@@ -4,7 +4,15 @@
 
 Numa logic is a collection of operational ML models and tools.
 
-## Instructions
+
+## Installation
+
+```shell
+pip install numalogic
+```
+
+
+## Develop locally
 
 1. Install Poetry:
     ```

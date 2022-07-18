@@ -1,12 +1,27 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.1.0"
+version = "0.1.1"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
+readme = "README.md"
+license = "Apache-2.0"
+maintainers = [
+    "Avik Basu <avikbasu93@gmail.com>",
+    "Vigith Maurice <vigith@gmail.com>",
+]
+classifiers = [
+    "Topic :: Software Development :: Libraries",
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10"
+]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.10"
+python = ">=3.8, <=3.10"
 pytz = "^2022.1"
 numpy = "^1.23.1"
 pandas = "^1.4.3"
