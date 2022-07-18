@@ -36,9 +36,8 @@ jobs:
       run: |
         poetry run pytest --cov-report=xml --cov=numalogic --cov-config .coveragerc numalogic/tests/ -sq
 
-    - uses: actions/checkout@master
-    - uses: codecov/codecov-action@v3
     - name: Upload Coverage
+      uses: codecov/codecov-action@v3
       with:
         files: ./coverage.xml
         fail_ci_if_error: true
