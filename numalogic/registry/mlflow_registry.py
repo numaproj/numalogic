@@ -33,10 +33,11 @@ class MLflowRegistrar(ArtifactManager):
 
     More details here: https://mlflow.org/docs/latest/model-registry.html
 
-    :param tracking_uri: the tracking server uri to use for mlflow
-    :param artifact_type: the type of artifact to use
-                          supported values include:
-                          {"pytorch", "sklearn", "tensorflow", "pyfunc"}
+    Args:
+        tracking_uri: the tracking server uri to use for mlflow
+        artifact_type: the type of artifact to use
+                              supported values include:
+                              {"pytorch", "sklearn", "tensorflow", "pyfunc"}
     """
 
     def __init__(self, tracking_uri: str, artifact_type: str = "pytorch"):
@@ -53,14 +54,14 @@ class MLflowRegistrar(ArtifactManager):
     ) -> ArtifactDict:
         """
         Returns a dictionary comprising information on model, metadata, model_properties
+        Args:
+            artifact: artifact to be saved
+            metadata: ML models metadata
+            model_properties: ML model properties (information like time "model_created",
+                                    "model_updated_time", "model_name", "tags" , "current stage",
+                                    "version"  etc.)
 
-        :param artifact: artifact to be saved
-        :param metadata: ML models metadata
-        :param model_properties: ML model properties (information like time "model_created",
-                                "model_updated_time", "model_name", "tags" , "current stage",
-                                "version"  etc.)
-
-        :return: ArtifactDict type object
+        Returns: ArtifactDict type object
         """
         return {"artifact": artifact, "metadata": metadata, "model_properties": model_properties}
 
@@ -68,11 +69,12 @@ class MLflowRegistrar(ArtifactManager):
     def construct_key(skeys: Sequence[str], dkeys: Sequence[str]) -> str:
         """
         Returns a single key comprising static and dynamic key fields.
+        Args:
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
 
-        :param skeys: static key fields as list/tuple of strings
-        :param dkeys: dynamic key fields as list/tuple of strings
-
-        :return: key
+        Returns:
+            key
         """
         _static_key = ":".join(skeys)
         _dynamic_key = ":".join(dkeys)
@@ -98,13 +100,14 @@ class MLflowRegistrar(ArtifactManager):
     ) -> ArtifactDict:
         """
         Loads the desired artifact from mlflow registry and returns it.
+        Args:
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
+            latest: boolean field to determine if latest version is desired or not
+            version: explicit artifact version
 
-        :param skeys: static key fields as list/tuple of strings
-        :param dkeys: dynamic key fields as list/tuple of strings
-        :param latest: boolean field to determine if latest version is desired or not
-        :param version: explicit artifact version
-
-        :return: A tuple of artifact and its metadata
+        Returns:
+             A dictionary artifact, metadata and model_properties
         """
 
         model_key = self.construct_key(skeys, dkeys)
@@ -137,13 +140,14 @@ class MLflowRegistrar(ArtifactManager):
     ) -> Optional[ModelVersion]:
         """
         Saves the artifact into mlflow registry and updates version.
+        Args:
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
+            artifact: artifact to be saved
+            metadata: additional metadata surrounding the artifact that needs to be saved
 
-        :param skeys: static key fields as list/tuple of strings
-        :param dkeys: dynamic key fields as list/tuple of strings
-        :param artifact: artifact to be saved
-        :param metadata: additional metadata surrounding the artifact that needs to be saved
-
-        :return: mlflow ModelVersion instance
+        Returns:
+            mlflow ModelVersion instance
         """
         model_key = self.construct_key(skeys, dkeys)
         try:
@@ -162,12 +166,13 @@ class MLflowRegistrar(ArtifactManager):
     def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
         """
         Deletes the artifact with a specified version from mlflow registry.
+        Args:
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
+            version: explicit artifact version
 
-        :param skeys: static key fields as list/tuple of strings
-        :param dkeys: dynamic key fields as list/tuple of strings
-        :param version: explicit artifact version
-
-        :return: None
+        Returns:
+             None
         """
         model_key = self.construct_key(skeys, dkeys)
         try:
@@ -181,9 +186,11 @@ class MLflowRegistrar(ArtifactManager):
         Changes stage information for the given model. Sets new model to "Production". The old production model is set
         to "Staging" and the rest model versions are set to "Archived".
 
-        :param model_name: model name for which we are updating the stage information.
+        Args:
+            model_name: model name for which we are updating the stage information.
 
-        :return: mlflow ModelVersion instance
+        Returns:
+             mlflow ModelVersion instance
         """
         try:
             version = int(self.get_version(model_name=model_name))
@@ -215,11 +222,10 @@ class MLflowRegistrar(ArtifactManager):
     def get_version(self, model_name: str) -> Optional[ModelVersion]:
         """
         Get model's latest version given the model name
-
-        :param model_name: model name for which the version has to be identified.
-
-
-        :return: version from mlflow ModelVersion instance
+        Args:
+            model_name: model name for which the version has to be identified.
+        Returns:
+            version from mlflow ModelVersion instance
         """
         try:
             return self.client.get_latest_versions(model_name, stages=[])[-1].version

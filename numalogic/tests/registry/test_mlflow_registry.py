@@ -6,8 +6,6 @@ from unittest import mock
 from unittest.mock import patch, Mock
 
 import mlflow
-import mlflow.pytorch
-import mlflow.pytorch
 import torch
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models.model import ModelInfo
@@ -269,10 +267,16 @@ class TestMLflow(unittest.TestCase):
             dkeys=dkeys,
             artifact=model,
         )
-        ml.load = mock.Mock(return_value=(model_sklearn(), None))
-        model, state_dict = ml.load(skeys=skeys, dkeys=dkeys)
-        self.assertEqual(type(model), RandomForestRegressor)
-        self.assertEqual(state_dict, None)
+        ml.load = mock.Mock(
+            return_value={
+                "artifact": model_sklearn(),
+                "metadata": None,
+                "model_properties": mock_get_model_version(),
+            }
+        )
+        data = ml.load(skeys=skeys, dkeys=dkeys)
+        self.assertEqual(type(data["artifact"]), RandomForestRegressor)
+        self.assertEqual(data["metadata"], None)
 
     @patch("mlflow.pytorch.log_model", mock_log_model)
     @patch("mlflow.log_param", OrderedDict({"a": 1}))
@@ -289,10 +293,16 @@ class TestMLflow(unittest.TestCase):
             dkeys=dkeys,
             artifact=model,
         )
-        ml.load = mock.Mock(return_value=(VanillaAE(10), None))
-        model, state_dict = ml.load(skeys=skeys, dkeys=dkeys, version="1", latest=False)
-        self.assertEqual(type(model), VanillaAE)
-        self.assertEqual(state_dict, None)
+        ml.load = mock.Mock(
+            return_value={
+                "artifact": VanillaAE(10),
+                "metadata": None,
+                "model_properties": mock_get_model_version(),
+            }
+        )
+        data = ml.load(skeys=skeys, dkeys=dkeys, version="1", latest=False)
+        self.assertEqual(type(data["artifact"]), VanillaAE)
+        self.assertEqual(data["metadata"], None)
 
     @patch("mlflow.pyfunc.log_model", mock_log_model)
     @patch("mlflow.log_param", mock_log_state_dict)
