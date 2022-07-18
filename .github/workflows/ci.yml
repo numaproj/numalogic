@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    name: version
+    name: Python version
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -39,7 +39,7 @@ jobs:
       run: make test
 
   format:
-    name: format
+    name: Black format
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
