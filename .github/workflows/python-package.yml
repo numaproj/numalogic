@@ -20,16 +20,23 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Install poetry
+      run: pipx install poetry
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'poetry'
-    - name: Install poetry
-      run: pipx install poetry
+
     - name: Install dependencies
-      run: poetry install --no-root
+      run: |
+        poetry env use ${{ matrix.python-version }}
+        poetry install --no-root
+
     - name: Black format check
       run: poetry run black --check .
+
     - name: Test with pytest
       run: make test
