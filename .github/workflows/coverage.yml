@@ -1,0 +1,44 @@
+name: Coverage
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Codecov
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9"]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install poetry
+      run: pipx install poetry
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'poetry'
+
+    - name: Install dependencies
+      run: |
+        poetry env use ${{ matrix.python-version }}
+        poetry install --no-root
+
+    - name: Run Coverage
+      run: |
+        poetry run pytest --cov-report=xml --cov=numalogic --cov-config .coveragerc numalogic/tests/ -sq
+
+    - name: Upload Coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: ./coverage.xml
+        fail_ci_if_error: true
+        verbose: true

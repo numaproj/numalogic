@@ -1,7 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
-name: Test
+name: Build
 
 on:
   push:
@@ -57,6 +54,11 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'poetry'
+
+    - name: Install dependencies
+      run: |
+        poetry env use ${{ matrix.python-version }}
+        poetry install --no-root
 
     - name: Black format check
       run: poetry run black --check .
