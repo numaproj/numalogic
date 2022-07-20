@@ -168,7 +168,7 @@ class AutoencoderPipeline(OutlierMixin):
             seq_len: sequence length / window length
 
         Returns:
-            Numpy type
+            Numpy array
         """
         if not seq_len:
             seq_len = self.seq_len or len(X)
