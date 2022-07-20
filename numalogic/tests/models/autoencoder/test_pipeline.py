@@ -126,6 +126,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
             num_encoder_layers=3,
             num_decoder_layers=1,
         )
+        print(self.X_train.shape)
         trainer = AutoencoderPipeline(model, SEQ_LEN, num_epochs=5, reconerr_method="absolute")
         trainer.fit(self.X_train)
         pred = trainer.predict(self.X_val)
@@ -134,7 +135,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         self.assertEqual(score.shape, pred.shape)
         self.assertEqual(trainer.reconerr_func, np.abs)
 
-    def test_score_04(self):
+    def test_score_05(self):
         model = VanillaAE(SEQ_LEN, n_features=self.X_train.shape[1])
         with self.assertRaises(ValueError):
             AutoencoderPipeline(model, SEQ_LEN, num_epochs=5, reconerr_method="noidea")
@@ -276,6 +277,17 @@ class TestSparseAEPipeline(unittest.TestCase):
 
     def test_fit_kl_divergence_03(self):
         model = Conv1dAE(self.X_train.shape[1], 8)
+        trainer = SparseAEPipeline(model=model, seq_len=SEQ_LEN, num_epochs=5, beta=1e-2, rho=0.01)
+        trainer.fit(self.X_train)
+
+    def test_fit_kl_divergence_04(self):
+        model = TransformerAE(
+            num_heads=8,
+            seq_length=SEQ_LEN,
+            dim_feedforward=64,
+            num_encoder_layers=3,
+            num_decoder_layers=1,
+        )
         trainer = SparseAEPipeline(model=model, seq_len=SEQ_LEN, num_epochs=5, beta=1e-2, rho=0.01)
         trainer.fit(self.X_train)
 

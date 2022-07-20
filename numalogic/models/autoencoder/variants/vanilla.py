@@ -160,21 +160,15 @@ class VanillaAE(TorchAE):
         self.encoder.apply(self.init_weights)
         self.decoder.apply(self.init_weights)
 
-    def __repr__(self) -> str:
-        return str(summary(self))
-
-    def summary(self, input_shape: Tuple[int, ...]) -> None:
-        print(summary(self, input_size=input_shape))
-
     @staticmethod
     def init_weights(m) -> None:
-        """
+        r"""
         Initiate parameters in the transformer model.
         """
         if type(m) in (nn.Linear,):
             nn.init.xavier_uniform_(m.weight, gain=2**0.5)
 
-    def forward(self, x) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return encoded, decoded

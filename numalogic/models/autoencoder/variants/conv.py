@@ -3,6 +3,7 @@ from typing import Tuple
 
 import torch
 from torch import nn, Tensor
+from torch.nn.init import calculate_gain
 from torchinfo import summary
 
 from numalogic.models.autoencoder.base import TorchAE
@@ -59,21 +60,15 @@ class Conv1dAE(TorchAE):
 
         self.thresholds = None
 
-    def __repr__(self) -> str:
-        return str(summary(self))
-
-    def summary(self, input_shape: Tuple[int, ...]) -> None:
-        print(summary(self, input_size=input_shape))
-
     @staticmethod
     def init_weights(m) -> None:
-        """
+        r"""
         Initiate parameters in the transformer model.
         """
-        if type(m) in (nn.Linear,):
-            nn.init.xavier_uniform_(m.weight, gain=2**0.5)
+        if type(m) in (nn.ConvTranspose1d, nn.Conv1d):
+            nn.init.xavier_normal_(m.weight, gain=calculate_gain("relu"))
 
-    def forward(self, x) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return encoded, decoded

@@ -15,7 +15,7 @@ ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
 EPOCHS = 10
 BATCH_SIZE = 256
-SEQ_LEN = 10
+SEQ_LEN = 12
 LR = 0.001
 torch.manual_seed(42)
 

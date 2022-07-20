@@ -22,7 +22,8 @@ class _Encoder(nn.Module):
         seq_len: sequence length / window length,
         no_features: number of features
         embedding_size: embedding layer size
-        num_layers: number of decoder layers"""
+        num_layers: number of decoder layers
+    """
 
     def __init__(self, seq_len: int, no_features: int, embedding_size: int, num_layers=1):
         super().__init__()
@@ -50,7 +51,8 @@ class _Decoder(nn.Module):
         seq_len: sequence length / window length,
         no_features: number of features
         hidden_size: hidden layer size(default = 32)
-        num_layers: number of decoder layers"""
+        num_layers: number of decoder layers
+    """
 
     def __init__(
         self, seq_len: int, no_features: int, output_size: int, hidden_size=32, num_layers=1
@@ -124,19 +126,15 @@ class LSTMAE(TorchAE):
         self.decoder = self.decoder.to(_DEVICE)
         self.decoder.apply(self.init_weights)
 
-    def __repr__(self) -> str:
-        return str(summary(self))
-
-    def summary(self, input_shape: Tuple[int, ...]) -> None:
-        print(summary(self, input_size=input_shape))
-
     @staticmethod
     def init_weights(m) -> None:
-        """Initiate parameters in the transformer model."""
+        r"""
+        Initiate parameters in the transformer model.
+        """
         if type(m) in (nn.Linear,):
             nn.init.xavier_uniform_(m.weight, gain=2**0.5)
 
-    def forward(self, x) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return encoded, decoded

@@ -10,7 +10,8 @@ from numalogic.preprocess.datasets import SequenceDataset
 
 
 def _scaled_dot_product(query: Tensor, key: Tensor, value: Tensor) -> Tensor:
-    r"""calculates scalar_dot_product between three tensors
+    r"""
+    Calculates scalar_dot_product between three tensors
 
     Args:
          query: Tensor
@@ -31,7 +32,8 @@ def _positional_encoding(
     seq_len: int,
     device: torch.device = torch.device("cpu"),
 ) -> Tensor:
-    r"""positional Encoding as described in `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
+    r"""
+    Positional Encoding as described in `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
 
     Args:
         feature: number of features
@@ -65,7 +67,8 @@ def _feed_forward(dim_input: int = 10, dim_feedforward: int = 2048) -> nn.Module
 
 
 class _Residual(nn.Module):
-    r"""Residual Class.
+    r"""
+    Residual Class.
 
     Args:
         sublayer: feedforward network
@@ -320,20 +323,18 @@ class TransformerAE(TorchAE):
             dim_feedforward=dim_feedforward,
             dropout=dropout,
         )
-
-    def __repr__(self) -> str:
-        return str(summary(self))
-
-    def summary(self, input_shape: Tuple[int, ...]) -> None:
-        print(summary(self, input_size=input_shape))
+        self.encoder.apply(self.init_weights)
+        self.decoder.apply(self.init_weights)
 
     @staticmethod
     def init_weights(m) -> None:
-        """Initiate parameters in the transformer model."""
+        r"""
+        Initiate parameters in the transformer model.
+        """
         if type(m) in (nn.Linear,):
             nn.init.xavier_uniform_(m.weight, gain=2**0.5)
 
-    def forward(self, x) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         torch.manual_seed(0)
         encoded = self.encoder(x)
         decoded = self.decoder(x, encoded)
@@ -351,5 +352,5 @@ class TransformerAE(TorchAE):
             SequenceDataset type
         """
         __seq_len = seq_len or self.seq_len
-        dataset = SequenceDataset(x, __seq_len, permute=False)
+        dataset = SequenceDataset(x, __seq_len, permute=True)
         return dataset

@@ -124,7 +124,8 @@ class AutoencoderPipeline(OutlierMixin):
         raise NotImplementedError(f"Unsupported optimizer value provided: {optimizer}")
 
     def fit(self, X: NDArray[float], y=None, log_freq: int = 5) -> "AutoencoderPipeline":
-        r"""Fit function to train autoencoder model
+        r"""
+        Fit function to train autoencoder model
 
         Args:
             X: training dataset
@@ -132,7 +133,7 @@ class AutoencoderPipeline(OutlierMixin):
             log_freq: frequency logging
 
         Returns:
-            Autoencoder Pipeline type
+            Autoencoder Pipeline instance
         """
         _LOGGER.info("Training autoencoder model..")
 
@@ -159,13 +160,15 @@ class AutoencoderPipeline(OutlierMixin):
         return self
 
     def predict(self, X: NDArray[float], seq_len: int = None) -> NDArray[float]:
-        r"""Predict function to train autoencoder model
+        r"""
+        Predict function to train autoencoder model
+
         Args:
             X: training dataset
             seq_len: sequence length / window length
 
         Returns:
-            NDArray type
+            Numpy type
         """
         if not seq_len:
             seq_len = self.seq_len or len(X)
@@ -176,13 +179,15 @@ class AutoencoderPipeline(OutlierMixin):
         return dataset.recover_shape(pred)
 
     def score(self, X: NDArray[float], seq_len: int = None) -> NDArray[float]:
-        r"""Score function to train autoencoder model
+        r"""
+        Score function to train autoencoder model
+
         Args:
             X: training dataset
             seq_len: sequence length / window length
 
         Returns:
-            NDArray type with anomaly scores
+            numpy type with anomaly scores
         """
         if self._thresholds is None:
             raise RuntimeError("Thresholds not present!!!")
@@ -194,13 +199,15 @@ class AutoencoderPipeline(OutlierMixin):
         return anomaly_scores
 
     def recon_err(self, X: NDArray[float], seq_len: int) -> NDArray:
-        r"""recon_err function to calculate reconstruction error
+        r"""
+        recon_err function to calculate reconstruction error
+
         Args:
             X: training dataset
             seq_len: sequence length / window length
 
         Returns:
-            NDArray type with anomaly scores
+            numpy type with anomaly scores
         """
         x_recon = self.predict(X, seq_len=seq_len)
         recon_err = self.reconerr_func(X - x_recon)
@@ -209,7 +216,8 @@ class AutoencoderPipeline(OutlierMixin):
     def find_thresholds(
         self, X: NDArray[float]
     ) -> Tuple[NDArray[float], NDArray[float], NDArray[float]]:
-        """recon_err function to calculate reconstruction error
+        r"""
+        Calculate threshold for the anomaly model
         Args:
             X: training dataset
 
@@ -225,13 +233,14 @@ class AutoencoderPipeline(OutlierMixin):
         return thresholds, recon_err_mean, recon_err_std
 
     def save(self, path: Optional[str] = None) -> Optional[BinaryIO]:
-        """Save function to save the model. If path is provided then the model is saved in the given path
-        otherwise return BytesIO object.
+        r"""
+        Save function to save the model. If path is provided then the model is saved in the given path
 
         Args:
               path: path to save the model (Optional parameter)
         Returns:
-              Binary type object if path is None"""
+              Binary type object if path is None
+        """
         state_dict = copy(self.model_properties)
         state_dict["model_state_dict"] = self._model.state_dict()
         if path:
@@ -247,7 +256,8 @@ class AutoencoderPipeline(OutlierMixin):
         self._stats = metadata["err_stats"]
 
     def load(self, path: Union[str, BinaryIO] = None, model=None, **metadata) -> None:
-        """Load the model to pipeline.
+        r"""
+        Load the model to pipeline.
 
         Args:
               path: path to load the model
