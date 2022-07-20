@@ -4,6 +4,7 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 from torch import Tensor
+from torch.nn.init import calculate_gain
 from torchinfo import summary
 
 from numalogic.models.autoencoder.base import TorchAE
@@ -131,8 +132,11 @@ class LSTMAE(TorchAE):
         r"""
         Initiate parameters in the transformer model.
         """
-        if type(m) in (nn.Linear,):
-            nn.init.xavier_uniform_(m.weight, gain=2**0.5)
+        for node, param in m.named_parameters():
+            if "bias" in node:
+                nn.init.zeros_(param)
+            else:
+                nn.init.xavier_normal_(param, gain=calculate_gain("tanh"))
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         encoded = self.encoder(x)

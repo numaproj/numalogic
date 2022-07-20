@@ -290,6 +290,8 @@ class TestSparseAEPipeline(unittest.TestCase):
         )
         trainer = SparseAEPipeline(model=model, seq_len=SEQ_LEN, num_epochs=5, beta=1e-2, rho=0.01)
         trainer.fit(self.X_train)
+        pred = trainer.predict(self.X_val, seq_len=SEQ_LEN)
+        self.assertEqual(self.X_val.shape, pred.shape)
 
     def test_predict_as_pl(self):
         pipeline = Pipeline(

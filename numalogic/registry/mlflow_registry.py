@@ -61,7 +61,7 @@ class MLflowRegistrar(ArtifactManager):
                                     "model_updated_time", "model_name", "tags" , "current stage",
                                     "version"  etc.)
 
-        Returns: ArtifactDict type object
+        Returns: ArtifactDict type object . A dictionary of artifact, metadata and model_properties
         """
         return {"artifact": artifact, "metadata": metadata, "model_properties": model_properties}
 

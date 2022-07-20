@@ -29,7 +29,8 @@ class _Encoder(nn.Module):
         self.encoder = nn.Sequential(*layers)
 
     def _construct_layers(self, layersizes: Sequence[int]) -> nn.ModuleList:
-        r"""Utility function to generate a simple feedforward network layer
+        r"""
+        Utility function to generate a simple feedforward network layer
 
         Args:
             layersizes: layer size

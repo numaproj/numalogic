@@ -187,7 +187,7 @@ class AutoencoderPipeline(OutlierMixin):
             seq_len: sequence length / window length
 
         Returns:
-            numpy type with anomaly scores
+            numpy array with anomaly scores
         """
         if self._thresholds is None:
             raise RuntimeError("Thresholds not present!!!")
@@ -207,7 +207,7 @@ class AutoencoderPipeline(OutlierMixin):
             seq_len: sequence length / window length
 
         Returns:
-            numpy type with anomaly scores
+            numpy array with anomaly scores
         """
         x_recon = self.predict(X, seq_len=seq_len)
         recon_err = self.reconerr_func(X - x_recon)
