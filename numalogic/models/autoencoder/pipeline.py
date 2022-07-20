@@ -133,7 +133,7 @@ class AutoencoderPipeline(OutlierMixin):
             log_freq: frequency logging
 
         Returns:
-            Autoencoder Pipeline instance
+            AutoencoderPipeline instance
         """
         _LOGGER.info("Training autoencoder model..")
 
