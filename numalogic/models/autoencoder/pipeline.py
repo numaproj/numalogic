@@ -16,26 +16,27 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class AutoencoderPipeline(OutlierMixin):
-    """
+    r"""
     Class to simplify training, inference, loading and saving of time-series autoencoders.
 
-    Note: this class only supports Pytorch models.
-
-    :param model: model instance
-    :param seq_len: sequence length
-    :param loss_fn: loss function used for training
-                    supported values include {"huber", "l1", "mse"}
-    :param: optimizer: optimizer to used for training.
-                       supported values include {"adam", "adagrad", "rmsprop"}
-    :param lr: learning rate
-    :param batch_size: batch size for training
-    :param num_epochs: number of epochs for training
-    :param std_tolerance: determines how many times the standard deviation to be used for threshold
-    :param reconerr_method: method used to calculate the distance
-                            between the original and the reconstucted data
-                            supported values include {"absolute", "squared"}
-    :param threshold_min: the minimum threshold to use;
-                          can be used when the threshold calculated is too low
+    Note:
+         This class only supports Pytorch models.
+    Args:
+        model: model instance
+        seq_len: sequence length
+        loss_fn: loss function used for training
+                        supported values include {"huber", "l1", "mse"}
+        optimizer: optimizer to used for training.
+                           supported values include {"adam", "adagrad", "rmsprop"}
+        lr: learning rate
+        batch_size: batch size for training
+        num_epochs: number of epochs for training
+        std_tolerance: determines how many times the standard deviation to be used for threshold
+        reconerr_method: method used to calculate the distance
+                                between the original and the reconstucted data
+                                supported values include {"absolute", "squared"}
+        threshold_min: the minimum threshold to use;
+                              can be used when the threshold calculated is too low
 
     >>> # Example usage
     >>> from numalogic.models.autoencoder.variants import VanillaAE
@@ -123,6 +124,17 @@ class AutoencoderPipeline(OutlierMixin):
         raise NotImplementedError(f"Unsupported optimizer value provided: {optimizer}")
 
     def fit(self, X: NDArray[float], y=None, log_freq: int = 5) -> "AutoencoderPipeline":
+        r"""
+        Fit function to train autoencoder model
+
+        Args:
+            X: training dataset
+            y: labels
+            log_freq: frequency logging
+
+        Returns:
+            AutoencoderPipeline instance
+        """
         _LOGGER.info("Training autoencoder model..")
 
         dataset = self._model.construct_dataset(X, self.seq_len)
@@ -148,6 +160,16 @@ class AutoencoderPipeline(OutlierMixin):
         return self
 
     def predict(self, X: NDArray[float], seq_len: int = None) -> NDArray[float]:
+        r"""
+        Return the reconstruction from the model.
+
+        Args:
+            X: training dataset
+            seq_len: sequence length / window length
+
+        Returns:
+            Numpy array
+        """
         if not seq_len:
             seq_len = self.seq_len or len(X)
         dataset = self._model.construct_dataset(X, seq_len)
@@ -157,6 +179,16 @@ class AutoencoderPipeline(OutlierMixin):
         return dataset.recover_shape(pred)
 
     def score(self, X: NDArray[float], seq_len: int = None) -> NDArray[float]:
+        r"""
+        Return anomaly score using the calculated threshold
+
+        Args:
+            X: training dataset
+            seq_len: sequence length / window length
+
+        Returns:
+            numpy array with anomaly scores
+        """
         if self._thresholds is None:
             raise RuntimeError("Thresholds not present!!!")
         thresh = self._thresholds.reshape(1, -1)
@@ -167,6 +199,16 @@ class AutoencoderPipeline(OutlierMixin):
         return anomaly_scores
 
     def recon_err(self, X: NDArray[float], seq_len: int) -> NDArray:
+        r"""
+        Returns the reconstruction error.
+
+        Args:
+            X: training dataset
+            seq_len: sequence length / window length
+
+        Returns:
+            numpy array with anomaly scores
+        """
         x_recon = self.predict(X, seq_len=seq_len)
         recon_err = self.reconerr_func(X - x_recon)
         return recon_err
@@ -174,6 +216,14 @@ class AutoencoderPipeline(OutlierMixin):
     def find_thresholds(
         self, X: NDArray[float]
     ) -> Tuple[NDArray[float], NDArray[float], NDArray[float]]:
+        r"""
+        Calculate threshold for the anomaly model
+        Args:
+            X: training dataset
+
+        Returns:
+            Tuple consisting of thresholds, reconstruction error mean, reconstruction error std
+        """
         recon_err = self.recon_err(X, seq_len=self.seq_len)
         recon_err_mean = np.mean(recon_err, axis=0)
         recon_err_std = np.std(recon_err, axis=0)
@@ -183,6 +233,14 @@ class AutoencoderPipeline(OutlierMixin):
         return thresholds, recon_err_mean, recon_err_std
 
     def save(self, path: Optional[str] = None) -> Optional[BinaryIO]:
+        r"""
+        Save function to save the model. If path is provided then the model is saved in the given path
+
+        Args:
+              path: path to save the model (Optional parameter)
+        Returns:
+              Binary type object if path is None
+        """
         state_dict = copy(self.model_properties)
         state_dict["model_state_dict"] = self._model.state_dict()
         if path:
@@ -198,6 +256,14 @@ class AutoencoderPipeline(OutlierMixin):
         self._stats = metadata["err_stats"]
 
     def load(self, path: Union[str, BinaryIO] = None, model=None, **metadata) -> None:
+        r"""
+        Load the model to pipeline.
+
+        Args:
+              path: path to load the model
+              model: machine learning model
+              metadata: additional pipeline metadata
+        """
         if (path and model) or (not path and not model):
             raise ValueError("One of path or model needs to be provided!")
         if model:

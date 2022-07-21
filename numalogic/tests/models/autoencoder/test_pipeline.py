@@ -9,7 +9,7 @@ from sklearn.preprocessing import StandardScaler, RobustScaler
 
 from numalogic._constants import TESTS_DIR
 from numalogic.models.autoencoder import AutoencoderPipeline, SparseAEPipeline
-from numalogic.models.autoencoder.variants import Conv1dAE, LSTMAE, VanillaAE
+from numalogic.models.autoencoder.variants import Conv1dAE, LSTMAE, VanillaAE, TransformerAE
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
@@ -119,6 +119,23 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         self.assertEqual(trainer.reconerr_func, np.abs)
 
     def test_score_04(self):
+        model = TransformerAE(
+            num_heads=8,
+            seq_length=SEQ_LEN,
+            dim_feedforward=64,
+            num_encoder_layers=3,
+            num_decoder_layers=1,
+        )
+        print(self.X_train.shape)
+        trainer = AutoencoderPipeline(model, SEQ_LEN, num_epochs=5, reconerr_method="absolute")
+        trainer.fit(self.X_train)
+        pred = trainer.predict(self.X_val)
+
+        score = trainer.score(self.X_val)
+        self.assertEqual(score.shape, pred.shape)
+        self.assertEqual(trainer.reconerr_func, np.abs)
+
+    def test_score_05(self):
         model = VanillaAE(SEQ_LEN, n_features=self.X_train.shape[1])
         with self.assertRaises(ValueError):
             AutoencoderPipeline(model, SEQ_LEN, num_epochs=5, reconerr_method="noidea")
@@ -196,11 +213,23 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         self.assertTrue(_mean_wts_1)
         self.assertAlmostEqual(_mean_wts_1, _mean_wts_2, places=6)
 
-    def test_with_model(self):
+    def test_with_conv1d_model(self):
         trainer = AutoencoderPipeline.with_model(
             Conv1dAE, SEQ_LEN, in_channels=self.X_train.shape[1], enc_channels=8
         )
         self.assertIsInstance(trainer.model, Conv1dAE)
+
+    def test_with_transformer_model(self):
+        trainer = AutoencoderPipeline.with_model(
+            TransformerAE,
+            SEQ_LEN,
+            num_heads=8,
+            seq_length=SEQ_LEN,
+            dim_feedforward=64,
+            num_encoder_layers=3,
+            num_decoder_layers=1,
+        )
+        self.assertIsInstance(trainer.model, TransformerAE)
 
     def test_load_model(self):
         X = np.random.randn(10, 1)
@@ -250,6 +279,19 @@ class TestSparseAEPipeline(unittest.TestCase):
         model = Conv1dAE(self.X_train.shape[1], 8)
         trainer = SparseAEPipeline(model=model, seq_len=SEQ_LEN, num_epochs=5, beta=1e-2, rho=0.01)
         trainer.fit(self.X_train)
+
+    def test_fit_kl_divergence_04(self):
+        model = TransformerAE(
+            num_heads=8,
+            seq_length=SEQ_LEN,
+            dim_feedforward=64,
+            num_encoder_layers=3,
+            num_decoder_layers=1,
+        )
+        trainer = SparseAEPipeline(model=model, seq_len=SEQ_LEN, num_epochs=5, beta=1e-2, rho=0.01)
+        trainer.fit(self.X_train)
+        pred = trainer.predict(self.X_val, seq_len=SEQ_LEN)
+        self.assertEqual(self.X_val.shape, pred.shape)
 
     def test_predict_as_pl(self):
         pipeline = Pipeline(

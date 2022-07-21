@@ -1,13 +1,24 @@
 from typing import Tuple, Sequence
 
 from torch import nn, Tensor
-from torchinfo import summary
 
+from numalogic.models.autoencoder.base import TorchAE
 from numalogic.preprocess.datasets import SequenceDataset
 from numalogic.tools.exceptions import LayerSizeMismatchError
 
 
 class _Encoder(nn.Module):
+    r"""
+    Encoder module for the autoencoder module.
+
+    Args:
+        seq_len: sequence length / window length
+        n_features: num of features
+        layersizes: encoder layer size
+        dropout_p: the dropout value
+
+    """
+
     def __init__(self, seq_len: int, n_features: int, layersizes: Sequence[int], dropout_p: float):
         super().__init__()
         self.seq_len = seq_len
@@ -18,6 +29,15 @@ class _Encoder(nn.Module):
         self.encoder = nn.Sequential(*layers)
 
     def _construct_layers(self, layersizes: Sequence[int]) -> nn.ModuleList:
+        r"""
+        Utility function to generate a simple feedforward network layer
+
+        Args:
+            layersizes: layer size
+
+        Returns:
+            A simple feedforward network layer of type nn.ModuleList
+        """
         layers = nn.ModuleList()
         start_layersize = self.seq_len
 
@@ -46,6 +66,17 @@ class _Encoder(nn.Module):
 
 
 class _Decoder(nn.Module):
+    r"""
+    Decoder module for the autoencoder module.
+
+    Args:
+        seq_len: sequence length / window length
+        n_features: num of features
+        layersizes: decoder layer size
+        dropout_p: the dropout value
+
+    """
+
     def __init__(self, seq_len: int, n_features: int, layersizes: Sequence[int], dropout_p: float):
         super().__init__()
         self.seq_len = seq_len
@@ -59,6 +90,15 @@ class _Decoder(nn.Module):
         return self.decoder(x)
 
     def _construct_layers(self, layersizes: Sequence[int]) -> nn.ModuleList:
+        r"""
+        Utility function to generate a simple feedforward network layer
+
+        Args:
+            layersizes: layer size
+
+        Returns:
+            A simple feedforward network layer
+        """
         layers = nn.ModuleList()
 
         for idx, _ in enumerate(layersizes[:-1]):
@@ -75,9 +115,17 @@ class _Decoder(nn.Module):
         return layers
 
 
-class VanillaAE(nn.Module):
-    """
-    Vanilla Autoencoder model comprising of Fully connected layers only.
+class VanillaAE(TorchAE):
+    r"""
+    Vanilla Autoencoder model comprising Fully connected layers only.
+
+    Args:
+
+        signal_len: sequence length / window length
+        n_features: num of features
+        encoder_layersizes: encoder layer size (default = Sequence[int] = (16, 8))
+        decoder_layersizes: decoder layer size (default = Sequence[int] = (8, 16))
+        dropout_p: the dropout value (default=0.25)
     """
 
     def __init__(
@@ -88,6 +136,7 @@ class VanillaAE(nn.Module):
         decoder_layersizes: Sequence[int] = (8, 16),
         dropout_p: float = 0.25,
     ):
+
         super(VanillaAE, self).__init__()
         self.seq_len = signal_len
         self.dropout_prob = dropout_p
@@ -114,23 +163,30 @@ class VanillaAE(nn.Module):
         self.encoder.apply(self.init_weights)
         self.decoder.apply(self.init_weights)
 
-    def __repr__(self) -> str:
-        return str(summary(self))
-
-    def summary(self, input_shape: Tuple[int, ...]) -> None:
-        print(summary(self, input_size=input_shape))
-
     @staticmethod
-    def init_weights(m) -> None:
+    def init_weights(m: nn.Module) -> None:
+        r"""
+        Initiate parameters in the transformer model.
+        """
         if type(m) == nn.Linear:
             nn.init.xavier_normal_(m.weight)
 
-    def forward(self, x) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return encoded, decoded
 
     def construct_dataset(self, x: Tensor, seq_len: int = None) -> SequenceDataset:
+        r"""
+         Constructs dataset given tensor and seq_len
+
+         Args:
+            x: Tensor type
+            seq_len: sequence length / window length
+
+        Returns:
+             SequenceDataset type
+        """
         __seq_len = seq_len or self.seq_len
-        dataset = SequenceDataset(x, seq_len, permute=True)
+        dataset = SequenceDataset(x, __seq_len, permute=True)
         return dataset

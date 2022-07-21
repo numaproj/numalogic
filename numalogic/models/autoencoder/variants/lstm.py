@@ -16,6 +16,16 @@ _LOGGER.info("Current device: %s", _DEVICE)
 
 
 class _Encoder(nn.Module):
+    r"""
+    Encoder network for the autoencoder network.
+
+    Args:
+        seq_len: sequence length / window length,
+        no_features: number of features
+        embedding_size: embedding layer size
+        num_layers: number of decoder layers
+    """
+
     def __init__(self, seq_len: int, no_features: int, embedding_size: int, num_layers=1):
         super().__init__()
 
@@ -35,6 +45,16 @@ class _Encoder(nn.Module):
 
 
 class _Decoder(nn.Module):
+    r"""
+    Decoder network for the autoencoder network.
+
+    Args:
+        seq_len: sequence length / window length,
+        no_features: number of features
+        hidden_size: hidden layer size(default = 32)
+        num_layers: number of decoder layers
+    """
+
     def __init__(
         self, seq_len: int, no_features: int, output_size: int, hidden_size=32, num_layers=1
     ):
@@ -62,8 +82,16 @@ class _Decoder(nn.Module):
 
 
 class LSTMAE(TorchAE):
-    """
+    r"""
     Long Short-Term Memory (LSTM) based autoencoder.
+
+    Args:
+        seq_len: sequence length / window length,
+        no_features: number of features
+        embedding_dim: embedding dimension for the network
+        encoder_layers: number of encoder layers (default = 1)
+        decoder_layers: number of decoder layers (default = 1)
+
     """
 
     def __init__(
@@ -99,14 +127,11 @@ class LSTMAE(TorchAE):
         self.decoder = self.decoder.to(_DEVICE)
         self.decoder.apply(self.init_weights)
 
-    def __repr__(self) -> str:
-        return summary(self)
-
-    def summary(self, input_shape: tuple) -> None:
-        print(summary(self, input_size=input_shape))
-
     @staticmethod
     def init_weights(m: nn.Module) -> None:
+        r"""
+        Initiate parameters in the transformer model.
+        """
         for node, param in m.named_parameters():
             if "bias" in node:
                 nn.init.zeros_(param)
@@ -120,6 +145,16 @@ class LSTMAE(TorchAE):
         return encoded, decoded
 
     def construct_dataset(self, x: Tensor, seq_len: int = None) -> SequenceDataset:
+        r"""
+         Constructs dataset given tensor and seq_len
+
+         Args:
+            x: Tensor type
+            seq_len: sequence length / window length
+
+        Returns:
+            SequenceDataset type
+        """
         __seq_len = seq_len or self.seq_len
         dataset = SequenceDataset(x, __seq_len, permute=False)
         return dataset
