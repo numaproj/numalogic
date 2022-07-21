@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.2.0"
+version = "0.2.1"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -37,6 +37,7 @@ pytest = "^7.1"
 pytest-cov = "^3.0"
 freezegun = "^1.2.1"
 pylint = "^2.14.2"
+flake8 = "^4.0.1"
 
 [tool.black]
 line-length = 100

@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 from torch.nn.init import calculate_gain
-from torchinfo import summary
 
 from numalogic.models.autoencoder.base import TorchAE
 from numalogic.preprocess.datasets import SequenceDataset

@@ -25,6 +25,7 @@ class TestBaselineForecaster(unittest.TestCase):
         anomaly_df = model.score(self.test_df)
 
         self.assertIsInstance(r2_score, float)
+        self.assertEqual(pred_df.shape, self.test_df.shape)
         self.assertEqual(anomaly_df.shape, self.test_df.shape)
 
 
@@ -47,6 +48,7 @@ class TestSeasonalNaiveForecaster(unittest.TestCase):
         pred_df = model.predict(self.test_df)
         r2_score = model.r2_score(self.test_df)
 
+        self.assertEqual(self.test_df.shape, pred_df.shape)
         self.assertIsInstance(r2_score, float)
 
     def test_period_err_01(self):
@@ -56,7 +58,7 @@ class TestSeasonalNaiveForecaster(unittest.TestCase):
 
     def test_period_err_02(self):
         with self.assertRaises(NotImplementedError):
-            model = SeasonalNaiveForecaster(season="yearly")
+            SeasonalNaiveForecaster(season="yearly")
 
     def test_evalset_err(self):
         model = SeasonalNaiveForecaster()
