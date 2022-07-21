@@ -9,6 +9,9 @@ clean:
 format: clean
 	poetry run black numalogic/
 
+lint: format
+	poetry run flake8 .
+
 # install all dependencies
 setup:
 	poetry install -v
@@ -17,8 +20,10 @@ setup:
 test:
 	poetry run pytest numalogic/tests/
 
-build:
+publish:
+	@rm -rf dist
 	poetry build
+	poetry publish
 
 requirements:
 	poetry export -f requirements.txt --output requirements.txt --without-hashes

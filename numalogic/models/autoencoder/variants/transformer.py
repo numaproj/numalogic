@@ -3,7 +3,6 @@ from typing import Tuple
 import torch
 import torch.nn.functional
 from torch import nn, Tensor
-from torchinfo import summary
 
 from numalogic.models.autoencoder.base import TorchAE
 from numalogic.preprocess.datasets import SequenceDataset
@@ -33,7 +32,8 @@ def _positional_encoding(
     device: torch.device = torch.device("cpu"),
 ) -> Tensor:
     r"""
-    Positional Encoding as described in `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
+    Positional Encoding as described in
+    `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
 
     Args:
         feature: number of features
@@ -283,7 +283,8 @@ class Decoder(nn.Module):
 
 class TransformerAE(TorchAE):
     r"""
-    Transformer model without masking. Inspiration: `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
+    Transformer model without masking. Inspiration:
+    `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
 
     Args:
         num_encoder_layers: number of encoder layers in the Encoder (default = 3)

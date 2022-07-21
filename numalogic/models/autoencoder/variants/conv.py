@@ -4,7 +4,6 @@ from typing import Tuple
 import torch
 from torch import nn, Tensor
 from torch.nn.init import calculate_gain
-from torchinfo import summary
 
 from numalogic.models.autoencoder.base import TorchAE
 from numalogic.preprocess.datasets import SequenceDataset
@@ -39,7 +38,9 @@ class Conv1dAE(TorchAE):
     ):
         super(Conv1dAE, self).__init__()
         self.encoder = nn.Sequential(
-            nn.Conv1d(in_channels, enc_channels, kernel_size=7, stride=2, padding=3),
+            nn.Conv1d(
+                in_channels, enc_channels, kernel_size=kernel_size, stride=stride, padding=padding
+            ),
             nn.BatchNorm1d(enc_channels),
             nn.ReLU(inplace=True),
             nn.MaxPool1d(2),
@@ -47,7 +48,12 @@ class Conv1dAE(TorchAE):
 
         self.decoder = nn.Sequential(
             nn.ConvTranspose1d(
-                enc_channels, enc_channels, kernel_size=7, stride=2, padding=3, output_padding=1
+                enc_channels,
+                enc_channels,
+                kernel_size=kernel_size,
+                stride=stride,
+                padding=padding,
+                output_padding=output_padding,
             ),
             nn.BatchNorm1d(enc_channels),
             nn.ReLU(inplace=True),
@@ -57,8 +63,6 @@ class Conv1dAE(TorchAE):
 
         self.encoder.apply(self.init_weights)
         self.decoder.apply(self.init_weights)
-
-        self.thresholds = None
 
     @staticmethod
     def init_weights(m: nn.Module) -> None:

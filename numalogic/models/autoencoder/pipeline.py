@@ -234,7 +234,8 @@ class AutoencoderPipeline(OutlierMixin):
 
     def save(self, path: Optional[str] = None) -> Optional[BinaryIO]:
         r"""
-        Save function to save the model. If path is provided then the model is saved in the given path
+        Save function to save the model.
+        If path is provided then the model is saved in the given path.
 
         Args:
               path: path to save the model (Optional parameter)
