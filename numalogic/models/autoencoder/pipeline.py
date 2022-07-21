@@ -161,7 +161,7 @@ class AutoencoderPipeline(OutlierMixin):
 
     def predict(self, X: NDArray[float], seq_len: int = None) -> NDArray[float]:
         r"""
-        Predict function to train autoencoder model
+        Return the reconstruction from the model.
 
         Args:
             X: training dataset
@@ -180,7 +180,7 @@ class AutoencoderPipeline(OutlierMixin):
 
     def score(self, X: NDArray[float], seq_len: int = None) -> NDArray[float]:
         r"""
-        Score function to train autoencoder model
+        Return anomaly score using the calculated threshold
 
         Args:
             X: training dataset
@@ -200,7 +200,7 @@ class AutoencoderPipeline(OutlierMixin):
 
     def recon_err(self, X: NDArray[float], seq_len: int) -> NDArray:
         r"""
-        recon_err function to calculate reconstruction error
+        Returns the reconstruction error.
 
         Args:
             X: training dataset

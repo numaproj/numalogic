@@ -162,12 +162,13 @@ class VanillaAE(TorchAE):
         self.decoder.apply(self.init_weights)
 
     @staticmethod
-    def init_weights(m) -> None:
+    def init_weights(m: nn.Module) -> None:
         r"""
         Initiate parameters in the transformer model.
         """
         if type(m) in (nn.Linear,):
-            nn.init.xavier_uniform_(m.weight, gain=2**0.5)
+            if type(m) == nn.Linear:
+                nn.init.xavier_normal_(m.weight)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         encoded = self.encoder(x)

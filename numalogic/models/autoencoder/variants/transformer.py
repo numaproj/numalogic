@@ -327,7 +327,7 @@ class TransformerAE(TorchAE):
         self.decoder.apply(self.init_weights)
 
     @staticmethod
-    def init_weights(m) -> None:
+    def init_weights(m: nn.Module) -> None:
         r"""
         Initiate parameters in the transformer model.
         """

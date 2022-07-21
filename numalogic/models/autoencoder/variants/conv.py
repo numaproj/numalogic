@@ -61,7 +61,7 @@ class Conv1dAE(TorchAE):
         self.thresholds = None
 
     @staticmethod
-    def init_weights(m) -> None:
+    def init_weights(m: nn.Module) -> None:
         r"""
         Initiate parameters in the transformer model.
         """
