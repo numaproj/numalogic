@@ -139,6 +139,7 @@ class LSTMAE(TorchAE):
                 nn.init.xavier_normal_(param, gain=calculate_gain("tanh"))
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+        torch.manual_seed(0)
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return encoded, decoded
