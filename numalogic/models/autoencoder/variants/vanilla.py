@@ -1,7 +1,6 @@
 from typing import Tuple, Sequence
 
 from torch import nn, Tensor
-from torchinfo import summary
 
 from numalogic.models.autoencoder.base import TorchAE
 from numalogic.preprocess.datasets import SequenceDataset
@@ -9,7 +8,8 @@ from numalogic.tools.exceptions import LayerSizeMismatchError
 
 
 class _Encoder(nn.Module):
-    r"""Encoder module for the autoencoder module.
+    r"""
+    Encoder module for the autoencoder module.
 
     Args:
         seq_len: sequence length / window length
@@ -36,7 +36,7 @@ class _Encoder(nn.Module):
             layersizes: layer size
 
         Returns:
-            a simple feedforward network layer of type nn.ModuleList
+            A simple feedforward network layer of type nn.ModuleList
         """
         layers = nn.ModuleList()
         start_layersize = self.seq_len
@@ -66,7 +66,8 @@ class _Encoder(nn.Module):
 
 
 class _Decoder(nn.Module):
-    r"""Decoder module for the autoencoder module.
+    r"""
+    Decoder module for the autoencoder module.
 
     Args:
         seq_len: sequence length / window length
@@ -89,13 +90,14 @@ class _Decoder(nn.Module):
         return self.decoder(x)
 
     def _construct_layers(self, layersizes: Sequence[int]) -> nn.ModuleList:
-        r"""Utility function to generate a simple feedforward network layer
+        r"""
+        Utility function to generate a simple feedforward network layer
 
         Args:
             layersizes: layer size
 
         Returns:
-            a simple feedforward network layer
+            A simple feedforward network layer
         """
         layers = nn.ModuleList()
 
@@ -166,9 +168,8 @@ class VanillaAE(TorchAE):
         r"""
         Initiate parameters in the transformer model.
         """
-        if type(m) in (nn.Linear,):
-            if type(m) == nn.Linear:
-                nn.init.xavier_normal_(m.weight)
+        if type(m) == nn.Linear:
+            nn.init.xavier_normal_(m.weight)
 
     def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
         encoded = self.encoder(x)
