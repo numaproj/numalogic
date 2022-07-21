@@ -16,7 +16,7 @@ jobs:
           fetch-depth: 0
       - run: git fetch --prune --prune-tags
       - run: git tag -l 'v*'
-      - run: ./hack/changelog.sh > CHANGELOG.md
+      - run: ./.hack/changelog.sh > CHANGELOG.md
       - uses: peter-evans/create-pull-request@v3
         with:
           title: 'docs: updated CHANGELOG.md'
