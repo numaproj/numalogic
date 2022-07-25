@@ -10,6 +10,8 @@ import torch
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models.model import ModelInfo
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.preprocessing import StandardScaler
 from torch import tensor
 
 from numalogic.models.autoencoder.variants import VanillaAE
@@ -184,6 +186,13 @@ def mock_get_model_version(*_, **__):
     ]
 
 
+def return_scaler():
+    scaler = StandardScaler()
+    data = [[0, 0], [0, 0], [1, 1], [1, 1]]
+    scaler.fit_transform(data)
+    return scaler
+
+
 def mock_load_model(*_, **__):
     return mlflow.pytorch.PyFuncModel
 
@@ -217,8 +226,13 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistrar(TRACKING_URI, artifact_type="pytorch")
         skeys = ["model_", "nnet"]
         dkeys = ["error1"]
+
         status = ml.save(
-            skeys=skeys, dkeys=dkeys, artifact=model, artifact_state_dict=model.state_dict()
+            skeys=skeys,
+            dkeys=dkeys,
+            primary_artifact=model,
+            secondary_artifact=Pipeline([return_scaler]),
+            artifact_state_dict=model.state_dict(),
         )
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
@@ -232,7 +246,11 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistrar(TRACKING_URI, artifact_type="sklearn")
         skeys = ["model_", "nnet"]
         dkeys = ["error1"]
-        status = ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
+        status = ml.save(
+            skeys=skeys,
+            dkeys=dkeys,
+            primary_artifact=model,
+        )
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
 
@@ -248,11 +266,20 @@ class TestMLflow(unittest.TestCase):
         ml.save(
             skeys=skeys,
             dkeys=dkeys,
-            artifact=model,
+            primary_artifact=model,
+            secondary_artifact=Pipeline([return_scaler()]),
         )
-        ml.load = mock.Mock(return_value=(VanillaAE(10), None))
-        model, metadata = ml.load(skeys=skeys, dkeys=dkeys)
-        self.assertEqual(type(model), VanillaAE)
+        ml.load = mock.Mock(
+            return_value={
+                "primary_artifact": VanillaAE(10),
+                "secondary_artifact": Pipeline([return_scaler()]),
+                "metadata": None,
+                "model_properties": mock_get_model_version(),
+            }
+        )
+        data = ml.load(skeys=skeys, dkeys=dkeys)
+        self.assertEqual(type(data["primary_artifact"]), VanillaAE)
+        self.assertEqual(type(data["secondary_artifact"]), Pipeline)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
@@ -265,17 +292,17 @@ class TestMLflow(unittest.TestCase):
         ml.save(
             skeys=skeys,
             dkeys=dkeys,
-            artifact=model,
+            primary_artifact=model,
         )
         ml.load = mock.Mock(
             return_value={
-                "artifact": model_sklearn(),
+                "primary_artifact": model_sklearn(),
                 "metadata": None,
                 "model_properties": mock_get_model_version(),
             }
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
-        self.assertEqual(type(data["artifact"]), RandomForestRegressor)
+        self.assertEqual(type(data["primary_artifact"]), RandomForestRegressor)
         self.assertEqual(data["metadata"], None)
 
     @patch("mlflow.pytorch.log_model", mock_log_model)
@@ -291,17 +318,17 @@ class TestMLflow(unittest.TestCase):
         ml.save(
             skeys=skeys,
             dkeys=dkeys,
-            artifact=model,
+            primary_artifact=model,
         )
         ml.load = mock.Mock(
             return_value={
-                "artifact": VanillaAE(10),
+                "primary_artifact": VanillaAE(10),
                 "metadata": None,
                 "model_properties": mock_get_model_version(),
             }
         )
         data = ml.load(skeys=skeys, dkeys=dkeys, version="1", latest=False)
-        self.assertEqual(type(data["artifact"]), VanillaAE)
+        self.assertEqual(type(data["primary_artifact"]), VanillaAE)
         self.assertEqual(data["metadata"], None)
 
     @patch("mlflow.pyfunc.log_model", mock_log_model)
@@ -346,7 +373,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistrar(TRACKING_URI)
         skeys = ["model_", "nnet"]
         dkeys = ["error1"]
-        ml.save(skeys=skeys, dkeys=dkeys, artifact=model, **model.state_dict())
+        ml.save(skeys=skeys, dkeys=dkeys, primary_artifact=model, **model.state_dict())
         ml.delete(skeys=skeys, dkeys=dkeys, version="1")
         with self.assertLogs(level="ERROR") as log:
             ml.load(skeys=skeys, dkeys=dkeys)
@@ -368,7 +395,7 @@ class TestMLflow(unittest.TestCase):
 
         ml = MLflowRegistrar(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
-            ml.save(skeys=fake_skeys, dkeys=fake_dkeys, artifact=self.model)
+            ml.save(skeys=fake_skeys, dkeys=fake_dkeys, primary_artifact=self.model)
             self.assertTrue(log.output)
 
 
