@@ -205,8 +205,8 @@ class MLflowRegistrar(ArtifactManager):
 
     def transition_stage(self, model_name: str) -> Optional[ModelVersion]:
         """
-        Changes stage information for the given model. Sets new model to "Production". The old production model is set
-        to "Staging" and the rest model versions are set to "Archived".
+        Changes stage information for the given model. Sets new model to "Production". The old production
+        model is set to "Staging" and the rest model versions are set to "Archived".
 
         Args:
             model_name: model name for which we are updating the stage information.
