@@ -1,9 +1,5 @@
 import math
-import unittest
 from collections import OrderedDict
-from contextlib import contextmanager
-from unittest import mock
-from unittest.mock import patch, Mock
 
 import mlflow
 import torch
@@ -11,7 +7,6 @@ from mlflow.entities import RunData, RunInfo, Run
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models.model import ModelInfo
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from torch import tensor
 
