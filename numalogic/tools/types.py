@@ -1,9 +1,8 @@
-from typing import TypeVar, Union, Dict, Sequence
+from typing import TypeVar, Union, Dict
 
 from mlflow.entities.model_registry import ModelVersion
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
-
 from torch import nn
 
 Artifact = TypeVar("Artifact", bound=Union[nn.Module, BaseEstimator, TransformerMixin, Pipeline])
