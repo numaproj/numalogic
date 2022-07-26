@@ -191,7 +191,7 @@ def return_empty_rundata():
             run_uuid="a7c0b376530b40d7b23e6ce2081c899c",
             start_time=1658788772612,
             status="RUNNING",
-            user_id="kbatra",
+            user_id="lol",
         ),
         run_data=RunData(metrics={}, tags={}, params={}),
     )
@@ -208,7 +208,7 @@ def return_sklearn_rundata():
             run_uuid="a7c0b376530b40d7b23e6ce2081c899c",
             start_time=1658788772612,
             status="RUNNING",
-            user_id="kbatra",
+            user_id="lol",
         ),
         run_data=RunData(
             metrics={},
@@ -244,7 +244,7 @@ def return_pytorch_rundata():
             run_uuid="a7c0b376530b40d7b23e6ce2081c899c",
             start_time=1658788772612,
             status="RUNNING",
-            user_id="kbatra",
+            user_id="lol",
         ),
         run_data=RunData(
             metrics={},

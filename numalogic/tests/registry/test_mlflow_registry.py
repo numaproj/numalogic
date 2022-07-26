@@ -8,7 +8,7 @@ from sklearn.pipeline import make_pipeline, Pipeline
 
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import MLflowRegistrar
-from numalogic.tests.registry.mlflow_registry_test_utility import (
+from numalogic.tests.registry._mlflow_utils import (
     model_sklearn,
     create_model,
     mock_log_model_pytorch,
