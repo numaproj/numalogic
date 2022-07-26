@@ -215,7 +215,7 @@ def return_sklearn_rundata():
             tags={},
             params=[
                 mlflow.entities.Param(
-                    "secondary_artifact",
+                    "secondary_artifacts",
                     "gASVRQIAAAAAAACMEHNrbGVhcm4ucGlwZWxpbmWUjAhQaXBlbGluZZSTlCmBlH2UKIwFc3RlcHOU\n"
                     "XZSMDnN0YW5kYXJkc2NhbGVylIwbc2tsZWFybi5wcmVwcm9jZXNzaW5nLl9kYXRhlIwOU3RhbmRh\n"
                     "cmRTY2FsZXKUk5QpgZR9lCiMCXdpdGhfbWVhbpSIjAh3aXRoX3N0ZJSIjARjb3B5lIiMDm5fZmVh\n"
@@ -691,18 +691,18 @@ def return_pytorch_rundata():
                 ),
                 mlflow.entities.Param("model_key", "sandbox:lolsadsd::sad:lolsadasdsda"),
                 mlflow.entities.Param(
-                    "secondary_artifact",
-                    "gASVRQIAAAAAAACMEHNrbGVhcm4ucGlwZWxpbmWUjAhQaXBlbGluZZSTlCmBlH2UKIwFc3RlcHOU\n"
-                    "XZSMDnN0YW5kYXJkc2NhbGVylIwbc2tsZWFybi5wcmVwcm9jZXNzaW5nLl9kYXRhlIwOU3RhbmRh\n"
-                    "cmRTY2FsZXKUk5QpgZR9lCiMCXdpdGhfbWVhbpSIjAh3aXRoX3N0ZJSIjARjb3B5lIiMDm5fZmVh\n"
-                    "dHVyZXNfaW5flEsCjA9uX3NhbXBsZXNfc2Vlbl+UjBVudW1weS5jb3JlLm11bHRpYXJyYXmUjAZz\n"
-                    "Y2FsYXKUk5SMBW51bXB5lIwFZHR5cGWUk5SMAmk4lImIh5RSlChLA4wBPJROTk5K/////0r/////\n"
-                    "SwB0lGJDCAQAAAAAAAAAlIaUUpSMBW1lYW5flGgSjAxfcmVjb25zdHJ1Y3SUk5RoFYwHbmRhcnJh\n"
-                    "eZSTlEsAhZRDAWKUh5RSlChLAUsChZRoF4wCZjiUiYiHlFKUKEsDaBtOTk5K/////0r/////SwB0\n"
-                    "lGKJQxAAAAAAAADgPwAAAAAAAOA/lHSUYowEdmFyX5RoImgkSwCFlGgmh5RSlChLAUsChZRoLIlD\n"
-                    "EAAAAAAAANA/AAAAAAAA0D+UdJRijAZzY2FsZV+UaCJoJEsAhZRoJoeUUpQoSwFLAoWUaCyJQxAA\n"
-                    "AAAAAADgPwAAAAAAAOA/lHSUYowQX3NrbGVhcm5fdmVyc2lvbpSMBTEuMS4xlHVihpRhjAZtZW1v\n"
-                    "cnmUTowHdmVyYm9zZZSJaD5oP3ViLg==\n",
+                    "secondary_artifacts",
+                    "gASVUQIAAAAAAAB9lIwGc2NhbGVylIwQc2tsZWFybi5waXBlbGluZZSMCFBpcGVsaW5llJOUKYGU\n"
+                    "fZQojAVzdGVwc5RdlIwOc3RhbmRhcmRzY2FsZXKUjBtza2xlYXJuLnByZXByb2Nlc3NpbmcuX2Rh\n"
+                    "dGGUjA5TdGFuZGFyZFNjYWxlcpSTlCmBlH2UKIwJd2l0aF9tZWFulIiMCHdpdGhfc3RklIiMBGNv\n"
+                    "cHmUiIwObl9mZWF0dXJlc19pbl+USwKMD25fc2FtcGxlc19zZWVuX5SMFW51bXB5LmNvcmUubXVs\n"
+                    "dGlhcnJheZSMBnNjYWxhcpSTlIwFbnVtcHmUjAVkdHlwZZSTlIwCaTiUiYiHlFKUKEsDjAE8lE5O\n"
+                    "Tkr/////Sv////9LAHSUYkMIBAAAAAAAAACUhpRSlIwFbWVhbl+UaBSMDF9yZWNvbnN0cnVjdJST\n"
+                    "lGgXjAduZGFycmF5lJOUSwCFlEMBYpSHlFKUKEsBSwKFlGgZjAJmOJSJiIeUUpQoSwNoHU5OTkr/\n"
+                    "////Sv////9LAHSUYolDEAAAAAAAAOA/AAAAAAAA4D+UdJRijAR2YXJflGgkaCZLAIWUaCiHlFKU\n"
+                    "KEsBSwKFlGguiUMQAAAAAAAA0D8AAAAAAADQP5R0lGKMBnNjYWxlX5RoJGgmSwCFlGgoh5RSlChL\n"
+                    "AUsChZRoLolDEAAAAAAAAOA/AAAAAAAA4D+UdJRijBBfc2tsZWFybl92ZXJzaW9ulIwFMS4xLjGU\n"
+                    "dWKGlGGMBm1lbW9yeZROjAd2ZXJib3NllIloQGhBdWJzLg==\n",
                 ),
             ],
         ),

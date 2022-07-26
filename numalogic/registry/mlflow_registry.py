@@ -2,7 +2,7 @@ import codecs
 import logging
 import pickle
 from enum import Enum
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Mapping, Union, Dict
 
 import mlflow.pyfunc
 import mlflow.pytorch
@@ -48,7 +48,7 @@ class MLflowRegistrar(ArtifactManager):
     @staticmethod
     def __as_dict(
         primary_artifact: Optional[Artifact],
-        secondary_artifact: Optional[Sequence[Artifact]],
+        secondary_artifacts: Union[Sequence[Artifact], Dict[str, Artifact], None],
         metadata: Optional[dict],
         model_properties: Optional[ModelVersion],
     ) -> ArtifactDict:
@@ -56,7 +56,7 @@ class MLflowRegistrar(ArtifactManager):
         Returns a dictionary comprising information on model, metadata, model_properties
         Args:
             primary_artifact: main artifact to be saved
-            secondary_artifact: secondary artifact to be saved
+            secondary_artifacts: secondary artifact to be saved
             metadata: ML models metadata
             model_properties: ML model properties (information like time "model_created",
                                     "model_updated_time", "model_name", "tags" , "current stage",
@@ -66,7 +66,7 @@ class MLflowRegistrar(ArtifactManager):
         """
         return {
             "primary_artifact": primary_artifact,
-            "secondary_artifact": secondary_artifact,
+            "secondary_artifacts": secondary_artifacts,
             "metadata": metadata,
             "model_properties": model_properties,
         }
@@ -113,7 +113,7 @@ class MLflowRegistrar(ArtifactManager):
             version: explicit artifact version
 
         Returns:
-             A dictionary primary_artifact, secondary_artifact, metadata and model_properties
+             A dictionary primary_artifact, secondary_artifacts, metadata and model_properties
         """
 
         model_key = self.construct_key(skeys, dkeys)
@@ -128,20 +128,20 @@ class MLflowRegistrar(ArtifactManager):
                 return {}
             _LOGGER.info("Successfully loaded model %s from Mlflow", model_key)
             metadata = None
-            secondary_artifact = None
+            secondary_artifacts = None
             model_properties = self.client.get_latest_versions(model_key, stages=["Production"])[-1]
             if model_properties.run_id:
                 run_id = model_properties.run_id
                 run_data = self.client.get_run(run_id).data.to_dictionary()
                 if run_data["params"]:
                     data = run_data["params"]
-                    secondary_artifact = pickle.loads(
-                        codecs.decode(data["secondary_artifact"].encode(), "base64")
+                    secondary_artifacts = pickle.loads(
+                        codecs.decode(data["secondary_artifacts"].encode(), "base64")
                     )
-                    _LOGGER.info("Successfully loaded secondary_artifact from Mlflow")
+                    _LOGGER.info("Successfully loaded secondary_artifacts from Mlflow")
                     metadata = pickle.loads(codecs.decode(data["metadata"].encode(), "base64"))
                     _LOGGER.info("Successfully loaded model metadata from Mlflow")
-            return self.__as_dict(model, secondary_artifact, metadata, model_properties)
+            return self.__as_dict(model, secondary_artifacts, metadata, model_properties)
         except Exception as ex:
             _LOGGER.exception("Error when loading a model with key: %s: %r", model_key, ex)
             return {}
@@ -151,7 +151,7 @@ class MLflowRegistrar(ArtifactManager):
         skeys: Sequence[str],
         dkeys: Sequence[str],
         primary_artifact: Artifact,
-        secondary_artifact: Artifact = None,
+        secondary_artifacts: Union[Sequence[Artifact], Dict[str, Artifact], None] = None,
         **metadata,
     ) -> Optional[ModelVersion]:
         """
@@ -160,7 +160,7 @@ class MLflowRegistrar(ArtifactManager):
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             primary_artifact: primary artifact to be saved
-            secondary_artifact: secondary artifact to be saved
+            secondary_artifacts: secondary artifact to be saved
             metadata: additional metadata surrounding the artifact that needs to be saved
 
         Returns:
@@ -169,11 +169,11 @@ class MLflowRegistrar(ArtifactManager):
         model_key = self.construct_key(skeys, dkeys)
         try:
             self.handler.log_model(primary_artifact, "model", registered_model_name=model_key)
-            if secondary_artifact:
-                secondary_artifact_data = codecs.encode(
-                    pickle.dumps(secondary_artifact), "base64"
+            if secondary_artifacts:
+                secondary_artifacts_data = codecs.encode(
+                    pickle.dumps(secondary_artifacts), "base64"
                 ).decode()
-                mlflow.log_param(key="secondary_artifact", value=secondary_artifact_data)
+                mlflow.log_param(key="secondary_artifacts", value=secondary_artifacts_data)
             if metadata:
                 data = codecs.encode(pickle.dumps(metadata), "base64").decode()
                 mlflow.log_param(key="metadata", value=data)

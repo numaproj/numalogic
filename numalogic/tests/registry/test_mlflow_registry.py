@@ -57,7 +57,7 @@ class TestMLflow(unittest.TestCase):
             skeys=skeys,
             dkeys=dkeys,
             primary_artifact=model,
-            secondary_artifact=make_pipeline(return_scaler),
+            secondary_artifacts=[make_pipeline(return_scaler)],
             artifact_state_dict=model.state_dict(),
         )
         mock_status = "READY"
@@ -94,11 +94,11 @@ class TestMLflow(unittest.TestCase):
             skeys=skeys,
             dkeys=dkeys,
             primary_artifact=model,
-            secondary_artifact=make_pipeline(return_scaler()),
+            secondary_artifacts={"scaler": make_pipeline(return_scaler())},
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertEqual(type(data["primary_artifact"]), VanillaAE)
-        self.assertEqual(type(data["secondary_artifact"]), Pipeline)
+        self.assertEqual(type(data["secondary_artifacts"]["scaler"]), Pipeline)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
