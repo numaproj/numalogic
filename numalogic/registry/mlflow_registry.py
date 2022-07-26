@@ -2,7 +2,7 @@ import codecs
 import logging
 import pickle
 from enum import Enum
-from typing import Optional, Sequence, Mapping, Union, Dict
+from typing import Optional, Sequence, Union, Dict
 
 import mlflow.pyfunc
 import mlflow.pytorch
