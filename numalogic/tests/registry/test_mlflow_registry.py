@@ -5,8 +5,10 @@ from unittest.mock import patch, Mock
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.preprocessing import StandardScaler, Normalizer
 
 from numalogic.models.autoencoder.variants import VanillaAE
+from numalogic.preprocess.transformer import LogTransformer
 from numalogic.registry import MLflowRegistrar
 from numalogic.tests.registry._mlflow_utils import (
     model_sklearn,
@@ -17,8 +19,9 @@ from numalogic.tests.registry._mlflow_utils import (
     mock_transition_stage,
     return_scaler,
     mock_log_model_sklearn,
-    return_pytorch_rundata,
+    return_pytorch_rundata_dict,
     return_empty_rundata,
+    return_pytorch_rundata_list,
 )
 
 TRACKING_URI = "http://0.0.0.0:5009"
@@ -84,8 +87,8 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
-    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata()))
-    def test_select_model_when_pytorch_model_exist(self):
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
+    def test_select_model_when_pytorch_model_exist1(self):
         model = self.model
         ml = MLflowRegistrar(TRACKING_URI, artifact_type="pytorch")
         skeys = ["model_", "nnet"]
@@ -94,11 +97,41 @@ class TestMLflow(unittest.TestCase):
             skeys=skeys,
             dkeys=dkeys,
             primary_artifact=model,
-            secondary_artifacts={"scaler": make_pipeline(return_scaler())},
+            secondary_artifacts={
+                "preproc": make_pipeline(StandardScaler(), LogTransformer()),
+                "postproc": make_pipeline(Normalizer()),
+            },
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertEqual(type(data["primary_artifact"]), VanillaAE)
-        self.assertEqual(type(data["secondary_artifacts"]["scaler"]), Pipeline)
+        print(data["secondary_artifacts"])
+        self.assertEqual(type(data["secondary_artifacts"]["preproc"]), Pipeline)
+        self.assertEqual(type(data["secondary_artifacts"]["postproc"]), Pipeline)
+
+    @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
+    @patch("mlflow.log_param", OrderedDict({"a": 1}))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_list()))
+    def test_select_model_when_pytorch_model_exist2(self):
+        model = self.model
+        ml = MLflowRegistrar(TRACKING_URI, artifact_type="pytorch")
+        skeys = ["model_", "nnet"]
+        dkeys = ["error1"]
+        ml.save(
+            skeys=skeys,
+            dkeys=dkeys,
+            primary_artifact=model,
+            secondary_artifacts=[
+                make_pipeline(StandardScaler(), LogTransformer()),
+                make_pipeline(Normalizer()),
+            ],
+        )
+        data = ml.load(skeys=skeys, dkeys=dkeys)
+        self.assertEqual(type(data["primary_artifact"]), VanillaAE)
+        print(data["secondary_artifacts"])
+        self.assertEqual(type(data["secondary_artifacts"]), list)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
