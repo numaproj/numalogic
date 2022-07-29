@@ -103,10 +103,10 @@ class TestMLflow(unittest.TestCase):
             },
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
-        self.assertEqual(type(data["primary_artifact"]), VanillaAE)
+        self.assertIsInstance(data["primary_artifact"], VanillaAE)
         print(data["secondary_artifacts"])
-        self.assertEqual(type(data["secondary_artifacts"]["preproc"]), Pipeline)
-        self.assertEqual(type(data["secondary_artifacts"]["postproc"]), Pipeline)
+        self.assertIsInstance(data["secondary_artifacts"]["preproc"], Pipeline)
+        self.assertIsInstance(data["secondary_artifacts"]["postproc"], Pipeline)
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
     @patch("mlflow.log_param", OrderedDict({"a": 1}))
@@ -129,9 +129,9 @@ class TestMLflow(unittest.TestCase):
             ],
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
-        self.assertEqual(type(data["primary_artifact"]), VanillaAE)
+        self.assertIsInstance(data["primary_artifact"], VanillaAE)
         print(data["secondary_artifacts"])
-        self.assertEqual(type(data["secondary_artifacts"]), list)
+        self.assertIsInstance(data["secondary_artifacts"], list)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
@@ -149,7 +149,7 @@ class TestMLflow(unittest.TestCase):
             primary_artifact=model,
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
-        self.assertEqual(type(data["primary_artifact"]), RandomForestRegressor)
+        self.assertIsInstance(data["primary_artifact"], RandomForestRegressor)
         self.assertEqual(data["metadata"], None)
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
@@ -169,7 +169,7 @@ class TestMLflow(unittest.TestCase):
             primary_artifact=model,
         )
         data = ml.load(skeys=skeys, dkeys=dkeys, version="1", latest=False)
-        self.assertEqual(type(data["primary_artifact"]), VanillaAE)
+        self.assertIsInstance(data["primary_artifact"], VanillaAE)
         self.assertEqual(data["metadata"], None)
 
     @patch("mlflow.pyfunc.log_model", mock_log_model_pytorch)

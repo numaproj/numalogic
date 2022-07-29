@@ -1,15 +1,15 @@
-from typing import TypeVar, Union, Dict
+from typing import Union, Dict, NewType, TypeVar, Sequence, Optional
 
 from mlflow.entities.model_registry import ModelVersion
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline
 from torch import nn
 
-Artifact = TypeVar("Artifact", bound=Union[nn.Module, BaseEstimator, TransformerMixin, Pipeline])
-ArtifactDict = TypeVar(
+Artifact = NewType("Artifact", Union[nn.Module, BaseEstimator, TransformerMixin, Pipeline])
+ArtifactDict = NewType(
     "ArtifactDict",
-    bound=Dict[
-        str, Union[Union[nn.Module, BaseEstimator, TransformerMixin, Pipeline], Dict, ModelVersion]
+    Optional[
+        Dict[str, Union[Sequence[Artifact], Dict[str, Artifact], Artifact, None, ModelVersion]]
     ],
 )
 AutoencoderModel = TypeVar("AutoencoderModel", bound="TorchAE")

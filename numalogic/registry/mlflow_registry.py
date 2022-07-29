@@ -34,9 +34,24 @@ class MLflowRegistrar(ArtifactManager):
 
     Args:
         tracking_uri: the tracking server uri to use for mlflow
-        artifact_type: the type of artifact to use
+        artifact_type: the type of primary artifact to use
                               supported values include:
                               {"pytorch", "sklearn", "tensorflow", "pyfunc"}
+
+    Examples
+    --------
+    >>> from numalogic.models.autoencoder.variants.vanilla import VanillaAE
+    >>> from numalogic.preprocess.transformer import LogTransformer
+    >>> from numalogic.registry.mlflow_registry import MLflowRegistrar
+    >>> from sklearn.preprocessing import StandardScaler, Normalizer
+    >>> from sklearn.pipeline import make_pipeline
+    >>>
+    >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
+    >>> scaler = StandardScaler.fit(data)
+    >>> ml = MLflowRegistrar(tracking_uri= "localhost:8080", artifact_type="pytorch")
+    >>> ml.save(skeys=["model"],dkeys=["AE"],primary_artifact=VanillaAE(10),
+    secondary_artifacts={"preproc": make_pipeline(scaler)})
+    >>> data = ml.load(skeys=["model"],dkeys=["AE"])
     """
 
     def __init__(self, tracking_uri: str, artifact_type: str = "pytorch"):
@@ -113,7 +128,8 @@ class MLflowRegistrar(ArtifactManager):
             version: explicit artifact version
 
         Returns:
-             A dictionary primary_artifact, secondary_artifacts, metadata and model_properties
+             A dictionary containing primary_artifact, secondary_artifacts, metadata and
+             model_properties
         """
 
         model_key = self.construct_key(skeys, dkeys)
