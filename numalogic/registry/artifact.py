@@ -19,36 +19,42 @@ class ArtifactManager(metaclass=ABCMeta):
         self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
     ) -> Artifact:
         """
-        Loads the desired artifact from registry/model-backend and returns it.
-
-        :param skeys: static key fields as list/tuple of strings
-        :param dkeys: dynamic key fields as list/tuple of strings
-        :param latest: boolean field to determine if latest version is desired or not
-        :param version: explicit artifact version
+        Loads the desired artifact from mlflow registry and returns it.
+        Args:
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
+            latest: boolean field to determine if latest version is desired or not
+            version: explicit artifact version
         """
         pass
 
     @abstractmethod
     def save(
-        self, skeys: Sequence[str], dkeys: Sequence[str], artifact: Artifact, **metadata
+        self,
+        skeys: Sequence[str],
+        dkeys: Sequence[str],
+        primary_artifact: Artifact,
+        secondary_artifact: Artifact = None,
+        **metadata
     ) -> Any:
-        """
-        Saves the artifact into registry/model-backend and updates version if supported.
-
-        :param skeys: static key fields as list/tuple of strings
-        :param dkeys: dynamic key fields as list/tuple of strings
-        :param artifact: artifact to be saved
-        :param metadata: additional metadata surrounding the artifact that needs to be saved
+        r"""
+        Saves the artifact into mlflow registry and updates version.
+        Args:
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
+            primary_artifact: primary artifact to be saved
+            secondary_artifact: secondary artifact to be saved
+            metadata: additional metadata surrounding the artifact that needs to be saved
         """
         pass
 
     @abstractmethod
     def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
         """
-        Deletes the artifact with a specified version from registry/model-backend.
-
-        :param skeys: static key fields as list/tuple of strings
-        :param dkeys: dynamic key fields as list/tuple of strings
-        :param version: explicit artifact version
+        Deletes the artifact with a specified version from mlflow registry.
+        Args:
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
+            version: explicit artifact version
         """
         pass
