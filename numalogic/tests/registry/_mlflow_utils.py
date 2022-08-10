@@ -286,7 +286,8 @@ def mock_list_of_model_version(*_, **__):
     return PagedList(items=model_list, token=None)
 
 
-mock_list_of_model_version()
+def mock_list_of_model_version2(*_, **__):
+    return PagedList(items=mock_get_model_version(), token=None)
 
 
 def return_scaler():
