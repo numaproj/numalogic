@@ -51,11 +51,12 @@ class ArtifactManager(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def delete(self, model_key: str, version: str) -> None:
+    def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
         """
         Deletes the artifact with a specified version from mlflow registry.
         Args:
-            model_key: model name used to store model in DB
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
             version: explicit artifact version
         """
         pass

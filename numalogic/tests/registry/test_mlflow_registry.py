@@ -205,7 +205,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistrar(TRACKING_URI, artifact_type="tensorflow")
         key = MLflowRegistrar.construct_key(fake_skeys, fake_dkeys)
         with self.assertLogs(level="ERROR") as log:
-            ml.transition_stage(model_name=key, models_to_retain=5)
+            ml.transition_stage(fake_skeys, fake_dkeys, models_to_retain=5)
             self.assertTrue(log.output)
 
     def test_no_implementation(self):
@@ -225,7 +225,7 @@ class TestMLflow(unittest.TestCase):
         skeys = ["model_", "nnet"]
         dkeys = ["error1"]
         ml.save(skeys=skeys, dkeys=dkeys, primary_artifact=model, **model.state_dict())
-        ml.delete(model_key=ml.construct_key(skeys=skeys, dkeys=dkeys), version="1")
+        ml.delete(skeys=skeys, dkeys=dkeys, version="1")
         with self.assertLogs(level="ERROR") as log:
             ml.load(skeys=skeys, dkeys=dkeys)
             self.assertTrue(log.output)
@@ -236,7 +236,7 @@ class TestMLflow(unittest.TestCase):
         fake_dkeys = ["error"]
         ml = MLflowRegistrar(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
-            ml.delete(model_key=ml.construct_key(skeys=fake_skeys, dkeys=fake_dkeys), version="1")
+            ml.delete(skeys=fake_skeys, dkeys=fake_dkeys, version="1")
             self.assertTrue(log.output)
 
     @patch("mlflow.pytorch.log_model", Mock(side_effect=RuntimeError))

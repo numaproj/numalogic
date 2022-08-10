@@ -197,7 +197,7 @@ class MLflowRegistrar(ArtifactManager):
                 mlflow.log_param(key="metadata", value=data)
                 mlflow.log_param(key="model_key", value=model_key)
             model_version = self.transition_stage(
-                model_name=model_key, models_to_retain=models_to_retain
+                skeys=skeys, dkeys=dkeys, models_to_retain=models_to_retain
             )
             _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
             return model_version
@@ -205,34 +205,40 @@ class MLflowRegistrar(ArtifactManager):
             _LOGGER.exception("Error when saving a model with key: %s: %r", model_key, ex)
             return None
 
-    def delete(self, model_key: str, version: str) -> None:
+    def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
         """
         Deletes the artifact with a specified version from mlflow registry.
         Args:
-            model_key: model name used to store model in DB
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
             version: explicit artifact version
 
         Returns:
              None
         """
         try:
+            model_key = self.construct_key(skeys, dkeys)
             self.client.delete_model_version(name=model_key, version=version)
             _LOGGER.info("Successfully deleted model %s", model_key)
         except Exception as ex:
             _LOGGER.exception("Error when deleting a model with key: %s: %r", model_key, ex)
 
-    def transition_stage(self, model_name: str, models_to_retain: int) -> Optional[ModelVersion]:
+    def transition_stage(
+        self, skeys: Sequence[str], dkeys: Sequence[str], models_to_retain: int
+    ) -> Optional[ModelVersion]:
         """
         Changes stage information for the given model. Sets new model to "Production". The old
         production model is set to "Staging" and the rest model versions are set to "Archived".
 
         Args:
-            model_name: model name for which we are updating the stage information.
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
             models_to_retain: number of models to retain in the DB
         Returns:
              mlflow ModelVersion instance
         """
         try:
+            model_name = self.construct_key(skeys, dkeys)
             version = int(self.get_version(model_name=model_name))
             latest_model_data = self.client.transition_model_version_stage(
                 name=model_name,
@@ -260,7 +266,7 @@ class MLflowRegistrar(ArtifactManager):
                 if len(list_model_versions) == models_to_retain:
                     break
                 model_version_delete = list_model_versions.pop(0).version
-                self.delete(model_key=model_name, version=model_version_delete)
+                self.delete(skeys=skeys, dkeys=dkeys, version=model_version_delete)
             _LOGGER.info("Successfully transitioned model to Production stage")
             return latest_model_data
         except Exception as ex:
