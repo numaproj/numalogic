@@ -6,6 +6,7 @@ import torch
 from mlflow.entities import RunData, RunInfo, Run
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models.model import ModelInfo
+from mlflow.store.entities import PagedList
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from torch import tensor
@@ -149,7 +150,7 @@ def mock_transition_stage(*_, **__):
         status_message="",
         tags={},
         user_id="",
-        version="5",
+        version="2",
     )
 
 
@@ -171,6 +172,14 @@ def mock_get_model_version(*_, **__):
             version="5",
         )
     ]
+
+
+def mock_list_of_model_version(*_, **__):
+
+    return PagedList(items=mock_get_model_version(), token=None)
+
+
+mock_list_of_model_version()
 
 
 def return_scaler():

@@ -35,6 +35,7 @@ class ArtifactManager(metaclass=ABCMeta):
         dkeys: Sequence[str],
         primary_artifact: Artifact,
         secondary_artifact: Artifact = None,
+        models_to_retain: int = 5,
         **metadata
     ) -> Any:
         r"""
@@ -44,17 +45,17 @@ class ArtifactManager(metaclass=ABCMeta):
             dkeys: dynamic key fields as list/tuple of strings
             primary_artifact: primary artifact to be saved
             secondary_artifact: secondary artifact to be saved
+            models_to_retain: number of models to retain in the DB
             metadata: additional metadata surrounding the artifact that needs to be saved
         """
         pass
 
     @abstractmethod
-    def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
+    def delete(self, model_key: str, version: str) -> None:
         """
         Deletes the artifact with a specified version from mlflow registry.
         Args:
-            skeys: static key fields as list/tuple of strings
-            dkeys: dynamic key fields as list/tuple of strings
+            model_key: model name used to store model in DB
             version: explicit artifact version
         """
         pass
