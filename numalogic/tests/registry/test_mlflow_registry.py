@@ -203,7 +203,6 @@ class TestMLflow(unittest.TestCase):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
         ml = MLflowRegistrar(TRACKING_URI, artifact_type="tensorflow")
-        key = MLflowRegistrar.construct_key(fake_skeys, fake_dkeys)
         with self.assertLogs(level="ERROR") as log:
             ml.transition_stage(fake_skeys, fake_dkeys, models_to_retain=5)
             self.assertTrue(log.output)
