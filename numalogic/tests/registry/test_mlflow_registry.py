@@ -107,7 +107,6 @@ class TestMLflow(unittest.TestCase):
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertIsInstance(data["primary_artifact"], VanillaAE)
-        print(data["secondary_artifacts"])
         self.assertIsInstance(data["secondary_artifacts"]["preproc"], Pipeline)
         self.assertIsInstance(data["secondary_artifacts"]["postproc"], Pipeline)
 
@@ -133,7 +132,6 @@ class TestMLflow(unittest.TestCase):
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertIsInstance(data["primary_artifact"], VanillaAE)
-        print(data["secondary_artifacts"])
         self.assertIsInstance(data["secondary_artifacts"], list)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)

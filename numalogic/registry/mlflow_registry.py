@@ -253,7 +253,9 @@ class MLflowRegistrar(ArtifactManager):
                 )
 
             # only keep "models_to_retain" number of models.
-            list_model_versions = self.client.search_model_versions("name='{}'".format(model_name))
+            list_model_versions = list(
+                self.client.search_model_versions("name='{}'".format(model_name))
+            )
             while len(list_model_versions) >= models_to_retain:
                 if len(list_model_versions) == models_to_retain:
                     break
