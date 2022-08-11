@@ -37,6 +37,7 @@ class MLflowRegistrar(ArtifactManager):
         artifact_type: the type of primary artifact to use
                               supported values include:
                               {"pytorch", "sklearn", "tensorflow", "pyfunc"}
+        models_to_retain: number of models to retain in the DB (default = 5)
 
     Examples
     --------
@@ -54,11 +55,14 @@ class MLflowRegistrar(ArtifactManager):
     >>> data = ml.load(skeys=["model"],dkeys=["AE"])
     """
 
-    def __init__(self, tracking_uri: str, artifact_type: str = "pytorch"):
+    def __init__(
+        self, tracking_uri: str, artifact_type: str = "pytorch", models_to_retain: int = 5
+    ):
         super().__init__(tracking_uri)
         mlflow.set_tracking_uri(tracking_uri)
         self.client = MlflowClient()
         self.handler = self.mlflow_handler(artifact_type)
+        self.models_to_retain = models_to_retain
 
     @staticmethod
     def __as_dict(
@@ -168,7 +172,6 @@ class MLflowRegistrar(ArtifactManager):
         dkeys: Sequence[str],
         primary_artifact: Artifact,
         secondary_artifacts: Union[Sequence[Artifact], Dict[str, Artifact], None] = None,
-        models_to_retain: int = 5,
         **metadata,
     ) -> Optional[ModelVersion]:
         """
@@ -178,7 +181,6 @@ class MLflowRegistrar(ArtifactManager):
             dkeys: dynamic key fields as list/tuple of strings
             primary_artifact: primary artifact to be saved
             secondary_artifacts: secondary artifact to be saved
-            models_to_retain: number of models to retain in the DB
             metadata: additional metadata surrounding the artifact that needs to be saved
 
         Returns:
@@ -196,9 +198,7 @@ class MLflowRegistrar(ArtifactManager):
                 data = codecs.encode(pickle.dumps(metadata), "base64").decode()
                 mlflow.log_param(key="metadata", value=data)
                 mlflow.log_param(key="model_key", value=model_key)
-            model_version = self.transition_stage(
-                skeys=skeys, dkeys=dkeys, models_to_retain=models_to_retain
-            )
+            model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
             _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
             return model_version
         except Exception as ex:
@@ -224,7 +224,7 @@ class MLflowRegistrar(ArtifactManager):
             _LOGGER.exception("Error when deleting a model with key: %s: %r", model_key, ex)
 
     def transition_stage(
-        self, skeys: Sequence[str], dkeys: Sequence[str], models_to_retain: int
+        self, skeys: Sequence[str], dkeys: Sequence[str]
     ) -> Optional[ModelVersion]:
         """
         Changes stage information for the given model. Sets new model to "Production". The old
@@ -233,7 +233,6 @@ class MLflowRegistrar(ArtifactManager):
         Args:
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            models_to_retain: number of models to retain in the DB
         Returns:
              mlflow ModelVersion instance
         """
@@ -262,11 +261,9 @@ class MLflowRegistrar(ArtifactManager):
             list_model_versions = list(
                 self.client.search_model_versions("name='{}'".format(model_name))
             )
-            while len(list_model_versions) >= models_to_retain:
-                if len(list_model_versions) == models_to_retain:
-                    break
-                model_version_delete = list_model_versions.pop(0).version
-                self.delete(skeys=skeys, dkeys=dkeys, version=model_version_delete)
+            models_to_delete = list_model_versions[: -self.models_to_retain]
+            for stale_model in models_to_delete:
+                self.delete(skeys=skeys, dkeys=dkeys, version=stale_model.version)
             _LOGGER.info("Successfully transitioned model to Production stage")
             return latest_model_data
         except Exception as ex:

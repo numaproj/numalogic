@@ -35,7 +35,6 @@ class ArtifactManager(metaclass=ABCMeta):
         dkeys: Sequence[str],
         primary_artifact: Artifact,
         secondary_artifact: Artifact = None,
-        models_to_retain: int = 5,
         **metadata
     ) -> Any:
         r"""
@@ -45,7 +44,6 @@ class ArtifactManager(metaclass=ABCMeta):
             dkeys: dynamic key fields as list/tuple of strings
             primary_artifact: primary artifact to be saved
             secondary_artifact: secondary artifact to be saved
-            models_to_retain: number of models to retain in the DB
             metadata: additional metadata surrounding the artifact that needs to be saved
         """
         pass

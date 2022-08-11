@@ -55,7 +55,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version)
     def test_insert_model(self):
         model = self.model
-        ml = MLflowRegistrar(TRACKING_URI, artifact_type="pytorch")
+        ml = MLflowRegistrar(TRACKING_URI, artifact_type="pytorch", models_to_retain=2)
         skeys = ["model_", "nnet"]
         dkeys = ["error1"]
 
