@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-from typing import Sequence, Any
+from typing import Sequence, Any, Union, Dict
 
 from numalogic.tools.types import Artifact
 
@@ -34,7 +34,7 @@ class ArtifactManager(metaclass=ABCMeta):
         skeys: Sequence[str],
         dkeys: Sequence[str],
         primary_artifact: Artifact,
-        secondary_artifact: Artifact = None,
+        secondary_artifacts: Union[Sequence[Artifact], Dict[str, Artifact], None] = None,
         **metadata
     ) -> Any:
         r"""
@@ -43,7 +43,7 @@ class ArtifactManager(metaclass=ABCMeta):
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             primary_artifact: primary artifact to be saved
-            secondary_artifact: secondary artifact to be saved
+            secondary_artifacts: secondary artifact to be saved
             metadata: additional metadata surrounding the artifact that needs to be saved
         """
         pass

@@ -216,8 +216,8 @@ class MLflowRegistrar(ArtifactManager):
         Returns:
              None
         """
+        model_key = self.construct_key(skeys, dkeys)
         try:
-            model_key = self.construct_key(skeys, dkeys)
             self.client.delete_model_version(name=model_key, version=version)
             _LOGGER.info("Successfully deleted model %s", model_key)
         except Exception as ex:
@@ -236,8 +236,8 @@ class MLflowRegistrar(ArtifactManager):
         Returns:
              mlflow ModelVersion instance
         """
+        model_name = self.construct_key(skeys, dkeys)
         try:
-            model_name = self.construct_key(skeys, dkeys)
             version = int(self.get_version(model_name=model_name))
             latest_model_data = self.client.transition_model_version_stage(
                 name=model_name,
@@ -258,9 +258,7 @@ class MLflowRegistrar(ArtifactManager):
                 )
 
             # only keep "models_to_retain" number of models.
-            list_model_versions = list(
-                self.client.search_model_versions("name='{}'".format(model_name))
-            )
+            list_model_versions = list(self.client.search_model_versions(f"name='{model_name}'"))
             models_to_delete = list_model_versions[: -self.models_to_retain]
             for stale_model in models_to_delete:
                 self.delete(skeys=skeys, dkeys=dkeys, version=stale_model.version)

@@ -204,7 +204,7 @@ class TestMLflow(unittest.TestCase):
         fake_dkeys = ["error"]
         ml = MLflowRegistrar(TRACKING_URI, artifact_type="tensorflow")
         with self.assertLogs(level="ERROR") as log:
-            ml.transition_stage(fake_skeys, fake_dkeys, models_to_retain=5)
+            ml.transition_stage(fake_skeys, fake_dkeys)
             self.assertTrue(log.output)
 
     def test_no_implementation(self):
