@@ -6,6 +6,7 @@ import torch
 from mlflow.entities import RunData, RunInfo, Run
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models.model import ModelInfo
+from mlflow.store.entities import PagedList
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from torch import tensor
@@ -149,7 +150,7 @@ def mock_transition_stage(*_, **__):
         status_message="",
         tags={},
         user_id="",
-        version="5",
+        version="2",
     )
 
 
@@ -171,6 +172,77 @@ def mock_get_model_version(*_, **__):
             version="5",
         )
     ]
+
+
+def mock_list_of_model_version(*_, **__):
+    model_list = [
+        ModelVersion(
+            creation_timestamp=1653402941169,
+            current_stage="Production",
+            description="",
+            last_updated_timestamp=1653402941191,
+            name="testtest:error",
+            run_id="6e85c26e6e8b49fdb493807d5a527a2c",
+            run_link="",
+            source="mlflow-artifacts:/0/6e85c26e6e8b49fdb493807d5a527a2c/artifacts/model",
+            status="READY",
+            status_message="",
+            tags={},
+            user_id="",
+            version="8",
+        ),
+        ModelVersion(
+            creation_timestamp=1653402941169,
+            current_stage="Production",
+            description="",
+            last_updated_timestamp=1653402941191,
+            name="testtest:error",
+            run_id="6e85c26e6e8b49fdb493807d5a527a2c",
+            run_link="",
+            source="mlflow-artifacts:/0/6e85c26e6e8b49fdb493807d5a527a2c/artifacts/model",
+            status="READY",
+            status_message="",
+            tags={},
+            user_id="",
+            version="9",
+        ),
+        ModelVersion(
+            creation_timestamp=1653402941169,
+            current_stage="Production",
+            description="",
+            last_updated_timestamp=1653402941191,
+            name="testtest:error",
+            run_id="6e85c26e6e8b49fdb493807d5a527a2c",
+            run_link="",
+            source="mlflow-artifacts:/0/6e85c26e6e8b49fdb493807d5a527a2c/artifacts/model",
+            status="READY",
+            status_message="",
+            tags={},
+            user_id="",
+            version="10",
+        ),
+        ModelVersion(
+            creation_timestamp=1653402941169,
+            current_stage="Production",
+            description="",
+            last_updated_timestamp=1653402941191,
+            name="testtest:error",
+            run_id="6e85c26e6e8b49fdb493807d5a527a2c",
+            run_link="",
+            source="mlflow-artifacts:/0/6e85c26e6e8b49fdb493807d5a527a2c/artifacts/model",
+            status="READY",
+            status_message="",
+            tags={},
+            user_id="",
+            version="11",
+        ),
+    ]
+
+    return PagedList(items=model_list, token=None)
+
+
+def mock_list_of_model_version2(*_, **__):
+    return PagedList(items=mock_get_model_version(), token=None)
 
 
 def return_scaler():
