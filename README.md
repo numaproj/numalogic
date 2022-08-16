@@ -1,7 +1,7 @@
 # numalogic
 
 [![Build](https://github.com/numaproj/numalogic/actions/workflows/ci.yml/badge.svg)](https://github.com/numaproj/numalogic/actions/workflows/ci.yml)
-[![Coverage](https://github.com/numaproj/numalogic/actions/workflows/coverage.yml/badge.svg?branch=main)](https://github.com/numaproj/numalogic/actions/workflows/coverage.yml)
+[![codecov](https://codecov.io/gh/numaproj/numalogic/branch/main/graph/badge.svg?token=020HF97A32)](https://codecov.io/gh/numaproj/numalogic)
 [![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 

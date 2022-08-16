@@ -1,0 +1,39 @@
+name: PyPi Publish
+
+on:
+  push:
+    tags:
+      - v*
+jobs:
+  pypi_publish:
+    if: github.repository == 'numaproj/numalogic'
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.9" ]
+
+    name: Publish to PyPi
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: pipx install poetry
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      - name: Install dependencies
+        run: |
+          poetry env use ${{ matrix.python-version }}
+          poetry install --no-root
+
+      - name: Build dist
+        run: poetry build
+
+      - name: Publish
+        run: poetry publish -u __token__ -p {{ secrets.PYPI_PASSWORD }}
