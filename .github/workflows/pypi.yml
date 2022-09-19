@@ -36,4 +36,4 @@ jobs:
         run: poetry build
 
       - name: Publish
-        run: poetry publish -u __token__ -p {{ secrets.PYPI_PASSWORD }}
+        run: poetry publish -u __token__ -p ${{ secrets.PYPI_PASSWORD }}
