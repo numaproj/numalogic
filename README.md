@@ -5,7 +5,7 @@
 [![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 
 
-Numa logic is a collection of operational ML models and tools.
+Numalogic is a collection of operational ML models and tools.
 
 
 ## Installation
