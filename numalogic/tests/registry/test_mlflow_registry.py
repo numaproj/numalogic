@@ -64,8 +64,7 @@ class TestMLflow(unittest.TestCase):
             dkeys=dkeys,
             primary_artifact=model,
             secondary_artifacts=[make_pipeline(return_scaler)],
-            artifact_state_dict=model.state_dict(),
-            models_to_retain=2,
+            **model.state_dict(),
         )
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)

@@ -155,12 +155,14 @@ class MLflowRegistrar(ArtifactManager):
                 run_data = self.client.get_run(run_id).data.to_dictionary()
                 if run_data["params"]:
                     data = run_data["params"]
-                    secondary_artifacts = pickle.loads(
-                        codecs.decode(data["secondary_artifacts"].encode(), "base64")
-                    )
-                    _LOGGER.info("Successfully loaded secondary_artifacts from Mlflow")
-                    metadata = pickle.loads(codecs.decode(data["metadata"].encode(), "base64"))
-                    _LOGGER.info("Successfully loaded model metadata from Mlflow")
+                    if "secondary_artifacts" in data:
+                        secondary_artifacts = pickle.loads(
+                            codecs.decode(data["secondary_artifacts"].encode(), "base64")
+                        )
+                        _LOGGER.info("Successfully loaded secondary_artifacts from Mlflow")
+                    if "metadata" in data:
+                        metadata = pickle.loads(codecs.decode(data["metadata"].encode(), "base64"))
+                        _LOGGER.info("Successfully loaded model metadata from Mlflow")
             return self.__as_dict(model, secondary_artifacts, metadata, model_properties)
         except Exception as ex:
             _LOGGER.exception("Error when loading a model with key: %s: %r", model_key, ex)
