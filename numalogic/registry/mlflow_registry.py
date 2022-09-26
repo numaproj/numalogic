@@ -49,9 +49,9 @@ class MLflowRegistrar(ArtifactManager):
     >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler.fit(data)
-    >>> ml = MLflowRegistrar(tracking_uri= "localhost:8080", artifact_type="pytorch")
-    >>> ml.save(skeys=["model"],dkeys=["AE"],primary_artifact=VanillaAE(10),
-    secondary_artifacts={"preproc": make_pipeline(scaler)})
+    >>> ml = MLflowRegistrar(tracking_uri="http://0.0.0.0:8080", artifact_type="pytorch")
+    >>> ml.save(skeys=["model"],dkeys=["AE"], primary_artifact=VanillaAE(10),
+    >>> ... secondary_artifacts={"preproc": make_pipeline(scaler)})
     >>> data = ml.load(skeys=["model"],dkeys=["AE"])
     """
 
@@ -75,7 +75,7 @@ class MLflowRegistrar(ArtifactManager):
         Returns a dictionary comprising information on model, metadata, model_properties
         Args:
             primary_artifact: main artifact to be saved
-            secondary_artifacts: secondary artifact to be saved
+            secondary_artifacts: secondary artifacts to be saved
             metadata: ML models metadata
             model_properties: ML model properties (information like time "model_created",
                                     "model_updated_time", "model_name", "tags" , "current stage",
