@@ -131,7 +131,8 @@ model.fit(X_train)
 Now that the model is trained, let's save it. Numalogic has built in support 
 for Mlflow's tracking and logging system.
 
-Let's first start the [mlflow server on localhost](https://www.mlflow.org/docs/latest/tracking.html#scenario-1-mlflow-on-localhost):
+Let's first start the [mlflow server on localhost](https://www.mlflow.org/docs/latest/tracking.html#scenario-1-mlflow-on-localhost),
+which has already been installed via `poetry` dependency:
 ```shell
 mlflow server \
         --default-artifact-root {directory}/mlruns --serve-artifacts \
