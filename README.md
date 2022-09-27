@@ -130,6 +130,13 @@ model.fit(X_train)
 ### Model saving
 Now that the model is trained, let's save it. Numalogic has built in support 
 for Mlflow's tracking and logging system.
+
+Let's first start the [mlflow server on localhost](https://www.mlflow.org/docs/latest/tracking.html#scenario-1-mlflow-on-localhost):
+```shell
+mlflow server \
+        --default-artifact-root {directory}/mlruns --serve-artifacts \
+        --backend-store-uri sqlite:///mlflow.db --host 0.0.0.0 --port 5000
+```
 ```python
 from numalogic.registry import MLflowRegistrar
 
@@ -137,7 +144,7 @@ from numalogic.registry import MLflowRegistrar
 static_keys = ["synthetic", "3ts"]
 dynamic_keys = ["minmaxscaler", "sparseconv1d"]
 
-registry = MLflowRegistrar(tracking_uri="http://0.0.0.0:8080", artifact_type="pytorch")
+registry = MLflowRegistrar(tracking_uri="http://0.0.0.0:5000", artifact_type="pytorch")
 registry.save(
    skeys=static_keys, 
    dkeys=dynamic_keys, 
