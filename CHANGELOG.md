@@ -1,10 +1,11 @@
 # Changelog
 
 ## v0.2.5 (2022-09-28)
-
+ * [199cb80](https://github.com/numaproj/numalogic/commit/199cb8089a75d26313723249999fc6dda91e9642)  docs: example usage in readme (#27)
 
 ### Contributors
 
+ * Avik Basu
 
 ## v0.2.4 (2022-09-21)
 
