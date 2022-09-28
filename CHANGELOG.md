@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.2.5 (2022-09-28)
+
+
+### Contributors
+
+
 ## v0.2.4 (2022-09-21)
 
  * [f0b0d3c](https://github.com/numaproj/numalogic/commit/f0b0d3c98bb12722dd9b3c5d064e3d0330008d07) fix: loading secondary artifacts (#16)
