@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/numaproj/numalogic/branch/main/graph/badge.svg?token=020HF97A32)](https://codecov.io/gh/numaproj/numalogic)
 [![black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![slack](https://img.shields.io/badge/slack-numaproj-brightgreen.svg?logo=slack)](https://join.slack.com/t/numaproj/shared_invite/zt-19svuv47m-YKHhsQ~~KK9mBv1E7pNzfg)
 [![Release Version](https://img.shields.io/github/v/release/numaproj/numalogic?label=numalogic)](https://github.com/numaproj/numalogic/releases/latest)
 
 
@@ -188,4 +189,4 @@ We would love contributions in the numalogic project in one of the following (bu
 - Making it easier to add user's custom models
 - Support for additional model registry frameworks
 
-For contribution guildelines please refer [here]([CONTRIBUTING](https://github.com/numaproj/numaproj/blob/main/CONTRIBUTING.md)).
+For contribution guildelines please refer [here](https://github.com/numaproj/numaproj/blob/main/CONTRIBUTING.md).
