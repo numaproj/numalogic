@@ -26,7 +26,7 @@ theme:
 extra:
   analytics:
     provider: google
-    property: G-M7DD40E8RV
+    property: G-9D7BFBLNPB
 markdown_extensions:
   - codehilite
   - admonition
