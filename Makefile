@@ -1,3 +1,12 @@
+# Check Python
+PYTHON:=$(shell command -v python 2> /dev/null)
+ifndef PYTHON
+PYTHON:=$(shell command -v python3 2> /dev/null)
+endif
+ifndef PYTHON
+$(error "Python is not available, please install.")
+endif
+
 clean:
 	@rm -rf build dist .eggs *.egg-info
 	@rm -rf .benchmarks .coverage coverage.xml htmlcov report.xml .tox
@@ -27,3 +36,16 @@ publish:
 
 requirements:
 	poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+/usr/local/bin/mkdocs:
+	$(PYTHON) -m pip install mkdocs==1.3.0 mkdocs_material==8.3.9
+
+# docs
+
+.PHONY: docs
+docs: /usr/local/bin/mkdocs
+	mkdocs build
+
+.PHONY: docs-serve
+docs-serve: docs
+	mkdocs serve
