@@ -37,6 +37,9 @@ class AutoencoderPipeline(OutlierMixin):
                                 supported values include {"absolute", "squared"}
         threshold_min: the minimum threshold to use;
                               can be used when the threshold calculated is too low
+        resume_training: parameter to decide if resume training is needed. Also,
+                              based on this parameter the optimizer state dict
+                              is stored in registry.
 
     >>> # Example usage
     >>> from numalogic.models.autoencoder.variants import VanillaAE
