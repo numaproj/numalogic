@@ -242,6 +242,12 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         model_pl2.load(model=model_pl1.model, **model_pl1.model_properties)
         self.assertEqual(model_pl2.err_stats["std"], model_pl1.err_stats["std"])
 
+    def test_load_model_with_resume_train(self):
+        X = np.random.randn(10, 1)
+        model = VanillaAE(10)
+        model_pl1 = AutoencoderPipeline(model, 10, resume_training=False)
+        self.assertEqual(model_pl1.model_properties["optimizer_state_dict"]["state"], {})
+
     def test_exception_in_load_model(self):
         X = np.random.randn(10, 1)
         model = VanillaAE(10)
