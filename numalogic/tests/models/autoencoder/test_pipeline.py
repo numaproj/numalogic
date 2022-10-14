@@ -90,7 +90,9 @@ class TestAutoEncoderPipeline(unittest.TestCase):
 
     def test_score_01(self):
         model = VanillaAE(SEQ_LEN, n_features=self.X_train.shape[1])
-        trainer = AutoencoderPipeline(model, SEQ_LEN, num_epochs=5, optimizer="adagrad")
+        trainer = AutoencoderPipeline(
+            model, SEQ_LEN, num_epochs=5, optimizer="adagrad", resume_training=True
+        )
         trainer.fit(self.X_train)
         pred = trainer.predict(self.X_val)
 
