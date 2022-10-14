@@ -80,11 +80,13 @@ class AutoencoderPipeline(OutlierMixin):
 
     @property
     def model_properties(self):
-        return {
-            "optimizer_state_dict": self.optimizer.state_dict(),
+        model_properties_dict = {
             "thresholds": self._thresholds,
             "err_stats": self._stats,
         }
+        if self.resume_training:
+            model_properties_dict["optimizer_state_dict"] = self.optimizer.state_dict()
+        return model_properties_dict
 
     @property
     def model(self) -> AutoencoderModel:

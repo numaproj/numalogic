@@ -233,7 +233,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         )
         self.assertIsInstance(trainer.model, TransformerAE)
 
-    def test_load_model(self):
+    def test_load_model_without_resume_training(self):
         X = np.random.randn(10, 1)
         model = VanillaAE(10)
         model_pl1 = AutoencoderPipeline(model, 10)
@@ -241,12 +241,37 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         model_pl2 = AutoencoderPipeline(model, 10)
         model_pl2.load(model=model_pl1.model, **model_pl1.model_properties)
         self.assertEqual(model_pl2.err_stats["std"], model_pl1.err_stats["std"])
+        self.assertEqual(list(model_pl1.model_properties.keys()), ["thresholds", "err_stats"])
+
+    def test_load_model_resume_training(self):
+        X = np.random.randn(10, 1)
+        model = VanillaAE(10)
+        model_pl1 = AutoencoderPipeline(model, 10, resume_training=True)
+        model_pl1.fit(X)
+        model_pl2 = AutoencoderPipeline(model, 10, resume_training=True)
+        model_pl2.load(model=model_pl1.model, **model_pl1.model_properties)
+        self.assertEqual(model_pl2.err_stats["std"], model_pl1.err_stats["std"])
+        self.assertEqual(
+            list(model_pl1.model_properties.keys()),
+            ["thresholds", "err_stats", "optimizer_state_dict"],
+        )
 
     def test_load_model_with_resume_train(self):
         X = np.random.randn(10, 1)
         model = VanillaAE(10)
+        model_pl1 = AutoencoderPipeline(model, 10, resume_training=True)
+        model_pl1.fit(X)
+        self.assertEqual(
+            list(model_pl1.model_properties.keys()),
+            ["thresholds", "err_stats", "optimizer_state_dict"],
+        )
+
+    def test_load_model_without_resume_train(self):
+        X = np.random.randn(10, 1)
+        model = VanillaAE(10)
         model_pl1 = AutoencoderPipeline(model, 10, resume_training=False)
-        self.assertEqual(model_pl1.model_properties["optimizer_state_dict"]["state"], {})
+        model_pl1.fit(X)
+        self.assertEqual(list(model_pl1.model_properties.keys()), ["thresholds", "err_stats"])
 
     def test_exception_in_load_model(self):
         X = np.random.randn(10, 1)
