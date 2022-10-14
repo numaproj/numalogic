@@ -59,6 +59,7 @@ class AutoencoderPipeline(OutlierMixin):
         std_tolerance: float = 3.0,
         reconerr_method: str = "absolute",
         threshold_min: float = None,
+        resume_training: bool = False,
     ):
         if not (model and seq_len):
             raise ValueError("No model and seq len provided!")
@@ -75,6 +76,7 @@ class AutoencoderPipeline(OutlierMixin):
         self.stdtol = std_tolerance
         self.reconerr_func = self.get_reconerr_func(reconerr_method)
         self.threshold_min = threshold_min
+        self.resume_training = resume_training
 
     @property
     def model_properties(self):
@@ -252,7 +254,8 @@ class AutoencoderPipeline(OutlierMixin):
             return buf
 
     def __load_metadata(self, **metadata) -> None:
-        self.optimizer.load_state_dict(metadata["optimizer_state_dict"])
+        if self.resume_training:
+            self.optimizer.load_state_dict(metadata["optimizer_state_dict"])
         self._thresholds = metadata["thresholds"]
         self._stats = metadata["err_stats"]
 
