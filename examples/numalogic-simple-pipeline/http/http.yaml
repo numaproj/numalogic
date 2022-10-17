@@ -1,0 +1,16 @@
+apiVersion: numaflow.numaproj.io/v1alpha1
+kind: Pipeline
+metadata:
+  name: http-pipeline
+spec:
+  vertices:
+  - name: input
+    source:
+      http:
+        service: true
+  - name: out3
+    sink:
+      log: {}
+  edges:
+    - from: input
+      to: out3

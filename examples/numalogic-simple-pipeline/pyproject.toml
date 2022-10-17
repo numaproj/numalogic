@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "pythonproject3"
+version = "0.1.0"
+description = ""
+authors = ["kbatra <kushal_batra@intuit.com>"]
+
+[tool.poetry.dependencies]
+python = "~3.9"
+dataclasses-json = "^0.5.6"
+cachetools = "^5.0.0"
+pynumaflow = "^0.2.4"
+numalogic = "^0.2.5"
+mlflow = "^1.29.0"
+
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
