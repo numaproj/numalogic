@@ -21,15 +21,11 @@ def preprocess(key: str, datum: Datum) -> Messages:
     # Load data and convert bytes to MessagePacket
     msg_packet = _load_msg_packet(datum.value)
 
-    ml_pipeline = SimpleMLPipeline(
-        metric=msg_packet.metric_name, preprocess_steps=[PRE_PROC]
-    )
+    ml_pipeline = SimpleMLPipeline(metric=msg_packet.metric_name, preprocess_steps=[PRE_PROC])
 
     # Clean and preprocess the data
     msg_packet.df = ml_pipeline.clean_data(msg_packet.df)
-    msg_packet.df["Preprocess_value"] = ml_pipeline.preprocess(
-        msg_packet.df["Value"], train=False
-    )
+    msg_packet.df["Preprocess_value"] = ml_pipeline.preprocess(msg_packet.df["Value"], train=False)
 
     # Update the message status
     msg_packet.status = Status.PRE_PROCESSED.value

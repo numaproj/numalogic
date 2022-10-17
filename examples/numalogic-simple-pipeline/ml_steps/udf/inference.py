@@ -19,9 +19,7 @@ def load_model(payload):
     try:
         model_name = os.getenv("MODEL_NAME", DEFAULT_MODEL_NAME)
         ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI)
-        artifact_dict = ml_registry.load(
-            skeys=[payload.metric_name], dkeys=[model_name]
-        )
+        artifact_dict = ml_registry.load(skeys=[payload.metric_name], dkeys=[model_name])
         LOGGER.info("Loaded artifacts for: %s", payload.metric_name)
         return artifact_dict
     except Exception as ex:
@@ -39,9 +37,7 @@ def inference(key: str, datum: Datum):
 
     # Check if model exists
     if artifact_dict:
-        LOGGER.info(
-            "Checking if artifacts for the metrics %s exists", msg_packet.metric_name
-        )
+        LOGGER.info("Checking if artifacts for the metrics %s exists", msg_packet.metric_name)
         ml_pipeline = SimpleMLPipeline(
             metric=msg_packet.metric_name,
             model_plname=DEFAULT_MODEL_NAME,
@@ -51,9 +47,7 @@ def inference(key: str, datum: Datum):
 
         # Load model to the pipeline
         ml_pipeline.load_model(
-            path_or_buf=None,
-            model=artifact_dict["primary_artifact"],
-            **artifact_dict["metadata"]
+            path_or_buf=None, model=artifact_dict["primary_artifact"], **artifact_dict["metadata"]
         )
 
         # Do the inference
@@ -83,7 +77,5 @@ def inference(key: str, datum: Datum):
         payload = _convert_packet_payload(msg_packet)
 
         # Convert MessagePacket back to bytes and forward it to train vertex
-        messages.append(
-            Message.to_vtx(key="train", value=json.dumps(payload).encode("utf-8"))
-        )
+        messages.append(Message.to_vtx(key="train", value=json.dumps(payload).encode("utf-8")))
     return messages

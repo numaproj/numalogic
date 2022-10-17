@@ -32,9 +32,7 @@ class SimpleMLPipeline:
         else:
             self.model_ppl = None
 
-        self.preprocess_pipeline = (
-            make_pipeline(*preprocess_steps) if preprocess_steps else None
-        )
+        self.preprocess_pipeline = make_pipeline(*preprocess_steps) if preprocess_steps else None
         self.postprocess_funcs = postprocess_funcs or []
 
     @property
@@ -85,10 +83,7 @@ class SimpleMLPipeline:
         return y
 
     def load_model(
-        self,
-        path_or_buf: Union[str, BinaryIO] = None,
-        model: nn.Module = None,
-        **metadata
+        self, path_or_buf: Union[str, BinaryIO] = None, model: nn.Module = None, **metadata
     ) -> None:
         if not self.model_ppl:
             raise ValueError(

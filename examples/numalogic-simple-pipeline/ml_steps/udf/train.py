@@ -46,13 +46,15 @@ def train(key: str, datum: Datum):
 
     df = pd.DataFrame(data=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])
     LOGGER.info(
-        "Time taken to fetch data: %s", time.time() - start_train,
+        "Time taken to fetch data: %s",
+        time.time() - start_train,
     )
     x_scaled = pipeline.preprocess(df.to_numpy())
     print(df.to_numpy())
     pipeline.train(x_scaled)
     LOGGER.info(
-        "Time taken to train model: %s", time.time() - start_train,
+        "Time taken to train model: %s",
+        time.time() - start_train,
     )
     ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="pytorch")
     mlflow.start_run()

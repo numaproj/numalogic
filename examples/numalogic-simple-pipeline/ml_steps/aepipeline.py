@@ -106,9 +106,7 @@ class AutoencoderPipeline(OutlierMixin):
             return np.square
         if method == "absolute":
             return np.abs
-        raise ValueError(
-            f"Unrecognized reconstruction error method specified: {method}"
-        )
+        raise ValueError(f"Unrecognized reconstruction error method specified: {method}")
 
     @staticmethod
     def init_criterion(loss_fn: str):
@@ -129,9 +127,7 @@ class AutoencoderPipeline(OutlierMixin):
             return optim.RMSprop(self._model.parameters(), lr=lr)
         raise NotImplementedError(f"Unsupported optimizer value provided: {optimizer}")
 
-    def fit(
-        self, X: NDArray[float], y=None, log_freq: int = 5
-    ) -> "AutoencoderPipeline":
+    def fit(self, X: NDArray[float], y=None, log_freq: int = 5) -> "AutoencoderPipeline":
         r"""
         Fit function to train autoencoder model
 
@@ -339,9 +335,7 @@ class SparseAEPipeline(AutoencoderPipeline):
         rho = torch.full(rho_hat.size(), self.rho)
         kl_loss = nn.KLDivLoss(reduction="sum")
         _dim = 0 if rho_hat.dim() == 1 else 1
-        return kl_loss(
-            torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim)
-        )
+        return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
 
     def calculate_regularized_loss(self, activation: Tensor) -> Tensor:
         if self.reg_method == "kl_div":
@@ -378,9 +372,7 @@ class SparseAEPipeline(AutoencoderPipeline):
                 self.optimizer.step()
 
             if epoch % log_freq == 0:
-                _LOGGER.info(
-                    f"epoch : {epoch}, penalty: {penalty} loss_mean : {loss.item():.7f}"
-                )
+                _LOGGER.info(f"epoch : {epoch}, penalty: {penalty} loss_mean : {loss.item():.7f}")
 
         self._thresholds, _mean, _std = self.find_thresholds(X)
         self._stats["mean"] = _mean

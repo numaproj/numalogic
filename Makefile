@@ -17,6 +17,7 @@ clean:
 
 format: clean
 	poetry run black numalogic/
+	poetry run black examples/
 
 lint: format
 	poetry run flake8 .
