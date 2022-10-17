@@ -248,7 +248,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         )
         self.assertIsInstance(trainer.model, TransformerAE)
 
-    def test_load_model_without_resume_train(self):
+    def test_load_model_without_resume_train_01(self):
         X = np.random.randn(10, 1)
         model = VanillaAE(10)
         model_pl1 = AutoencoderPipeline(model, 10)
@@ -258,7 +258,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         self.assertEqual(model_pl2.err_stats["std"], model_pl1.err_stats["std"])
         self.assertEqual(list(model_pl1.model_properties.keys()), ["thresholds", "err_stats"])
 
-    def test_load_model_resume_train(self):
+    def test_load_model_resume_train_01(self):
         X = np.random.randn(10, 1)
         model = VanillaAE(10)
         model_pl1 = AutoencoderPipeline(model, 10, resume_train=True)
@@ -271,7 +271,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
             ["thresholds", "err_stats", "optimizer_state_dict"],
         )
 
-    def test_load_model_with_resume_train(self):
+    def test_load_model_with_resume_train_02(self):
         X = np.random.randn(10, 1)
         model = VanillaAE(10)
         model_pl1 = AutoencoderPipeline(model, 10, resume_train=True)
@@ -281,7 +281,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
             ["thresholds", "err_stats", "optimizer_state_dict"],
         )
 
-    def test_load_model_without_resume_train(self):
+    def test_load_model_without_resume_train_02(self):
         X = np.random.randn(10, 1)
         model = VanillaAE(10)
         model_pl1 = AutoencoderPipeline(model, 10, resume_train=False)
