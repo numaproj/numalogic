@@ -37,7 +37,7 @@ class AutoencoderPipeline(OutlierMixin):
                                 supported values include {"absolute", "squared"}
         threshold_min: the minimum threshold to use;
                               can be used when the threshold calculated is too low
-        resume_training: parameter to decide if resume training is needed. Also,
+        resume_train: parameter to decide if resume training is needed. Also,
                               based on this parameter the optimizer state dict
                               is stored in registry.
 
@@ -62,7 +62,7 @@ class AutoencoderPipeline(OutlierMixin):
         std_tolerance: float = 3.0,
         reconerr_method: str = "absolute",
         threshold_min: float = None,
-        resume_training: bool = False,
+        resume_train: bool = False,
     ):
         if not (model and seq_len):
             raise ValueError("No model and seq len provided!")
@@ -79,7 +79,7 @@ class AutoencoderPipeline(OutlierMixin):
         self.stdtol = std_tolerance
         self.reconerr_func = self.get_reconerr_func(reconerr_method)
         self.threshold_min = threshold_min
-        self.resume_training = resume_training
+        self.resume_train = resume_train
 
     @property
     def model_properties(self):
@@ -87,7 +87,7 @@ class AutoencoderPipeline(OutlierMixin):
             "thresholds": self._thresholds,
             "err_stats": self._stats,
         }
-        if self.resume_training:
+        if self.resume_train:
             model_properties_dict["optimizer_state_dict"] = self.optimizer.state_dict()
         return model_properties_dict
 
@@ -259,7 +259,7 @@ class AutoencoderPipeline(OutlierMixin):
             return buf
 
     def __load_metadata(self, **metadata) -> None:
-        if self.resume_training:
+        if self.resume_train:
             self.optimizer.load_state_dict(metadata["optimizer_state_dict"])
         self._thresholds = metadata["thresholds"]
         self._stats = metadata["err_stats"]
