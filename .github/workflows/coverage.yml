@@ -30,7 +30,7 @@ jobs:
     - name: Install dependencies
       run: |
         poetry env use ${{ matrix.python-version }}
-        poetry install --no-root
+        poetry install --no-root -E mlflow
 
     - name: Run Coverage
       run: |
