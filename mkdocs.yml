@@ -36,3 +36,5 @@ markdown_extensions:
       permalink: true
 nav:
   - Home: README.md
+  - User Guide:
+      - data-generator.md
