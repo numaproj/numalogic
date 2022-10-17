@@ -110,6 +110,7 @@ def mock_log_model_pytorch(*_, **__):
         signature_dict=None,
         utc_time_created="2022-05-23 22:35:59.557372",
         mlflow_version="1.26.0",
+        signature=None
     )
 
 
@@ -133,6 +134,7 @@ def mock_log_model_sklearn(*_, **__):
         signature_dict=None,
         utc_time_created="2022-05-23 22:35:59.557372",
         mlflow_version="1.26.0",
+        signature=None
     )
 
 
