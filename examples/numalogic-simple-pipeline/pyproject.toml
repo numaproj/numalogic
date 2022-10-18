@@ -10,7 +10,7 @@ dataclasses-json = "^0.5.6"
 cachetools = "^5.0.0"
 pynumaflow = "^0.2.4"
 numalogic = "^0.2.5"
-mlflow = "^1.29.0"
+uuid = "^1.30"
 
 
 [tool.poetry.dev-dependencies]

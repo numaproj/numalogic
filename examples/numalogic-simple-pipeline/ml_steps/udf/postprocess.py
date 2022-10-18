@@ -1,27 +1,29 @@
-import json
 import logging
 
+import numpy as np
 from pynumaflow.function import Messages, Message, Datum
 
-from ml_steps.tools import Status
-from ml_steps.utlity_function import _load_msg_packet, _convert_packet_payload
+from ml_steps.dtypes import Status, Payload
 
 LOGGER = logging.getLogger(__name__)
 
 
+def tanh_norm(scores, scale_factor=10, smooth_factor=10):
+    return scale_factor * np.tanh(scores / smooth_factor)
+
+
 def postprocess(key: str, datum: Datum) -> Messages:
-    # Load data and convert bytes to MessagePacket
-    msg_packet = _load_msg_packet(datum.value)
+    # Load json data
+    payload = Payload.from_json(datum.value.decode("utf-8"))
 
-    # Postprocess on Inferred data column
-    msg_packet.anomaly_score = msg_packet.df["Inferred_value"].mean()
+    # Postprocess step
+    data = np.asarray(payload.data)
+    payload.anomaly_score = tanh_norm(data)
+    payload.status = Status.POST_PROCESSED.value
+    LOGGER.info("%s - PostProcess complete", payload.uuid)
+    LOGGER.info("%s - The anomaly score is: %s", payload.uuid, payload.anomaly_score)
 
-    # Update the message status
-    msg_packet.status = Status.POST_PROCESSED.value
-
-    # Convert MessagePacket back to bytes
-    payload = _convert_packet_payload(msg_packet)
-    LOGGER.info("Postprocess for metrics %s completed.", msg_packet.metric_name)
+    # Convert Payload back to bytes
     messages = Messages()
-    messages.append(Message.to_all(json.dumps(payload).encode("utf-8")))
+    messages.append(Message.to_all(payload.to_json().encode("utf-8")))
     return messages

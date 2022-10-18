@@ -64,8 +64,8 @@ spec:
     udf:
       container:
         env:
-        - name: TRACKING_URI
-          value: "http://mlflow-service.numaflow-system.svc.cluster.local:5000"
+        - name: WIN_SIZE
+          value: "12"
         image: docker.io/library/numalogic-simple-pipeline:v1
         args:
           - python
@@ -94,52 +94,3 @@ spec:
           - postprocess
     - from: postprocess
       to: out
-
-
----
-#mlflow deployment config
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: mlflow-sqlite
-  labels:
-    app: mlflow
-spec:
-  selector:
-    matchLabels:
-      app: mlflow
-  template:
-    metadata:
-      labels:
-        app: mlflow
-    spec:
-      containers:
-        - image: docker.io/library/numalogic-simple-pipeline:v1
-          name: mlflow
-          args:
-          - server
-          - --backend-store-uri
-          - sqlite:///mlflow.db
-          - --artifacts-destination
-          - file://app/.mlruns
-          - --serve-artifacts
-          - --host
-          - "0.0.0.0"
-          - --port
-          - "5000"
-          command:
-            - mlflow
-          ports:
-            - containerPort: 5000
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: mlflow-service
-spec:
-  type: ClusterIP
-  selector:
-    app: mlflow
-  ports:
-    - port: 5000
-      targetPort: 5000

@@ -1,5 +1,4 @@
 FROM python:3.9.12-slim
-RUN pip install mlflow
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
   PYTHONHASHSEED=random \
@@ -20,7 +19,6 @@ RUN apt-get update \
         wget \
         # deps for building python deps
         build-essential
-RUN apt-get install -y git
 # install poetry - respects $POETRY_VERSION & $POETRY_HOME
 RUN curl -sSL https://install.python-poetry.org | python3 -
 
@@ -40,5 +38,3 @@ RUN chmod +x entry.sh
 
 ENTRYPOINT ["/dumb-init", "--"]
 CMD ["/app/entry.sh"]
-
-EXPOSE 5000
