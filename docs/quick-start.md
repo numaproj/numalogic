@@ -22,8 +22,7 @@ poetry install
 
 ## Using Jupyter Notebook:
 
-Start Jupyter Notebook, navigate to examples folder and open the quick start jupiter notebook. You can play with different availble options for each step.
-
+Start Jupyter Notebook, navigate to the examples folder and open the quick start Jupyter notebook. You can play with different available options for each step.
 ```shell
 jupyter Notebook .
 ```
