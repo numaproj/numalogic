@@ -35,8 +35,14 @@ the result further or drop it after a trigger request.
 
 ## Installation
 
+numalogic can be installed using pip.
 ```shell
 pip install numalogic
+```
+
+If using mlflow for model registry, install using:
+```shell
+pip install numalogic[mlflow]
 ```
 
 ### Build locally
@@ -53,13 +59,17 @@ pip install numalogic
     ```
     poetry install
     ```
+   If extra dependencies are needed:
+    ```
+    poetry install --all-extras
+    ```
 4. To run unit tests:
     ```
     make test
     ```
 5. To format code style using black:
     ```
-    make format
+    make lint
     ```
 
 ## Usage
@@ -92,7 +102,7 @@ Now that the model is trained, let's save it. Numalogic has built in support
 for Mlflow's tracking and logging system.
 
 Let's first start the [mlflow server on localhost](https://www.mlflow.org/docs/latest/tracking.html#scenario-1-mlflow-on-localhost),
-which has already been installed via `poetry` dependency:
+which has already been installed optionally via `poetry` dependency:
 ```shell
 mlflow server \
         --default-artifact-root {directory}/mlruns --serve-artifacts \
