@@ -1,7 +1,13 @@
 ## Data Generator
 
-### Generate synthetic data
 Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.  
+
+Using the synthetic data, we can:
+1. Compare and evaluate different ML algorithms, since we have labeled anomalies
+2. Understand different types of anomalies, and our models' performance on each of them
+3. Recreate realtime scenarios
+
+### Generate multivariate timeseries
 
 ```python
 from numalogic.synthetic import SyntheticTSGenerator
@@ -19,23 +25,32 @@ ts_generator = SyntheticTSGenerator(
     cosine_ratio_range=(0.5, 0.9),
     noise_range=(5, 15),
 )
-ts_df = ts_generator.gen_tseries()  # shape: (8000, 3) with column names [s1, s2, s3]
+
+# shape: (8000, 3) with column names [s1, s2, s3]
+ts_df = ts_generator.gen_tseries()  
 
 # Split into test and train
 train_df, test_df = ts_generator.train_test_split(ts_df, test_size=1000)
 ```
 ![Train and Test sets](../images/train_test.png)
 
-### Generate synthetic anomalies
+### Inject anomalies
 
-Now, once we generate the synthetic data like above, we can also add  "contextual" anomalies to the test set, using numalogic's AnomalyGenerator.
-Contextual is one of the different types of anomalies that can be imputed. Others include "point", "collective"
-and "causal".
+Now, once we generate the synthetic data like above, we can inject anomalies into the test data set using `AnomalyGenerator`. 
+
+`AnomalyGenerator` supports the following types of anomalies:
+1. global: Outliers in the global context
+2. contextual: Outliers only in the seasonal context
+3. causal: Outliers caused by a temporal causal effect
+4. collective: Outliers present simultaneously in two or more time series
+
+You can also use `anomaly_ratio` to adjust the ratio of anomalous data points  wrt number of samples.
 
 ```python
 from numalogic.synthetic import AnomalyGenerator
 
-injected_cols = ["s1", "s2"]  # columns to inject anomalies
+# columns to inject anomalies
+injected_cols = ["s1", "s2"]  
 anomaly_generator = AnomalyGenerator(
     train_df, anomaly_type="contextual", anomaly_ratio=0.3
 )
