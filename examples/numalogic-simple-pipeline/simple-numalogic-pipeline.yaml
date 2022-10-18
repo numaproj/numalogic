@@ -42,7 +42,7 @@ spec:
     containerTemplate:
       env:
         - name: NUMAFLOW_DEBUG
-          value: "true" # DO NOT forget the double quotes!!!
+          value: "true"
   - name: postprocess
     udf:
       container:
@@ -52,12 +52,6 @@ spec:
         - starter.py
         - postprocess
   - name: out
-    sink:
-      log: {}
-  - name: out2
-    sink:
-      log: {}
-  - name: out3
     sink:
       log: {}
   - name: train
@@ -73,8 +67,6 @@ spec:
           - train
   edges:
     - from: in
-      to: out2
-    - from: in
       to: input
     - from: input
       to: preprocess
@@ -83,8 +75,6 @@ spec:
       conditions:
         keyIn:
           - train
-    - from: train
-      to: out3
     - from: preprocess
       to: inference
     - from: inference

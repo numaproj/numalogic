@@ -1,8 +1,8 @@
 [tool.poetry]
-name = "pythonproject3"
+name = "Simple Numalogic Pipeline"
 version = "0.1.0"
-description = ""
-authors = ["kbatra <kushal_batra@intuit.com>"]
+description = "Simple Numalogic Pipeline"
+authors = ["s0nicboOm <i.kushalbatra@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"

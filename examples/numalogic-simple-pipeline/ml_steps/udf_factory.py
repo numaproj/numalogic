@@ -1,4 +1,4 @@
-from ml_steps.udf import input, inference, postprocess, preprocess, train
+from ml_steps.udf import inference, postprocess, preprocess, train
 
 
 class HandlerFactory:
@@ -6,9 +6,6 @@ class HandlerFactory:
     def get_handler(cls, step: str):
         if step == "preprocess":
             return preprocess
-
-        if step == "input":
-            return input
 
         if step == "inference":
             return inference

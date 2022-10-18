@@ -37,7 +37,9 @@ def inference(key: str, datum: Datum) -> Messages:
     # If model is not present send it to trainer for training
     except Exception as ex:
         LOGGER.exception(
-            "%s - Model not found. Retraining the model. Error:%r", payload.uuid, ex,
+            "%s - Model not found. Retraining the model. Error:%r",
+            payload.uuid,
+            ex,
         )
         payload.status = Status.TRAIN.value
         # Convert Payload back to bytes and send it to train vertex
