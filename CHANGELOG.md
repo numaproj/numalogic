@@ -1,11 +1,22 @@
 # Changelog
 
-## v0.2.5 (2022-09-28)
- * [199cb80](https://github.com/numaproj/numalogic/commit/199cb8089a75d26313723249999fc6dda91e9642)  docs: example usage in readme (#27)
+## v0.2.6 (2022-10-17)
+
+ * [5703d1b](https://github.com/numaproj/numalogic/commit/5703d1b75d642242dc5c521a2e85e9cbb2527923) fix: update readme with optional mlflow dependency
+ * [702f3b4](https://github.com/numaproj/numalogic/commit/702f3b45bea0890de2db6a2b61a44dd0a675d3be) fix: install extras in workflows
+ * [8969e80](https://github.com/numaproj/numalogic/commit/8969e80e1831e0b6823a650f400d954de2e76c22) chore!: make mlflow as an optional dependency
+ * [9cc97cb](https://github.com/numaproj/numalogic/commit/9cc97cbb7161fa61108288c0381a10b802114b4d) feat: resume training parameter (#40)
 
 ### Contributors
 
  * Avik Basu
+ * Kushal Batra
+
+## v0.2.5 (2022-09-28)
+
+
+### Contributors
+
 
 ## v0.2.4 (2022-09-21)
 
