@@ -138,8 +138,8 @@ test_recon = model.predict(X_test)
 # A number less than 1 indicates an inlier, and greater than 1 indicates an outlier.
 test_anomaly_score = model.score(X_test)
 ```
-![Reconstruction](images/recon.png)
-![Anomaly Score](images/anomaly_score.png)
+![Reconstruction](docs/assets/recon.png)
+![Anomaly Score](docs/assets/anomaly_score.png)
 
 ## Contributing
 We would love contributions in the numalogic project in one of the following (but not limited to) areas:
@@ -149,3 +149,9 @@ We would love contributions in the numalogic project in one of the following (bu
 - Support for additional model registry frameworks
 
 For contribution guildelines please refer [here](https://github.com/numaproj/numaproj/blob/main/CONTRIBUTING.md).
+
+
+## Resources
+- [QUICK_START](docs/quick-start.md)
+- [EXAMPLES](examples)
+- [CONTRIBUTING](https://github.com/numaproj/numaproj/blob/main/CONTRIBUTING.md)

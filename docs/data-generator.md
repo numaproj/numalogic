@@ -32,7 +32,7 @@ ts_df = ts_generator.gen_tseries()
 # Split into test and train
 train_df, test_df = ts_generator.train_test_split(ts_df, test_size=1000)
 ```
-![Train and Test sets](../images/train_test.png)
+![Train and Test sets](./assets/train_test.png)
 
 ### Inject anomalies
 
@@ -59,4 +59,4 @@ outlier_test_df = anomaly_generator.inject_anomalies(
 )
 ```
 
-![Outliers](../images/outliers.png)
+![Outliers](./assets/outliers.png)
