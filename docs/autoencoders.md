@@ -10,7 +10,7 @@ Numalogic provides two types of pipelines for Autoencoders.
 
 #### AutoencoderPipeline
 
-Here we are using `VanillAE`, a Vanilla Autoencoder model comprising only fully connected layers.
+Here we are using `VanillAE`, a Vanilla Autoencoder model.
 
 ```python 
 from numalogic.models.autoencoder.variants import Conv1dAE
@@ -24,9 +24,9 @@ model.fit(X_train)
 
 #### SparseAEPipeline
 
-`SparseAEPipeline` can be used when the training data is sparse. 
+SparseAEPipeline can be used when the training data is sparse. 
 
-Here we are using `Conv1dAE`, a one dimensional Convolutional Autoencoder with multichannel support.
+Here we are using `Conv1dAE`, a one dimensional Convolutional Autoencoder.
 
 ```python 
 from numalogic.models.autoencoder.variants import Conv1dAE
@@ -44,6 +44,8 @@ Numalogic supports the following variants of Autoencoders
 
 #### VanillaAE
 
+Vanilla Autoencoder model comprising only fully connected layers.
+
 ```python
 from numalogic.models.autoencoder.variants import VanillaAE
 
@@ -51,6 +53,8 @@ model = VanillaAE(seq_len=12, n_features=2)
 ```   
 
 #### Conv1dAE
+
+Conv1dAE is a one dimensional Convolutional Autoencoder with multichannel support.
    
 ```python
 from numalogic.models.autoencoder.variants import Conv1dAE
@@ -59,6 +63,8 @@ model=Conv1dAE(in_channels=3, enc_channels=8)
 ```
 
 #### LSTMAE
+
+An LSTM (Long Short-Term Memory) Autoencoder is an implementation of an autoencoder for sequence data using an Encoder-Decoder LSTM architecture.
 
 ```python
 from numalogic.models.autoencoder.variants import LSTMAE

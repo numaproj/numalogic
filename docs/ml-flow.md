@@ -17,9 +17,9 @@ mlflow server \
 
 Once the mlflow server has been started, you can navigate to http://127.0.0.1:5000/ to explore mlflow UI.
 
-Numalogic provides `MLflowRegistrar`, to save and load models to/from MLflow.
-
 ### Model saving
+
+Numalogic provides `MLflowRegistrar`, to save and load models to/from MLflow.
 
 Here, `tracking_uri` is the uri where mlflow server is running. The `static_keys` and `dynamic_keys` are used to form a unique key for the model.
 
