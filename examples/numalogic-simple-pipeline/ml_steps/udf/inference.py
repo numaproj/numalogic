@@ -11,7 +11,6 @@ from ml_steps.utility import Payload, load_model
 LOGGER = logging.getLogger(__name__)
 DEFAULT_WIN_SIZE = 12
 WIN_SIZE = int(os.getenv("WIN_SIZE", DEFAULT_WIN_SIZE))
-TRACKING_URI = "http://mlflow-service.numaflow-system.svc.cluster.local:5000"
 
 
 def inference(key: str, datum: Datum) -> Messages:
@@ -35,9 +34,7 @@ def inference(key: str, datum: Datum) -> Messages:
         LOGGER.info("%s - Inference complete", payload.uuid)
 
         # Convert Payload back to bytes and send it to postprocess vertex
-        messages.append(
-            Message.to_vtx(key="postprocess", value=payload.to_json().encode("utf-8"))
-        )
+        messages.append(Message.to_vtx(key="postprocess", value=payload.to_json().encode("utf-8")))
 
     # If model error, send it to trainer for training
     except Exception as ex:
@@ -48,8 +45,6 @@ def inference(key: str, datum: Datum) -> Messages:
         )
 
         # Convert Payload back to bytes and send it to train vertex
-        messages.append(
-            Message.to_vtx(key="train", value=payload.to_json().encode("utf-8"))
-        )
+        messages.append(Message.to_vtx(key="train", value=payload.to_json().encode("utf-8")))
 
     return messages
