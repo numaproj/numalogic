@@ -1,14 +1,14 @@
-# Autoencoders:
+# Autoencoders
 
 An Autoencoder is a type of Artificial Neural Network, used to learn efficient data representations (encoding) of unlabeled data. 
 
 It mainly consist of 2 components: an encoder and a decoder. The encoder compresses the input into a lower dimensional code, the decoder then reconstructs the input only using this code.
 
-### Autoencoder Pipelines:
+### Autoencoder Pipelines
 
 Numalogic provides two types of pipelines for Autoencoders.
 
-#### AutoencoderPipeline:
+#### AutoencoderPipeline
 
 Here we are using `VanillAE`, a Vanilla Autoencoder model comprising only fully connected layers.
 
@@ -22,7 +22,7 @@ model = AutoencoderPipeline(
 model.fit(X_train)
 ```
 
-#### SparseAEPipeline:
+#### SparseAEPipeline
 
 `SparseAEPipeline` can be used when the training data is sparse. 
 
@@ -38,7 +38,7 @@ model = SparseAEPipeline(
 model.fit(X_train)
 ```
 
-### Autoencoder Variants:
+### Autoencoder Variants
 
 Numalogic supports the following variants of Autoencoders
 

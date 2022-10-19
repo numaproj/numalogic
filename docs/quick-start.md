@@ -8,7 +8,7 @@ Install Numalogic and experiment with different tools available.
 pip install numalogic
 ```
 
-## Numalogic as a Library:
+## Numalogic as a Library
 
 Numalogic can used as an independent library. 
 
@@ -35,8 +35,7 @@ anomaly_score = model.score(X_test)
 
 For more detailed experimentation, refer to [quick-start-example](https://github.com/numaproj/numalogic/blob/main/examples/quick-start.ipynb)
 
-
-## Numalogic as streaming ML using Numaflow:
+## Numalogic as streaming ML using Numaflow
 
 ### Running Numaflow:
 
@@ -47,7 +46,7 @@ For more detailed experimentation, refer to [quick-start-example](https://github
    ```
 For more information, refer to https://numaflow.numaproj.io/quick-start/
 
-### Running the Simple Numalogic Pipeline:
+### Running the Simple Numalogic Pipeline
 
 1. Build the docker image, and push
 ```
@@ -58,7 +57,7 @@ docker build -t simple-numalogic-pipeline . && k3d image import docker.io/librar
 kubectl apply -f simple-numalogic-pipeline.yaml
 ```
 
-### Sending data to the pipeline for ML Inference:
+### Sending data to the pipeline for ML Inference
 
 1. Port-forward to the http-source vertex
    ```
@@ -75,15 +74,15 @@ kubectl apply -f simple-numalogic-pipeline.yaml
    kubectl logs -f simple-numalogic-pipeline-out-0-xxxxx
    ```
 
-### To see the model in mlflow UI:
+### To see the model in ML Flow UI
 
 1. Port forward mlflow-service
    ```
    kubectl port-forward svc/mlflow-service 5000
    ```
-2. Open http://127.0.0.1:5000/
+2. Navigate to http://127.0.0.1:5000/
 
-### Train on your own data:
+### Train on your own data
 If you want to train ML model on your own data, replace the `train_data.csv` file with your own file.
 The `train_data.csv` file is present under directory `ml_steps/resources` 
 
