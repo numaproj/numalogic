@@ -424,34 +424,6 @@ pipelines = ["scikit-learn (>=1.0)", "pyarrow (>=7.0)", "shap (>=0.40)", "pandas
 sqlserver = ["mlflow-dbstore"]
 
 [[package]]
-name = "mlflow-skinny"
-version = "1.29.0"
-description = "MLflow: A Platform for ML Development and Productionization"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[package.dependencies]
-click = ">=7.0,<9"
-cloudpickle = "<3"
-databricks-cli = ">=0.8.7,<1"
-entrypoints = "<1"
-gitpython = ">=2.1.0,<4"
-importlib-metadata = ">=3.7.0,<4.7.0 || >4.7.0,<5"
-packaging = "<22"
-protobuf = ">=3.12.0,<5"
-pytz = "<2023"
-pyyaml = ">=5.1,<7"
-requests = ">=2.17.3,<3"
-sqlparse = ">=0.4.0,<1"
-
-[package.extras]
-aliyun-oss = ["aliyunstoreplugin"]
-extras = ["scikit-learn", "pyarrow", "boto3", "google-cloud-storage (>=1.30.0)", "azureml-core (>=1.2.0)", "pysftp", "kubernetes", "mlserver (>=0.5.3)", "mlserver-mlflow (>=0.5.3)", "virtualenv"]
-pipelines = ["scikit-learn (>=1.0)", "pyarrow (>=7.0)", "shap (>=0.40)", "pandas-profiling (>=3.1)", "ipython (>=7.0)", "markdown (>=3.3)", "Jinja2 (>=3.0)"]
-sqlserver = ["mlflow-dbstore"]
-
-[[package]]
 name = "msgpack"
 version = "1.0.4"
 description = "MessagePack serializer"
@@ -477,20 +449,22 @@ python-versions = "*"
 
 [[package]]
 name = "numalogic"
-version = "0.2.5"
+version = "0.2.6"
 description = "Collection of operational Machine Learning models and tools."
 category = "main"
 optional = false
 python-versions = ">=3.8,<3.11"
 
 [package.dependencies]
-mlflow-skinny = ">=1.27.0,<2.0.0"
 numpy = ">=1.23.1,<2.0.0"
 pandas = ">=1.4.3,<2.0.0"
 pytz = ">=2022.1,<2023.0"
 scikit-learn = ">=1.0,<2.0"
 torch = ">=1.12.0,<2.0.0"
 torchinfo = ">=1.6.0,<2.0.0"
+
+[package.extras]
+mlflow = ["mlflow (>=1.27.0,<2.0.0)"]
 
 [[package]]
 name = "numpy"
@@ -906,7 +880,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "~3.9"
-content-hash = "6d6f3c78d04b8746a375e89091441eee56f6ebdb95020de0c4b567d512dc0a24"
+content-hash = "82dfdbe0bb5c426cd2a9e09c074de07794c12954e0273b4b8e8771a7f320a9b6"
 
 [metadata.files]
 aiohttp = []
@@ -1004,7 +978,6 @@ markupsafe = [
 marshmallow = []
 marshmallow-enum = []
 mlflow = []
-mlflow-skinny = []
 msgpack = []
 multidict = []
 mypy-extensions = [

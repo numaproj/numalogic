@@ -1,16 +1,17 @@
 [tool.poetry]
-name = "Simple Numalogic Pipeline"
+name = "pythonproject3"
 version = "0.1.0"
-description = "Simple Numalogic Pipeline"
-authors = ["s0nicboOm <i.kushalbatra@gmail.com>"]
+description = ""
+authors = ["kbatra <kushal_batra@intuit.com>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
 dataclasses-json = "^0.5.6"
 cachetools = "^5.0.0"
 pynumaflow = "^0.2.4"
-numalogic = "^0.2.5"
+numalogic = "0.2.6"
 uuid = "^1.30"
+mlflow = "^1.29.0"
 
 
 [tool.poetry.dev-dependencies]

@@ -11,11 +11,13 @@ spec:
     bufferUsageLimit: 100
   vertices:
   - name: in
+    scale:
+      disabled: true
     source:
-      generator:
-        rpu: 5
-        duration: 1s
+      http: {}
   - name: preprocess
+    scale:
+      disabled: true
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
@@ -23,15 +25,9 @@ spec:
         - python
         - starter.py
         - preprocess
-  - name: input
-    udf:
-      container:
-        image: docker.io/library/numalogic-simple-pipeline:v1
-        args:
-        - python
-        - starter.py
-        - input
   - name: inference
+    scale:
+      disabled: true
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
@@ -44,6 +40,8 @@ spec:
         - name: NUMAFLOW_DEBUG
           value: "true"
   - name: postprocess
+    scale:
+      disabled: true
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
@@ -52,9 +50,13 @@ spec:
         - starter.py
         - postprocess
   - name: out
+    scale:
+      disabled: true
     sink:
       log: {}
   - name: train
+    scale:
+      disabled: true
     udf:
       container:
         env:
@@ -67,8 +69,6 @@ spec:
           - train
   edges:
     - from: in
-      to: input
-    - from: input
       to: preprocess
     - from: inference
       to: train
@@ -84,3 +84,51 @@ spec:
           - postprocess
     - from: postprocess
       to: out
+
+---
+#mlflow deployment config
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-sqlite
+  labels:
+    app: mlflow
+spec:
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - image: docker.io/library/numalogic-simple-pipeline:v1
+          name: mlflow
+          args:
+          - server
+          - --backend-store-uri
+          - sqlite:///mlflow.db
+          - --artifacts-destination
+          - file://app/.mlruns
+          - --serve-artifacts
+          - --host
+          - "0.0.0.0"
+          - --port
+          - "5000"
+          command:
+            - mlflow
+          ports:
+            - containerPort: 5000
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: mlflow-service
+spec:
+  type: ClusterIP
+  selector:
+    app: mlflow
+  ports:
+    - port: 5000
+      targetPort: 5000
