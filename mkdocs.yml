@@ -39,5 +39,15 @@ nav:
   - Getting Started:
       - quick-start.md
   - User Guide:
+      - Core Concepts:
+          - Training:
+              - autoencoders.md
+              - forecasting.md
+          - inference.md
+          - Addons:
+              - pre-processing.md
+              - post-processing.md
       - data-generator.md
+      - Model Registry:
+          - ml-flow.md
   - Numaproj: https://numaproj.io
