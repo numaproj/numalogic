@@ -4,7 +4,7 @@ metadata:
   name: numalogic-simple-pipeline
 spec:
   watermark:
-    disabled: true
+    disabled: false
   limits:
     readBatchSize: 10
     bufferMaxLength: 500

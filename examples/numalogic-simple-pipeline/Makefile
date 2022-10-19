@@ -1,6 +1,4 @@
-POETRY := $${HOME}/.poetry/bin/poetry
-
-clean:
+    clean:
 	@rm -rf build dist .eggs *.egg-info
 	@rm -rf .benchmarks .coverage coverage.xml htmlcov report.xml .tox
 	@find . -type d -name '.mypy_cache' -exec rm -rf {} +

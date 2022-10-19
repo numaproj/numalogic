@@ -1,6 +1,7 @@
 import logging
 
 import numpy as np
+from numalogic.scores import tanh_norm
 from pynumaflow.function import Messages, Message, Datum
 
 from ml_steps.utility import Payload
@@ -8,16 +9,12 @@ from ml_steps.utility import Payload
 LOGGER = logging.getLogger(__name__)
 
 
-def tanh_norm(scores, scale_factor=10, smooth_factor=10):
-    return scale_factor * np.tanh(scores / smooth_factor)
-
-
 def postprocess(key: str, datum: Datum) -> Messages:
     # Load json data
     payload = Payload.from_json(datum.value.decode("utf-8"))
 
     # Postprocess step
-    data = np.asarray(payload.data)
+    data = np.asarray(payload.ts_data)
     payload.anomaly_score = np.mean(tanh_norm(data))
 
     LOGGER.info("%s - PostProcess complete", payload.uuid)

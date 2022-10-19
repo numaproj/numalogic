@@ -6,7 +6,7 @@ ENV PYTHONFAULTHANDLER=1 \
   PIP_NO_CACHE_DIR=off \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
-  POETRY_VERSION=1.2.0 \
+  POETRY_VERSION=1.2.2 \
   POETRY_HOME="/opt/poetry" \
   POETRY_VIRTUALENVS_IN_PROJECT=true \
   POETRY_NO_INTERACTION=1 \
@@ -27,7 +27,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 WORKDIR $PYSETUP_PATH
 ADD . $PYSETUP_PATH
 WORKDIR $PYSETUP_PATH
-RUN poetry install --no-dev --no-root
+RUN poetry install
 
 ADD . /app
 

@@ -1,6 +1,16 @@
-# Simple Numalogic Pipeline 
+# Simplepl
 
 ## Running Example: Simple Numalogic Pipeline
+
+### Running Numaflow
+1. ```
+   kubectl create ns numaflow-system
+   kubectl apply -n numaflow-system -f https://raw.githubusercontent.com/numaproj/numaflow/stable/config/install.yaml
+   kubectl apply -f https://raw.githubusercontent.com/numaproj/numaflow/stable/examples/0-isbsvc-jetstream.yaml
+   ```
+For more information, refer to https://numaflow.numaproj.io/quick-start/
+
+###Running the Simple Numalogic Pipeline
 1. Build the docker image, and push
 ```
 docker build -t simple-numalogic-pipeline:v1 . && k3d image import docker.io/library/simple-numalogic-pipeline:v1
@@ -50,3 +60,7 @@ kubectl apply -f simple-numalogic-pipeline.yaml
    kubectl port-forward svc/mlflow-service 5000
    ```
 2. Open http://127.0.0.1:5000/
+
+## Train on your own data
+If you want to train ML model on your own data, replace the `train_data.csv` file with your own file.
+The `train_data.csv` file is present under directory `ml_steps/resources` 

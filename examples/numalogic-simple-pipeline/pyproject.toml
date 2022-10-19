@@ -1,18 +1,15 @@
 [tool.poetry]
-name = "pythonproject3"
+name = "numalogic-simple-demo"
 version = "0.1.0"
-description = ""
-authors = ["kbatra <kushal_batra@intuit.com>"]
+description = "Simple ML Pipeline illustrating Numalogic library usage."
+authors = ["s0nicboOm <i.kushalbatra@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "~3.9"
 dataclasses-json = "^0.5.6"
 cachetools = "^5.0.0"
-pynumaflow = "^0.2.4"
-numalogic = "0.2.6"
-uuid = "^1.30"
-mlflow = "^1.29.0"
-
+pynumaflow = "~0.2.4"
+numalogic = {version = "0.2.6", extras = ["mlflow"]}
 
 [tool.poetry.dev-dependencies]
 
