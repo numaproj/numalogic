@@ -6,7 +6,7 @@ It mainly consist of 2 components: an encoder and a decoder. The encoder compres
 
 ### Autoencoder Pipelines
 
-Numalogic provides two types of pipelines for Autoencoders.
+Numalogic provides two types of pipelines for Autoencoders. These pipelines serve as a wrapper around the base network models, making it easier to train, predict and generate scores. Also, this module follows the sklearn API.
 
 #### AutoencoderPipeline
 
@@ -14,7 +14,7 @@ Here we are using `VanillAE`, a Vanilla Autoencoder model.
 
 ```python 
 from numalogic.models.autoencoder.variants import Conv1dAE
-from numalogic.models.autoencoder.pipeline import SparseAEPipeline
+from numalogic.models.autoencoder import SparseAEPipeline
 
 model = AutoencoderPipeline(
     model=VanillaAE(signal_len=12, n_features=3), seq_len=seq_len
@@ -28,14 +28,12 @@ A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve a
 
 So, by adding a sparsity regularization, we will be able to stop the neural network from copying the input and reduce overfitting.
 
-Here we are using `Conv1dAE`, a one dimensional Convolutional Autoencoder.
-
 ```python 
 from numalogic.models.autoencoder.variants import Conv1dAE
-from numalogic.models.autoencoder.pipeline import SparseAEPipeline
+from numalogic.models.autoencoder import SparseAEPipeline
 
 model = SparseAEPipeline(
-    model=Conv1dAE(in_channels=3, enc_channels=8), seq_len=36, num_epochs=30
+    model=VanillaAE(signal_len=12, n_features=3), seq_len=36, num_epochs=30
 )
 model.fit(X_train)
 ```

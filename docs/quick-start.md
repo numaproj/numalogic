@@ -15,12 +15,13 @@ Numalogic can be used as an independent library, it provides various ML models a
 In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set there are data points that go out of this range, which the algorithm should be able to detect as anomalies.
 
 ```python
+import numpy as np
 from numalogic.models.autoencoder import AutoencoderPipeline
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.scores import tanh_norm
 
-X_train = [[1], [3], [5], [2], [5], [1], [4], [5], [1], [4], [5], [8], [9], [1], [2], [4], [5], [1], [3]]
-X_test = [[-20], [3], [5], [40], [5], [10], [4], [5], [100]]
+X_train = np.array([1, 3, 5, 2, 5, 1, 4, 5, 1, 4, 5, 8, 9, 1, 2, 4, 5, 1, 3]).reshape(-1, 1)
+X_test = np.arrat([-20, 3, 5, 40, 5, 10, 4, 5, 100]).reshape(-1,1)
 
 model = AutoencoderPipeline(
     model=Conv1dAE(in_channels=1, enc_channels=4), seq_len=8, num_epochs=30
