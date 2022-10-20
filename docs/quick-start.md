@@ -56,7 +56,7 @@ Anomaly Scores: [[2.70173135]
 
 Replace `X_train` and `X_test` with your own data, and see the anomaly scores generated.
 
-For more detailed experimentation, refer to [quick-start-example](https://github.com/numaproj/numalogic/blob/main/examples/quick-start.ipynb)
+For more detailed experimentation, refer to [quick-start example](https://github.com/numaproj/numalogic/blob/main/examples/quick-start.ipynb)
 
 ## Numalogic as streaming ML using Numaflow
 
@@ -116,6 +116,8 @@ Once the pipeline has been created, the data can be sent to the pipeline by port
 
 Initially there is no ML model present, to trigger training do a curl command and send any data to the pipeline. 
 
+The training data is from [train_data.csv](), which follows a sinusoidal pattern where value falls in range 200-350. 
+
 The following logs will be seen in the training pod.
 
 ```shell
@@ -140,6 +142,8 @@ Created version '1' of model 'ae::model'.
 Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference. 
 
 After sending the data, look for logs in the output pod which shows the anomaly score.
+
+Since, we trained the model with data that follows a sinusoidal pattern where value falls in range 200-350. Any value within this range is considered to be non anomalous. And, any value out of this range is considered to be anomalous.
 
 Sending non-anomalous data: 
 ```
