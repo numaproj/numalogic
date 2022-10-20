@@ -1,4 +1,4 @@
-## Data Generator
+# Data Generator
 
 Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.  
 
