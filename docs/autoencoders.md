@@ -75,6 +75,12 @@ model = LSTMAE(seq_len=12, no_features=2, embedding_dim=15)
 
 #### TransformerAE
 
+The transformer-based Autoencoder model was inspired from [Attention is all you need](https://arxiv.org/abs/1706.03762) paper. 
+
+It consists of an encoder and a decoder which are both stacks of residual attention blocks, i.e a stack of layers set in such a way that the output of a layer is taken and added to another layer deeper in the block.
+
+These blocks can process an input sequence of variable length n without exhibiting a recurrent structure and allows transformer-based encoder-decoders to be highly parallelizable.
+
 ```python
 from numalogic.models.autoencoder.variants import TransformerAE
 
