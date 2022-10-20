@@ -1,15 +1,16 @@
 import io
 import logging
 from copy import copy
-from typing import BinaryIO, Callable, Dict, Optional, Tuple, Union
+from typing import Optional, Dict, Tuple, BinaryIO, Union, Callable
 
 import numpy as np
 import torch
-from numalogic.tools.types import AutoencoderModel
 from numpy.typing import NDArray
 from sklearn.base import OutlierMixin
-from torch import Tensor, nn, optim
+from torch import nn, optim, Tensor
 from torch.utils.data import DataLoader
+
+from numalogic.tools.types import AutoencoderModel
 
 _LOGGER = logging.getLogger(__name__)
 
