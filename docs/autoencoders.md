@@ -26,6 +26,8 @@ model.fit(X_train)
 
 A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve an information bottleneck. Specifically the loss function is constructed so that activations are penalized within a layer.
 
+So, by adding a sparsity regularization, we will be able to stop the neural network from copying the input and reduce overfitting.
+
 Here we are using `Conv1dAE`, a one dimensional Convolutional Autoencoder.
 
 ```python 
