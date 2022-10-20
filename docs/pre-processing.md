@@ -10,7 +10,11 @@ Numalogic provides the following tranformers for pre-processing the training or 
 
 ### Log Transformer
 
-Log transformation is a data transformation method in which it replaces each data point x with a log(x). `LogTransformer` reduces the variance in some distributions, especially with large outliers.
+Log transformation is a data transformation method in which it replaces each data point x with a log(x). 
+
+Now, with `add_factor`, each data point x is converted to log(x + add_factor)
+
+Log transformation reduces the variance in some distributions, especially with large outliers.
 
 ```python
 from sklearn.pipeline import make_pipeline
@@ -30,7 +34,11 @@ X_test = scaler.transform(test_df.to_numpy())
 
 Static Power Transformer converts each data point x to x<sup>n</sup>. 
 
+When `add_factor` is provided, each data point x is converted to (x + add_factor)<sup>n</sup>
+
 ```python
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import MinMaxScaler
 from numalogic.preprocess.transformer import StaticPowerTransformer
 
 transformer = StaticPowerTransformer(n=3, add_factor=2)
