@@ -10,19 +10,19 @@ pip install numalogic
 
 ## Numalogic as a Library
 
-Numalogic can be used as an independent library, it provides various ML models and tools. Here, we are using a `SparseAEPipeline`, you can refer to [training section](autoencoders.md) for other available options. 
+Numalogic can be used as an independent library, it provides various ML models and tools. Here, we are using a `AutoencoderPipeline`, refer to [training section](autoencoders.md) for other available options. 
 
-In this example, we have numbers ranging from 1-10 in the train data set. In the test data set, we have data points that go out of this range, which the algorithm should be able to detect as anomalies.
+In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set there are data points that go out of this range, which the algorithm should be able to detect as anomalies.
 
 ```python
-from numalogic.models.autoencoder import SparseAEPipeline
+from numalogic.models.autoencoder import AutoencoderPipeline
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.scores import tanh_norm
 
 X_train = [[1], [3], [5], [2], [5], [1], [4], [5], [1], [4], [5], [8], [9], [1], [2], [4], [5], [1], [3]]
 X_test = [[-20], [3], [5], [40], [5], [10], [4], [5], [100]]
 
-model = SparseAEPipeline(
+model = AutoencoderPipeline(
     model=Conv1dAE(in_channels=1, enc_channels=4), seq_len=8, num_epochs=30
 )
 # fit method trains the model on train data set
@@ -39,27 +39,18 @@ anomaly_score_norm = tanh_norm(anomaly_score)
 print("Anomaly Scores:", anomaly_score_norm)
 ```
 
-Below is the sample output, which has logs and anomaly scores printed. You can notice the anomaly score for points -20, 40 and 100 in `X_test` is high.
+Below is the sample output, which has logs and anomaly scores printed. Notice the anomaly score for points -20, 40 and 100 in `X_test` is high.
 ```shell
-2022-10-19 17:37:08,241 - INFO - Current device: cpu
-2022-10-19 17:37:08,241 - INFO - Current device: cpu
-2022-10-19 17:37:08,245 - INFO - Training sparse autoencoder model with beta: 0.001, and rho: 0.05
-2022-10-19 17:37:08,245 - INFO - Using kl_div regularized loss
-2022-10-19 17:37:08,274 - INFO - epoch : 5, penalty: 0.00017940076941158623 loss_mean : 1.6290421
-2022-10-19 17:37:08,282 - INFO - epoch : 10, penalty: 0.0001806353684514761 loss_mean : 1.5867264
-2022-10-19 17:37:08,290 - INFO - epoch : 15, penalty: 0.00018205904052592814 loss_mean : 1.5468330
-2022-10-19 17:37:08,297 - INFO - epoch : 20, penalty: 0.0001839457399910316 loss_mean : 1.5095336
-2022-10-19 17:37:08,306 - INFO - epoch : 25, penalty: 0.00018673710292205215 loss_mean : 1.4750170
-2022-10-19 17:37:08,314 - INFO - epoch : 30, penalty: 0.0001903115917230025 loss_mean : 1.4423900
-Anomaly Scores: [[3.43350191]
- [1.0774759 ]
- [0.81873476]
- [5.34637364]
- [1.38783935]
- [0.3643268 ]
- [1.14278396]
- [2.78489574]
- [7.41677152]]
+...snip training logs...
+Anomaly Scores: [[2.70173135]
+ [0.22298803]
+ [0.01045979]
+ [3.66973793]
+ [0.12931582]
+ [0.53661316]
+ [0.10056313]
+ [0.2634344 ]
+ [7.76317209]]
 ```
 
 Replace `X_train` and `X_test` with your own data, and see the anomaly scores generated.
@@ -68,29 +59,45 @@ For more detailed experimentation, refer to [quick-start-example](https://github
 
 ## Numalogic as streaming ML using Numaflow
 
-Numalogic can also be paired with our streaming platform [Numaflow](https://numaflow.numaproj.io/), to build streaming ML pipelines where Numalogic can be used in UDF.
+Numalogic can also be paired with our streaming platform [Numaflow](https://numaflow.numaproj.io/), to build streaming ML pipelines where Numalogic can be used in [UDF](https://numaflow.numaproj.io/user-defined-functions/).
 
-### Running Numaflow:
+### Prerequiste
 
- ```
-   kubectl create ns numaflow-system
-   kubectl apply -n numaflow-system -f https://raw.githubusercontent.com/numaproj/numaflow/stable/config/install.yaml
-   kubectl apply -f https://raw.githubusercontent.com/numaproj/numaflow/stable/examples/0-isbsvc-jetstream.yaml
-   ```
-For more information, refer to https://numaflow.numaproj.io/quick-start/
+- [Numaflow](https://numaflow.numaproj.io/quick-start/#installation)
 
 ### Running the Simple Numalogic Pipeline
 
-1. Build the docker image, and push
+Once Numaflow is installed, create a simple Numalogic pipeline, which takes in timeseries data, does the pre-processing, training, inference and post-processing.
+
+For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples) under examples folder and execute the following commands.
+
+1. Build the docker image, import to k3d and apply the pipeline.
 ```
 docker build -t simple-numalogic-pipeline . && k3d image import docker.io/library/simple-numalogic-pipeline
-```
-2. Apply the pipeline
-```
+
 kubectl apply -f simple-numalogic-pipeline.yaml
 ```
+2. To verify if the pipeline has been deployed successfully, check the status of each pod.
+```shell
+> kubectl get pods
+NAME                                               READY   STATUS    RESTARTS   AGE
+numaflow-server-d64bf6f7c-2czd7                    1/1     Running   0          72s
+numaflow-controller-c84948cbb-994fn                1/1     Running   0          72s
+isbsvc-default-js-0                                3/3     Running   0          68s
+isbsvc-default-js-1                                3/3     Running   0          68s
+isbsvc-default-js-2                                3/3     Running   0          68s
+mlflow-sqlite-84cf5d6cd-pkmct                      1/1     Running   0          46s
+numalogic-simple-pipeline-preprocess-0-mvuqb       2/2     Running   0          46s
+numalogic-simple-pipeline-train-0-8xjg1            2/2     Running   0          46s
+numalogic-simple-pipeline-daemon-66bbd94c4-hf4k2   1/1     Running   0          46s
+numalogic-simple-pipeline-inference-0-n3asg        2/2     Running   0          46s
+numalogic-simple-pipeline-postprocess-0-bw67q      2/2     Running   0          46s
+numalogic-simple-pipeline-out-0-hjb7m              1/1     Running   0          46s
+numalogic-simple-pipeline-in-0-tmd0v               1/1     Running   0          46s
+```
+### Sending data to the pipeline
 
-### Sending data to the pipeline for ML Inference
+Once the pipeline has been created, the data can be sent to the pipeline by port-forwarding the input vertex.
 
 1. Port-forward to the http-source vertex
    ```
@@ -101,23 +108,68 @@ kubectl apply -f simple-numalogic-pipeline.yaml
    ```
    curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}'
    ```
+   Note: only send an array of length 12 in data, as the sequence length used for training is 12.   
+
    
-3. Check the anomaly score in the output log 
-   ```
-   kubectl logs -f simple-numalogic-pipeline-out-0-xxxxx
-   ```
+### Training
 
-### To see the model in ML Flow UI
+Initially there is no ML model present, to trigger training do a curl command and send any data to the pipeline. 
 
-1. Port forward mlflow-service
+The following logs will be seen in the training pod.
+
+```shell
+> curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}'
+
+> kubectl logs numalogic-simple-pipeline-train-0-xxxxx -c udf
+2022-10-19 22:38:45,431 - INFO - Training autoencoder model..
+2022-10-19 22:38:45,783 - INFO - epoch : 5, loss_mean : 0.0744678
+2022-10-19 22:38:46,431 - INFO - epoch : 10, loss_mean : 0.0491540
+...
+2022-10-19 22:38:49,645 - INFO - epoch : 95, loss_mean : 0.0047888
+2022-10-19 22:38:49,878 - INFO - epoch : 100, loss_mean : 0.0043651
+2022-10-19 22:38:49,880 - INFO - 8b597791-b8a3-41b0-8375-47e168887c54 - Training complete
+Successfully registered model 'ae::model'.
+2022/10/19 22:38:52 INFO mlflow.tracking._model_registry.client: Waiting up to 300 seconds for model version to finish creation.                     Model name: ae::model, version 1
+Created version '1' of model 'ae::model'.
+2022-10-19 22:38:52,920 - INFO - 8b597791-b8a3-41b0-8375-47e168887c54 - Model Saving complete
+```
+
+### Inference
+
+Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference. 
+
+In the output, `ts_data` is the final array that the input array has been transformed to, after all the steps in the pipeline. `anomaly_score` is the final anomaly score generated for the input data.
+
+Sending non-anomalous data: 
+```
+curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[358.060687,326.253469,329.023996,346.168602,339.511273,359.080987,341.036110,333.584121,376.034150,351.065394,355.379422,333.347769]}'
+
+2022/10/20 04:54:44 (out) {"ts_data": [[0.14472376660734326], [0.638373062689151], [0.8480656378656608], [0.4205087588581154], [1.285475729481929], [0.8136729095134241], [0.09972157219780131], [0.2856860200353754], [0.6005371351085002], [0.021966491476278518], [0.10405302543443251], [0.6428168263777302]], "anomaly_score": 0.49173648784304, "uuid": "0506b380-4565-405c-a3a3-ddc3a19e0bb4"}
+```
+
+Sending anomalous data:
+```
+curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[358.060687,326.253469,329.023996,346.168602,339.511273,800.162220,614.091646,537.250124,776.034150,751.065394,700.379422,733.347769]}'
+
+2022/10/20 04:56:40 (out) {"ts_data": [[1.173712319431301], [0.39061549013480673], [2.523849648503271], [2.0962927694957254], [13.032012667825805], [5.80166091013039], [3.6868855191928325], [4.814846700913904], [4.185973265627947], [3.9097889275446356], [4.505391607282856], [4.1170053183846305]], "anomaly_score": 3.9579276751803145, "uuid": "ed039779-f924-4801-9418-eeef30715ef1"}
+```
+
+
+### MLflow UI
+
+To see the model in MLflow UI, port forward mlflow-service using the below command and navigate to http://127.0.0.1:5000/
    ```
    kubectl port-forward svc/mlflow-service 5000
    ```
-2. Navigate to http://127.0.0.1:5000/
+
 
 ### Train on your own data
-If you want to train ML model on your own data, replace the `train_data.csv` file with your own file.
-The `train_data.csv` file is present under directory `ml_steps/resources` 
+If you want to train ML model on your own data, replace the `train_data.csv` file with your own file, under [resources.](https://github.com/numaproj/numalogic/tree/main/examples) 
+
+
+
+
+
 
 
 
