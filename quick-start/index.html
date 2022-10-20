@@ -13,7 +13,7 @@
     
     
       
-        <title>Quick start - Numalogic - Collection of operational time series ML models and tools</title>
+        <title>Quick Start - Numalogic - Collection of operational time series ML models and tools</title>
       
     
     
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Quick start
+              Quick Start
             
           </span>
         </div>
@@ -357,14 +357,16 @@
       <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Quick start
+          Quick Start
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Quick start
+        Quick Start
       </a>
       
         
@@ -372,6 +374,8 @@
 <nav class="md-nav md-nav--secondary" aria-label="Table of contents">
   
   
+  
+    
   
   
     <label class="md-nav__title" for="__toc">
@@ -381,30 +385,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    Quick Start
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    Prerequisites:
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
-    Installation:
+    Installation
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-jupyter-notebook" class="md-nav__link">
-    Using Jupyter Notebook:
+  <a href="#numalogic-as-a-library" class="md-nav__link">
+    Numalogic as a Library
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#numalogic-as-streaming-ml-using-numaflow" class="md-nav__link">
+    Numalogic as streaming ML using Numaflow
+  </a>
+  
+    <nav class="md-nav" aria-label="Numalogic as streaming ML using Numaflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequiste" class="md-nav__link">
+    Prerequiste
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-the-simple-numalogic-pipeline" class="md-nav__link">
+    Running the Simple Numalogic Pipeline
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sending-data-to-the-pipeline" class="md-nav__link">
+    Sending data to the pipeline
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training" class="md-nav__link">
+    Training
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inference" class="md-nav__link">
+    Inference
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mlflow-ui" class="md-nav__link">
+    MLflow UI
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#train-on-your-own-data" class="md-nav__link">
+    Train on your own data
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -458,8 +510,224 @@
   
     <li class="md-nav__item">
       <a href="../data-generator/" class="md-nav__link">
-        Data generator
+        Data Generator
       </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2">
+          Core Concepts
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Core Concepts" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_2">
+          <span class="md-nav__icon md-icon"></span>
+          Core Concepts
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_1" type="checkbox" id="__nav_3_2_1" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_1">
+          Training
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Training" data-md-level="3">
+        <label class="md-nav__title" for="__nav_3_2_1">
+          <span class="md-nav__icon md-icon"></span>
+          Training
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../autoencoders/" class="md-nav__link">
+        Autoencoders
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../forecasting/" class="md-nav__link">
+        Forcasting
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../inference/" class="md-nav__link">
+        Inference
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_3" type="checkbox" id="__nav_3_2_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_2_3">
+          Addons
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Addons" data-md-level="3">
+        <label class="md-nav__title" for="__nav_3_2_3">
+          <span class="md-nav__icon md-icon"></span>
+          Addons
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../pre-processing/" class="md-nav__link">
+        Pre Processing
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../post-processing/" class="md-nav__link">
+        Post Processing
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+      
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_3" type="checkbox" id="__nav_3_3" >
+      
+      
+      
+      
+        <label class="md-nav__link" for="__nav_3_3">
+          Model Registry
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <nav class="md-nav" aria-label="Model Registry" data-md-level="2">
+        <label class="md-nav__title" for="__nav_3_3">
+          <span class="md-nav__icon md-icon"></span>
+          Model Registry
+        </label>
+        <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ml-flow/" class="md-nav__link">
+        MLflow
+      </a>
+    </li>
+  
+
+            
+          
+        </ul>
+      </nav>
     </li>
   
 
@@ -503,6 +771,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -511,30 +781,78 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
-    Quick Start
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#prerequisites" class="md-nav__link">
-    Prerequisites:
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#installation" class="md-nav__link">
-    Installation:
+    Installation
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#using-jupyter-notebook" class="md-nav__link">
-    Using Jupyter Notebook:
+  <a href="#numalogic-as-a-library" class="md-nav__link">
+    Numalogic as a Library
   </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#numalogic-as-streaming-ml-using-numaflow" class="md-nav__link">
+    Numalogic as streaming ML using Numaflow
+  </a>
+  
+    <nav class="md-nav" aria-label="Numalogic as streaming ML using Numaflow">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#prerequiste" class="md-nav__link">
+    Prerequiste
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-the-simple-numalogic-pipeline" class="md-nav__link">
+    Running the Simple Numalogic Pipeline
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sending-data-to-the-pipeline" class="md-nav__link">
+    Sending data to the pipeline
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#training" class="md-nav__link">
+    Training
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#inference" class="md-nav__link">
+    Inference
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#mlflow-ui" class="md-nav__link">
+    MLflow UI
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#train-on-your-own-data" class="md-nav__link">
+    Train on your own data
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -556,30 +874,142 @@
 
 
 
-  <h1>Quick start</h1>
+<h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
+<h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
+<p>Install Numalogic and experiment with different tools available.</p>
+<div class="highlight"><pre><span></span><code>pip install numalogic
+</code></pre></div>
+<h2 id="numalogic-as-a-library">Numalogic as a Library<a class="headerlink" href="#numalogic-as-a-library" title="Permanent link">&para;</a></h2>
+<p>Numalogic can be used as an independent library, it provides various ML models and tools. Here, we are using a <code>AutoencoderPipeline</code>, refer to <a href="../autoencoders/">training section</a> for other available options. </p>
+<p>In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set there are data points that go out of this range, which the algorithm should be able to detect as anomalies.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder</span> <span class="kn">import</span> <span class="n">AutoencoderPipeline</span>
+<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">Conv1dAE</span>
+<span class="kn">from</span> <span class="nn">numalogic.scores</span> <span class="kn">import</span> <span class="n">tanh_norm</span>
 
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<p>Install Numalogic and experiment with different tools available. </p>
-<h2 id="prerequisites">Prerequisites:<a class="headerlink" href="#prerequisites" title="Permanent link">&para;</a></h2>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoencoderPipeline</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">Conv1dAE</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">enc_channels</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span> <span class="n">seq_len</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">num_epochs</span><span class="o">=</span><span class="mi">30</span>
+<span class="p">)</span>
+<span class="c1"># fit method trains the model on train data set</span>
+<span class="n">model</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+
+<span class="c1"># predict method returns the reconstruction error</span>
+<span class="n">recon</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+
+<span class="c1"># score method returns the anomaly score computed on test data set</span>
+<span class="n">anomaly_score</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+
+<span class="c1"># normalizing scores to range between 0-10</span>
+<span class="n">anomaly_score_norm</span> <span class="o">=</span> <span class="n">tanh_norm</span><span class="p">(</span><span class="n">anomaly_score</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Anomaly Scores:&quot;</span><span class="p">,</span> <span class="n">anomaly_score_norm</span><span class="p">)</span>
+</code></pre></div>
+<p>Below is the sample output, which has logs and anomaly scores printed. Notice the anomaly score for points -20, 40 and 100 in <code>X_test</code> is high.
+<div class="highlight"><pre><span></span><code>...snip training logs...
+Anomaly Scores: <span class="o">[[</span><span class="m">2</span>.70173135<span class="o">]</span>
+ <span class="o">[</span><span class="m">0</span>.22298803<span class="o">]</span>
+ <span class="o">[</span><span class="m">0</span>.01045979<span class="o">]</span>
+ <span class="o">[</span><span class="m">3</span>.66973793<span class="o">]</span>
+ <span class="o">[</span><span class="m">0</span>.12931582<span class="o">]</span>
+ <span class="o">[</span><span class="m">0</span>.53661316<span class="o">]</span>
+ <span class="o">[</span><span class="m">0</span>.10056313<span class="o">]</span>
+ <span class="o">[</span><span class="m">0</span>.2634344 <span class="o">]</span>
+ <span class="o">[</span><span class="m">7</span>.76317209<span class="o">]]</span>
+</code></pre></div></p>
+<p>Replace <code>X_train</code> and <code>X_test</code> with your own data, and see the anomaly scores generated.</p>
+<p>For more detailed experimentation, refer to <a href="https://github.com/numaproj/numalogic/blob/main/examples/quick-start.ipynb">quick-start example</a></p>
+<h2 id="numalogic-as-streaming-ml-using-numaflow">Numalogic as streaming ML using Numaflow<a class="headerlink" href="#numalogic-as-streaming-ml-using-numaflow" title="Permanent link">&para;</a></h2>
+<p>Numalogic can also be paired with our streaming platform <a href="https://numaflow.numaproj.io/">Numaflow</a>, to build streaming ML pipelines where Numalogic can be used in <a href="https://numaflow.numaproj.io/user-defined-functions/">UDF</a>.</p>
+<h3 id="prerequiste">Prerequiste<a class="headerlink" href="#prerequiste" title="Permanent link">&para;</a></h3>
 <ul>
-<li><a href="https://python-poetry.org/docs/">Poetry</a></li>
-<li><a href="https://jupyter.org/install">Jupyter</a></li>
+<li><a href="https://numaflow.numaproj.io/quick-start/#installation">Numaflow</a></li>
 </ul>
-<h2 id="installation">Installation:<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<p>Run the following command to install the dependencies and build locally.
-<div class="highlight"><pre><span></span><code><span class="c1">#install poetry</span>
-curl -sSL https://install.python-poetry.org <span class="p">|</span> python3 -
+<h3 id="running-the-simple-numalogic-pipeline">Running the Simple Numalogic Pipeline<a class="headerlink" href="#running-the-simple-numalogic-pipeline" title="Permanent link">&para;</a></h3>
+<p>Once Numaflow is installed, create a simple Numalogic pipeline, which takes in timeseries data, does the pre-processing, training, inference and post-processing.</p>
+<p>For building this pipeline, navigate to <a href="https://github.com/numaproj/numalogic/tree/main/examples">numalogic-simple-pipeline</a> under examples folder and execute the following commands.</p>
+<ol>
+<li>Build the docker image, import to k3d and apply the pipeline.
+<div class="highlight"><pre><span></span><code>docker build -t simple-numalogic-pipeline . &amp;&amp; k3d image import docker.io/library/simple-numalogic-pipeline
 
-<span class="c1">#activate virtual env</span>
-poetry shell
+kubectl apply -f simple-numalogic-pipeline.yaml
+</code></pre></div></li>
+<li>To verify if the pipeline has been deployed successfully, check the status of each pod.
+<div class="highlight"><pre><span></span><code>&gt; kubectl get pods
+NAME                                               READY   STATUS    RESTARTS   AGE
+numaflow-server-d64bf6f7c-2czd7                    <span class="m">1</span>/1     Running   <span class="m">0</span>          72s
+numaflow-controller-c84948cbb-994fn                <span class="m">1</span>/1     Running   <span class="m">0</span>          72s
+isbsvc-default-js-0                                <span class="m">3</span>/3     Running   <span class="m">0</span>          68s
+isbsvc-default-js-1                                <span class="m">3</span>/3     Running   <span class="m">0</span>          68s
+isbsvc-default-js-2                                <span class="m">3</span>/3     Running   <span class="m">0</span>          68s
+mlflow-sqlite-84cf5d6cd-pkmct                      <span class="m">1</span>/1     Running   <span class="m">0</span>          46s
+numalogic-simple-pipeline-preprocess-0-mvuqb       <span class="m">2</span>/2     Running   <span class="m">0</span>          46s
+numalogic-simple-pipeline-train-0-8xjg1            <span class="m">2</span>/2     Running   <span class="m">0</span>          46s
+numalogic-simple-pipeline-daemon-66bbd94c4-hf4k2   <span class="m">1</span>/1     Running   <span class="m">0</span>          46s
+numalogic-simple-pipeline-inference-0-n3asg        <span class="m">2</span>/2     Running   <span class="m">0</span>          46s
+numalogic-simple-pipeline-postprocess-0-bw67q      <span class="m">2</span>/2     Running   <span class="m">0</span>          46s
+numalogic-simple-pipeline-out-0-hjb7m              <span class="m">1</span>/1     Running   <span class="m">0</span>          46s
+numalogic-simple-pipeline-in-0-tmd0v               <span class="m">1</span>/1     Running   <span class="m">0</span>          46s
+</code></pre></div></li>
+</ol>
+<h3 id="sending-data-to-the-pipeline">Sending data to the pipeline<a class="headerlink" href="#sending-data-to-the-pipeline" title="Permanent link">&para;</a></h3>
+<p>Once the pipeline has been created, the data can be sent to the pipeline by port-forwarding the input vertex.</p>
+<ol>
+<li>
+<p>Port-forward to the http-source vertex
+   <div class="highlight"><pre><span></span><code>kubectl port-forward simple-numalogic-pipeline-in-0-xxxxx 8443
+</code></pre></div></p>
+</li>
+<li>
+<p>Send the data to the pod via curl
+   <div class="highlight"><pre><span></span><code>curl -kq -X POST https://localhost:8443/vertices/in -d &#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;
+</code></pre></div>
+   Note: only send an array of length 12 in data, as the sequence length used for training is 12.   </p>
+</li>
+</ol>
+<h3 id="training">Training<a class="headerlink" href="#training" title="Permanent link">&para;</a></h3>
+<p>Initially there is no ML model present, to trigger training do a curl command and send any data to the pipeline. </p>
+<p>The training data is from <a href="https://github.com/numaproj/numalogic/tree/main/examples">train_data.csv</a>, which follows a sinusoidal pattern where values fall in the range 200-350. </p>
+<p>The following logs will be seen in the training pod.</p>
+<div class="highlight"><pre><span></span><code>&gt; curl -kq -X POST https://localhost:8443/vertices/in -d <span class="s1">&#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;</span>
 
-<span class="c1">#install dependencies</span>
-poetry install
+&gt; kubectl logs numalogic-simple-pipeline-train-0-xxxxx -c udf
+<span class="m">2022</span>-10-19 <span class="m">22</span>:38:45,431 - INFO - Training autoencoder model..
+<span class="m">2022</span>-10-19 <span class="m">22</span>:38:45,783 - INFO - epoch : <span class="m">5</span>, loss_mean : <span class="m">0</span>.0744678
+<span class="m">2022</span>-10-19 <span class="m">22</span>:38:46,431 - INFO - epoch : <span class="m">10</span>, loss_mean : <span class="m">0</span>.0491540
+...
+<span class="m">2022</span>-10-19 <span class="m">22</span>:38:49,645 - INFO - epoch : <span class="m">95</span>, loss_mean : <span class="m">0</span>.0047888
+<span class="m">2022</span>-10-19 <span class="m">22</span>:38:49,878 - INFO - epoch : <span class="m">100</span>, loss_mean : <span class="m">0</span>.0043651
+<span class="m">2022</span>-10-19 <span class="m">22</span>:38:49,880 - INFO - 8b597791-b8a3-41b0-8375-47e168887c54 - Training <span class="nb">complete</span>
+Successfully registered model <span class="s1">&#39;ae::model&#39;</span>.
+<span class="m">2022</span>/10/19 <span class="m">22</span>:38:52 INFO mlflow.tracking._model_registry.client: Waiting up to <span class="m">300</span> seconds <span class="k">for</span> model version to finish creation.                     Model name: ae::model, version <span class="m">1</span>
+Created version <span class="s1">&#39;1&#39;</span> of model <span class="s1">&#39;ae::model&#39;</span>.
+<span class="m">2022</span>-10-19 <span class="m">22</span>:38:52,920 - INFO - 8b597791-b8a3-41b0-8375-47e168887c54 - Model Saving <span class="nb">complete</span>
+</code></pre></div>
+<h3 id="inference">Inference<a class="headerlink" href="#inference" title="Permanent link">&para;</a></h3>
+<p>Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference. </p>
+<p>After sending the data, look for logs in the output pod which shows the anomaly score.</p>
+<p>Since, we trained the model with data that follows a sinusoidal pattern where values range from 200-350, any value within this range is considered to be non anomalous. And, any value out of this range is considered to be anomalous.</p>
+<p>Sending non-anomalous data: 
+<div class="highlight"><pre><span></span><code>&gt; curl -kq -X POST https://localhost:8443/vertices/in -d &#39;{&quot;data&quot;:[358.060687,326.253469,329.023996,346.168602,339.511273,359.080987,341.036110,333.584121,376.034150,351.065394,355.379422,333.347769]}&#39;
+
+&gt; kubectl logs numalogic-simple-pipeline-out-0-xxxxx
+2022/10/20 04:54:44 (out) {&quot;ts_data&quot;: [[0.14472376660734326], [0.638373062689151], [0.8480656378656608], [0.4205087588581154], [1.285475729481929], [0.8136729095134241], [0.09972157219780131], [0.2856860200353754], [0.6005371351085002], [0.021966491476278518], [0.10405302543443251], [0.6428168263777302]], &quot;anomaly_score&quot;: 0.49173648784304, &quot;uuid&quot;: &quot;0506b380-4565-405c-a3a3-ddc3a19e0bb4&quot;}
 </code></pre></div></p>
-<h2 id="using-jupyter-notebook">Using Jupyter Notebook:<a class="headerlink" href="#using-jupyter-notebook" title="Permanent link">&para;</a></h2>
-<p>Start Jupyter Notebook, navigate to the examples folder and open the quick start Jupyter notebook. You can play with different available options for each step.
-<div class="highlight"><pre><span></span><code>jupyter Notebook .
+<p>Sending anomalous data:
+<div class="highlight"><pre><span></span><code>&gt; curl -kq -X POST https://localhost:8443/vertices/in -d &#39;{&quot;data&quot;:[358.060687,326.253469,329.023996,346.168602,339.511273,800.162220,614.091646,537.250124,776.034150,751.065394,700.379422,733.347769]}&#39;
+
+&gt; kubectl logs numalogic-simple-pipeline-out-0-xxxxx
+2022/10/20 04:56:40 (out) {&quot;ts_data&quot;: [[1.173712319431301], [0.39061549013480673], [2.523849648503271], [2.0962927694957254], [13.032012667825805], [5.80166091013039], [3.6868855191928325], [4.814846700913904], [4.185973265627947], [3.9097889275446356], [4.505391607282856], [4.1170053183846305]], &quot;anomaly_score&quot;: 3.9579276751803145, &quot;uuid&quot;: &quot;ed039779-f924-4801-9418-eeef30715ef1&quot;}
 </code></pre></div></p>
+<p>In the output, <code>ts_data</code> is the final array that the input array has been transformed to, after all the steps in the pipeline. <code>anomaly_score</code> is the final anomaly score generated for the input data.</p>
+<h3 id="mlflow-ui">MLflow UI<a class="headerlink" href="#mlflow-ui" title="Permanent link">&para;</a></h3>
+<p>To see the model in MLflow UI, port forward mlflow-service using the below command and navigate to http://127.0.0.1:5000/
+   <div class="highlight"><pre><span></span><code>kubectl port-forward svc/mlflow-service 5000
+</code></pre></div></p>
+<h3 id="train-on-your-own-data">Train on your own data<a class="headerlink" href="#train-on-your-own-data" title="Permanent link">&para;</a></h3>
+<p>If you want to train ML model on your own data, replace the <code>train_data.csv</code> file with your own file, under <a href="https://github.com/numaproj/numalogic/tree/main/examples">resources.</a> </p>
 
               
             </article>
@@ -616,13 +1046,13 @@ poetry install
       
       
         
-        <a href="../data-generator/" class="md-footer__link md-footer__link--next" aria-label="Next: Data generator" rel="next">
+        <a href="../data-generator/" class="md-footer__link md-footer__link--next" aria-label="Next: Data Generator" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Data generator
+              Data Generator
             </div>
           </div>
           <div class="md-footer__button md-icon">

@@ -13,7 +13,7 @@
     
     
       
-        <title>Data Generator - Numalogic - Collection of operational time series ML models and tools</title>
+        <title>Inference - Numalogic - Collection of operational time series ML models and tools</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#data-generator" class="md-skip">
+        <a href="#inference" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Data Generator
+              Inference
             
           </span>
         </div>
@@ -232,7 +232,7 @@
   
   
     <li class="md-tabs__item">
-      <a href="./" class="md-tabs__link md-tabs__link--active">
+      <a href="../data-generator/" class="md-tabs__link md-tabs__link--active">
         User Guide
       </a>
     </li>
@@ -397,59 +397,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Data Generator
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../data-generator/" class="md-nav__link">
         Data Generator
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#generate-multivariate-timeseries" class="md-nav__link">
-    Generate multivariate timeseries
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inject-anomalies" class="md-nav__link">
-    Inject anomalies
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -459,12 +411,14 @@
               
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" >
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" checked>
       
       
       
@@ -546,11 +500,21 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../inference/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Inference
       </a>
+      
     </li>
   
 
@@ -712,28 +676,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#generate-multivariate-timeseries" class="md-nav__link">
-    Generate multivariate timeseries
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inject-anomalies" class="md-nav__link">
-    Inject anomalies
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -744,62 +686,26 @@
             <article class="md-content__inner md-typeset">
               
                 
-  <a href="https://github.com/numaproj/numalogic/edit/main/docs/data-generator.md" title="Edit this page" class="md-content__button md-icon">
+  <a href="https://github.com/numaproj/numalogic/edit/main/docs/inference.md" title="Edit this page" class="md-content__button md-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
   </a>
 
 
 
-<h1 id="data-generator">Data Generator<a class="headerlink" href="#data-generator" title="Permanent link">&para;</a></h1>
-<p>Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.  </p>
-<p>Using the synthetic data, we can:
-1. Compare and evaluate different ML algorithms, since we have labeled anomalies
-2. Understand different types of anomalies, and our models' performance on each of them
-3. Recreate realtime scenarios</p>
-<h3 id="generate-multivariate-timeseries">Generate multivariate timeseries<a class="headerlink" href="#generate-multivariate-timeseries" title="Permanent link">&para;</a></h3>
-<p><div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.synthetic</span> <span class="kn">import</span> <span class="n">SyntheticTSGenerator</span>
+<h1 id="inference">Inference<a class="headerlink" href="#inference" title="Permanent link">&para;</a></h1>
+<p>Now, once we have the model trained using one of the ML algorthims, we can predict the anomalies in the test data.</p>
+<p>This can be a streaming or a batched data.</p>
+<div class="highlight"><pre><span></span><code><span class="n">X_test</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">outlier_test_df</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
 
-<span class="n">ts_generator</span> <span class="o">=</span> <span class="n">SyntheticTSGenerator</span><span class="p">(</span>
-    <span class="n">seq_len</span><span class="o">=</span><span class="mi">8000</span><span class="p">,</span>
-    <span class="n">num_series</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-    <span class="n">freq</span><span class="o">=</span><span class="s2">&quot;T&quot;</span><span class="p">,</span>
-    <span class="n">primary_period</span><span class="o">=</span><span class="mi">720</span><span class="p">,</span>
-    <span class="n">secondary_period</span><span class="o">=</span><span class="mi">6000</span><span class="p">,</span>
-    <span class="n">seasonal_ts_prob</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
-    <span class="n">baseline_range</span><span class="o">=</span><span class="p">(</span><span class="mf">200.0</span><span class="p">,</span> <span class="mf">350.0</span><span class="p">),</span>
-    <span class="n">slope_range</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.001</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">),</span>
-    <span class="n">amplitude_range</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">75</span><span class="p">),</span>
-    <span class="n">cosine_ratio_range</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">),</span>
-    <span class="n">noise_range</span><span class="o">=</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>
-<span class="p">)</span>
+<span class="c1"># predict method returns the reconstruction produced by the AE</span>
+<span class="n">test_recon</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 
-<span class="c1"># shape: (8000, 3) with column names [s1, s2, s3]</span>
-<span class="n">ts_df</span> <span class="o">=</span> <span class="n">ts_generator</span><span class="o">.</span><span class="n">gen_tseries</span><span class="p">()</span>  
-
-<span class="c1"># Split into test and train</span>
-<span class="n">train_df</span><span class="p">,</span> <span class="n">test_df</span> <span class="o">=</span> <span class="n">ts_generator</span><span class="o">.</span><span class="n">train_test_split</span><span class="p">(</span><span class="n">ts_df</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="c1"># score method returns the anomaly score, calculated using thresholds.</span>
+<span class="c1"># A number less than 1 indicates an inlier, and greater than 1 indicates an outlier.</span>
+<span class="n">test_anomaly_score</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 </code></pre></div>
-<img alt="Train and Test sets" src="../assets/train_test.png" /></p>
-<h3 id="inject-anomalies">Inject anomalies<a class="headerlink" href="#inject-anomalies" title="Permanent link">&para;</a></h3>
-<p>Now, once we generate the synthetic data like above, we can inject anomalies into the test data set using <code>AnomalyGenerator</code>. </p>
-<p><code>AnomalyGenerator</code> supports the following types of anomalies:
-1. global: Outliers in the global context
-2. contextual: Outliers only in the seasonal context
-3. causal: Outliers caused by a temporal causal effect
-4. collective: Outliers present simultaneously in two or more time series</p>
-<p>You can also use <code>anomaly_ratio</code> to adjust the ratio of anomalous data points  wrt number of samples.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.synthetic</span> <span class="kn">import</span> <span class="n">AnomalyGenerator</span>
-
-<span class="c1"># columns to inject anomalies</span>
-<span class="n">injected_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;s1&quot;</span><span class="p">,</span> <span class="s2">&quot;s2&quot;</span><span class="p">]</span>  
-<span class="n">anomaly_generator</span> <span class="o">=</span> <span class="n">AnomalyGenerator</span><span class="p">(</span>
-    <span class="n">train_df</span><span class="p">,</span> <span class="n">anomaly_type</span><span class="o">=</span><span class="s2">&quot;contextual&quot;</span><span class="p">,</span> <span class="n">anomaly_ratio</span><span class="o">=</span><span class="mf">0.3</span>
-<span class="p">)</span>
-<span class="n">outlier_test_df</span> <span class="o">=</span> <span class="n">anomaly_generator</span><span class="o">.</span><span class="n">inject_anomalies</span><span class="p">(</span>
-    <span class="n">test_df</span><span class="p">,</span> <span class="n">cols</span><span class="o">=</span><span class="n">injected_cols</span><span class="p">,</span> <span class="n">impact</span><span class="o">=</span><span class="mf">1.5</span>
-<span class="p">)</span>
-</code></pre></div>
-<p><img alt="Outliers" src="../assets/outliers.png" /></p>
+<p><img alt="Reconstruction" src="../assets/recon.png" />
+<img alt="Anomaly Score" src="../assets/anomaly_score.png" /></p>
 
               
             </article>
@@ -820,7 +726,7 @@
     <nav class="md-footer__inner md-grid" aria-label="Footer" >
       
         
-        <a href="../quick-start/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Quick Start" rel="prev">
+        <a href="../forecasting/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Forcasting" rel="prev">
           <div class="md-footer__button md-icon">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
           </div>
@@ -829,20 +735,20 @@
               <span class="md-footer__direction">
                 Previous
               </span>
-              Quick Start
+              Forcasting
             </div>
           </div>
         </a>
       
       
         
-        <a href="../autoencoders/" class="md-footer__link md-footer__link--next" aria-label="Next: Autoencoders" rel="next">
+        <a href="../pre-processing/" class="md-footer__link md-footer__link--next" aria-label="Next: Pre Processing" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Autoencoders
+              Pre Processing
             </div>
           </div>
           <div class="md-footer__button md-icon">
