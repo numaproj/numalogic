@@ -116,7 +116,7 @@ Once the pipeline has been created, the data can be sent to the pipeline by port
 
 Initially there is no ML model present, to trigger training do a curl command and send any data to the pipeline. 
 
-The training data is from [train_data.csv](), which follows a sinusoidal pattern where value falls in range 200-350. 
+The training data is from [train_data.csv](https://github.com/numaproj/numalogic/tree/main/examples), which follows a sinusoidal pattern where values fall in the range 200-350. 
 
 The following logs will be seen in the training pod.
 
@@ -143,7 +143,7 @@ Now, the pipeline is ready for inference with the model trained above, data can 
 
 After sending the data, look for logs in the output pod which shows the anomaly score.
 
-Since, we trained the model with data that follows a sinusoidal pattern where value falls in range 200-350. Any value within this range is considered to be non anomalous. And, any value out of this range is considered to be anomalous.
+Since, we trained the model with data that follows a sinusoidal pattern where values range from 200-350, any value within this range is considered to be non anomalous. And, any value out of this range is considered to be anomalous.
 
 Sending non-anomalous data: 
 ```
