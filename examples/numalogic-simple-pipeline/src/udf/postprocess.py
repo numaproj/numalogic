@@ -4,7 +4,7 @@ import numpy as np
 from numalogic.scores import tanh_norm
 from pynumaflow.function import Messages, Message, Datum
 
-from src.utility import Payload
+from src.utils import Payload
 
 LOGGER = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.preprocess.transformer import LogTransformer
 from pynumaflow.function import Datum, Messages, Message
 
-from src.utility import Payload, save_model, TRAIN_DATA_PATH
+from src.utils import Payload, save_model, TRAIN_DATA_PATH
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))

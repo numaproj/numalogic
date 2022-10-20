@@ -6,7 +6,7 @@ from numalogic.models.autoencoder import AutoencoderPipeline
 from numalogic.models.autoencoder.variants import Conv1dAE
 from pynumaflow.function import Messages, Message, Datum
 
-from src.utility import Payload, load_model
+from src.utils import Payload, load_model
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))
