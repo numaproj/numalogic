@@ -22,6 +22,7 @@ def inference(key: str, datum: Datum) -> Messages:
 
     # Check if model exists for inference
     if artifact:
+
         # load model from registry
         pl = AutoencoderPipeline(model=Conv1dAE(in_channels=1, enc_channels=12), seq_len=WIN_SIZE)
         pl.load(model=artifact["primary_artifact"], **artifact["metadata"])
