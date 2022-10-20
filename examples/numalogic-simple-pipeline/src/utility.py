@@ -1,7 +1,6 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Union, Sequence, Any
 
 import mlflow
 from dataclasses_json import dataclass_json
@@ -12,7 +11,7 @@ from numpy._typing import ArrayLike
 
 DIR = os.path.dirname(__file__)
 ROOT_DIR = os.path.split(DIR)[0]
-TRAIN_DATA_PATH = os.path.join(ROOT_DIR, "ml_steps/resources/train_data.csv")
+TRAIN_DATA_PATH = os.path.join(ROOT_DIR, "src/resources/train_data.csv")
 TRACKING_URI = "http://mlflow-service.numaflow-system.svc.cluster.local:5000"
 LOGGER = logging.getLogger(__name__)
 

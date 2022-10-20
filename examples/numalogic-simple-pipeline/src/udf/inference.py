@@ -3,14 +3,13 @@ import os
 
 import numpy as np
 from numalogic.models.autoencoder import AutoencoderPipeline
-from numalogic.models.autoencoder.variants import VanillaAE
+from numalogic.models.autoencoder.variants import Conv1dAE
 from pynumaflow.function import Messages, Message, Datum
 
-from ml_steps.utility import Payload, load_model
+from src.utility import Payload, load_model
 
 LOGGER = logging.getLogger(__name__)
-DEFAULT_WIN_SIZE = 12
-WIN_SIZE = int(os.getenv("WIN_SIZE", DEFAULT_WIN_SIZE))
+WIN_SIZE = int(os.getenv("WIN_SIZE"))
 
 
 def inference(key: str, datum: Datum) -> Messages:
@@ -24,7 +23,7 @@ def inference(key: str, datum: Datum) -> Messages:
     # Check if model exists for inference
     if artifact:
         # load model from registry
-        pl = AutoencoderPipeline(model=VanillaAE(WIN_SIZE), seq_len=WIN_SIZE)
+        pl = AutoencoderPipeline(model=Conv1dAE(in_channels=1, enc_channels=12), seq_len=WIN_SIZE)
         pl.load(model=artifact["primary_artifact"], **artifact["metadata"])
 
         LOGGER.info("%s - Model found!", payload.uuid)

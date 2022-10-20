@@ -1,4 +1,4 @@
-from ml_steps.udf import inference, postprocess, preprocess, train
+from src.udf import inference, postprocess, preprocess, train
 
 
 class HandlerFactory:

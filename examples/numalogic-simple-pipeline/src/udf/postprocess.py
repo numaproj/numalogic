@@ -4,7 +4,7 @@ import numpy as np
 from numalogic.scores import tanh_norm
 from pynumaflow.function import Messages, Message, Datum
 
-from ml_steps.utility import Payload
+from src.utility import Payload
 
 LOGGER = logging.getLogger(__name__)
 
@@ -15,9 +15,10 @@ def postprocess(key: str, datum: Datum) -> Messages:
 
     # Postprocess step
     data = np.asarray(payload.ts_data)
-    payload.anomaly_score = np.mean(tanh_norm(data))
 
-    LOGGER.info("%s - PostProcess complete", payload.uuid)
+    # Taking mean of the anomaly scores
+    payload.anomaly_score = tanh_norm(np.mean(data))
+
     LOGGER.info("%s - The anomaly score is: %s", payload.uuid, payload.anomaly_score)
 
     # Convert Payload back to bytes

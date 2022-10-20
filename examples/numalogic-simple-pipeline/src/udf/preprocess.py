@@ -6,7 +6,7 @@ import numpy as np
 from numalogic.preprocess.transformer import LogTransformer
 from pynumaflow.function import Messages, Message, Datum
 
-from ml_steps.utility import Payload
+from src.utility import Payload
 
 LOGGER = logging.getLogger(__name__)
 
@@ -14,13 +14,13 @@ LOGGER = logging.getLogger(__name__)
 def preprocess(key: str, datum: Datum) -> Messages:
     # Load json data
     json_data = datum.value
-    array = json.loads(json_data)["data"]
-    payload = Payload(ts_data=array, uuid=str(uuid.uuid4()))
+    ts_array = json.loads(json_data)["data"]
+    payload = Payload(ts_data=ts_array, uuid=str(uuid.uuid4()))
 
     # preprocess step
     data = np.asarray(payload.ts_data)
-    preproc_transformer = LogTransformer()
-    payload.ts_data = preproc_transformer.transform(data).tolist()
+    clf = LogTransformer()
+    payload.ts_data = clf.transform(data).tolist()
     LOGGER.info("%s - Preprocess complete", payload.uuid)
 
     # Convert Payload back to bytes

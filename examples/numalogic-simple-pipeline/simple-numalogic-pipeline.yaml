@@ -4,7 +4,7 @@ metadata:
   name: numalogic-simple-pipeline
 spec:
   watermark:
-    disabled: false
+    disabled: true
   limits:
     readBatchSize: 10
     bufferMaxLength: 500
@@ -21,6 +21,9 @@ spec:
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
+        env:
+          - name: WIN_SIZE
+            value: "12"
         args:
         - python
         - starter.py
@@ -31,20 +34,22 @@ spec:
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
+        env:
+          - name: WIN_SIZE
+            value: "12"
         args:
         - python
         - starter.py
         - inference
-    containerTemplate:
-      env:
-        - name: NUMAFLOW_DEBUG
-          value: "true"
   - name: postprocess
     scale:
       disabled: true
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
+        env:
+          - name: WIN_SIZE
+            value: "12"
         args:
         - python
         - starter.py
@@ -60,8 +65,8 @@ spec:
     udf:
       container:
         env:
-        - name: WIN_SIZE
-          value: "12"
+          - name: WIN_SIZE
+            value: "12"
         image: docker.io/library/numalogic-simple-pipeline:v1
         args:
           - python

@@ -8,7 +8,7 @@ authors = ["s0nicboOm <i.kushalbatra@gmail.com>"]
 python = "~3.9"
 dataclasses-json = "^0.5.6"
 cachetools = "^5.0.0"
-pynumaflow = "~0.2.4"
+pynumaflow = "^0.2.4"
 numalogic = {version = "0.2.6", extras = ["mlflow"]}
 
 [tool.poetry.dev-dependencies]
