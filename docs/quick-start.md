@@ -68,6 +68,8 @@ For more detailed experimentation, refer to [quick-start-example](https://github
 
 ## Numalogic as streaming ML using Numaflow
 
+Numalogic can also be paired with our streaming platform [Numaflow](https://numaflow.numaproj.io/), to build streaming ML pipelines where Numalogic can be used in UDF.
+
 ### Running Numaflow:
 
  ```

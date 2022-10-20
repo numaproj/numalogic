@@ -24,7 +24,7 @@ model.fit(X_train)
 
 #### SparseAEPipeline
 
-SparseAEPipeline can be used when the training data is sparse. 
+A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve an information bottleneck. Specifically the loss function is constructed so that activations are penalized within a layer.
 
 Here we are using `Conv1dAE`, a one dimensional Convolutional Autoencoder.
 
