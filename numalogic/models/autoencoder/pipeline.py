@@ -160,6 +160,7 @@ class AutoencoderPipeline(OutlierMixin):
                 losses = np.append(losses, [loss.item()])
             if epoch % log_freq == 0:
                 _LOGGER.info(f"epoch : {epoch}, loss_mean : {losses.mean():.7f}")
+            losses = np.empty(1)
 
         self._thresholds, _mean, _std = self.find_thresholds(X)
         self._stats["mean"] = _mean
