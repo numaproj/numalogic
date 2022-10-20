@@ -139,21 +139,25 @@ Created version '1' of model 'ae::model'.
 
 Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference. 
 
-In the output, `ts_data` is the final array that the input array has been transformed to, after all the steps in the pipeline. `anomaly_score` is the final anomaly score generated for the input data.
+After sending the data, look for logs in the output pod which shows the anomaly score.
 
 Sending non-anomalous data: 
 ```
-curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[358.060687,326.253469,329.023996,346.168602,339.511273,359.080987,341.036110,333.584121,376.034150,351.065394,355.379422,333.347769]}'
+> curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[358.060687,326.253469,329.023996,346.168602,339.511273,359.080987,341.036110,333.584121,376.034150,351.065394,355.379422,333.347769]}'
 
+> kubectl logs numalogic-simple-pipeline-out-0-xxxxx
 2022/10/20 04:54:44 (out) {"ts_data": [[0.14472376660734326], [0.638373062689151], [0.8480656378656608], [0.4205087588581154], [1.285475729481929], [0.8136729095134241], [0.09972157219780131], [0.2856860200353754], [0.6005371351085002], [0.021966491476278518], [0.10405302543443251], [0.6428168263777302]], "anomaly_score": 0.49173648784304, "uuid": "0506b380-4565-405c-a3a3-ddc3a19e0bb4"}
 ```
 
 Sending anomalous data:
 ```
-curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[358.060687,326.253469,329.023996,346.168602,339.511273,800.162220,614.091646,537.250124,776.034150,751.065394,700.379422,733.347769]}'
+> curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[358.060687,326.253469,329.023996,346.168602,339.511273,800.162220,614.091646,537.250124,776.034150,751.065394,700.379422,733.347769]}'
 
+> kubectl logs numalogic-simple-pipeline-out-0-xxxxx
 2022/10/20 04:56:40 (out) {"ts_data": [[1.173712319431301], [0.39061549013480673], [2.523849648503271], [2.0962927694957254], [13.032012667825805], [5.80166091013039], [3.6868855191928325], [4.814846700913904], [4.185973265627947], [3.9097889275446356], [4.505391607282856], [4.1170053183846305]], "anomaly_score": 3.9579276751803145, "uuid": "ed039779-f924-4801-9418-eeef30715ef1"}
 ```
+
+In the output, `ts_data` is the final array that the input array has been transformed to, after all the steps in the pipeline. `anomaly_score` is the final anomaly score generated for the input data.
 
 
 ### MLflow UI
