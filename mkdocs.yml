@@ -39,6 +39,7 @@ nav:
   - Getting Started:
       - quick-start.md
   - User Guide:
+      - data-generator.md
       - Core Concepts:
           - Training:
               - autoencoders.md
@@ -47,7 +48,6 @@ nav:
           - Addons:
               - pre-processing.md
               - post-processing.md
-      - data-generator.md
       - Model Registry:
           - ml-flow.md
   - Numaproj: https://numaproj.io

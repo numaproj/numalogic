@@ -12,7 +12,6 @@ model.fit(train_df)
 pred_df = model.predict(test_df)
 r2_score = model.r2_score(test_df)
 anomaly_score = model.score(test_df)
-
 ```
 ### Seasonal Naive Forecaster
 

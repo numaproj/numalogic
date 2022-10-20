@@ -72,3 +72,17 @@ from numalogic.models.autoencoder.variants import LSTMAE
 model = LSTMAE(seq_len=12, no_features=2, embedding_dim=15)
 
 ```
+
+#### TransformerAE
+
+```python
+from numalogic.models.autoencoder.variants import TransformerAE
+
+model = TransformerAE(
+            num_heads=8,
+            seq_length=12,
+            dim_feedforward=64,
+            num_encoder_layers=3,
+            num_decoder_layers=1,
+        )
+```
