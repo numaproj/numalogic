@@ -150,6 +150,7 @@ class AutoencoderPipeline(OutlierMixin):
         loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False)
         self._model.train()
         losses = np.empty(1)
+        loss = torch.Tensor([0.0])
         for epoch in range(1, self.num_epochs + 1):
             for x_batch in loader:
                 self.optimizer.zero_grad()
