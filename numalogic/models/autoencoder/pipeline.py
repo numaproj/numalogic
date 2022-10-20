@@ -149,7 +149,7 @@ class AutoencoderPipeline(OutlierMixin):
         dataset = self._model.construct_dataset(X, self.seq_len)
         loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False)
         self._model.train()
-        losses = np.empty(1)
+        losses = []
         for epoch in range(1, self.num_epochs + 1):
             for x_batch in loader:
                 self.optimizer.zero_grad()
@@ -157,10 +157,10 @@ class AutoencoderPipeline(OutlierMixin):
                 loss = self.criterion(decoded, x_batch)
                 loss.backward()
                 self.optimizer.step()
-                losses = np.append(losses, [loss.item()])
+                losses.append(loss.item())
             if epoch % log_freq == 0:
-                _LOGGER.info(f"epoch : {epoch}, loss_mean : {losses.mean():.7f}")
-            losses = np.empty(1)
+                _LOGGER.info(f"epoch : {epoch}, loss_mean : {np.array(losses).mean():.7f}")
+            losses = []
 
         self._thresholds, _mean, _std = self.find_thresholds(X)
         self._stats["mean"] = _mean
