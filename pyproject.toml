@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.2.5"
+version = "0.2.6"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -28,16 +28,20 @@ pandas = "^1.4.3"
 torch = "^1.12.0"
 torchinfo = "^1.6.0"
 scikit-learn = "^1.0"
-mlflow-skinny = "^1.27.0"
+
+mlflow = { version = "^1.27.0", optional = true }
+
+[tool.poetry.extras]
+mlflow = ["mlflow"]
 
 [tool.poetry.dev-dependencies]
 matplotlib = "^3.4.2"
 black = "^22.6"
 pytest = "^7.1"
-pytest-cov = "^3.0"
+pytest-cov = "^4.0"
 freezegun = "^1.2.1"
 pylint = "^2.14.2"
-flake8 = "^4.0.1"
+flake8 = "^5.0"
 
 [tool.black]
 line-length = 100

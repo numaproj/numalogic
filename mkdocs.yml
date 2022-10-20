@@ -36,3 +36,8 @@ markdown_extensions:
       permalink: true
 nav:
   - Home: README.md
+  - Getting Started:
+      - quick-start.md
+  - User Guide:
+      - data-generator.md
+  - Numaproj: https://numaproj.io

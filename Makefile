@@ -24,7 +24,7 @@ lint: format
 
 # install all dependencies
 setup:
-	poetry install -v
+	poetry install --all-extras
 
 # test your application (tests in the tests/ directory)
 test:
