@@ -1,16 +1,15 @@
 import io
 import logging
 from copy import copy
-from typing import Optional, Dict, Tuple, BinaryIO, Union, Callable
+from typing import BinaryIO, Callable, Dict, Optional, Tuple, Union
 
 import numpy as np
 import torch
+from numalogic.tools.types import AutoencoderModel
 from numpy.typing import NDArray
 from sklearn.base import OutlierMixin
-from torch import nn, optim, Tensor
+from torch import Tensor, nn, optim
 from torch.utils.data import DataLoader
-
-from numalogic.tools.types import AutoencoderModel
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -66,6 +65,8 @@ class AutoencoderPipeline(OutlierMixin):
     ):
         if not (model and seq_len):
             raise ValueError("No model and seq len provided!")
+        if num_epochs < 1:
+            raise ValueError("num_epochs must be a positive interger")
 
         self._model = model
         self.seq_len = seq_len
@@ -147,8 +148,7 @@ class AutoencoderPipeline(OutlierMixin):
         dataset = self._model.construct_dataset(X, self.seq_len)
         loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=False)
         self._model.train()
-
-        loss = torch.Tensor([0.0])
+        losses = np.empty(1)
         for epoch in range(1, self.num_epochs + 1):
             for x_batch in loader:
                 self.optimizer.zero_grad()
@@ -156,9 +156,9 @@ class AutoencoderPipeline(OutlierMixin):
                 loss = self.criterion(decoded, x_batch)
                 loss.backward()
                 self.optimizer.step()
-
+                losses = np.append(losses, [loss.item()])
             if epoch % log_freq == 0:
-                _LOGGER.info(f"epoch : {epoch}, loss_mean : {loss.item():.7f}")
+                _LOGGER.info(f"epoch : {epoch}, loss_mean : {losses.mean():.7f}")
 
         self._thresholds, _mean, _std = self.find_thresholds(X)
         self._stats["mean"] = _mean
