@@ -300,6 +300,11 @@ class TestAutoEncoderPipeline(unittest.TestCase):
             )
             self.assertEqual(model_pl2.err_stats["std"], model_pl1.err_stats["std"])
 
+    def test_exception_invalid_epoch(self):
+        model = VanillaAE(10)
+        with self.assertRaises(ValueError):
+            AutoencoderPipeline(model, 10, num_epochs=-10)
+
 
 class TestSparseAEPipeline(unittest.TestCase):
     X_train = None
