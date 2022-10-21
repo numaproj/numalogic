@@ -10,6 +10,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 def postprocess(key: str, datum: Datum) -> Messages:
+    r"""
+    The postprocess transforms the inferred data into anomaly score between [0,10] and sends it to log sink.
+
+    For more information about the arguments, refer:
+    https://github.com/numaproj/numaflow-python/blob/main/pynumaflow/function/_dtypes.py
+    """
     # Load json data
     payload = Payload.from_json(datum.value.decode("utf-8"))
 

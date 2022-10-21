@@ -11,13 +11,11 @@ spec:
     bufferUsageLimit: 100
   vertices:
   - name: in
-    scale:
-      disabled: true
     source:
       http: {}
   - name: preprocess
     scale:
-      disabled: true
+      min: 1
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
@@ -30,7 +28,7 @@ spec:
         - preprocess
   - name: inference
     scale:
-      disabled: true
+      min: 1
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
@@ -43,7 +41,7 @@ spec:
         - inference
   - name: postprocess
     scale:
-      disabled: true
+      min: 1
     udf:
       container:
         image: docker.io/library/numalogic-simple-pipeline:v1
@@ -56,12 +54,12 @@ spec:
         - postprocess
   - name: out
     scale:
-      disabled: true
+      min: 1
     sink:
       log: {}
   - name: train
     scale:
-      disabled: true
+      min: 1
     udf:
       container:
         env:

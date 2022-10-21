@@ -16,20 +16,31 @@ ttl_cache = cachetools.TTLCache(maxsize=128, ttl=120 * 60)
 
 
 def train(key: str, datum: Datum):
+    r"""
+    The train function here receives data from inference step. This step preprocesses, trains and saves a 1-D
+    Convolution AE model into the registry.
+
+    For more information about the arguments, refer:
+    https://github.com/numaproj/numaflow-python/blob/main/pynumaflow/function/_dtypes.py
+    """
     payload = Payload.from_json(datum.value.decode("utf-8"))
     messages = Messages()
 
     """
     Checking if the model has already been trained or is training in progress. If so, we store 
     just the model key in TTL Cache. This is done to prevent multiple same model training triggers as 
-    ML models might take time to train. In the key skey is 'ae' and dkey is 'model'. They are combined
-    into a single key as 'ae::model'.
+    ML models might take time to train. In the key skey = ['ae'] and dkey = ['model']. They are combined
+    into a single key as 'ae::model'. 
+    Reference: https://github.com/numaproj/numalogic/blob/main/numalogic/registry/mlflow_registry.py
     """
 
-    if "ae_model" in ttl_cache:
+    model_key = "ae::model"
+
+    if model_key in ttl_cache:
         messages.append(Message.to_drop())
         return messages
-    ttl_cache["ae::model"] = "ae::model"
+
+    ttl_cache[model_key] = model_key
 
     # Load Training data
     data = pd.read_csv(TRAIN_DATA_PATH, index_col=None)
@@ -44,7 +55,7 @@ def train(key: str, datum: Datum):
     LOGGER.info("%s - Training complete", payload.uuid)
 
     # Save to registry
-    save_model(pl)
+    save_model(pl, skeys=["ae"], dkeys=["model"])
     LOGGER.info("%s - Model Saving complete", payload.uuid)
 
     # Train is the last vertex in the graph

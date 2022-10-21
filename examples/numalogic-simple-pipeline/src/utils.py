@@ -1,6 +1,7 @@
 import logging
 import os
 from dataclasses import dataclass
+from typing import Sequence
 
 import mlflow
 from dataclasses_json import dataclass_json
@@ -24,19 +25,17 @@ class Payload:
     uuid: str = None
 
 
-def save_model(pl: AutoencoderPipeline) -> None:
+def save_model(pl: AutoencoderPipeline, skeys: Sequence[str], dkeys: Sequence[str]) -> None:
     ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="pytorch")
     mlflow.start_run()
-    ml_registry.save(
-        skeys=["ae"], dkeys=["model"], primary_artifact=pl.model, **pl.model_properties
-    )
+    ml_registry.save(skeys=skeys, dkeys=dkeys, primary_artifact=pl.model, **pl.model_properties)
     mlflow.end_run()
 
 
-def load_model() -> ArtifactDict:
+def load_model(skeys: Sequence[str], dkeys: Sequence[str]) -> ArtifactDict:
     try:
         ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI)
-        artifact_dict = ml_registry.load(skeys=["ae"], dkeys=["model"])
+        artifact_dict = ml_registry.load(skeys=skeys, dkeys=dkeys)
         return artifact_dict
     except Exception as ex:
         LOGGER.exception("Error while loading model from MLFlow database: %s", ex)
