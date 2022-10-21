@@ -2,7 +2,7 @@
 
 ## Installation
 
-Install Numalogic and experiment with different tools available.
+Install Numalogic and experiment with the different tools available.
 
 ```shell
 pip install numalogic
@@ -10,9 +10,9 @@ pip install numalogic
 
 ## Numalogic as a Library
 
-Numalogic can be used as an independent library, it provides various ML models and tools. Here, we are using a `AutoencoderPipeline`, refer to [training section](autoencoders.md) for other available options. 
+Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using a `AutoencoderPipeline`. Refer to [training section](autoencoders.md) for other available options. 
 
-In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set there are data points that go out of this range, which the algorithm should be able to detect as anomalies.
+In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set, there are data points that go out of this range, which the algorithm should be able to detect as anomalies.
 
 ```python
 import numpy as np
@@ -62,17 +62,17 @@ For more detailed experimentation, refer to [quick-start example](https://github
 
 Numalogic can also be paired with our streaming platform [Numaflow](https://numaflow.numaproj.io/), to build streaming ML pipelines where Numalogic can be used in [UDF](https://numaflow.numaproj.io/user-defined-functions/).
 
-### Prerequiste
+### Prerequisite
 
 - [Numaflow](https://numaflow.numaproj.io/quick-start/#installation)
 
 ### Running the Simple Numalogic Pipeline
 
-Once Numaflow is installed, create a simple Numalogic pipeline, which takes in timeseries data, does the pre-processing, training, inference and post-processing.
+Once Numaflow is installed, create a simple Numalogic pipeline, which takes in time-series data, does the pre-processing, training, inference, and post-processing.
 
-For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples) under examples folder and execute the following commands.
+For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples) under the examples folder and execute the following commands.
 
-1. Build the docker image, import to k3d and apply the pipeline.
+1. Build the docker image, import it to k3d, and apply the pipeline.
 ```
 docker build -t simple-numalogic-pipeline . && k3d image import docker.io/library/simple-numalogic-pipeline
 
@@ -114,7 +114,7 @@ Once the pipeline has been created, the data can be sent to the pipeline by port
    
 ### Training
 
-Initially there is no ML model present, to trigger training do a curl command and send any data to the pipeline. 
+Initially, there is no ML model present; to trigger training do a curl command and send any data to the pipeline. 
 
 The training data is from [train_data.csv](https://github.com/numaproj/numalogic/tree/main/examples), which follows a sinusoidal pattern where values fall in the range 200-350. 
 
@@ -141,9 +141,9 @@ Created version '1' of model 'ae::model'.
 
 Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference. 
 
-After sending the data, look for logs in the output pod which shows the anomaly score.
+After sending the data, look for logs in the output pod, which shows the anomaly score.
 
-Since, we trained the model with data that follows a sinusoidal pattern where values range from 200-350, any value within this range is considered to be non anomalous. And, any value out of this range is considered to be anomalous.
+Since we trained the model with data that follows a sinusoidal pattern where values range from 200-350, any value within this range is considered to be non-anomalous. And any value out of this range is considered to be anomalous.
 
 Sending non-anomalous data: 
 ```
@@ -173,8 +173,7 @@ To see the model in MLflow UI, port forward mlflow-service using the below comma
 
 
 ### Train on your own data
-If you want to train ML model on your own data, replace the `train_data.csv` file with your own file, under [resources.](https://github.com/numaproj/numalogic/tree/main/examples) 
-
+If you want to train an ML model on your own data, replace the `train_data.csv` file with your own file under [resources.](https://github.com/numaproj/numalogic/tree/main/examples) 
 
 
 
