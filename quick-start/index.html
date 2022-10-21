@@ -928,7 +928,7 @@ Anomaly Scores: <span class="o">[[</span><span class="m">2</span>.70173135<span 
 </ul>
 <h3 id="running-the-simple-numalogic-pipeline">Running the Simple Numalogic Pipeline<a class="headerlink" href="#running-the-simple-numalogic-pipeline" title="Permanent link">&para;</a></h3>
 <p>Once Numaflow is installed, create a simple Numalogic pipeline, which takes in time-series data, does the pre-processing, training, inference, and post-processing.</p>
-<p>For building this pipeline, navigate to <a href="https://github.com/numaproj/numalogic/tree/main/examples">numalogic-simple-pipeline</a> under the examples folder and execute the following commands.</p>
+<p>For building this pipeline, navigate to <a href="https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline">numalogic-simple-pipeline</a> under the examples folder and execute the following commands.</p>
 <ol>
 <li>Build the docker image, import it to k3d, and apply the pipeline.
 <div class="highlight"><pre><span></span><code>docker build -t simple-numalogic-pipeline . &amp;&amp; k3d image import docker.io/library/simple-numalogic-pipeline
@@ -970,7 +970,7 @@ numalogic-simple-pipeline-in-0-tmd0v               <span class="m">1</span>/1   
 </ol>
 <h3 id="training">Training<a class="headerlink" href="#training" title="Permanent link">&para;</a></h3>
 <p>Initially, there is no ML model present; to trigger training do a curl command and send any data to the pipeline. </p>
-<p>The training data is from <a href="https://github.com/numaproj/numalogic/tree/main/examples">train_data.csv</a>, which follows a sinusoidal pattern where values fall in the range 200-350. </p>
+<p>The training data is from <a href="https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources/train_data.csv">train_data.csv</a>, which follows a sinusoidal pattern where values fall in the range 200-350. </p>
 <p>The following logs will be seen in the training pod.</p>
 <div class="highlight"><pre><span></span><code>&gt; curl -kq -X POST https://localhost:8443/vertices/in -d <span class="s1">&#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;</span>
 
@@ -1009,7 +1009,8 @@ Created version <span class="s1">&#39;1&#39;</span> of model <span class="s1">&#
    <div class="highlight"><pre><span></span><code>kubectl port-forward svc/mlflow-service 5000
 </code></pre></div></p>
 <h3 id="train-on-your-own-data">Train on your own data<a class="headerlink" href="#train-on-your-own-data" title="Permanent link">&para;</a></h3>
-<p>If you want to train an ML model on your own data, replace the <code>train_data.csv</code> file with your own file under <a href="https://github.com/numaproj/numalogic/tree/main/examples">resources.</a> </p>
+<p>If you want to train an ML model on your own data, replace the <code>train_data.csv</code> file with your own file under <a href="https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources">resources.</a> </p>
+<p>For more details, refer to <a href="https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline">numalogic-simple-pipeline</a> </p>
 
               
             </article>

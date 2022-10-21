@@ -752,10 +752,12 @@
 
 <h1 id="data-generator">Data Generator<a class="headerlink" href="#data-generator" title="Permanent link">&para;</a></h1>
 <p>Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.  </p>
-<p>Using the synthetic data, we can:
-1. Compare and evaluate different ML algorithms, since we have labeled anomalies
-2. Understand different types of anomalies, and our models' performance on each of them
-3. Recreate realtime scenarios</p>
+<p>Using the synthetic data, we can:</p>
+<ol>
+<li>Compare and evaluate different ML algorithms, since we have labeled anomalies</li>
+<li>Understand different types of anomalies, and our models' performance on each of them</li>
+<li>Recreate realtime scenarios</li>
+</ol>
 <h3 id="generate-multivariate-timeseries">Generate multivariate timeseries<a class="headerlink" href="#generate-multivariate-timeseries" title="Permanent link">&para;</a></h3>
 <p><div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.synthetic</span> <span class="kn">import</span> <span class="n">SyntheticTSGenerator</span>
 
@@ -782,11 +784,13 @@
 <img alt="Train and Test sets" src="../assets/train_test.png" /></p>
 <h3 id="inject-anomalies">Inject anomalies<a class="headerlink" href="#inject-anomalies" title="Permanent link">&para;</a></h3>
 <p>Now, once we generate the synthetic data like above, we can inject anomalies into the test data set using <code>AnomalyGenerator</code>. </p>
-<p><code>AnomalyGenerator</code> supports the following types of anomalies:
-1. global: Outliers in the global context
-2. contextual: Outliers only in the seasonal context
-3. causal: Outliers caused by a temporal causal effect
-4. collective: Outliers present simultaneously in two or more time series</p>
+<p><code>AnomalyGenerator</code> supports the following types of anomalies:</p>
+<ol>
+<li>global: Outliers in the global context</li>
+<li>contextual: Outliers only in the seasonal context</li>
+<li>causal: Outliers caused by a temporal causal effect</li>
+<li>collective: Outliers present simultaneously in two or more time series</li>
+</ol>
 <p>You can also use <code>anomaly_ratio</code> to adjust the ratio of anomalous data points  wrt number of samples.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.synthetic</span> <span class="kn">import</span> <span class="n">AnomalyGenerator</span>
 
