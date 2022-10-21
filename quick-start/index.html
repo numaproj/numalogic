@@ -407,8 +407,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#prerequiste" class="md-nav__link">
-    Prerequiste
+  <a href="#prerequisite" class="md-nav__link">
+    Prerequisite
   </a>
   
 </li>
@@ -803,8 +803,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#prerequiste" class="md-nav__link">
-    Prerequiste
+  <a href="#prerequisite" class="md-nav__link">
+    Prerequisite
   </a>
   
 </li>
@@ -876,12 +876,12 @@
 
 <h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<p>Install Numalogic and experiment with different tools available.</p>
+<p>Install Numalogic and experiment with the different tools available.</p>
 <div class="highlight"><pre><span></span><code>pip install numalogic
 </code></pre></div>
 <h2 id="numalogic-as-a-library">Numalogic as a Library<a class="headerlink" href="#numalogic-as-a-library" title="Permanent link">&para;</a></h2>
-<p>Numalogic can be used as an independent library, it provides various ML models and tools. Here, we are using a <code>AutoencoderPipeline</code>, refer to <a href="../autoencoders/">training section</a> for other available options. </p>
-<p>In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set there are data points that go out of this range, which the algorithm should be able to detect as anomalies.</p>
+<p>Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using a <code>AutoencoderPipeline</code>. Refer to <a href="../autoencoders/">training section</a> for other available options. </p>
+<p>In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set, there are data points that go out of this range, which the algorithm should be able to detect as anomalies.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numalogic.models.autoencoder</span> <span class="kn">import</span> <span class="n">AutoencoderPipeline</span>
 <span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">Conv1dAE</span>
@@ -922,15 +922,15 @@ Anomaly Scores: <span class="o">[[</span><span class="m">2</span>.70173135<span 
 <p>For more detailed experimentation, refer to <a href="https://github.com/numaproj/numalogic/blob/main/examples/quick-start.ipynb">quick-start example</a></p>
 <h2 id="numalogic-as-streaming-ml-using-numaflow">Numalogic as streaming ML using Numaflow<a class="headerlink" href="#numalogic-as-streaming-ml-using-numaflow" title="Permanent link">&para;</a></h2>
 <p>Numalogic can also be paired with our streaming platform <a href="https://numaflow.numaproj.io/">Numaflow</a>, to build streaming ML pipelines where Numalogic can be used in <a href="https://numaflow.numaproj.io/user-defined-functions/">UDF</a>.</p>
-<h3 id="prerequiste">Prerequiste<a class="headerlink" href="#prerequiste" title="Permanent link">&para;</a></h3>
+<h3 id="prerequisite">Prerequisite<a class="headerlink" href="#prerequisite" title="Permanent link">&para;</a></h3>
 <ul>
 <li><a href="https://numaflow.numaproj.io/quick-start/#installation">Numaflow</a></li>
 </ul>
 <h3 id="running-the-simple-numalogic-pipeline">Running the Simple Numalogic Pipeline<a class="headerlink" href="#running-the-simple-numalogic-pipeline" title="Permanent link">&para;</a></h3>
-<p>Once Numaflow is installed, create a simple Numalogic pipeline, which takes in timeseries data, does the pre-processing, training, inference and post-processing.</p>
-<p>For building this pipeline, navigate to <a href="https://github.com/numaproj/numalogic/tree/main/examples">numalogic-simple-pipeline</a> under examples folder and execute the following commands.</p>
+<p>Once Numaflow is installed, create a simple Numalogic pipeline, which takes in time-series data, does the pre-processing, training, inference, and post-processing.</p>
+<p>For building this pipeline, navigate to <a href="https://github.com/numaproj/numalogic/tree/main/examples">numalogic-simple-pipeline</a> under the examples folder and execute the following commands.</p>
 <ol>
-<li>Build the docker image, import to k3d and apply the pipeline.
+<li>Build the docker image, import it to k3d, and apply the pipeline.
 <div class="highlight"><pre><span></span><code>docker build -t simple-numalogic-pipeline . &amp;&amp; k3d image import docker.io/library/simple-numalogic-pipeline
 
 kubectl apply -f simple-numalogic-pipeline.yaml
@@ -969,7 +969,7 @@ numalogic-simple-pipeline-in-0-tmd0v               <span class="m">1</span>/1   
 </li>
 </ol>
 <h3 id="training">Training<a class="headerlink" href="#training" title="Permanent link">&para;</a></h3>
-<p>Initially there is no ML model present, to trigger training do a curl command and send any data to the pipeline. </p>
+<p>Initially, there is no ML model present; to trigger training do a curl command and send any data to the pipeline. </p>
 <p>The training data is from <a href="https://github.com/numaproj/numalogic/tree/main/examples">train_data.csv</a>, which follows a sinusoidal pattern where values fall in the range 200-350. </p>
 <p>The following logs will be seen in the training pod.</p>
 <div class="highlight"><pre><span></span><code>&gt; curl -kq -X POST https://localhost:8443/vertices/in -d <span class="s1">&#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;</span>
@@ -989,8 +989,8 @@ Created version <span class="s1">&#39;1&#39;</span> of model <span class="s1">&#
 </code></pre></div>
 <h3 id="inference">Inference<a class="headerlink" href="#inference" title="Permanent link">&para;</a></h3>
 <p>Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference. </p>
-<p>After sending the data, look for logs in the output pod which shows the anomaly score.</p>
-<p>Since, we trained the model with data that follows a sinusoidal pattern where values range from 200-350, any value within this range is considered to be non anomalous. And, any value out of this range is considered to be anomalous.</p>
+<p>After sending the data, look for logs in the output pod, which shows the anomaly score.</p>
+<p>Since we trained the model with data that follows a sinusoidal pattern where values range from 200-350, any value within this range is considered to be non-anomalous. And any value out of this range is considered to be anomalous.</p>
 <p>Sending non-anomalous data: 
 <div class="highlight"><pre><span></span><code>&gt; curl -kq -X POST https://localhost:8443/vertices/in -d &#39;{&quot;data&quot;:[358.060687,326.253469,329.023996,346.168602,339.511273,359.080987,341.036110,333.584121,376.034150,351.065394,355.379422,333.347769]}&#39;
 
@@ -1009,7 +1009,7 @@ Created version <span class="s1">&#39;1&#39;</span> of model <span class="s1">&#
    <div class="highlight"><pre><span></span><code>kubectl port-forward svc/mlflow-service 5000
 </code></pre></div></p>
 <h3 id="train-on-your-own-data">Train on your own data<a class="headerlink" href="#train-on-your-own-data" title="Permanent link">&para;</a></h3>
-<p>If you want to train ML model on your own data, replace the <code>train_data.csv</code> file with your own file, under <a href="https://github.com/numaproj/numalogic/tree/main/examples">resources.</a> </p>
+<p>If you want to train an ML model on your own data, replace the <code>train_data.csv</code> file with your own file under <a href="https://github.com/numaproj/numalogic/tree/main/examples">resources.</a> </p>
 
               
             </article>
