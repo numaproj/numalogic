@@ -1,0 +1,137 @@
+apiVersion: numaflow.numaproj.io/v1alpha1
+kind: Pipeline
+metadata:
+  name: numalogic-simple-pipeline
+spec:
+  watermark:
+    disabled: true
+  limits:
+    readBatchSize: 10
+    bufferMaxLength: 500
+    bufferUsageLimit: 100
+  vertices:
+  - name: in
+    source:
+      http: {}
+  - name: preprocess
+    scale:
+      min: 1
+    udf:
+      container:
+        image: docker.io/library/numalogic-simple-pipeline:v1
+        env:
+          - name: WIN_SIZE
+            value: "12"
+        args:
+        - python
+        - starter.py
+        - preprocess
+  - name: inference
+    scale:
+      min: 1
+    udf:
+      container:
+        image: docker.io/library/numalogic-simple-pipeline:v1
+        env:
+          - name: WIN_SIZE
+            value: "12"
+        args:
+        - python
+        - starter.py
+        - inference
+  - name: postprocess
+    scale:
+      min: 1
+    udf:
+      container:
+        image: docker.io/library/numalogic-simple-pipeline:v1
+        env:
+          - name: WIN_SIZE
+            value: "12"
+        args:
+        - python
+        - starter.py
+        - postprocess
+  - name: out
+    scale:
+      min: 1
+    sink:
+      log: {}
+  - name: train
+    scale:
+      min: 1
+    udf:
+      container:
+        env:
+          - name: WIN_SIZE
+            value: "12"
+        image: docker.io/library/numalogic-simple-pipeline:v1
+        args:
+          - python
+          - starter.py
+          - train
+  edges:
+    - from: in
+      to: preprocess
+    - from: inference
+      to: train
+      conditions:
+        keyIn:
+          - train
+    - from: preprocess
+      to: inference
+    - from: inference
+      to: postprocess
+      conditions:
+        keyIn:
+          - postprocess
+    - from: postprocess
+      to: out
+
+---
+#mlflow deployment config
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow-sqlite
+  labels:
+    app: mlflow
+spec:
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - image: docker.io/library/numalogic-simple-pipeline:v1
+          name: mlflow
+          args:
+          - server
+          - --backend-store-uri
+          - sqlite:///mlflow.db
+          - --artifacts-destination
+          - file://app/.mlruns
+          - --serve-artifacts
+          - --host
+          - "0.0.0.0"
+          - --port
+          - "5000"
+          command:
+            - mlflow
+          ports:
+            - containerPort: 5000
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: mlflow-service
+spec:
+  type: ClusterIP
+  selector:
+    app: mlflow
+  ports:
+    - port: 5000
+      targetPort: 5000

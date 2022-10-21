@@ -16,7 +16,8 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	poetry run black numalogic/
+	poetry run black numalogic/*
+	poetry run black examples/*
 
 lint: format
 	poetry run flake8 .
