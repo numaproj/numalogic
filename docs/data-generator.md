@@ -3,6 +3,7 @@
 Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.  
 
 Using the synthetic data, we can:
+
 1. Compare and evaluate different ML algorithms, since we have labeled anomalies
 2. Understand different types of anomalies, and our models' performance on each of them
 3. Recreate realtime scenarios
@@ -39,6 +40,7 @@ train_df, test_df = ts_generator.train_test_split(ts_df, test_size=1000)
 Now, once we generate the synthetic data like above, we can inject anomalies into the test data set using `AnomalyGenerator`. 
 
 `AnomalyGenerator` supports the following types of anomalies:
+
 1. global: Outliers in the global context
 2. contextual: Outliers only in the seasonal context
 3. causal: Outliers caused by a temporal causal effect
