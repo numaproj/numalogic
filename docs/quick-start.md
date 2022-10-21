@@ -70,7 +70,7 @@ Numalogic can also be paired with our streaming platform [Numaflow](https://numa
 
 Once Numaflow is installed, create a simple Numalogic pipeline, which takes in time-series data, does the pre-processing, training, inference, and post-processing.
 
-For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples) under the examples folder and execute the following commands.
+For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline) under the examples folder and execute the following commands.
 
 1. Build the docker image, import it to k3d, and apply the pipeline.
 ```
@@ -116,7 +116,7 @@ Once the pipeline has been created, the data can be sent to the pipeline by port
 
 Initially, there is no ML model present; to trigger training do a curl command and send any data to the pipeline. 
 
-The training data is from [train_data.csv](https://github.com/numaproj/numalogic/tree/main/examples), which follows a sinusoidal pattern where values fall in the range 200-350. 
+The training data is from [train_data.csv](https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources/train_data.csv), which follows a sinusoidal pattern where values fall in the range 200-350. 
 
 The following logs will be seen in the training pod.
 
@@ -173,9 +173,9 @@ To see the model in MLflow UI, port forward mlflow-service using the below comma
 
 
 ### Train on your own data
-If you want to train an ML model on your own data, replace the `train_data.csv` file with your own file under [resources.](https://github.com/numaproj/numalogic/tree/main/examples) 
+If you want to train an ML model on your own data, replace the `train_data.csv` file with your own file under [resources.](https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources) 
 
-
+For more details, refer to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline) 
 
 
 
