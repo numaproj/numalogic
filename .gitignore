@@ -75,6 +75,10 @@ docs/_build/
 .pybuilder/
 target/
 
+#mlflow
+/.mlruns
+*.db
+
 # Jupyter Notebook
 .ipynb_checkpoints
 
