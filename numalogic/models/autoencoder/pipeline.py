@@ -320,18 +320,21 @@ class AutoencoderPipeline(OutlierMixin):
 
 class SparseAEPipeline(AutoencoderPipeline):
     r"""
-    Class to simplify training, inference, loading and saving of Sparse Autoencoder. 
-    This SparseAEPipeline class inherits from the AutoencoderPipeline class and serves as a wrapper around the base network models.
-    Sparse Autoencoder is a type of autoencoder that applies sparsity constraint to achieve information bottleneck even when the number of hidden units is huge. 
-    It penalizes the loss function such that only some neurons are activated at a time. This sparsity penalty helps in preventing overfitting.
-    More details about Sparse Autoencoder can be found at <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+    Class to simplify training, inference, loading and saving of Sparse Autoencoder.
+    It inherits from AutoencoderPipeline class and serves as a wrapper around base network models.
+    Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
+    This helps in achieving information bottleneck even when the number of hidden units is huge.
+    It penalizes the loss function such that only some neurons are activated at a time.
+    This sparsity penalty helps in preventing overfitting.
+    More details about Sparse Autoencoder can be found at
+        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
 
     Note:
          This class only supports Pytorch models.
     Args:
         beta: regularization parameter (Defaults to 1e-3)
         rho: sparsity parameter value (Defaults to 0.05)
-        method: regularization method 
+        method: regularization method
                         supported values include {"kl_div", "L1", "L2"}
                         (Defaults to "kl_div")
         model: model instance
@@ -370,7 +373,7 @@ class SparseAEPipeline(AutoencoderPipeline):
 
     def l1_loss(self) -> Tensor:
         r"""
-        Loss function for computing sparse penalty based on L1 regularization. 
+        Loss function for computing sparse penalty based on L1 regularization.
         L1 regularization adds the absolute magnitude value of coefficient as the penalty term.
 
         Returns:
@@ -382,7 +385,7 @@ class SparseAEPipeline(AutoencoderPipeline):
 
     def l2_loss(self) -> Tensor:
         r"""
-        Loss function for computing sparse penalty based on L2 regularization. 
+        Loss function for computing sparse penalty based on L2 regularization.
         L2 regularization adds the squared magnitude of coefficient as the penalty term.
 
         Returns:
@@ -394,8 +397,8 @@ class SparseAEPipeline(AutoencoderPipeline):
 
     def kl_divergence(self, activations: Tensor) -> Tensor:
         r"""
-        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence. 
-        KL Divergence measures the difference between two probability distributions. 
+        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
+        KL Divergence measures the difference between two probability distributions.
 
         Args:
             activations: encoded output from the model layer-wise
