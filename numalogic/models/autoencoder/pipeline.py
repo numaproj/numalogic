@@ -319,6 +319,52 @@ class AutoencoderPipeline(OutlierMixin):
 
 
 class SparseAEPipeline(AutoencoderPipeline):
+    r"""
+    Class to simplify training, inference, loading and saving of Sparse Autoencoder.
+    It inherits from AutoencoderPipeline class and serves as a wrapper around base network models.
+    Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
+    This helps in achieving information bottleneck even when the number of hidden units is huge.
+    It penalizes the loss function such that only some neurons are activated at a time.
+    This sparsity penalty helps in preventing overfitting.
+    More details about Sparse Autoencoder can be found at
+        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+
+    Note:
+         This class only supports Pytorch models.
+    Args:
+        beta: regularization parameter (Defaults to 1e-3)
+        rho: sparsity parameter value (Defaults to 0.05)
+        method: regularization method
+                        supported values include {"kl_div", "L1", "L2"}
+                        (Defaults to "kl_div")
+        model: model instance
+        seq_len: sequence length
+        loss_fn: loss function used for training
+                        supported values include {"huber", "l1", "mse"}
+        optimizer: optimizer to be used for training.
+                           supported values include {"adam", "adagrad", "rmsprop"}
+        lr: learning rate
+        batch_size: batch size for training
+        num_epochs: number of epochs for training
+        std_tolerance: determines how many times the standard deviation to be used for threshold
+        reconerr_method: method used to calculate the distance
+                                between the original and the reconstucted data
+                                supported values include {"absolute", "squared"}
+        threshold_min: the minimum threshold to use;
+                              can be used when the threshold calculated is too low
+        resume_train: parameter to decide if resume training is needed. Also,
+                              based on this parameter the optimizer state dict
+                              is stored in registry.
+
+    >>> # Example usage
+    >>> from numalogic.models.autoencoder.variants import VanillaAE
+    >>> from numalogic.models.autoencoder import SparseAEPipeline
+    >>> x_train = np.random.randn(100, 3)
+    >>> model = VanillaAE(signal_len=12, n_features=3)
+    >>> sparse_ae_trainer = SparseAEPipeline(model=model, seq_len=36, num_epochs=30)
+    >>> sparse_ae_trainer.fit(x_train)
+    """
+
     def __init__(self, beta=1e-3, rho=0.05, method="kl_div", *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.beta = beta
@@ -326,16 +372,40 @@ class SparseAEPipeline(AutoencoderPipeline):
         self.reg_method = method
 
     def l1_loss(self) -> Tensor:
+        r"""
+        Loss function for computing sparse penalty based on L1 regularization.
+        L1 regularization adds the absolute magnitude value of coefficient as the penalty term.
+
+        Returns:
+            Tensor
+        """
         l1_lambda = self.beta
         l1_norm = sum(torch.linalg.norm(p, 1) for p in self._model.parameters())
         return torch.Tensor(l1_norm + l1_lambda)
 
     def l2_loss(self) -> Tensor:
+        r"""
+        Loss function for computing sparse penalty based on L2 regularization.
+        L2 regularization adds the squared magnitude of coefficient as the penalty term.
+
+        Returns:
+            Tensor
+        """
         l2_lambda = self.beta
         l2_norm = sum(torch.linalg.norm(p, 2) for p in self._model.parameters())
         return torch.Tensor(l2_norm + l2_lambda)
 
     def kl_divergence(self, activations: Tensor) -> Tensor:
+        r"""
+        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
+        KL Divergence measures the difference between two probability distributions.
+
+        Args:
+            activations: encoded output from the model layer-wise
+
+        Returns:
+            Tensor
+        """
         rho_hat = torch.mean(activations, dim=0)
         rho = torch.full(rho_hat.size(), self.rho)
         kl_loss = nn.KLDivLoss(reduction="sum")
@@ -343,6 +413,18 @@ class SparseAEPipeline(AutoencoderPipeline):
         return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
 
     def calculate_regularized_loss(self, activation: Tensor) -> Tensor:
+        r"""
+        Loss Function to compute regularized loss penalty based on the chosen regularization method
+
+        Args:
+            activation: encoded output from the model layer-wise
+
+        Raises:
+            NotImplementedError: Unsupported regularization method value provided
+
+        Returns:
+            Tensor
+        """
         if self.reg_method == "kl_div":
             return self.kl_divergence(activation) * self.beta
         if self.reg_method == "L1":
@@ -354,6 +436,14 @@ class SparseAEPipeline(AutoencoderPipeline):
         )
 
     def fit(self, X: NDArray[float], y=None, log_freq: int = 5) -> None:
+        r"""
+        Fit function to train sparse autoencoder model
+
+        Args:
+            X: training dataset
+            y: labels (Defaults to None)
+            log_freq: frequency logging, i.e, number of epochs to be logged (Defaults to 5)
+        """
         _LOGGER.info(
             "Training sparse autoencoder model with beta: %s, and rho: %s", self.beta, self.rho
         )
