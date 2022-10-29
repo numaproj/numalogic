@@ -329,10 +329,11 @@ class SparseAEPipeline(AutoencoderPipeline):
     Note:
          This class only supports Pytorch models.
     Args:
-        beta: regularization parameter
-        rho: sparsity parameter value
-        method: regularization method
+        beta: regularization parameter (Defaults to 1e-3)
+        rho: sparsity parameter value (Defaults to 0.05)
+        method: regularization method 
                         supported values include {"kl_div", "L1", "L2"}
+                        (Defaults to "kl_div")
         model: model instance
         seq_len: sequence length
         loss_fn: loss function used for training
@@ -362,25 +363,6 @@ class SparseAEPipeline(AutoencoderPipeline):
     """
 
     def __init__(self, beta=1e-3, rho=0.05, method="kl_div", *args, **kwargs):
-        r"""
-        Function to initialize the data member values (including the inherited parent class members) when an object of this class is created. 
-
-        Args:
-            beta: regularization parameter (Defaults to 1e-3)
-            rho: sparsity parameter value (Defaults to 0.05)
-            method: regularization method (Defaults to "kl_div")
-            model: model instance
-            seq_len: sequence length
-            loss_fn: loss function used for training
-            optimizer: optimizer to be used for training
-            lr: learning rate
-            batch_size: batch size for training
-            num_epochs: number of epochs for training
-            std_tolerance: determines how many times the standard deviation to be used for threshold
-            reconerr_method: method used to calculate the distance between the original and the reconstucted data
-            threshold_min: the minimum threshold to use
-            resume_train: parameter to decide if resume training is needed
-        """
         super().__init__(*args, **kwargs)
         self.beta = beta
         self.rho = rho
