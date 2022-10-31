@@ -1,5 +1,4 @@
 FROM python:3.9.12-slim
-RUN pip install mlflow
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
   PYTHONHASHSEED=random \
@@ -27,7 +26,7 @@ RUN curl -sSL https://install.python-poetry.org | python3 -
 WORKDIR $PYSETUP_PATH
 ADD . $PYSETUP_PATH
 WORKDIR $PYSETUP_PATH
-RUN poetry install
+RUN poetry install --all-extras
 
 ADD . /app
 
