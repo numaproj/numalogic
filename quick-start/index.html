@@ -931,9 +931,9 @@ Anomaly Scores: <span class="o">[[</span><span class="m">2</span>.70173135<span 
 <p>For building this pipeline, navigate to <a href="https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline">numalogic-simple-pipeline</a> under the examples folder and execute the following commands.</p>
 <ol>
 <li>Build the docker image, import it to k3d, and apply the pipeline.
-<div class="highlight"><pre><span></span><code>docker build -t simple-numalogic-pipeline . &amp;&amp; k3d image import docker.io/library/simple-numalogic-pipeline
+<div class="highlight"><pre><span></span><code>docker build -t numalogic-simple-pipeline:v1 . <span class="o">&amp;&amp;</span> k3d image import docker.io/library/numalogic-simple-pipeline:v1
 
-kubectl apply -f simple-numalogic-pipeline.yaml
+kubectl apply -f numa-pl.yaml
 </code></pre></div></li>
 <li>To verify if the pipeline has been deployed successfully, check the status of each pod.
 <div class="highlight"><pre><span></span><code>&gt; kubectl get pods
@@ -958,12 +958,12 @@ numalogic-simple-pipeline-in-0-tmd0v               <span class="m">1</span>/1   
 <ol>
 <li>
 <p>Port-forward to the http-source vertex
-   <div class="highlight"><pre><span></span><code>kubectl port-forward simple-numalogic-pipeline-in-0-xxxxx 8443
+   <div class="highlight"><pre><span></span><code>kubectl port-forward simple-numalogic-pipeline-in-0-xxxxx <span class="m">8443</span>
 </code></pre></div></p>
 </li>
 <li>
 <p>Send the data to the pod via curl
-   <div class="highlight"><pre><span></span><code>curl -kq -X POST https://localhost:8443/vertices/in -d &#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;
+   <div class="highlight"><pre><span></span><code>curl -kq -X POST https://localhost:8443/vertices/in -d <span class="s1">&#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;</span>
 </code></pre></div>
    Note: only send an array of length 12 in data, as the sequence length used for training is 12.   </p>
 </li>
@@ -1006,7 +1006,7 @@ Created version <span class="s1">&#39;1&#39;</span> of model <span class="s1">&#
 <p>In the output, <code>ts_data</code> is the final array that the input array has been transformed to, after all the steps in the pipeline. <code>anomaly_score</code> is the final anomaly score generated for the input data.</p>
 <h3 id="mlflow-ui">MLflow UI<a class="headerlink" href="#mlflow-ui" title="Permanent link">&para;</a></h3>
 <p>To see the model in MLflow UI, port forward mlflow-service using the below command and navigate to http://127.0.0.1:5000/
-   <div class="highlight"><pre><span></span><code>kubectl port-forward svc/mlflow-service 5000
+   <div class="highlight"><pre><span></span><code>kubectl port-forward svc/mlflow-service <span class="m">5000</span>
 </code></pre></div></p>
 <h3 id="train-on-your-own-data">Train on your own data<a class="headerlink" href="#train-on-your-own-data" title="Permanent link">&para;</a></h3>
 <p>If you want to train an ML model on your own data, replace the <code>train_data.csv</code> file with your own file under <a href="https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources">resources.</a> </p>
