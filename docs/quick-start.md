@@ -74,9 +74,9 @@ For building this pipeline, navigate to [numalogic-simple-pipeline](https://gith
 
 1. Build the docker image, import it to k3d, and apply the pipeline.
 ```shell
-docker build -t simple-numalogic-pipeline:v1 . && k3d image import docker.io/library/simple-numalogic-pipeline:v1
+docker build -t numalogic-simple-pipeline:v1 . && k3d image import docker.io/library/numalogic-simple-pipeline:v1
 
-kubectl apply -f simple-numalogic-pl.yaml
+kubectl apply -f numa-pl.yaml
 ```
 2. To verify if the pipeline has been deployed successfully, check the status of each pod.
 ```shell
