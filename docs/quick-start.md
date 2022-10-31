@@ -73,10 +73,10 @@ Once Numaflow is installed, create a simple Numalogic pipeline, which takes in t
 For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline) under the examples folder and execute the following commands.
 
 1. Build the docker image, import it to k3d, and apply the pipeline.
-```
-docker build -t simple-numalogic-pipeline . && k3d image import docker.io/library/simple-numalogic-pipeline
+```shell
+docker build -t simple-numalogic-pipeline:v1 . && k3d image import docker.io/library/simple-numalogic-pipeline:v1
 
-kubectl apply -f simple-numalogic-pipeline.yaml
+kubectl apply -f simple-numalogic-pl.yaml
 ```
 2. To verify if the pipeline has been deployed successfully, check the status of each pod.
 ```shell
@@ -101,12 +101,12 @@ numalogic-simple-pipeline-in-0-tmd0v               1/1     Running   0          
 Once the pipeline has been created, the data can be sent to the pipeline by port-forwarding the input vertex.
 
 1. Port-forward to the http-source vertex
-   ```
+   ```shell
    kubectl port-forward simple-numalogic-pipeline-in-0-xxxxx 8443
    ```
    
 2. Send the data to the pod via curl
-   ```
+   ```shell
    curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}'
    ```
    Note: only send an array of length 12 in data, as the sequence length used for training is 12.   
@@ -167,7 +167,7 @@ In the output, `ts_data` is the final array that the input array has been transf
 ### MLflow UI
 
 To see the model in MLflow UI, port forward mlflow-service using the below command and navigate to http://127.0.0.1:5000/
-   ```
+   ```shell
    kubectl port-forward svc/mlflow-service 5000
    ```
 

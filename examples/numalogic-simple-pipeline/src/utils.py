@@ -7,8 +7,8 @@ import mlflow
 from dataclasses_json import dataclass_json
 from numalogic.models.autoencoder import AutoencoderPipeline
 from numalogic.registry import MLflowRegistrar
-from numalogic.tools.types import Artifact, ArtifactDict
-from numpy._typing import ArrayLike
+from numalogic.tools.types import ArtifactDict
+from numpy.typing import ArrayLike
 
 DIR = os.path.dirname(__file__)
 ROOT_DIR = os.path.split(DIR)[0]
