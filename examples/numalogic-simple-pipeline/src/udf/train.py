@@ -17,7 +17,8 @@ ttl_cache = cachetools.TTLCache(maxsize=128, ttl=120 * 60)
 
 def train(key: str, datum: Datum):
     r"""
-    The train function here receives data from inference step. This step preprocesses, trains and saves a 1-D
+    The train function here receives data from inference step.
+    This step preprocesses, trains and saves a 1-D
     Convolution AE model into the registry.
 
     For more information about the arguments, refer:
@@ -27,10 +28,10 @@ def train(key: str, datum: Datum):
     messages = Messages()
 
     """
-    Checking if the model has already been trained or is training in progress. If so, we store 
-    just the model key in TTL Cache. This is done to prevent multiple same model training triggers as 
-    ML models might take time to train. In the key skey = ['ae'] and dkey = ['model']. They are combined
-    into a single key as 'ae::model'. 
+    Checking if the model has already been trained or is training in progress. If so, we store
+    just the model key in TTL Cache. This is done to prevent multiple same model training
+    triggers as ML models might take time to train. In the key skey = ['ae'] and dkey = ['model'].
+    They are combined into a single key as 'ae::model'.
     Reference: https://github.com/numaproj/numalogic/blob/main/numalogic/registry/mlflow_registry.py
     """
 
