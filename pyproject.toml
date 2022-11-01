@@ -17,11 +17,12 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10"
+   "Programming Language :: Python :: 3.10",
+   "Programming Language :: Python :: 3.11"
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.11"
+python = ">=3.8, <3.12"
 pytz = "^2022.1"
 numpy = "^1.23.1"
 pandas = "^1.4.3"
