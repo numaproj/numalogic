@@ -68,12 +68,14 @@ class AutoencoderPipeline(TransformerMixin, BaseEstimator):
         self.batch_size = batch_size
         self.num_epochs = num_epochs
         self.resume_train = resume_train
+        self._epochs_elapsed = 0
 
     @property
     def model_properties(self):
         model_properties_dict = {
             "batch_size": self.batch_size,
             "num_epochs": self.num_epochs,
+            "epochs_elapsed": self._epochs_elapsed
         }
         if self.resume_train:
             model_properties_dict["optimizer_state_dict"] = self.optimizer.state_dict()
@@ -131,7 +133,7 @@ class AutoencoderPipeline(TransformerMixin, BaseEstimator):
             if epoch % log_freq == 0:
                 _LOGGER.info(f"epoch : {epoch}, loss_mean : {np.mean(losses):.7f}")
             losses = []
-
+            self._epochs_elapsed += 1
         return self
 
     def predict(self, X: NDArray[float], seq_len: int = None) -> NDArray[float]:
@@ -192,8 +194,9 @@ class AutoencoderPipeline(TransformerMixin, BaseEstimator):
     def __load_metadata(self, **metadata) -> None:
         if self.resume_train:
             self.optimizer.load_state_dict(metadata["optimizer_state_dict"])
-        self._thresholds = metadata["thresholds"]
-        self._stats = metadata["err_stats"]
+            self._epochs_elapsed = metadata["epochs_elapsed"]
+        self.num_epochs = metadata["num_epochs"]
+        self.batch_size = metadata["batch_size"]
 
     def load(self, path: Union[str, BinaryIO] = None, model=None, **metadata) -> None:
         r"""
