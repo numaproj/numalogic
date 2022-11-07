@@ -1,7 +1,7 @@
 import io
 import logging
 from copy import copy
-from typing import Optional, Dict, BinaryIO, Union
+from typing import Optional, BinaryIO, Union
 
 import numpy as np
 import torch
@@ -25,7 +25,7 @@ class AutoencoderPipeline(TransformerMixin, BaseEstimator):
         model: model instance
         seq_len: sequence length
         loss_fn: loss function used for training
-                        supported values include {"huber", "l1", "mse"}
+                        supported values include    {"huber", "l1", "mse"}
         optimizer: optimizer to used for training.
                            supported values include {"adam", "adagrad", "rmsprop"}
         lr: learning rate
