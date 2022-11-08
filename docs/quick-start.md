@@ -80,7 +80,10 @@ kubectl apply -f numa-pl.yaml
 ```
 2. To verify if the pipeline has been deployed successfully, check the status of each pod.
 ```shell
-> kubectl get pods
+kubectl get pods
+```
+Output will be something like this:
+```
 NAME                                               READY   STATUS    RESTARTS   AGE
 numaflow-server-d64bf6f7c-2czd7                    1/1     Running   0          72s
 numaflow-controller-c84948cbb-994fn                1/1     Running   0          72s
@@ -102,7 +105,7 @@ Once the pipeline has been created, the data can be sent to the pipeline by port
 
 1. Port-forward to the http-source vertex
    ```shell
-   kubectl port-forward simple-numalogic-pipeline-in-0-xxxxx 8443
+   kubectl port-forward numalogic-simple-pipeline-in-0-xxxxx 8443
    ```
    
 2. Send the data to the pod via curl
