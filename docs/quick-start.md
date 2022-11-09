@@ -72,7 +72,7 @@ Once Numaflow is installed, create a simple Numalogic pipeline, which takes in t
 
 For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline) under the examples folder and execute the following commands.
 
-1. Build the docker image, import it to k3d, and apply the pipeline.
+1. Build the docker image, import it to k3d, and apply the pipeline. *Note Make sure the pipeline and, numaflow controllers and isbs pods are running in the same namespace (`numaflow-system`in this case).*
 ```shell
 docker build -t numalogic-simple-pipeline:v1 . && k3d image import docker.io/library/numalogic-simple-pipeline:v1
 
