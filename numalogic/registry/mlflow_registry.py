@@ -1,6 +1,4 @@
-import codecs
 import logging
-import pickle
 from enum import Enum
 from typing import Optional, Sequence, Union, Dict
 
@@ -10,8 +8,8 @@ from mlflow.entities.model_registry import ModelVersion
 from mlflow.exceptions import RestException
 from mlflow.tracking import MlflowClient
 
-from numalogic.registry import ArtifactManager
-from numalogic.tools.types import Artifact, ArtifactDict
+from numalogic.registry import ArtifactManager, ArtifactData
+from numalogic.tools.types import Artifact
 
 _LOGGER = logging.getLogger()
 
@@ -20,7 +18,6 @@ class ModelStage(str, Enum):
     """
     Defines different stages the model state can be in mlflow
     """
-
     STAGE = "Staging"
     ARCHIVE = "Archived"
     PRODUCTION = "Production"
@@ -42,53 +39,37 @@ class MLflowRegistrar(ArtifactManager):
     Examples
     --------
     >>> from numalogic.models.autoencoder.variants.vanilla import VanillaAE
-    >>> from numalogic.preprocess.transformer import LogTransformer
     >>> from numalogic.registry.mlflow_registry import MLflowRegistrar
-    >>> from sklearn.preprocessing import StandardScaler, Normalizer
     >>> from sklearn.pipeline import make_pipeline
     >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler.fit(data)
-    >>> ml = MLflowRegistrar(tracking_uri="http://0.0.0.0:8080", artifact_type="pytorch")
-    >>> ml.save(skeys=["model"],dkeys=["AE"], primary_artifact=VanillaAE(10),
-    >>> ... secondary_artifacts={"preproc": make_pipeline(scaler)})
-    >>> data = ml.load(skeys=["model"],dkeys=["AE"])
+    >>> registry = MLflowRegistrar(tracking_uri="http://0.0.0.0:8080", artifact_type="pytorch")
+    >>> registry.save(skeys=["model"], dkeys=["AE"], artifact=VanillaAE(10))
+    >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"])
     """
+    _TRACKING_URI = None
+
+    def __new__(
+        cls,
+        tracking_uri: Optional[str],
+        artifact_type: str = "pytorch",
+        models_to_retain: int = 5,
+        *args,
+        **kwargs,
+    ):
+        instance = super().__new__(cls, *args, **kwargs)
+        if (not cls._TRACKING_URI) or (cls._TRACKING_URI != tracking_uri):
+            cls._TRACKING_URI = tracking_uri
+        return instance
 
     def __init__(
         self, tracking_uri: str, artifact_type: str = "pytorch", models_to_retain: int = 5
     ):
         super().__init__(tracking_uri)
-        mlflow.set_tracking_uri(tracking_uri)
         self.client = MlflowClient()
         self.handler = self.mlflow_handler(artifact_type)
         self.models_to_retain = models_to_retain
-
-    @staticmethod
-    def __as_dict(
-        primary_artifact: Optional[Artifact],
-        secondary_artifacts: Union[Sequence[Artifact], Dict[str, Artifact], None],
-        metadata: Optional[dict],
-        model_properties: Optional[ModelVersion],
-    ) -> ArtifactDict:
-        """
-        Returns a dictionary comprising information on model, metadata, model_properties
-        Args:
-            primary_artifact: main artifact to be saved
-            secondary_artifacts: secondary artifacts to be saved
-            metadata: ML models metadata
-            model_properties: ML model properties (information like time "model_created",
-                                    "model_updated_time", "model_name", "tags" , "current stage",
-                                    "version"  etc.)
-
-        Returns: ArtifactDict type object
-        """
-        return {
-            "primary_artifact": primary_artifact,
-            "secondary_artifacts": secondary_artifacts,
-            "metadata": metadata,
-            "model_properties": model_properties,
-        }
 
     @staticmethod
     def construct_key(skeys: Sequence[str], dkeys: Sequence[str]) -> str:
@@ -121,68 +102,54 @@ class MLflowRegistrar(ArtifactManager):
         raise NotImplementedError("Artifact Type not Implemented")
 
     def load(
-        self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
-    ) -> ArtifactDict:
-        """
-        Loads the desired artifact from mlflow registry and returns it.
-        Args:
-            skeys: static key fields as list/tuple of strings
-            dkeys: dynamic key fields as list/tuple of strings
-            latest: boolean field to determine if latest version is desired or not
-            version: explicit artifact version
-
-        Returns:
-             A dictionary containing primary_artifact, secondary_artifacts, metadata and
-             model_properties
-        """
-
+        self,
+        skeys: Sequence[str],
+        dkeys: Sequence[str],
+        latest: bool = True,
+        version: str = None,
+    ) -> Optional[ArtifactData]:
         model_key = self.construct_key(skeys, dkeys)
         try:
             if latest:
-                stage = "Production"
-                model = self.handler.load_model(model_uri=f"models:/{model_key}/{stage}")
+                model = self.handler.load_model(
+                    model_uri=f"models:/{model_key}/{ModelStage.PRODUCTION}"
+                )
+                version_info = self.client.get_latest_versions(
+                    model_key, stages=[ModelStage.PRODUCTION]
+                )[-1]
             elif version is not None:
-                model = self.handler.load_model(model_uri=f"models:/{model_key}/{version}")
+                model = self.handler.load_model(
+                    model_uri=f"models:/{model_key}/{version}"
+                )
+                version_info = self.client.get_model_version(model_key, version)
             else:
-                _LOGGER.warning("Version not provided in the load mlflow model function call")
-                return {}
+                raise ValueError("One of 'latest' or 'version' needed in load method call")
             _LOGGER.info("Successfully loaded model %s from Mlflow", model_key)
-            metadata = None
-            secondary_artifacts = None
-            model_properties = self.client.get_latest_versions(model_key, stages=["Production"])[-1]
-            if model_properties.run_id:
-                run_id = model_properties.run_id
-                run_data = self.client.get_run(run_id).data.to_dictionary()
-                if run_data["params"]:
-                    data = run_data["params"]
-                    if "secondary_artifacts" in data:
-                        secondary_artifacts = pickle.loads(
-                            codecs.decode(data["secondary_artifacts"].encode(), "base64")
-                        )
-                        _LOGGER.info("Successfully loaded secondary_artifacts from Mlflow")
-                    if "metadata" in data:
-                        metadata = pickle.loads(codecs.decode(data["metadata"].encode(), "base64"))
-                        _LOGGER.info("Successfully loaded model metadata from Mlflow")
-            return self.__as_dict(model, secondary_artifacts, metadata, model_properties)
+
+            run_info = mlflow.get_run(version_info.run_id)
+            metadata = run_info.data.params or None
+            _LOGGER.info("Successfully loaded model metadata from Mlflow!")
+
+            return ArtifactData(artifact=model, metadata=metadata, extras=dict(version_info))
         except Exception as ex:
-            _LOGGER.exception("Error when loading a model with key: %s: %r", model_key, ex)
-            return {}
+            _LOGGER.exception(
+                "Error when loading a model with key: %s: %r", model_key, ex
+            )
+            return None
 
     def save(
         self,
         skeys: Sequence[str],
         dkeys: Sequence[str],
-        primary_artifact: Artifact,
-        secondary_artifacts: Union[Sequence[Artifact], Dict[str, Artifact], None] = None,
-        **metadata,
+        artifact: Artifact,
+        **metadata: str,
     ) -> Optional[ModelVersion]:
         """
         Saves the artifact into mlflow registry and updates version.
         Args:
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            primary_artifact: primary artifact to be saved
-            secondary_artifacts: secondary artifact to be saved
+            artifact: primary artifact to be saved
             metadata: additional metadata surrounding the artifact that needs to be saved
 
         Returns:
@@ -190,22 +157,22 @@ class MLflowRegistrar(ArtifactManager):
         """
         model_key = self.construct_key(skeys, dkeys)
         try:
-            self.handler.log_model(primary_artifact, "model", registered_model_name=model_key)
-            if secondary_artifacts:
-                secondary_artifacts_data = codecs.encode(
-                    pickle.dumps(secondary_artifacts), "base64"
-                ).decode()
-                mlflow.log_param(key="secondary_artifacts", value=secondary_artifacts_data)
+            mlflow.start_run()
+            self.handler.log_model(
+                artifact, "model", registered_model_name=model_key
+            )
             if metadata:
-                data = codecs.encode(pickle.dumps(metadata), "base64").decode()
-                mlflow.log_param(key="metadata", value=data)
-                mlflow.log_param(key="model_key", value=model_key)
+                mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
             _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
             return model_version
         except Exception as ex:
-            _LOGGER.exception("Error when saving a model with key: %s: %r", model_key, ex)
+            _LOGGER.exception(
+                "Error when saving a model with key: %s: %r", model_key, ex
+            )
             return None
+        finally:
+            mlflow.end_run()
 
     def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
         """

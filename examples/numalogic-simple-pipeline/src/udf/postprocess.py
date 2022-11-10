@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from numalogic.scores import tanh_norm
+from numalogic.postprocess import tanh_norm
 from pynumaflow.function import Messages, Message, Datum
 
 from src.utils import Payload
