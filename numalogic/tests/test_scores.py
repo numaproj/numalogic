@@ -2,7 +2,7 @@ import unittest
 
 import numpy as np
 
-from numalogic.scores import tanh_norm
+from numalogic.postprocess import tanh_norm
 
 
 class TestScores(unittest.TestCase):
