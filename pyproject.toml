@@ -27,7 +27,7 @@ numpy = "^1.23.1"
 pandas = "^1.4.3"
 torch = "~1.12.0"
 torchinfo = "^1.6.0"
-scikit-learn = "^1.0"
+scikit-learn = "^1.1"
 
 mlflow-skinny = { version = "~2.0.1", optional = true }
 mlflow = { version = "~2.0.1", optional = true }
