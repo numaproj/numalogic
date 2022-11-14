@@ -4,6 +4,7 @@ import pickle
 from enum import Enum
 from typing import Optional, Sequence, Union, Dict
 
+import boto3
 import mlflow.pyfunc
 import mlflow.pytorch
 from mlflow.entities.model_registry import ModelVersion
@@ -56,13 +57,20 @@ class MLflowRegistrar(ArtifactManager):
     """
 
     def __init__(
-        self, tracking_uri: str, artifact_type: str = "pytorch", models_to_retain: int = 5
+        self,
+        tracking_uri: str,
+        artifact_type: str = "pytorch",
+        models_to_retain: int = 5,
+        s3_aws_role: str = None,
+        s3_session_name: str = None,
     ):
         super().__init__(tracking_uri)
         mlflow.set_tracking_uri(tracking_uri)
         self.client = MlflowClient()
         self.handler = self.mlflow_handler(artifact_type)
         self.models_to_retain = models_to_retain
+        if s3_aws_role:
+            self.assume_role(role_arn=s3_aws_role, session_name=s3_session_name)
 
     @staticmethod
     def __as_dict(
@@ -119,6 +127,19 @@ class MLflowRegistrar(ArtifactManager):
         if artifact_type == "pyfunc":
             return mlflow.pyfunc
         raise NotImplementedError("Artifact Type not Implemented")
+
+    @staticmethod
+    def assume_role(role_arn: str, session_name: str):
+        client = boto3.client("sts")
+        assumed_role_object = client.assume_role(RoleArn=role_arn, RoleSessionName=session_name)
+        credentials = assumed_role_object["Credentials"]
+
+        # setting default session with aws keys - will be used internally in mlflow
+        boto3.setup_default_session(
+            aws_access_key_id=credentials["AccessKeyId"],
+            aws_secret_access_key=credentials["SecretAccessKey"],
+            aws_session_token=credentials["SessionToken"],
+        )
 
     def load(
         self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
