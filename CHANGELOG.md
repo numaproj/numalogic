@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.7 (2022-11-14)
+
+ * [f9c74c9](https://github.com/numaproj/numalogic/commit/f9c74c90c37fca24db3465c24326a639e93bc802) fix: allow only patch updates in torch version due to cuda build errors on mac (#90)
+ * [0a5fcdf](https://github.com/numaproj/numalogic/commit/0a5fcdf6c1ea4732b2c6c97f57d983751cfe2956) fix_readme: mention namespace name when applying the pipeline (#88)
+ * [537fae5](https://github.com/numaproj/numalogic/commit/537fae56577954391d10b134cb318d388c1a7dd7) fix: AutoencoderPipeline logged loss mean (#55)
+ * [22f8e5d](https://github.com/numaproj/numalogic/commit/22f8e5d79183d848f68c7cbeb2d88126fb326d03) chore!: make mlflow as an optional dependency (#47)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+ * diego-ponce
+
 ## v0.2.6 (2022-10-17)
 
  * [5703d1b](https://github.com/numaproj/numalogic/commit/5703d1b75d642242dc5c521a2e85e9cbb2527923) fix: update readme with optional mlflow dependency
