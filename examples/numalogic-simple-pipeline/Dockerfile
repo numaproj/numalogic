@@ -1,4 +1,5 @@
 FROM python:3.9.12-slim
+RUN pip install mlflow
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
   PYTHONHASHSEED=random \
@@ -18,23 +19,26 @@ RUN apt-get update \
         curl \
         wget \
         # deps for building python deps
-        build-essential
-RUN apt-get install -y git
-# install poetry - respects $POETRY_VERSION & $POETRY_HOME
-RUN curl -sSL https://install.python-poetry.org | python3 -
+        build-essential \
+    && apt-get install -y git \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    \
+    # install dumb-init
+    && wget -O /dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64 \
+    && chmod +x /dumb-init \
+    \
+    # install poetry - respects $POETRY_VERSION & $POETRY_HOME
+    && curl -sSL https://install.python-poetry.org | python3 -
+
 
 WORKDIR $PYSETUP_PATH
-ADD . $PYSETUP_PATH
-WORKDIR $PYSETUP_PATH
-RUN poetry install --all-extras
+COPY ./pyproject.toml ./poetry.lock $PYSETUP_PATH
+RUN poetry install --without dev --no-cache --no-root && \
+    rm -rf ~/.cache/pypoetry/
 
 ADD . /app
-
-# install dumb-init
-RUN wget -O /dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64
-RUN chmod +x /dumb-init
-
 WORKDIR /app
+
 RUN chmod +x entry.sh
 
 ENTRYPOINT ["/dumb-init", "--"]
