@@ -1,5 +1,4 @@
 FROM python:3.9.12-slim
-RUN pip install mlflow
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
   PYTHONHASHSEED=random \
