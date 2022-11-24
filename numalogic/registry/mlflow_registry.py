@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import Optional, Sequence, Union, Dict
+from typing import Optional, Sequence
 
 import mlflow.pyfunc
 import mlflow.pytorch
@@ -67,6 +67,7 @@ class MLflowRegistrar(ArtifactManager):
         self, tracking_uri: str, artifact_type: str = "pytorch", models_to_retain: int = 5
     ):
         super().__init__(tracking_uri)
+        mlflow.set_tracking_uri(tracking_uri)
         self.client = MlflowClient()
         self.handler = self.mlflow_handler(artifact_type)
         self.models_to_retain = models_to_retain
@@ -158,18 +159,14 @@ class MLflowRegistrar(ArtifactManager):
         model_key = self.construct_key(skeys, dkeys)
         try:
             mlflow.start_run()
-            self.handler.log_model(
-                artifact, "model", registered_model_name=model_key
-            )
+            self.handler.log_model(artifact, "model", registered_model_name=model_key)
             if metadata:
                 mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
             _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
             return model_version
         except Exception as ex:
-            _LOGGER.exception(
-                "Error when saving a model with key: %s: %r", model_key, ex
-            )
+            _LOGGER.exception("Error when saving a model with key: %s: %r", model_key, ex)
             return None
         finally:
             mlflow.end_run()
