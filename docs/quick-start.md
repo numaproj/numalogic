@@ -72,7 +72,7 @@ Once Numaflow is installed, create a simple Numalogic pipeline, which takes in t
 
 For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline) under the examples folder and execute the following commands.
 
-1. Build the docker image, import it to k3d, and apply the pipeline. *Note Make sure the pipeline and, numaflow controllers and isbs pods are running in the same namespace (`numaflow-system`in this case).*
+1. Build the docker image, import it to k3d, and apply the pipeline. *Note Make sure the pipeline and, numaflow controllers and isbsvc pods are running in the same namespace (`default` in this case).*
 ```shell
 docker build -t numalogic-simple-pipeline:v1 . && k3d image import docker.io/library/numalogic-simple-pipeline:v1
 
@@ -85,8 +85,6 @@ kubectl get pods
 Output will be something like this:
 ```
 NAME                                               READY   STATUS    RESTARTS   AGE
-numaflow-server-d64bf6f7c-2czd7                    1/1     Running   0          72s
-numaflow-controller-c84948cbb-994fn                1/1     Running   0          72s
 isbsvc-default-js-0                                3/3     Running   0          68s
 isbsvc-default-js-1                                3/3     Running   0          68s
 isbsvc-default-js-2                                3/3     Running   0          68s
