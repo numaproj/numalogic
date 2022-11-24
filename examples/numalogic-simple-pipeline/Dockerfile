@@ -32,7 +32,7 @@ RUN apt-get update \
 
 WORKDIR $PYSETUP_PATH
 COPY ./pyproject.toml ./poetry.lock $PYSETUP_PATH
-RUN poetry install --without dev --no-cache --no-root && \
+RUN poetry install --all-extras --without dev --no-cache --no-root && \
     rm -rf ~/.cache/pypoetry/
 
 ADD . /app
