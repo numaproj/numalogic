@@ -29,12 +29,13 @@ torch = "~1.12.0"
 torchinfo = "^1.6.0"
 scikit-learn = "^1.1"
 
-mlflow = { version = "^1.27.0", optional = true }
+mlflow-skinny = { version = "^1.30.0", optional = true }
+flask = {version = "^2.2.2", optional = true }
 
 [tool.poetry.extras]
-mlflow = ["mlflow"]
+mlflow = ["mlflow", "flask"]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 matplotlib = "^3.4.2"
 black = "^22.6"
 pytest = "^7.1"
