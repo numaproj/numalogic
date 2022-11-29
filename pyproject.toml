@@ -34,7 +34,7 @@ mlflow-skinny = { version = "^2.0.1", optional = true }
 
 [tool.poetry.extras]
 mlflow-skinny = ["mlflow-skinny"]
-mlflow-server = ["mlflow"]
+mlflow = ["mlflow"]
 
 [tool.poetry.dev-dependencies]
 matplotlib = "^3.4.2"
