@@ -5,11 +5,11 @@ description = "Simple ML Pipeline illustrating Numalogic library usage."
 authors = ["s0nicboOm <i.kushalbatra@gmail.com>"]
 
 [tool.poetry.dependencies]
-python = "~3.9"
+python = ">=3.8, <3.11"
 dataclasses-json = "^0.5.6"
 cachetools = "^5.0.0"
 pynumaflow = "~0.2.4"
-numalogic = {version = "0.2.6", extras = ["mlflow"]}
+numalogic = {git = "https://github.com/s0nicboOm/numalogic", extras = ["mlflow", "mlflow-skinny"], rev = "test-mlflow"}
 
 [tool.poetry.dev-dependencies]
 

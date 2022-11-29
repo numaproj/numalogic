@@ -28,13 +28,13 @@ def inference(key: str, datum: Datum) -> Messages:
     messages = Messages()
 
     #
-    artifact = load_model(skeys=["ae"], dkeys=["model"])
+    artifact_data = load_model(skeys=["ae"], dkeys=["model"])
 
     # Check if model exists for inference
-    if artifact:
+    if artifact_data:
         # load model from registry
         pl = AutoencoderPipeline(model=Conv1dAE(in_channels=1, enc_channels=12), seq_len=WIN_SIZE)
-        pl.load(model=artifact["primary_artifact"], **artifact["metadata"])
+        pl.load(model=artifact_data.artifact, **artifact_data.metadata)
 
         LOGGER.info("%s - Model found!", payload.uuid)
 

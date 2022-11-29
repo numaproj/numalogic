@@ -3,7 +3,6 @@ import os
 from dataclasses import dataclass
 from typing import Sequence
 
-import mlflow
 from dataclasses_json import dataclass_json
 from numalogic.models.autoencoder import AutoencoderPipeline
 from numalogic.registry import MLflowRegistrar
@@ -13,7 +12,7 @@ from numpy.typing import ArrayLike
 DIR = os.path.dirname(__file__)
 ROOT_DIR = os.path.split(DIR)[0]
 TRAIN_DATA_PATH = os.path.join(ROOT_DIR, "src/resources/train_data.csv")
-TRACKING_URI = "http://mlflow-service.numaflow-system.svc.cluster.local:5000"
+TRACKING_URI = "http://mlflow-service.default.svc.cluster.local:5000"
 LOGGER = logging.getLogger(__name__)
 
 
@@ -27,9 +26,7 @@ class Payload:
 
 def save_model(pl: AutoencoderPipeline, skeys: Sequence[str], dkeys: Sequence[str]) -> None:
     ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="pytorch")
-    mlflow.start_run()
-    ml_registry.save(skeys=skeys, dkeys=dkeys, primary_artifact=pl.model, **pl.model_properties)
-    mlflow.end_run()
+    ml_registry.save(skeys=skeys, dkeys=dkeys, artifact=pl.model, **pl.model_properties)
 
 
 def load_model(skeys: Sequence[str], dkeys: Sequence[str]) -> ArtifactDict:
