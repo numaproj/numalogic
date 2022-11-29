@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic-simple-demo"
-version = "0.1.1"
+version = "0.1.2"
 description = "Simple ML Pipeline illustrating Numalogic library usage."
 authors = ["s0nicboOm <i.kushalbatra@gmail.com>"]
 
@@ -8,10 +8,11 @@ authors = ["s0nicboOm <i.kushalbatra@gmail.com>"]
 python = ">=3.8, <3.11"
 dataclasses-json = "^0.5.6"
 cachetools = "^5.0.0"
-pynumaflow = "~0.2.4"
+pynumaflow = "~0.2.6"
 numalogic = {version = "0.2.7", extras = ["mlflow"]}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.mlflowserver.dependencies]
+mlflow = "^1.30.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
