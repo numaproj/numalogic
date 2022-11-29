@@ -21,7 +21,7 @@ from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.postprocess import tanh_norm
 
 X_train = np.array([1, 3, 5, 2, 5, 1, 4, 5, 1, 4, 5, 8, 9, 1, 2, 4, 5, 1, 3]).reshape(-1, 1)
-X_test = np.array([-20, 3, 5, 40, 5, 10, 4, 5, 100]).reshape(-1, 1)
+X_test = np.array([-20, 3, 5, 40, 5, 10, 4, 5, 100]).reshape(-1,1)
 
 model = AutoencoderPipeline(
    model=Conv1dAE(in_channels=1, enc_channels=4), seq_len=8, num_epochs=30
@@ -72,18 +72,17 @@ Once Numaflow is installed, create a simple Numalogic pipeline, which takes in t
 
 For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline) under the examples folder and execute the following commands.
 
-1. Build the docker image, import it to k3d, and apply the pipeline.
+1. Apply the pipeline. *Note Make sure the pipeline and, numaflow controllers and isbsvc pods are running in the same namespace (`default` in this case).*
 ```shell
-docker build -t numalogic-simple-pipeline:v1 . && k3d image import docker.io/library/numalogic-simple-pipeline:v1
-
 kubectl apply -f numa-pl.yaml
 ```
 2. To verify if the pipeline has been deployed successfully, check the status of each pod.
 ```shell
-> kubectl get pods
+kubectl get pods
+```
+Output will be something like this:
+```
 NAME                                               READY   STATUS    RESTARTS   AGE
-numaflow-server-d64bf6f7c-2czd7                    1/1     Running   0          72s
-numaflow-controller-c84948cbb-994fn                1/1     Running   0          72s
 isbsvc-default-js-0                                3/3     Running   0          68s
 isbsvc-default-js-1                                3/3     Running   0          68s
 isbsvc-default-js-2                                3/3     Running   0          68s
@@ -100,9 +99,9 @@ numalogic-simple-pipeline-in-0-tmd0v               1/1     Running   0          
 
 Once the pipeline has been created, the data can be sent to the pipeline by port-forwarding the input vertex.
 
-1. Port-forward to the http-source vertex
+1. Port-forward to the http-source vertex. From the above pod output, this would be:
    ```shell
-   kubectl port-forward simple-numalogic-pipeline-in-0-xxxxx 8443
+   kubectl port-forward numalogic-simple-pipeline-in-0-tmd0v 8443
    ```
    
 2. Send the data to the pod via curl

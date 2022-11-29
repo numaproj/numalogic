@@ -1,3 +1,7 @@
+####################################################################################################
+# builder: install needed dependencies
+####################################################################################################
+
 FROM python:3.10-slim-bullseye AS builder
 
 ENV PYTHONFAULTHANDLER=1 \
@@ -29,11 +33,14 @@ RUN apt-get update \
     && chmod +x /dumb-init \
     && curl -sSL https://install.python-poetry.org | python3 -
 
+####################################################################################################
+# mlflow: used for running the mlflow server
+####################################################################################################
 FROM builder AS mlflow
 
 WORKDIR $PYSETUP_PATH
 COPY ./pyproject.toml ./poetry.lock ./
-RUN poetry install --only mlflow --no-cache --no-root && \
+RUN poetry install --only mlflowserver --no-cache --no-root && \
     rm -rf ~/.cache/pypoetry/
 
 ADD . /app
@@ -46,12 +53,14 @@ CMD ["/app/entry.sh"]
 
 EXPOSE 5000
 
-
+####################################################################################################
+# udf: used for running the udf vertices
+####################################################################################################
 FROM builder AS udf
 
 WORKDIR $PYSETUP_PATH
 COPY ./pyproject.toml ./poetry.lock ./
-RUN poetry install --with mlflow-skinny --no-cache --no-root && \
+RUN poetry install --without mlflowserver --no-cache --no-root && \
     rm -rf ~/.cache/pypoetry/
 
 ADD . /app
