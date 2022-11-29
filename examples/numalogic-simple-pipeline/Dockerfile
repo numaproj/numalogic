@@ -1,3 +1,7 @@
+####################################################################################################
+# builder: install needed dependencies
+####################################################################################################
+
 FROM python:3.10-slim-bullseye AS builder
 
 ENV PYTHONFAULTHANDLER=1 \
@@ -29,6 +33,9 @@ RUN apt-get update \
     && chmod +x /dumb-init \
     && curl -sSL https://install.python-poetry.org | python3 -
 
+####################################################################################################
+# mlflow: used for running the mlflow server
+####################################################################################################
 FROM builder AS mlflow
 
 WORKDIR $PYSETUP_PATH
@@ -46,7 +53,9 @@ CMD ["/app/entry.sh"]
 
 EXPOSE 5000
 
-
+####################################################################################################
+# udf: used for running the udf vertices
+####################################################################################################
 FROM builder AS udf
 
 WORKDIR $PYSETUP_PATH
