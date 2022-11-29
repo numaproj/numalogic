@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.2.8 (2022-11-29)
+
+ * [7d5075d](https://github.com/numaproj/numalogic/commit/7d5075ddda5950fef772cf07ffdb8f949bed589f) remove mlflow full
+ * [05d6071](https://github.com/numaproj/numalogic/commit/05d6071a1de4ca85ed8095bab7654c2e77f366f5) fix: have mlflow-server as an optional extra
+ * [3c5bc83](https://github.com/numaproj/numalogic/commit/3c5bc8371a50a98a7ffc634b034692cc53ba597c) fix: lock file
+ * [d2c6293](https://github.com/numaproj/numalogic/commit/d2c6293f594ed67cc8a6ddabce1f8f0bdd84249f) fix: change example pipeline mlflow port (#96)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
 ## v0.2.7 (2022-11-14)
 
  * [f9c74c9](https://github.com/numaproj/numalogic/commit/f9c74c90c37fca24db3465c24326a639e93bc802) fix: allow only patch updates in torch version due to cuda build errors on mac (#90)
