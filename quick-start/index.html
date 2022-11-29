@@ -930,10 +930,8 @@ Anomaly Scores: <span class="o">[[</span><span class="m">2</span>.70173135<span 
 <p>Once Numaflow is installed, create a simple Numalogic pipeline, which takes in time-series data, does the pre-processing, training, inference, and post-processing.</p>
 <p>For building this pipeline, navigate to <a href="https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline">numalogic-simple-pipeline</a> under the examples folder and execute the following commands.</p>
 <ol>
-<li>Build the docker image, import it to k3d, and apply the pipeline. <em>Note Make sure the pipeline and, numaflow controllers and isbsvc pods are running in the same namespace (<code>default</code> in this case).</em>
-<div class="highlight"><pre><span></span><code>docker build -t numalogic-simple-pipeline:v1 . <span class="o">&amp;&amp;</span> k3d image import docker.io/library/numalogic-simple-pipeline:v1
-
-kubectl apply -f numa-pl.yaml
+<li>Apply the pipeline. <em>Note Make sure the pipeline and, numaflow controllers and isbsvc pods are running in the same namespace (<code>default</code> in this case).</em>
+<div class="highlight"><pre><span></span><code>kubectl apply -f numa-pl.yaml
 </code></pre></div></li>
 <li>To verify if the pipeline has been deployed successfully, check the status of each pod.
 <div class="highlight"><pre><span></span><code>kubectl get pods
@@ -957,8 +955,8 @@ numalogic-simple-pipeline-in-0-tmd0v               1/1     Running   0          
 <p>Once the pipeline has been created, the data can be sent to the pipeline by port-forwarding the input vertex.</p>
 <ol>
 <li>
-<p>Port-forward to the http-source vertex
-   <div class="highlight"><pre><span></span><code>kubectl port-forward numalogic-simple-pipeline-in-0-xxxxx <span class="m">8443</span>
+<p>Port-forward to the http-source vertex. From the above pod output, this would be:
+   <div class="highlight"><pre><span></span><code>kubectl port-forward numalogic-simple-pipeline-in-0-tmd0v <span class="m">8443</span>
 </code></pre></div></p>
 </li>
 <li>
