@@ -67,6 +67,7 @@ class MLflowRegistrar(ArtifactManager):
         self, tracking_uri: str, artifact_type: str = "pytorch", models_to_retain: int = 5
     ):
         super().__init__(tracking_uri)
+        mlflow.set_tracking_uri(tracking_uri)
         self.client = MlflowClient()
         self.handler = self.mlflow_handler(artifact_type)
         self.models_to_retain = models_to_retain
