@@ -33,7 +33,7 @@ mlflow-skinny = { version = "^1.30.0", optional = true }
 flask = {version = "^2.2.2", optional = true }
 
 [tool.poetry.extras]
-mlflow = ["mlflow", "flask"]
+mlflow = ["mlflow-skinny", "flask"]
 
 [tool.poetry.group.dev.dependencies]
 matplotlib = "^3.4.2"
