@@ -5,10 +5,11 @@ import cachetools
 import pandas as pd
 from numalogic.models.autoencoder import AutoencoderPipeline
 from numalogic.models.autoencoder.variants import Conv1dAE
+from numalogic.models.threshold._std import StdDevThreshold
 from numalogic.preprocess.transformer import LogTransformer
 from pynumaflow.function import Datum, Messages, Message
 
-from src.utils import Payload, save_model, TRAIN_DATA_PATH
+from src.utils import Payload, save_artifact, TRAIN_DATA_PATH
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))
@@ -50,13 +51,18 @@ def train(key: str, datum: Datum):
     clf = LogTransformer()
     train_data = clf.fit_transform(data)
 
+    # Define Threshold method
+    thresh_clf = StdDevThreshold(std_factor=1.2)
+    thresh_clf.fit(train_data.to_numpy().reshape(-1, 1))
+
     # Train step
     pl = AutoencoderPipeline(model=Conv1dAE(in_channels=1, enc_channels=12), seq_len=WIN_SIZE)
     pl.fit(train_data.to_numpy())
     LOGGER.info("%s - Training complete", payload.uuid)
 
     # Save to registry
-    save_model(pl, skeys=["ae"], dkeys=["model"])
+    save_artifact(pl.model, skeys=["ae"], dkeys=["model"])
+    save_artifact(thresh_clf, skeys=["thresh_clf"], dkeys=["model"])
     LOGGER.info("%s - Model Saving complete", payload.uuid)
 
     # Train is the last vertex in the graph
