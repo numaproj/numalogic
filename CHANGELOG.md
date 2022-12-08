@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.0a0 (2022-12-08)
+
+ * [78cf5b4](https://github.com/numaproj/numalogic/commit/78cf5b4e26ffd6dffa5e0dc364cbd51b220bd928) fix: fix pipeline for 0.3 release (#106)
+ * [709553f](https://github.com/numaproj/numalogic/commit/709553f4ae879f7e786634b02867966756706174) fix: fix mlflow test cases (#98)
+ * [701812e](https://github.com/numaproj/numalogic/commit/701812efed6742915d9cf57aef985127b3cc449d) feat!: disentangle threshold selection from the main model  (#89)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
 ## v0.2.8 (2022-11-29)
 
  * [7d5075d](https://github.com/numaproj/numalogic/commit/7d5075ddda5950fef772cf07ffdb8f949bed589f) remove mlflow full
