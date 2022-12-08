@@ -38,11 +38,7 @@ class ArtifactManager(metaclass=ABCMeta):
 
     @abstractmethod
     def save(
-        self,
-        skeys: Sequence[str],
-        dkeys: Sequence[str],
-        artifact: Artifact,
-        **metadata
+        self, skeys: Sequence[str], dkeys: Sequence[str], artifact: Artifact, **metadata
     ) -> Any:
         r"""
         Saves the artifact into mlflow registry and updates version.

@@ -1,10 +1,12 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Sequence
+from typing import Sequence, Union
 
 from dataclasses_json import dataclass_json
 from numalogic.models.autoencoder import AutoencoderPipeline
+from numalogic.models.autoencoder.base import TorchAE
+from numalogic.models.threshold._std import StdDevThreshold
 from numalogic.registry import MLflowRegistrar
 from numalogic.tools.types import ArtifactDict
 from numpy.typing import ArrayLike
@@ -24,16 +26,26 @@ class Payload:
     uuid: str = None
 
 
-def save_model(pl: AutoencoderPipeline, skeys: Sequence[str], dkeys: Sequence[str]) -> None:
-    ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="pytorch")
-    ml_registry.save(skeys=skeys, dkeys=dkeys, artifact=pl.model, **pl.model_properties)
+def save_artifact(
+    pl: Union[AutoencoderPipeline, StdDevThreshold],
+    skeys: Sequence[str],
+    dkeys: Sequence[str],
+) -> None:
+    if isinstance(pl, TorchAE):
+        ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="pytorch")
+    else:
+        ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="sklearn")
+    ml_registry.save(skeys=skeys, dkeys=dkeys, artifact=pl)
 
 
-def load_model(skeys: Sequence[str], dkeys: Sequence[str]) -> ArtifactDict:
+def load_artifact(skeys: Sequence[str], dkeys: Sequence[str], type: str = None) -> ArtifactDict:
     try:
-        ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI)
+        if type == "pytorch":
+            ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="pytorch")
+        else:
+            ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="sklearn")
         artifact_dict = ml_registry.load(skeys=skeys, dkeys=dkeys)
         return artifact_dict
     except Exception as ex:
-        LOGGER.exception("Error while loading model from MLFlow database: %s", ex)
+        LOGGER.exception("Error while loading artifact from MLFlow database: %s", ex)
         return None

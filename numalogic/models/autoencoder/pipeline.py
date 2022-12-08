@@ -54,7 +54,7 @@ class AutoencoderPipeline(TransformerMixin, BaseEstimator):
         lr: float = 0.001,
         batch_size: int = 256,
         num_epochs: int = 100,
-        resume_train: bool = False
+        resume_train: bool = False,
     ):
         if not (model and seq_len):
             raise ValueError("No model and seq len provided!")
@@ -75,7 +75,7 @@ class AutoencoderPipeline(TransformerMixin, BaseEstimator):
         model_properties_dict = {
             "batch_size": self.batch_size,
             "num_epochs": self.num_epochs,
-            "epochs_elapsed": self._epochs_elapsed
+            "epochs_elapsed": self._epochs_elapsed,
         }
         if self.resume_train:
             model_properties_dict["optimizer_state_dict"] = self.optimizer.state_dict()

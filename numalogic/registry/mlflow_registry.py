@@ -18,6 +18,7 @@ class ModelStage(str, Enum):
     """
     Defines different stages the model state can be in mlflow
     """
+
     STAGE = "Staging"
     ARCHIVE = "Archived"
     PRODUCTION = "Production"
@@ -48,6 +49,7 @@ class MLflowRegistrar(ArtifactManager):
     >>> registry.save(skeys=["model"], dkeys=["AE"], artifact=VanillaAE(10))
     >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"])
     """
+
     _TRACKING_URI = None
 
     def __new__(
@@ -119,9 +121,7 @@ class MLflowRegistrar(ArtifactManager):
                     model_key, stages=[ModelStage.PRODUCTION]
                 )[-1]
             elif version is not None:
-                model = self.handler.load_model(
-                    model_uri=f"models:/{model_key}/{version}"
-                )
+                model = self.handler.load_model(model_uri=f"models:/{model_key}/{version}")
                 version_info = self.client.get_model_version(model_key, version)
             else:
                 raise ValueError("One of 'latest' or 'version' needed in load method call")
@@ -133,9 +133,7 @@ class MLflowRegistrar(ArtifactManager):
 
             return ArtifactData(artifact=model, metadata=metadata, extras=dict(version_info))
         except Exception as ex:
-            _LOGGER.exception(
-                "Error when loading a model with key: %s: %r", model_key, ex
-            )
+            _LOGGER.exception("Error when loading a model with key: %s: %r", model_key, ex)
             return None
 
     def save(
@@ -159,18 +157,14 @@ class MLflowRegistrar(ArtifactManager):
         model_key = self.construct_key(skeys, dkeys)
         try:
             mlflow.start_run()
-            self.handler.log_model(
-                artifact, "model", registered_model_name=model_key
-            )
+            self.handler.log_model(artifact, "model", registered_model_name=model_key)
             if metadata:
                 mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
             _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
             return model_version
         except Exception as ex:
-            _LOGGER.exception(
-                "Error when saving a model with key: %s: %r", model_key, ex
-            )
+            _LOGGER.exception("Error when saving a model with key: %s: %r", model_key, ex)
             return None
         finally:
             mlflow.end_run()

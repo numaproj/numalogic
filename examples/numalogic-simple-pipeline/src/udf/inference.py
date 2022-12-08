@@ -6,7 +6,7 @@ from numalogic.models.autoencoder import AutoencoderPipeline
 from numalogic.models.autoencoder.variants import Conv1dAE
 from pynumaflow.function import Messages, Message, Datum
 
-from src.utils import Payload, load_model
+from src.utils import Payload, load_artifact
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))
@@ -27,20 +27,24 @@ def inference(key: str, datum: Datum) -> Messages:
     payload = Payload.from_json(datum.value.decode("utf-8"))
     messages = Messages()
 
-    #
-    artifact_data = load_model(skeys=["ae"], dkeys=["model"])
+    artifact_data = load_artifact(skeys=["ae"], dkeys=["model"], type="pytorch")
+    thresh_clf_data = load_artifact(skeys=["thresh_clf"], dkeys=["model"])
 
     # Check if model exists for inference
-    if artifact_data:
-        # load model from registry
-        pl = AutoencoderPipeline(model=Conv1dAE(in_channels=1, enc_channels=12), seq_len=WIN_SIZE)
-        pl.load(model=artifact_data.artifact, **artifact_data.metadata)
-
+    if artifact_data and thresh_clf_data:
         LOGGER.info("%s - Model found!", payload.uuid)
+
+        # Load model from registry
+        pl = AutoencoderPipeline(model=Conv1dAE(in_channels=1, enc_channels=12), seq_len=WIN_SIZE)
+        pl.load(model=artifact_data.artifact)
+
+        # Load the threshold model from registry
+        thresh_clf = thresh_clf_data.artifact
 
         # Infer using the loaded model
         infer_data = np.asarray(payload.ts_data).reshape(-1, 1)
-        payload.ts_data = pl.score(infer_data).tolist()
+        score_data = pl.score(infer_data)
+        payload.ts_data = thresh_clf.predict(score_data).tolist()
 
         LOGGER.info("%s - Inference complete", payload.uuid)
 
