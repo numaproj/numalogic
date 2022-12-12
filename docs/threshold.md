@@ -27,9 +27,9 @@ ae_pl = AutoencoderPipeline(
 ae_pl.fit(X_train)
 
 # predict method returns the reconstruction error
-anomaly_score = ae_pl.score(X_test)
+anomaly_score = ae_pl.predict(X_test)
 ```
-Predicting using the threshold model
+Predicting score using the threshold model
 ```python
 # Predict final anomaly score using threshold estimator
 anomaly_score = thresh_clf.predict(anomaly_score)
