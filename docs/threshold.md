@@ -7,15 +7,30 @@ Currently, the library supports `StdDevThreshold`. This takes in paramaters `min
 defines threshold as `mean + 3 * std_factor`. 
 
 
-1. Fitting the threshold model
+Fitting the threshold model
 ```python
-thresh_clf = StdDevThreshold(std_factor=1.2)
+# preprocess step
+clf = LogTransformer()
+train_data = clf.fit_transform(X_train)
+test_data = clf.transform(X_test)
 
-thresh_clf.fit(train_data)
+# Fitting the Threshold model 
+thresh_clf = StdDevThreshold(std_factor=1.2)
 ```
 
-
-2. Predicting using the threshold model
+Train the model
 ```python
-thresh_clf.predict(test_data)
+# Train the Autoencoder model and fit the model on train data
+ae_pl = AutoencoderPipeline(
+    model=Conv1dAE(in_channels=1, enc_channels=4), seq_len=8, num_epochs=30
+)
+ae_pl.fit(X_train)
+
+# predict method returns the reconstruction error
+anomaly_score = ae_pl.score(X_test)
+```
+Predicting using the threshold model
+```python
+# Predict final anomaly score using threshold estimator
+anomaly_score = thresh_clf.predict(anomaly_score)
 ```
