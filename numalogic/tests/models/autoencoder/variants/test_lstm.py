@@ -56,7 +56,6 @@ class TestLSTMAE(unittest.TestCase):
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
         self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
 
-
     def test_native_train(self):
         model = LSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15)
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)

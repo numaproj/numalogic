@@ -135,7 +135,7 @@ class VanillaAE(BaseAE):
         encoder_layersizes: Sequence[int] = (16, 8),
         decoder_layersizes: Sequence[int] = (8, 16),
         dropout_p: float = 0.25,
-        **kwargs
+        **kwargs,
     ):
 
         super(VanillaAE, self).__init__(**kwargs)
@@ -198,20 +198,21 @@ class VanillaAE(BaseAE):
 
 class SparseVanillaAE(VanillaAE):
     r"""
-        Sparse Autoencoder for a fully connected network.
-        It inherits from VanillaAE class and serves as a wrapper around base network models.
-        Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
-        This helps in achieving information bottleneck even when the number of hidden units is huge.
-        It penalizes the loss function such that only some neurons are activated at a time.
-        This sparsity penalty helps in preventing overfitting.
-        More details about Sparse Autoencoder can be found at
-            <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+    Sparse Autoencoder for a fully connected network.
+    It inherits from VanillaAE class and serves as a wrapper around base network models.
+    Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
+    This helps in achieving information bottleneck even when the number of hidden units is huge.
+    It penalizes the loss function such that only some neurons are activated at a time.
+    This sparsity penalty helps in preventing overfitting.
+    More details about Sparse Autoencoder can be found at
+        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
 
-        Args:
-            beta: regularization parameter (Defaults to 1e-3)
-            rho: sparsity parameter value (Defaults to 0.05)
-            **kwargs: VanillaAE kwargs
+    Args:
+        beta: regularization parameter (Defaults to 1e-3)
+        rho: sparsity parameter value (Defaults to 0.05)
+        **kwargs: VanillaAE kwargs
     """
+
     def __init__(self, beta=1e-3, rho=0.05, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.beta = beta

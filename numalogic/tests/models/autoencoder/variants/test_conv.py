@@ -47,7 +47,9 @@ class TestConvAE(unittest.TestCase):
         self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
 
     def test_sparse_conv1d(self):
-        model = SparseConv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1], enc_channels=8, loss_fn="mse")
+        model = SparseConv1dAE(
+            seq_len=SEQ_LEN, in_channels=self.X_train.shape[1], enc_channels=8, loss_fn="mse"
+        )
         datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)

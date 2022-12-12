@@ -42,7 +42,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
 
     def test_fit_vanilla(self):
         self.model = VanillaAE(SEQ_LEN, n_features=self.X_train.shape[1])
-        trainer = AutoencoderPipeline(self.model, SEQ_LEN, num_epochs=5)
+        trainer = AutoencoderPipeline(self.model, SEQ_LEN, num_epochs=100)
         trainer.fit(self.X_train)
 
     # def test_threshold_min(self):
@@ -110,6 +110,7 @@ class TestAutoEncoderPipeline(unittest.TestCase):
 
     def test_score_02(self):
         stream_data = self.X_val[:12]
+        print(stream_data.shape)
         self.model = Conv1dAE(self.X_train.shape[1], 8)
         trainer = AutoencoderPipeline(self.model, SEQ_LEN, num_epochs=5, optimizer="rmsprop")
         trainer.fit(self.X_train)
@@ -227,7 +228,9 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         model_pl1.fit(X)
         model_pl2 = AutoencoderPipeline(model, 10)
         model_pl2.load(model=model_pl1.model, **model_pl1.model_properties)
-        self.assertEqual(list(model_pl1.model_properties.keys()), ["batch_size", "num_epochs", "epochs_elapsed"])
+        self.assertEqual(
+            list(model_pl1.model_properties.keys()), ["batch_size", "num_epochs", "epochs_elapsed"]
+        )
 
     def test_load_model_resume_train_01(self):
         X = np.random.randn(10, 1)
@@ -256,7 +259,9 @@ class TestAutoEncoderPipeline(unittest.TestCase):
         model = VanillaAE(10)
         model_pl1 = AutoencoderPipeline(model, 10, resume_train=False)
         model_pl1.fit(X)
-        self.assertEqual(["batch_size", "num_epochs", "epochs_elapsed"], list(model_pl1.model_properties.keys()))
+        self.assertEqual(
+            ["batch_size", "num_epochs", "epochs_elapsed"], list(model_pl1.model_properties.keys())
+        )
 
     def test_exception_in_load_model(self):
         X = np.random.randn(10, 1)

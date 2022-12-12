@@ -9,6 +9,7 @@ class BaseAE(pl.LightningModule, metaclass=ABCMeta):
     """
     Abstract Base class for all Pytorch based autoencoder models for time-series data.
     """
+
     def __init__(self, loss_fn: str = "huber", optim_algo: str = "adam", lr: float = 1e-3):
         super().__init__()
         self.lr = lr

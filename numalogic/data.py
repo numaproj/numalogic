@@ -14,7 +14,7 @@ class StreamingDataset(IterableDataset):
     def create_seq(self, x):
         idx = 0
         while idx < len(self._data) - self._seq_len + 1:
-            yield x[idx: idx + self._seq_len]
+            yield x[idx : idx + self._seq_len]
             idx += 1
 
     def __iter__(self):
@@ -26,7 +26,7 @@ class StreamingDataset(IterableDataset):
     def __getitem__(self, idx: int):
         if idx >= len(self._data) - self._seq_len + 1:
             raise IndexError(f"{idx} out of bound!")
-        return self._data[idx: idx + self._seq_len]
+        return self._data[idx : idx + self._seq_len]
 
 
 class TimeseriesDataModule(pl.LightningDataModule):
@@ -61,5 +61,8 @@ class TimeseriesDataModule(pl.LightningDataModule):
 
     @staticmethod
     def unbatch_sequences(batched):
-        output = batched[:, :, 0]
-        return np.vstack((output, batched[-1, :, 1:].T))
+        # output = batched[:, :, 0]
+        # return np.vstack((output, batched[-1, :, 1:].T))
+
+        output = batched[:, 0, :]
+        return np.vstack((output, batched[-1, 1::]))
