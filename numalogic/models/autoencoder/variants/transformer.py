@@ -4,7 +4,7 @@ import torch
 import torch.nn.functional
 from torch import nn, Tensor
 
-from numalogic.models.autoencoder.base import TorchAE
+from numalogic.models.autoencoder.base import BaseAE
 from numalogic.preprocess.datasets import SequenceDataset
 
 
@@ -281,15 +281,15 @@ class Decoder(nn.Module):
         return torch.softmax(self.linear(tgt), dim=-1)
 
 
-class TransformerAE(TorchAE):
+class TransformerAE(BaseAE):
     r"""
     Transformer model without masking. Inspiration:
     `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
 
     Args:
+        seq_len: sequence length / window length (default=1)
         num_encoder_layers: number of encoder layers in the Encoder (default = 3)
         num_decoder_layers: number of encoder layers in the Decoder (default = 3)
-        seq_length: sequence length / window length (default=1)
         num_heads: the number of heads in the multiheadattention models (default=6)
         dim_feedforward: the dimension of the feedforward network model (default=2048)
         dropout: the dropout value (default=0.1).
@@ -300,26 +300,30 @@ class TransformerAE(TorchAE):
 
     def __init__(
         self,
+        seq_len: int = 1,
+        n_features: int = 1,
         num_encoder_layers: int = 3,
         num_decoder_layers: int = 3,
-        seq_length: int = 1,
         num_heads: int = 6,
         dim_feedforward: int = 2048,
         dropout: float = 0.1,
         activation: nn.Module = nn.ReLU(),
+        **kwargs
     ):
-        super().__init__()
+        super().__init__(**kwargs)
+        self.n_features = n_features
+        self.seq_len = seq_len
         self.activation = activation
         self.encoder = Encoder(
             num_layers=num_encoder_layers,
-            dim_model=seq_length,
+            dim_model=seq_len,
             num_heads=num_heads,
             dim_feedforward=dim_feedforward,
             dropout=dropout,
         )
         self.decoder = Decoder(
             num_layers=num_decoder_layers,
-            dim_model=seq_length,
+            dim_model=seq_len,
             num_heads=num_heads,
             dim_feedforward=dim_feedforward,
             dropout=dropout,
@@ -335,23 +339,66 @@ class TransformerAE(TorchAE):
         if type(m) in (nn.Linear,):
             nn.init.xavier_uniform_(m.weight, gain=2**0.5)
 
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        torch.manual_seed(0)
-        encoded = self.encoder(x)
-        decoded = self.decoder(x, encoded)
+    def forward(self, batch: Tensor) -> Tuple[Tensor, Tensor]:
+        batch = batch.view(-1, self.n_features, self.seq_len)
+        encoded = self.encoder(batch)
+        decoded = self.decoder(batch, encoded)
         return encoded, decoded
 
-    def construct_dataset(self, x: Tensor, seq_len: int = None) -> SequenceDataset:
-        r"""
-         Constructs dataset given tensor and seq_len
+    def _get_reconstruction_loss(self, batch):
+        _, recon = self.forward(batch)
+        x = batch.view(-1, self.n_features, self.seq_len)
+        return self.criterion(x, recon)
 
-         Args:
-            x: Tensor type
-            seq_len: sequence length / window length
+    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
+        """Returns reconstruction for streaming input"""
+        recon = self.reconstruction(batch)
+        recon = recon.view(-1, self.seq_len, self.n_features)
+        recon_err = self.criterion(batch, recon, reduction="none")
+        return recon_err
+
+
+class SparseTransformerAE(TransformerAE):
+    r"""
+        Sparse Autoencoder for a transformer network.
+        It inherits from VanillaAE class and serves as a wrapper around base network models.
+        Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
+        This helps in achieving information bottleneck even when the number of hidden units is huge.
+        It penalizes the loss function such that only some neurons are activated at a time.
+        This sparsity penalty helps in preventing overfitting.
+        More details about Sparse Autoencoder can be found at
+            <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+
+        Args:
+            beta: regularization parameter (Defaults to 1e-3)
+            rho: sparsity parameter value (Defaults to 0.05)
+            **kwargs: VanillaAE kwargs
+    """
+    def __init__(self, beta=1e-3, rho=0.05, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.beta = beta
+        self.rho = rho
+
+    def kl_divergence(self, activations: Tensor) -> Tensor:
+        r"""
+        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
+        KL Divergence measures the difference between two probability distributions.
+
+        Args:
+            activations: encoded output from the model layer-wise
 
         Returns:
-            SequenceDataset type
+            Tensor
         """
-        __seq_len = seq_len or self.seq_len
-        dataset = SequenceDataset(x, __seq_len, permute=True)
-        return dataset
+        rho_hat = torch.mean(activations, dim=0)
+        rho = torch.full(rho_hat.size(), self.rho)
+        kl_loss = nn.KLDivLoss(reduction="sum")
+        _dim = 0 if rho_hat.dim() == 1 else 1
+        return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
+
+    def _get_reconstruction_loss(self, batch):
+        latent, recon = self.forward(batch)
+        x = batch.view(-1, self.n_features, self.seq_len)
+        loss = self.criterion(x, recon)
+        penalty = self.kl_divergence(latent)
+        return loss + penalty

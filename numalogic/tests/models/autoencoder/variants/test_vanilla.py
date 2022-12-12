@@ -8,20 +8,21 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.models.autoencoder.variants.vanilla import VanillaAE
-from numalogic.preprocess.datasets import SequenceDataset
+from numalogic.data import StreamingDataset, TimeseriesDataModule
+from numalogic.models.autoencoder.trainer import AutoencoderTrainer
+from numalogic.models.autoencoder.variants.vanilla import VanillaAE, SparseVanillaAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
 EPOCHS = 5
-BATCH_SIZE = 256
-SEQ_LEN = 20
+BATCH_SIZE = 64
+SEQ_LEN = 12
 LR = 0.001
 torch.manual_seed(42)
 
 
-class TESTBVanillaAE(unittest.TestCase):
+class TESTVanillaAE(unittest.TestCase):
     X_train = None
     X_val = None
 
@@ -33,35 +34,37 @@ class TESTBVanillaAE(unittest.TestCase):
         cls.X_train = scaler.fit_transform(df[:-240])
         cls.X_val = scaler.transform(df[-240:])
 
-    def test_train_01(self):
-        model = VanillaAE(SEQ_LEN, n_features=2)
-        optimizer = torch.optim.Adam(model.parameters(), lr=LR)
-        criterion = nn.HuberLoss(delta=0.5)
-        dataset = SequenceDataset(self.X_train, SEQ_LEN)
-        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+    def test_vanilla(self):
+        model = VanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1])
+        datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
 
-        model.train()
-        loss = torch.Tensor([0.0])
-        for epoch in range(1, EPOCHS + 1):
-            for _X_batch in train_loader:
-                optimizer.zero_grad()
-                encoded, decoded = model(_X_batch)
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = AutoencoderTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
+        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
 
-                loss = criterion(decoded, _X_batch)
-                loss.backward()
-                optimizer.step()
+    def test_sparse_vanilla(self):
+        model = SparseVanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1")
+        datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
 
-            if epoch % 5 == 0:
-                print(f"epoch : {epoch}, loss_mean : {loss.item():.7f}")
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = AutoencoderTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
+        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
 
-    def test_train_02(self):
+    def test_native_train(self):
         model = VanillaAE(
             SEQ_LEN, n_features=2, encoder_layersizes=[24, 16, 6], decoder_layersizes=[6, 16, 24]
         )
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
         criterion = nn.HuberLoss(delta=0.5)
-        dataset = SequenceDataset(self.X_train, SEQ_LEN)
-        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
+
+        dataset = StreamingDataset(self.X_train, seq_len=SEQ_LEN)
+        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE)
 
         model.train()
         loss = torch.Tensor([0.0])
@@ -69,6 +72,7 @@ class TESTBVanillaAE(unittest.TestCase):
             for _X_batch in train_loader:
                 optimizer.zero_grad()
                 encoded, decoded = model(_X_batch)
+                decoded = decoded.view(-1, SEQ_LEN, self.X_train.shape[1])
 
                 loss = criterion(decoded, _X_batch)
                 loss.backward()
