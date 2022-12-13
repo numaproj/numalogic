@@ -40,7 +40,7 @@ ae_pl = AutoencoderPipeline(
 # fit method trains the model on train data set
 ae_pl.fit(X_train)
 
-# predict method returns the reconstruction error
+# score method returns the reconstruction error
 anomaly_score = ae_pl.score(X_test)
 
 # recalibrate score based on threshold estimator
