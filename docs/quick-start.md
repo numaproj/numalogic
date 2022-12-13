@@ -18,22 +18,33 @@ In this example, the train data set has numbers ranging from 1-10. Whereas in th
 import numpy as np
 from numalogic.models.autoencoder import AutoencoderPipeline
 from numalogic.models.autoencoder.variants import Conv1dAE
+from numalogic.models.threshold._std import StdDevThreshold
 from numalogic.postprocess import tanh_norm
+from numalogic.preprocess.transformer import LogTransformer
 
 X_train = np.array([1, 3, 5, 2, 5, 1, 4, 5, 1, 4, 5, 8, 9, 1, 2, 4, 5, 1, 3]).reshape(-1, 1)
 X_test = np.array([-20, 3, 5, 40, 5, 10, 4, 5, 100]).reshape(-1, 1)
 
-model = AutoencoderPipeline(
-   model=Conv1dAE(in_channels=1, enc_channels=4), seq_len=8, num_epochs=30
+# preprocess step
+clf = LogTransformer()
+train_data = clf.fit_transform(X_train)
+test_data = clf.transform(X_test)
+
+# Define threshold estimator and call fit()
+thresh_clf = StdDevThreshold(std_factor=1.2)
+thresh_clf.fit(train_data)
+
+ae_pl = AutoencoderPipeline(
+    model=Conv1dAE(in_channels=1, enc_channels=4), seq_len=8, num_epochs=30
 )
 # fit method trains the model on train data set
-model.fit(X_train)
+ae_pl.fit(X_train)
 
-# predict method returns the reconstruction error
-recon = model.predict(X_test)
+# score method returns the reconstruction error
+anomaly_score = ae_pl.score(X_test)
 
-# score method returns the anomaly score computed on test data set
-anomaly_score = model.score(X_test)
+# recalibrate score based on threshold estimator
+anomaly_score = thresh_clf.predict(anomaly_score)
 
 # normalizing scores to range between 0-10
 anomaly_score_norm = tanh_norm(anomaly_score)
@@ -43,15 +54,15 @@ print("Anomaly Scores:", anomaly_score_norm)
 Below is the sample output, which has logs and anomaly scores printed. Notice the anomaly score for points -20, 40 and 100 in `X_test` is high.
 ```shell
 ...snip training logs...
-Anomaly Scores: [[2.70173135]
- [0.22298803]
- [0.01045979]
- [3.66973793]
- [0.12931582]
- [0.53661316]
- [0.10056313]
- [0.2634344 ]
- [7.76317209]]
+Anomaly Scores: [[6.4051428 ]
+ [5.56049277]
+ [6.17384938]
+ [9.3043446 ]
+ [0.22345986]
+ [0.48584632]
+ [3.18197182]
+ [6.29744181]
+ [9.99937961]]
 ```
 
 Replace `X_train` and `X_test` with your own data, and see the anomaly scores generated.
