@@ -61,8 +61,5 @@ class TimeseriesDataModule(pl.LightningDataModule):
 
     @staticmethod
     def unbatch_sequences(batched):
-        # output = batched[:, :, 0]
-        # return np.vstack((output, batched[-1, :, 1:].T))
-
         output = batched[:, 0, :]
         return np.vstack((output, batched[-1, 1::]))

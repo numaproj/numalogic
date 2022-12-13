@@ -22,21 +22,20 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
-pytz = "^2022.1"
 numpy = "^1.23.1"
 pandas = "^1.4.3"
 torch = "~1.12.0"
-torchinfo = "^1.6.0"
 scikit-learn = "^1.0"
-
+pytorch-lightning = "^1.8.3.post1"
 mlflow-skinny = { version = "~2.0.1", optional = true }
-mlflow = { version = "~2.0.1", optional = true }
 
 [tool.poetry.extras]
 mlflow-skinny = ["mlflow-skinny"]
-mlflow = ["mlflow"]
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
 matplotlib = "^3.4.2"
 black = "^22.6"
 pytest = "^7.1"
@@ -44,6 +43,17 @@ pytest-cov = "^4.0"
 freezegun = "^1.2.1"
 pylint = "^2.14.2"
 flake8 = "^5.0"
+
+[tool.poetry.group.jupyter]
+optional = true
+
+[tool.poetry.group.jupyter.dependencies]
+jupyter = "^1.0.0"
+ipykernel = "^6.15.1"
+nb-black = "^1.0.7"
+black = "^22.6.0"
+ipympl = "^0.9.1"
+ipython-autotime = "^0.3.1"
 
 [tool.black]
 line-length = 100
