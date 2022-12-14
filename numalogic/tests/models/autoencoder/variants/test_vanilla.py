@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.data import StreamingDataset, TimeseriesDataModule
+from numalogic.tools.data import StreamingDataset, TimeseriesDataModule
 from numalogic.models.autoencoder.trainer import AutoencoderTrainer
 from numalogic.models.autoencoder.variants.vanilla import VanillaAE, SparseVanillaAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
@@ -43,7 +43,7 @@ class TESTVanillaAE(unittest.TestCase):
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
         stream_trainer = AutoencoderTrainer()
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
-        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
+        self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
     def test_sparse_vanilla(self):
         model = SparseVanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1")
@@ -53,8 +53,8 @@ class TESTVanillaAE(unittest.TestCase):
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
         stream_trainer = AutoencoderTrainer()
-        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
-        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
+        self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
 
     def test_native_train(self):
         model = VanillaAE(

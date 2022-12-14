@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.data import TimeseriesDataModule, StreamingDataset
+from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 from numalogic.models.autoencoder.trainer import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.models.autoencoder.variants.conv import SparseConv1dAE
@@ -44,7 +44,7 @@ class TestConvAE(unittest.TestCase):
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
         stream_trainer = AutoencoderTrainer()
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
-        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
+        self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
     def test_sparse_conv1d(self):
         model = SparseConv1dAE(
@@ -56,8 +56,8 @@ class TestConvAE(unittest.TestCase):
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
         stream_trainer = AutoencoderTrainer()
-        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
-        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
+        self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
 
     def test_native_train(self):
         self.model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1], enc_channels=8)

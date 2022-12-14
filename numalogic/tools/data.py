@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 from numpy.typing import NDArray
 from pytorch_lightning.utilities.types import TRAIN_DATALOADERS, EVAL_DATALOADERS
 from torch.utils.data import IterableDataset, DataLoader
@@ -62,4 +63,4 @@ class TimeseriesDataModule(pl.LightningDataModule):
     @staticmethod
     def unbatch_sequences(batched):
         output = batched[:, 0, :]
-        return np.vstack((output, batched[-1, 1::]))
+        return torch.vstack((output, batched[-1, 1::]))

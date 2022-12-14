@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.data import TimeseriesDataModule, StreamingDataset
+from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 from numalogic.models.autoencoder.trainer import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import LSTMAE
 from numalogic.models.autoencoder.variants.lstm import SparseLSTMAE
@@ -43,7 +43,7 @@ class TestLSTMAE(unittest.TestCase):
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
         stream_trainer = AutoencoderTrainer()
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
-        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
+        self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
     def test_sparse_lstm_ae(self):
         model = SparseLSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15, loss_fn="mse")
@@ -53,7 +53,7 @@ class TestLSTMAE(unittest.TestCase):
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
         stream_trainer = AutoencoderTrainer()
-        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
         self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
 
     def test_native_train(self):

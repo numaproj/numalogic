@@ -8,7 +8,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.data import StreamingDataset, TimeseriesDataModule
+from numalogic.tools.data import StreamingDataset, TimeseriesDataModule
 from numalogic.models.autoencoder.trainer import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import TransformerAE
 from numalogic.models.autoencoder.variants.transformer import SparseTransformerAE
@@ -50,7 +50,7 @@ class TestTransformerAE(unittest.TestCase):
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
         stream_trainer = AutoencoderTrainer()
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
-        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
+        self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
     def test_sparse_transformer(self):
         model = SparseTransformerAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1")
@@ -60,7 +60,7 @@ class TestTransformerAE(unittest.TestCase):
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
         stream_trainer = AutoencoderTrainer()
-        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
         self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
 
     def test_train(self):

@@ -2153,7 +2153,7 @@ mlflow-skinny = ["mlflow-skinny"]
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8, <3.11"
-content-hash = "00e2c3a13f2e2462a06a7d0a502ef1db2c4fb33adc7204b85b3c3ab245cf1109"
+content-hash = "a4ab9580d7bf45e3b7f04e71aaa4b0fbec390758e90aab3137363df9cf7044a8"
 
 [metadata.files]
 aiohttp = [

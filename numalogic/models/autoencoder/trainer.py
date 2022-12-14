@@ -2,6 +2,7 @@ import logging
 
 import pytorch_lightning as pl
 import torch
+from numalogic.tools.data import TimeseriesDataModule
 from pytorch_lightning import Trainer
 from torch import Tensor
 
@@ -31,6 +32,9 @@ class AutoencoderTrainer(Trainer):
             **trainer_kw
         )
 
-    def predict(self, model: pl.LightningModule = None, **kwargs) -> Tensor:
-        outs = super().predict(model, **kwargs)
-        return torch.vstack(outs)
+    def predict(self, model: pl.LightningModule = None, unbatch=True, **kwargs) -> Tensor:
+        recon_err = super().predict(model, **kwargs)
+        recon_err = torch.vstack(recon_err)
+        if unbatch:
+            return TimeseriesDataModule.unbatch_sequences(recon_err)
+        return recon_err
