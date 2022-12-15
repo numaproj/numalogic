@@ -2,10 +2,8 @@ from typing import Tuple
 
 import torch
 import torch.nn.functional
-from torch import nn, Tensor
-
 from numalogic.models.autoencoder.base import BaseAE
-from numalogic.preprocess.datasets import SequenceDataset
+from torch import nn, Tensor
 
 
 def _scaled_dot_product(query: Tensor, key: Tensor, value: Tensor) -> Tensor:
