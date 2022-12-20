@@ -36,7 +36,7 @@ class TESTVanillaAE(unittest.TestCase):
 
     def test_vanilla(self):
         model = VanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1])
-        datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
@@ -47,7 +47,7 @@ class TESTVanillaAE(unittest.TestCase):
 
     def test_sparse_vanilla(self):
         model = SparseVanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1")
-        datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 

@@ -36,7 +36,7 @@ class TestLSTMAE(unittest.TestCase):
 
     def test_lstm_ae(self):
         model = LSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15)
-        datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
@@ -47,7 +47,7 @@ class TestLSTMAE(unittest.TestCase):
 
     def test_sparse_lstm_ae(self):
         model = SparseLSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15, loss_fn="mse")
-        datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 

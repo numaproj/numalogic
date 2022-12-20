@@ -38,8 +38,8 @@ class TimeseriesDataModule(pl.LightningDataModule):
     def __init__(
         self,
         seq_len: int,
-        train_data: NDArray[float],
-        val_data: NDArray[float] = None,
+        train_data: NDArray,
+        val_data: NDArray = None,
         batch_size: int = 64,
     ):
         super().__init__()
@@ -54,7 +54,6 @@ class TimeseriesDataModule(pl.LightningDataModule):
     def setup(self, stage: str) -> None:
         if stage == "fit":
             self.train_dataset = StreamingDataset(self.train_data, self.seq_len)
-        elif stage == "validate":
             if self.val_data is None:
                 return
             self.val_dataset = StreamingDataset(self.val_data, self.seq_len)

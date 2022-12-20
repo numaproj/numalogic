@@ -43,7 +43,7 @@ class TestTransformerAE(unittest.TestCase):
             num_encoder_layers=3,
             num_decoder_layers=1,
         )
-        datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=EPOCHS, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
@@ -54,7 +54,7 @@ class TestTransformerAE(unittest.TestCase):
 
     def test_sparse_transformer(self):
         model = SparseTransformerAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1")
-        datamodule = TimeseriesDataModule(self.X_train, SEQ_LEN, batch_size=BATCH_SIZE)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=EPOCHS, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
