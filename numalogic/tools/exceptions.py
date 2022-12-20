@@ -12,3 +12,7 @@ class InvalidRangeParameter(Exception):
 
 class LayerSizeMismatchError(Exception):
     pass
+
+
+class DataModuleError(Exception):
+    pass

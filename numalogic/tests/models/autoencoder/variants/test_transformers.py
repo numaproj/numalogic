@@ -8,12 +8,14 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
+from numalogic.tools.data import StreamingDataset, TimeseriesDataModule
+from numalogic.models.autoencoder.trainer import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import TransformerAE
-from numalogic.preprocess.datasets import SequenceDataset
+from numalogic.models.autoencoder.variants.transformer import SparseTransformerAE
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
-EPOCHS = 10
+EPOCHS = 5
 BATCH_SIZE = 256
 SEQ_LEN = 12
 LR = 0.001
@@ -32,10 +34,40 @@ class TestTransformerAE(unittest.TestCase):
         cls.X_train = scaler.fit_transform(df[:-240])
         cls.X_val = scaler.transform(df[-240:])
 
+    def test_transformer(self):
+        model = TransformerAE(
+            seq_len=SEQ_LEN,
+            n_features=2,
+            num_heads=8,
+            dim_feedforward=64,
+            num_encoder_layers=3,
+            num_decoder_layers=1,
+        )
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
+        trainer = AutoencoderTrainer(max_epochs=EPOCHS, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = AutoencoderTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
+        self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
+
+    def test_sparse_transformer(self):
+        model = SparseTransformerAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1")
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
+        trainer = AutoencoderTrainer(max_epochs=EPOCHS, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = AutoencoderTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
+        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
+
     def test_train(self):
         model = TransformerAE(
+            n_features=2,
             num_heads=8,
-            seq_length=SEQ_LEN,
+            seq_len=SEQ_LEN,
             dim_feedforward=64,
             num_encoder_layers=3,
             num_decoder_layers=1,
@@ -43,9 +75,8 @@ class TestTransformerAE(unittest.TestCase):
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
         criterion = nn.HuberLoss(delta=0.5)
 
-        dataset = SequenceDataset(self.X_train, SEQ_LEN, permute=True)
-        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
-        model.summary(dataset.data.size())
+        dataset = StreamingDataset(self.X_train, seq_len=SEQ_LEN)
+        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE)
 
         model.train()
         loss = torch.Tensor([0.0])
@@ -53,9 +84,9 @@ class TestTransformerAE(unittest.TestCase):
             for _X_batch in train_loader:
                 optimizer.zero_grad()
                 encoded, decoded = model(_X_batch)
+                decoded = decoded.view(-1, SEQ_LEN, self.X_train.shape[1])
 
                 loss = criterion(decoded, _X_batch)
-                print(loss)
                 loss.backward()
                 optimizer.step()
 

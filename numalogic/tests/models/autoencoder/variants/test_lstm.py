@@ -8,13 +8,15 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
+from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
+from numalogic.models.autoencoder.trainer import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import LSTMAE
-from numalogic.preprocess.datasets import SequenceDataset
+from numalogic.models.autoencoder.variants.lstm import SparseLSTMAE
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
 EPOCHS = 5
-BATCH_SIZE = 256
+BATCH_SIZE = 64
 SEQ_LEN = 12
 LR = 0.001
 torch.manual_seed(42)
@@ -32,14 +34,35 @@ class TestLSTMAE(unittest.TestCase):
         cls.X_train = scaler.fit_transform(df[:-240])
         cls.X_val = scaler.transform(df[-240:])
 
-    def test_train(self):
+    def test_lstm_ae(self):
+        model = LSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = AutoencoderTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
+        self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
+
+    def test_sparse_lstm_ae(self):
+        model = SparseLSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15, loss_fn="mse")
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = AutoencoderTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
+        self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
+
+    def test_native_train(self):
         model = LSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15)
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
         criterion = nn.HuberLoss(delta=0.5)
 
-        dataset = SequenceDataset(self.X_train, SEQ_LEN, permute=False)
-        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=False)
-        model.summary(dataset.data.size())
+        dataset = StreamingDataset(self.X_train, seq_len=SEQ_LEN)
+        train_loader = DataLoader(dataset, batch_size=BATCH_SIZE)
 
         model.train()
         loss = torch.Tensor([0.0])

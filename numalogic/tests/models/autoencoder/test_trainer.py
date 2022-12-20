@@ -1,0 +1,63 @@
+import os
+import unittest
+
+import pandas as pd
+import torch
+from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader
+
+from numalogic._constants import TESTS_DIR
+from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder.variants import Conv1dAE
+from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
+
+ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
+DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
+EPOCHS = 5
+BATCH_SIZE = 256
+SEQ_LEN = 12
+LR = 0.001
+torch.manual_seed(42)
+
+
+class TestAutoencoderTrainer(unittest.TestCase):
+    x_train = None
+    x_val = None
+    x_test = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        df = pd.read_csv(DATA_FILE)
+        df = df[["success", "failure"]]
+
+        scaler = StandardScaler()
+        cls.x_train = scaler.fit_transform(df[:-480])
+        cls.x_val = scaler.transform(df[-480:-240])
+        cls.x_test = scaler.transform(df[-240:])
+        print(cls.x_train.shape, cls.x_val.shape, cls.x_test.shape)
+
+    def test_trainer_01(self):
+        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=4)
+        datamodule = TimeseriesDataModule(
+            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
+        )
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True, limit_val_batches=1)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=1)
+        y_test = trainer.predict(model, dataloaders=streamloader, unbatch=True)
+        self.assertTupleEqual(self.x_test.shape, y_test.size())
+
+    def test_trainer_02(self):
+        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=4)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=BATCH_SIZE)
+        y_test_batched = trainer.predict(model, dataloaders=streamloader, unbatch=False)
+        self.assertTupleEqual((229, SEQ_LEN, self.x_test.shape[1]), y_test_batched.size())
+
+
+if __name__ == "__main__":
+    unittest.main()
