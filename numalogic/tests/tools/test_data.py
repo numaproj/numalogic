@@ -13,6 +13,7 @@ ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
 SEQ_LEN = 12
 
+
 class TestStreamingDataset(unittest.TestCase):
     data = None
     m = None
@@ -33,7 +34,7 @@ class TestStreamingDataset(unittest.TestCase):
 
     def test_dataset_err_01(self):
         with self.assertRaises(ValueError):
-            StreamingDataset(self.data, seq_len=self.m+1)
+            StreamingDataset(self.data, seq_len=self.m + 1)
 
     def test_dataset_err_02(self):
         dataset = StreamingDataset(self.data, seq_len=SEQ_LEN)
@@ -77,8 +78,6 @@ class TestTimeSeriesDataModule(unittest.TestCase):
         for batch in datamodule.train_dataloader():
             unbatched = datamodule.unbatch_sequences(batch)
             self.assertAlmostEqual(torch.mean(unbatched).item(), np.mean(self.train_data), places=5)
-
-
 
 
 if __name__ == "__main__":

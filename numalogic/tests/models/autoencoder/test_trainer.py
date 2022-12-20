@@ -39,10 +39,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
     def test_trainer_01(self):
         model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=4)
         datamodule = TimeseriesDataModule(
-            SEQ_LEN,
-            self.x_train,
-            val_data=self.x_val,
-            batch_size=BATCH_SIZE
+            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
         )
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True, limit_val_batches=1)
         trainer.fit(model, datamodule=datamodule)
@@ -53,11 +50,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
 
     def test_trainer_02(self):
         model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=4)
-        datamodule = TimeseriesDataModule(
-            SEQ_LEN,
-            self.x_train,
-            batch_size=BATCH_SIZE
-        )
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 

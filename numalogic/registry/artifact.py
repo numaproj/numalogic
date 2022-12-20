@@ -1,6 +1,6 @@
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from typing import Sequence, Any, Union, Dict
+from typing import Sequence, Any, Dict
 
 from numalogic.tools.types import Artifact
 

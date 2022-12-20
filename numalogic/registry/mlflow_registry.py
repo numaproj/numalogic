@@ -1,6 +1,6 @@
 import logging
 from enum import Enum
-from typing import Optional, Sequence, Union, Dict
+from typing import Optional, Sequence
 
 import mlflow.pyfunc
 import mlflow.pytorch

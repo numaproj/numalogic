@@ -14,5 +14,5 @@ __all__ = [
     "SparseLSTMAE",
     "TransformerAE",
     "SparseTransformerAE",
-    "BaseAE"
+    "BaseAE",
 ]
