@@ -24,7 +24,7 @@ class ModelStage(str, Enum):
     PRODUCTION = "Production"
 
 
-class MLflowRegistrar(ArtifactManager):
+class MLflowRegistry(ArtifactManager):
     """
     Model saving and loading using MLFlow Registry.
 
@@ -40,12 +40,12 @@ class MLflowRegistrar(ArtifactManager):
     Examples
     --------
     >>> from numalogic.models.autoencoder.variants.vanilla import VanillaAE
-    >>> from numalogic.registry.mlflow_registry import MLflowRegistrar
+    >>> from numalogic.registry.mlflow_registry import MLflowRegistry
     >>> from sklearn.pipeline import make_pipeline
     >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler.fit(data)
-    >>> registry = MLflowRegistrar(tracking_uri="http://0.0.0.0:8080", artifact_type="pytorch")
+    >>> registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080", artifact_type="pytorch")
     >>> registry.save(skeys=["model"], dkeys=["AE"], artifact=VanillaAE(10))
     >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"])
     """
