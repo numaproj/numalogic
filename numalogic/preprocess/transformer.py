@@ -2,12 +2,12 @@ import logging
 
 import numpy as np
 from numpy.typing import ArrayLike
-from sklearn.base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from sklearn.base import BaseEstimator, TransformerMixin
 
 LOGGER = logging.getLogger(__name__)
 
 
-class _DataIndependentTransformers(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class _DataIndependentTransformers(TransformerMixin, BaseEstimator):
     def fit(self, _: ArrayLike):
         return self
 
