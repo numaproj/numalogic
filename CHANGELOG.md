@@ -11,6 +11,14 @@
  * Avik Basu
  * Kushal Batra
 
+## v0.2.9 (2022-12-21)
+
+ * [df20591](https://github.com/numaproj/numalogic/commit/df20591f5a3b45117525c4331e5668c4289bd118) fix: sklearn base import for scikit learn v1.2 (#112)
+
+### Contributors
+
+ * Avik Basu
+
 ## v0.2.8 (2022-11-29)
 
  * [7d5075d](https://github.com/numaproj/numalogic/commit/7d5075ddda5950fef772cf07ffdb8f949bed589f) remove mlflow full
