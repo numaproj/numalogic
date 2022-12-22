@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.0a1 (2022-12-22)
+
+ * [88d26ec](https://github.com/numaproj/numalogic/commit/88d26ec000ee719f967dc90f4f78f57784b1db7e) feat!: convert AE variants to lightning modules (#110)
+ * [ed94615](https://github.com/numaproj/numalogic/commit/ed9461517f68192d275d81ef38727bcbe62e887f) fix: fix and clean mlflow test cases (#109)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
 ## v0.3.0a0 (2022-12-08)
 
  * [78cf5b4](https://github.com/numaproj/numalogic/commit/78cf5b4e26ffd6dffa5e0dc364cbd51b220bd928) fix: fix pipeline for 0.3 release (#106)
