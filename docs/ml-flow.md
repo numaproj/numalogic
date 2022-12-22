@@ -19,34 +19,34 @@ Once the mlflow server has been started, you can navigate to http://127.0.0.1:50
 
 ### Model saving
 
-Numalogic provides `MLflowRegistrar`, to save and load models to/from MLflow.
+Numalogic provides `MLflowRegistry`, to save and load models to/from MLflow.
 
 Here, `tracking_uri` is the uri where mlflow server is running. The `static_keys` and `dynamic_keys` are used to form a unique key for the model.
 
-The `primary_artifact` would be the main model, and `secondary_artifacts` can be used to save any pre-processing models like scalers. 
+The `primary_artifact` would be the main model, and `secondary_artifacts` can be used to save any pre-processing models like scalers.
 
 ```python
-from numalogic.registry import MLflowRegistrar
+from numalogic.registry import MLflowRegistry
 
 # static and dynamic keys are used to look up a model
 static_keys = ["synthetic", "3ts"]
 dynamic_keys = ["minmaxscaler", "sparseconv1d"]
 
-registry = MLflowRegistrar(tracking_uri="http://0.0.0.0:5000", artifact_type="pytorch")
+registry = MLflowRegistry(tracking_uri="http://0.0.0.0:5000", artifact_type="pytorch")
 registry.save(
-   skeys=static_keys, 
-   dkeys=dynamic_keys, 
-   primary_artifact=model, 
-   secondary_artifacts={"preproc": scaler}
+    skeys=static_keys,
+    dkeys=dynamic_keys,
+    primary_artifact=model,
+    secondary_artifacts={"preproc": scaler}
 )
 ```
 
 ### Model loading
 
-Once, the models are save to MLflow, the `load` function of `MLflowRegistrar` can be used to load the model.
+Once, the models are save to MLflow, the `load` function of `MLflowRegistry` can be used to load the model.
 
 ```python
-registry = MLflowRegistrar(tracking_uri="http://0.0.0.0:8080")
+registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080")
 artifact_dict = registry.load(
     skeys=static_keys, dkeys=dynamic_keys
 )

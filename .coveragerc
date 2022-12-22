@@ -2,4 +2,4 @@
 branch = True
 parallel = True
 source = numalogic
-omit = numalogic/tests/*
+omit = tests/*

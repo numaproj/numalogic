@@ -6,8 +6,8 @@ from mlflow import ActiveRun
 from sklearn.ensemble import RandomForestRegressor
 
 from numalogic.models.autoencoder.variants import VanillaAE
-from numalogic.registry import MLflowRegistrar
-from numalogic.tests.registry._mlflow_utils import (
+from numalogic.registry import MLflowRegistry
+from tests.registry._mlflow_utils import (
     model_sklearn,
     create_model,
     mock_log_model_pytorch,
@@ -44,7 +44,7 @@ class TestMLflow(unittest.TestCase):
     def test_construct_key(self):
         skeys = ["model_", "nnet"]
         dkeys = ["error1"]
-        key = MLflowRegistrar.construct_key(skeys, dkeys)
+        key = MLflowRegistry.construct_key(skeys, dkeys)
         self.assertEqual("model_:nnet::error1", key)
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch)
@@ -55,7 +55,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version)
     def test_insert_model(self):
-        ml = MLflowRegistrar(TRACKING_URI)
+        ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
         status = ml.save(
@@ -75,7 +75,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     def test_insert_model_sklearn(self):
         model = self.model_sklearn
-        ml = MLflowRegistrar(TRACKING_URI, artifact_type="sklearn")
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
         skeys = self.skeys
         dkeys = self.dkeys
         status = ml.save(
@@ -96,7 +96,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_select_model_when_pytorch_model_exist1(self):
         model = self.model
-        ml = MLflowRegistrar(TRACKING_URI, artifact_type="pytorch")
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
         skeys = self.skeys
         dkeys = self.dkeys
         ml.save(skeys=skeys, dkeys=dkeys, artifact=model, **{"lr": 0.01})
@@ -113,7 +113,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
     def test_select_model_when_pytorch_model_exist2(self):
         model = self.model
-        ml = MLflowRegistrar(TRACKING_URI, artifact_type="pytorch", models_to_retain=2)
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch", models_to_retain=2)
         skeys = self.skeys
         dkeys = self.dkeys
         ml.save(
@@ -135,7 +135,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
     def test_select_model_when_sklearn_model_exist(self):
         model = self.model_sklearn
-        ml = MLflowRegistrar(TRACKING_URI, artifact_type="sklearn")
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
         skeys = self.skeys
         dkeys = self.dkeys
         ml.save(
@@ -157,7 +157,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
     def test_select_model_with_version(self):
         model = self.model
-        ml = MLflowRegistrar(TRACKING_URI)
+        ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
         ml.save(
@@ -173,7 +173,7 @@ class TestMLflow(unittest.TestCase):
     def test_select_model_when_no_model_01(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
-        ml = MLflowRegistrar(TRACKING_URI, artifact_type="pyfunc")
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="pyfunc")
         with self.assertLogs(level="ERROR") as log:
             ml.load(skeys=fake_skeys, dkeys=fake_dkeys)
             self.assertTrue(log.output)
@@ -182,7 +182,7 @@ class TestMLflow(unittest.TestCase):
     def test_select_model_when_no_model_02(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
-        ml = MLflowRegistrar(TRACKING_URI, artifact_type="tensorflow")
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="tensorflow")
         with self.assertLogs(level="ERROR") as log:
             ml.load(skeys=fake_skeys, dkeys=fake_dkeys)
             self.assertTrue(log.output)
@@ -195,14 +195,14 @@ class TestMLflow(unittest.TestCase):
     def test_transition_stage_fail(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
-        ml = MLflowRegistrar(TRACKING_URI, artifact_type="tensorflow")
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="tensorflow")
         with self.assertLogs(level="ERROR") as log:
             ml.transition_stage(fake_skeys, fake_dkeys)
             self.assertTrue(log.output)
 
     def test_no_implementation(self):
         with self.assertRaises(NotImplementedError):
-            MLflowRegistrar(TRACKING_URI, artifact_type="some_random")
+            MLflowRegistry(TRACKING_URI, artifact_type="some_random")
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
@@ -215,7 +215,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.pytorch.load_model", Mock(side_effect=RuntimeError))
     def test_delete_model_when_model_exist(self):
         model = self.model
-        ml = MLflowRegistrar(TRACKING_URI)
+        ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
         ml.save(skeys=skeys, dkeys=dkeys, artifact=model, **{"lr": 0.01})
@@ -228,7 +228,7 @@ class TestMLflow(unittest.TestCase):
     def test_delete_model_when_no_model(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
-        ml = MLflowRegistrar(TRACKING_URI)
+        ml = MLflowRegistry(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
             ml.delete(skeys=fake_skeys, dkeys=fake_dkeys, version="1")
             print(log.output)
@@ -241,7 +241,7 @@ class TestMLflow(unittest.TestCase):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
 
-        ml = MLflowRegistrar(TRACKING_URI)
+        ml = MLflowRegistry(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
             ml.save(skeys=fake_skeys, dkeys=fake_dkeys, artifact=self.model)
             self.assertTrue(log.output)
