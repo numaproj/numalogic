@@ -1,4 +1,4 @@
-FROM python:3.10-slim-bullseye AS builder
+FROM arm64v8/python:3.10-slim-bullseye AS builder
 
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
@@ -6,7 +6,7 @@ ENV PYTHONFAULTHANDLER=1 \
   PIP_NO_CACHE_DIR=on \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
-  POETRY_VERSION=1.2.2 \
+  POETRY_VERSION=1.3.1 \
   POETRY_HOME="/opt/poetry" \
   POETRY_VIRTUALENVS_IN_PROJECT=true \
   POETRY_NO_INTERACTION=1 \
@@ -32,8 +32,8 @@ RUN apt-get update \
 FROM builder AS mlflow
 
 WORKDIR $PYSETUP_PATH
-COPY ./pyproject.toml ./poetry.lock ./
-RUN poetry install --only mlflow --no-cache --no-root && \
+COPY ./pyproject.toml ./
+RUN poetry install --only mlflowserver --no-cache --no-root && \
     rm -rf ~/.cache/pypoetry/
 
 ADD . /app
@@ -51,7 +51,8 @@ FROM builder AS udf
 
 WORKDIR $PYSETUP_PATH
 COPY ./pyproject.toml ./poetry.lock ./
-RUN poetry install --with mlflow-skinny --no-cache --no-root && \
+RUN poetry run pip3 install torch pytorch-lightning --extra-index-url https://download.pytorch.org/whl/cpu
+RUN poetry install --no-cache --no-root && \
     rm -rf ~/.cache/pypoetry/
 
 ADD . /app

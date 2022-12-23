@@ -8,10 +8,17 @@ authors = ["s0nicboOm <i.kushalbatra@gmail.com>"]
 python = ">=3.8, <3.11"
 dataclasses-json = "^0.5.6"
 cachetools = "^5.0.0"
-pynumaflow = "~0.2.4"
-numalogic = {version = "0.3.0a", extras = ["mlflow", "mlflow-skinny"]}
+# torch = "~1.12"
+protobuf = "~3.20"
+pynumaflow = "~0.2.6"
+# lightning = { version = "^1.8", extras = ["pytorch"]}
+numalogic = {git = "https://github.com/numaproj/numalogic.git", extras = ["mlflow-skinny"], rev = "example-0.3"}
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.mlflowserver]
+optional = true
+
+[tool.poetry.group.mlflowserver.dependencies]
+mlflow = "^1.30.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
