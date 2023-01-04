@@ -31,7 +31,7 @@ spec:
       min: 1
     udf:
       container:
-        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1-torch
+        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1
         env:
           - name: WIN_SIZE
             value: "12"
@@ -39,6 +39,19 @@ spec:
         - python
         - starter.py
         - inference
+  - name: threshold
+    scale:
+      min: 1
+    udf:
+      container:
+        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1
+        env:
+          - name: WIN_SIZE
+            value: "12"
+        args:
+          - python
+          - starter.py
+          - threshold
   - name: postprocess
     scale:
       min: 1
@@ -65,7 +78,7 @@ spec:
         env:
           - name: WIN_SIZE
             value: "12"
-        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1-torch
+        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1
         args:
           - python
           - starter.py
@@ -73,14 +86,16 @@ spec:
   edges:
     - from: in
       to: preprocess
+    - from: preprocess
+      to: inference
     - from: inference
+      to: threshold
+    - from: threshold
       to: train
       conditions:
         keyIn:
           - train
-    - from: preprocess
-      to: inference
-    - from: inference
+    - from: threshold
       to: postprocess
       conditions:
         keyIn:

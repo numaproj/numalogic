@@ -26,15 +26,14 @@ RUN apt-get update \
     \
     # install dumb-init
     && wget -O /dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64 \
-    && chmod +x /dumb-init \
-    && curl -sSL https://install.python-poetry.org | python3 -
+    && chmod +x /dumb-init # \
+    # && curl -sSL https://install.python-poetry.org | python3 -
+    && pip3 install --upgrade pip3
 
 FROM builder AS mlflow
 
 WORKDIR $PYSETUP_PATH
-COPY ./pyproject.toml ./
-RUN poetry install --only mlflowserver --no-cache --no-root && \
-    rm -rf ~/.cache/pypoetry/
+RUN pip3 install "mlflow==2.0.1"
 
 ADD . /app
 WORKDIR /app
@@ -50,10 +49,8 @@ EXPOSE 5000
 FROM builder AS udf
 
 WORKDIR $PYSETUP_PATH
-COPY ./pyproject.toml ./poetry.lock ./
-RUN poetry run pip3 install torch pytorch-lightning --extra-index-url https://download.pytorch.org/whl/cpu
-RUN poetry install --no-cache --no-root && \
-    rm -rf ~/.cache/pypoetry/
+COPY ./requirements.txt ./
+RUN pip3 install -r requirements.txt
 
 ADD . /app
 WORKDIR /app

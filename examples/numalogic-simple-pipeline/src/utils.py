@@ -17,11 +17,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dataclass_json
-@dataclass
+@dataclass(slots=True)
 class Payload:
     ts_data: ArrayLike = None
     anomaly_score: float = 0.0
     uuid: str = None
+    is_artifact_valid: bool = True
 
 
 def save_artifact(
