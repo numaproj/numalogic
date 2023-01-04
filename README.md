@@ -35,6 +35,21 @@ the result further or drop it after a trigger request.
 
 ## Installation
 
+Numalogic requires Python 3.8 or higher.
+
+### Prerequisites
+Numalogic needs [PyTorch]("https://pytorch.org/") and 
+[PyTorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/) to work. 
+But since these packages are platform dependendent, 
+they are not included in the numalogic package itself. Kindly install them first.
+
+Numalogic supports the following pytorch versions:
+- 1.11.x
+- 1.12.x
+- 1.13.x
+
+Other versions do work, it is just that they are not tested.
+
 numalogic can be installed using pip.
 ```shell
 pip install numalogic
@@ -57,7 +72,7 @@ pip install numalogic[mlflow]
     ```
 3. To install dependencies:
     ```
-    poetry install
+    poetry install --with dev,torch
     ```
    If extra dependencies are needed:
     ```
