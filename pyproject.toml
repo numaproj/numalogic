@@ -25,11 +25,17 @@ python = ">=3.8, <3.11"
 numpy = "^1.23"
 pandas = "^1.4"
 scikit-learn = "^1.0"
-pytorch-lightning = "^1.8"
 mlflow-skinny = { version = "~2.0.1", optional = true }
 
 [tool.poetry.extras]
 mlflow-skinny = ["mlflow-skinny"]
+
+[tool.poetry.group.torch]
+optional = true
+
+[tool.poetry.group.torch.dependencies]
+protobuf = "~3.20"
+pytorch-lightning = "^1.8"
 
 [tool.poetry.group.dev]
 optional = true

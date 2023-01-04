@@ -11,7 +11,7 @@ from src.utils import Payload
 LOGGER = logging.getLogger(__name__)
 
 
-def preprocess(key: str, datum: Datum) -> Messages:
+def preprocess(_: str, datum: Datum) -> Messages:
     r"""
     The preprocess function here transforms the input data for ML inference and sends
     the payload to inference vertex.
@@ -32,6 +32,4 @@ def preprocess(key: str, datum: Datum) -> Messages:
     LOGGER.info("%s - Preprocess complete for data: %s", payload.uuid, payload.ts_data)
 
     # Convert Payload back to bytes
-    messages = Messages()
-    messages.append(Message.to_all(payload.to_json().encode("utf-8")))
-    return messages
+    return Messages(Message.to_all(payload.to_json().encode("utf-8")))

@@ -1,4 +1,4 @@
-from src.udf import inference, postprocess, preprocess, train
+from src.udf import inference, postprocess, preprocess, train, threshold
 
 
 class HandlerFactory:
@@ -16,4 +16,7 @@ class HandlerFactory:
         if step == "train":
             return train
 
-        raise NotImplementedError(f"Invalid step provided: {step}")
+        if step == "threshold":
+            return threshold
+
+        raise ValueError(f"Invalid step provided: {step}")

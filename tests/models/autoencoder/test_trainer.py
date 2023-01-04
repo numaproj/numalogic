@@ -54,6 +54,9 @@ class TestAutoencoderTrainer(unittest.TestCase):
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
+        y_train = trainer.predict(model, dataloaders=datamodule.train_dataloader())
+        self.assertTupleEqual(self.x_train.shape, y_train.size())
+
         streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=BATCH_SIZE)
         y_test_batched = trainer.predict(model, dataloaders=streamloader, unbatch=False)
         self.assertTupleEqual((229, SEQ_LEN, self.x_test.shape[1]), y_test_batched.size())
