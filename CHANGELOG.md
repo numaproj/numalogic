@@ -1,5 +1,59 @@
 # Changelog
 
+## v0.3.0a1 (2022-12-22)
+
+ * [88d26ec](https://github.com/numaproj/numalogic/commit/88d26ec000ee719f967dc90f4f78f57784b1db7e) feat!: convert AE variants to lightning modules (#110)
+ * [ed94615](https://github.com/numaproj/numalogic/commit/ed9461517f68192d275d81ef38727bcbe62e887f) fix: fix and clean mlflow test cases (#109)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
+## v0.3.0a0 (2022-12-08)
+
+ * [78cf5b4](https://github.com/numaproj/numalogic/commit/78cf5b4e26ffd6dffa5e0dc364cbd51b220bd928) fix: fix pipeline for 0.3 release (#106)
+ * [709553f](https://github.com/numaproj/numalogic/commit/709553f4ae879f7e786634b02867966756706174) fix: fix mlflow test cases (#98)
+ * [701812e](https://github.com/numaproj/numalogic/commit/701812efed6742915d9cf57aef985127b3cc449d) feat!: disentangle threshold selection from the main model  (#89)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
+## v0.2.9 (2022-12-21)
+
+ * [df20591](https://github.com/numaproj/numalogic/commit/df20591f5a3b45117525c4331e5668c4289bd118) fix: sklearn base import for scikit learn v1.2 (#112)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.2.8 (2022-11-29)
+
+ * [7d5075d](https://github.com/numaproj/numalogic/commit/7d5075ddda5950fef772cf07ffdb8f949bed589f) remove mlflow full
+ * [05d6071](https://github.com/numaproj/numalogic/commit/05d6071a1de4ca85ed8095bab7654c2e77f366f5) fix: have mlflow-server as an optional extra
+ * [3c5bc83](https://github.com/numaproj/numalogic/commit/3c5bc8371a50a98a7ffc634b034692cc53ba597c) fix: lock file
+ * [d2c6293](https://github.com/numaproj/numalogic/commit/d2c6293f594ed67cc8a6ddabce1f8f0bdd84249f) fix: change example pipeline mlflow port (#96)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
+## v0.2.7 (2022-11-14)
+
+ * [f9c74c9](https://github.com/numaproj/numalogic/commit/f9c74c90c37fca24db3465c24326a639e93bc802) fix: allow only patch updates in torch version due to cuda build errors on mac (#90)
+ * [0a5fcdf](https://github.com/numaproj/numalogic/commit/0a5fcdf6c1ea4732b2c6c97f57d983751cfe2956) fix_readme: mention namespace name when applying the pipeline (#88)
+ * [537fae5](https://github.com/numaproj/numalogic/commit/537fae56577954391d10b134cb318d388c1a7dd7) fix: AutoencoderPipeline logged loss mean (#55)
+ * [22f8e5d](https://github.com/numaproj/numalogic/commit/22f8e5d79183d848f68c7cbeb2d88126fb326d03) chore!: make mlflow as an optional dependency (#47)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+ * diego-ponce
+
 ## v0.2.6 (2022-10-17)
 
  * [5703d1b](https://github.com/numaproj/numalogic/commit/5703d1b75d642242dc5c521a2e85e9cbb2527923) fix: update readme with optional mlflow dependency

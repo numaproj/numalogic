@@ -18,7 +18,7 @@ spec:
       min: 1
     udf:
       container:
-        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1
+        image: quay.io/numaio/numalogic/example-udf
         env:
           - name: WIN_SIZE
             value: "12"
@@ -31,7 +31,7 @@ spec:
       min: 1
     udf:
       container:
-        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1
+        image: quay.io/numaio/numalogic/example-udf
         env:
           - name: WIN_SIZE
             value: "12"
@@ -44,7 +44,7 @@ spec:
       min: 1
     udf:
       container:
-        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1
+        image: quay.io/numaio/numalogic/example-udf
         env:
           - name: WIN_SIZE
             value: "12"
@@ -57,7 +57,7 @@ spec:
       min: 1
     udf:
       container:
-        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1
+        image: quay.io/numaio/numalogic/example-udf
         env:
           - name: WIN_SIZE
             value: "12"
@@ -78,7 +78,7 @@ spec:
         env:
           - name: WIN_SIZE
             value: "12"
-        image: docker.io/library/numalogic-simple-pipeline:v0.3.0a1
+        image: quay.io/numaio/numalogic/example-udf
         args:
           - python
           - starter.py
@@ -121,7 +121,7 @@ spec:
         app: mlflow
     spec:
       containers:
-        - image: docker.io/library/numalogic-simple-pipeline:mlflow-v0.3.0a1
+        - image: quay.io/numaio/numalogic/example-mlflow
           name: mlflow
           args:
           - server

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.3.0a1"
+version = "0.3.0"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -28,7 +28,7 @@ scikit-learn = "^1.0"
 mlflow-skinny = { version = "~2.0.1", optional = true }
 
 [tool.poetry.extras]
-mlflow-skinny = ["mlflow-skinny"]
+mlflow = ["mlflow-skinny"]
 
 [tool.poetry.group.torch]
 optional = true
