@@ -16,7 +16,7 @@ WIN_SIZE = int(os.getenv("WIN_SIZE"))
 def inference(_: str, datum: Datum) -> Messages:
     r"""
     Here inference is done on the data, given, the ML model is present
-    in the registry. If a model does not exist, the paylaad is flagged for training.
+    in the registry. If a model does not exist, the payload is flagged for training.
     It then passes to the threshold vertex.
 
     For more information about the arguments, refer:
