@@ -2,6 +2,8 @@ import logging
 
 import pytorch_lightning as pl
 import torch
+
+from numalogic.tools.callbacks import ProgressDetails
 from numalogic.tools.data import TimeseriesDataModule
 from pytorch_lightning import Trainer
 from torch import Tensor
@@ -20,8 +22,12 @@ class AutoencoderTrainer(Trainer):
         enable_progress_bar=False,
         enable_model_summary=False,
         limit_val_batches=0,
+        callbacks=None,
         **trainer_kw
     ):
+        if (not callbacks) and enable_progress_bar:
+            callbacks = ProgressDetails()
+
         super().__init__(
             logger=logger,
             max_epochs=max_epochs,
@@ -31,6 +37,7 @@ class AutoencoderTrainer(Trainer):
             enable_progress_bar=enable_progress_bar,
             enable_model_summary=enable_model_summary,
             limit_val_batches=limit_val_batches,
+            callbacks=callbacks,
             **trainer_kw
         )
 
