@@ -30,7 +30,7 @@ jobs:
     - name: Install dependencies
       run: |
         poetry env use ${{ matrix.python-version }}
-        poetry install --all-extras
+        poetry install --all-extras --with dev,torch
 
     - name: Test with pytest
       run: make test
