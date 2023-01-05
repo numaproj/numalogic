@@ -54,7 +54,3 @@ class BaseAE(pl.LightningModule, metaclass=ABCMeta):
     def validation_step(self, batch, batch_idx):
         loss = self._get_reconstruction_loss(batch)
         return loss
-
-    def test_step(self, batch, batch_idx):
-        loss = self._get_reconstruction_loss(batch)
-        return loss
