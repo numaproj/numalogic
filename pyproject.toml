@@ -75,6 +75,7 @@ exclude = '''
   | buck-out
   | build
   | dist
+  | examples/.*/venv
   | tests/.*/setup.py
 )/
 '''
