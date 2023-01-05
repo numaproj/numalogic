@@ -22,6 +22,5 @@ class TestPostprocess(unittest.TestCase):
         self.assertAlmostEqual(np.sum(scores), 39.52, places=2)
 
 
-
 if __name__ == "__main__":
     unittest.main()

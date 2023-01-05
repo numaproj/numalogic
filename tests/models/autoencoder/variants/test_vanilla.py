@@ -46,7 +46,9 @@ class TESTVanillaAE(unittest.TestCase):
         self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
     def test_sparse_vanilla(self):
-        model = SparseVanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1", optim_algo="adagrad")
+        model = SparseVanillaAE(
+            seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1", optim_algo="adagrad"
+        )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
@@ -58,8 +60,11 @@ class TESTVanillaAE(unittest.TestCase):
 
     def test_native_train(self):
         model = VanillaAE(
-            SEQ_LEN, n_features=2, encoder_layersizes=[24, 16, 6], decoder_layersizes=[6, 16, 24],
-            optim_algo="rmsprop"
+            SEQ_LEN,
+            n_features=2,
+            encoder_layersizes=[24, 16, 6],
+            decoder_layersizes=[6, 16, 24],
+            optim_algo="rmsprop",
         )
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
         criterion = nn.HuberLoss(delta=0.5)
@@ -92,11 +97,7 @@ class TESTVanillaAE(unittest.TestCase):
             )
 
     def test_train_err_02(self):
-        model = VanillaAE(
-            SEQ_LEN,
-            n_features=2,
-            optim_algo="random"
-        )
+        model = VanillaAE(SEQ_LEN, n_features=2, optim_algo="random")
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         with self.assertRaises(NotImplementedError):
@@ -104,11 +105,7 @@ class TESTVanillaAE(unittest.TestCase):
 
     def test_train_err_03(self):
         with self.assertRaises(NotImplementedError):
-            VanillaAE(
-                SEQ_LEN,
-                n_features=2,
-                loss_fn="random"
-            )
+            VanillaAE(SEQ_LEN, n_features=2, loss_fn="random")
 
 
 if __name__ == "__main__":
