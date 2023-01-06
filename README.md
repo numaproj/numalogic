@@ -33,12 +33,33 @@ development velocity of the ML developer when they have to make a decision wheth
 the result further or drop it after a trigger request.
 
 
+## Key Features
+
+1. Ease of use: simple and efficient tools for predictive data analytics
+2. Reusability: all the functionalities can be re-used in various contexts
+3. Model selection: easy to compare, validate, fine-tune and choose the model that works best with each data set
+4. Data processing: readily available feature extraction, scaling, transforming and normalization tools
+5. Extensibility: adding your own functions or extending over the existing capabilities
+6. Model Storage: out-of-the-box support for MLFlow and support for other model ML lifecycle management tools
+
+## Use Cases
+1. Deployment failure detection
+2. System failure detection for node failures or crashes
+3. Fraud detection
+4. Network intrusion detection
+5. Forecasting on time series data
+
+## Getting Started
+
+For set-up information and running your first pipeline using numalogic, please see our [getting started guide](./quick-start.md).
+
+
 ## Installation
 
 Numalogic requires Python 3.8 or higher.
 
 ### Prerequisites
-Numalogic needs [PyTorch]("https://pytorch.org/") and 
+Numalogic needs [PyTorch](https://pytorch.org/) and 
 [PyTorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/) to work. 
 But since these packages are platform dependendent, 
 they are not included in the numalogic package itself. Kindly install them first.

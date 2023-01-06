@@ -44,6 +44,7 @@ class AutoencoderTrainer(Trainer):
     def predict(self, model: pl.LightningModule = None, unbatch=True, **kwargs) -> Tensor:
         recon_err = super().predict(model, **kwargs)
         recon_err = torch.vstack(recon_err)
+        # TODO fix when batch size = 1
         if unbatch:
             return TimeseriesDataModule.unbatch_sequences(recon_err)
         return recon_err

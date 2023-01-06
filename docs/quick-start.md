@@ -2,7 +2,17 @@
 
 ## Installation
 
-Install Numalogic and experiment with the different tools available.
+### Install pytorch-lightning
+Numalogic needs [PyTorch](https://pytorch.org/) and 
+[PyTorch Lightning](https://pytorch-lightning.readthedocs.io/en/stable/) to work.
+You can install simply by:
+```shell
+pip install pytorch-lightning
+```
+Or you can install your platform specific torch version from their website.
+
+
+### Install Numalogic
 
 ```shell
 pip install numalogic
@@ -16,53 +26,75 @@ In this example, the train data set has numbers ranging from 1-10. Whereas in th
 
 ```python
 import numpy as np
-from numalogic.models.autoencoder import AutoencoderPipeline
-from numalogic.models.autoencoder.variants import Conv1dAE
-from numalogic.models.threshold._std import StdDevThreshold
-from numalogic.postprocess import tanh_norm
-from numalogic.preprocess.transformer import LogTransformer
+from sklearn.preprocessing import StandardScaler
+from torch.utils.data import DataLoader
+from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder.variants import VanillaAE
+from numalogic.models.threshold import StdDevThreshold
+from numalogic.postprocess import TanhNorm
+from numalogic.tools.data import StreamingDataset
 
-X_train = np.array([1, 3, 5, 2, 5, 1, 4, 5, 1, 4, 5, 8, 9, 1, 2, 4, 5, 1, 3]).reshape(-1, 1)
-X_test = np.array([-20, 3, 5, 40, 5, 10, 4, 5, 100]).reshape(-1, 1)
+if __name__ == "__main__":
+    X_train = np.array([1, 3, 5, 2, 5, 1, 4, 5, 1, 4, 5, 8, 9, 1, 2, 4, 5, 1, 3]).reshape(-1, 1)
+    X_test = np.array([-20, 3, 5, 60, 5, 10, 4, 5, 200]).reshape(-1, 1)
 
-# preprocess step
-clf = LogTransformer()
-train_data = clf.fit_transform(X_train)
-test_data = clf.transform(X_test)
+    # Preprocess step
+    clf = StandardScaler()
+    train_data = clf.fit_transform(X_train)
+    test_data = clf.transform(X_test)
+    print(train_data)
+    print(test_data)
 
-# Define threshold estimator and call fit()
-thresh_clf = StdDevThreshold(std_factor=1.2)
-thresh_clf.fit(train_data)
+    # Set a sequence length.
+    SEQ_LEN = 8
 
-ae_pl = AutoencoderPipeline(
-    model=Conv1dAE(in_channels=1, enc_channels=4), seq_len=8, num_epochs=30
-)
-# fit method trains the model on train data set
-ae_pl.fit(X_train)
+    # Define the model. We are using a simple fully connected autoencoder here.
+    model = VanillaAE(seq_len=SEQ_LEN, n_features=1)
 
-# score method returns the reconstruction error
-anomaly_score = ae_pl.score(X_test)
+    # Create a torch dataset
+    train_dataset = StreamingDataset(train_data, seq_len=SEQ_LEN)
 
-# recalibrate score based on threshold estimator
-anomaly_score = thresh_clf.predict(anomaly_score)
+    # Define the trainer, and fit the model.
+    trainer = AutoencoderTrainer(max_epochs=30, enable_progress_bar=True)
+    trainer.fit(model, train_dataloaders=DataLoader(train_dataset))
 
-# normalizing scores to range between 0-10
-anomaly_score_norm = tanh_norm(anomaly_score)
-print("Anomaly Scores:", anomaly_score_norm)
+    # Get the training reconstruction error from the model.
+    train_reconerr = trainer.predict(model, dataloaders=DataLoader(train_dataset, batch_size=2))
+    print(train_reconerr)
+
+    # Define threshold estimator, and find a threshold on the training reconstruction error.
+    thresh_clf = StdDevThreshold()
+    thresh_clf.fit(train_reconerr.numpy())
+
+    # Now it is time for inference on the test data.
+    # First, let's get the reconstruction error on the test set.
+    test_dataset = StreamingDataset(test_data, seq_len=SEQ_LEN)
+    test_recon_err = trainer.predict(model, dataloaders=DataLoader(test_dataset, batch_size=2))
+    print(test_recon_err)
+
+    # The trained threshold estimator can give us the anomaly score
+    anomaly_score = thresh_clf.score(test_recon_err.numpy())
+
+    # Optionally, we can normalize scores to range between 0-10 to make it more readable
+    postproc_clf = TanhNorm()
+    anomaly_score_norm = postproc_clf.fit_transform(anomaly_score)
+    print("Anomaly Scores:\n", str(anomaly_score_norm))
+
 ```
 
 Below is the sample output, which has logs and anomaly scores printed. Notice the anomaly score for points -20, 40 and 100 in `X_test` is high.
 ```shell
 ...snip training logs...
-Anomaly Scores: [[6.4051428 ]
- [5.56049277]
- [6.17384938]
- [9.3043446 ]
- [0.22345986]
- [0.48584632]
- [3.18197182]
- [6.29744181]
- [9.99937961]]
+Anomaly Scores:
+ [[6.905296  ]
+ [0.1290902 ]
+ [0.17081457]
+ [9.688352  ]
+ [0.02224382]
+ [1.7376249 ]
+ [0.33091545]
+ [0.08399535]
+ [9.999992  ]]
 ```
 
 Replace `X_train` and `X_test` with your own data, and see the anomaly scores generated.
