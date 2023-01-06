@@ -21,6 +21,14 @@
  * Avik Basu
  * Kushal Batra
 
+## v0.3.0 (2023-01-05)
+
+ * [dca9a7a](https://github.com/numaproj/numalogic/commit/dca9a7a7b39ea229c5f306770967d10aa0285e35) feat!: merge to release v0.3 (#119)
+
+### Contributors
+
+ * Avik Basu
+
 ## v0.2.9 (2022-12-21)
 
  * [df20591](https://github.com/numaproj/numalogic/commit/df20591f5a3b45117525c4331e5668c4289bd118) fix: sklearn base import for scikit learn v1.2 (#112)
