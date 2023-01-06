@@ -469,6 +469,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#numaflow-ui" class="md-nav__link">
+    Numaflow UI
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#train-on-your-own-data" class="md-nav__link">
     Train on your own data
   </a>
@@ -885,6 +892,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#numaflow-ui" class="md-nav__link">
+    Numaflow UI
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#train-on-your-own-data" class="md-nav__link">
     Train on your own data
   </a>
@@ -1025,6 +1039,7 @@ numalogic-simple-pipeline-preprocess-0-mvuqb       2/2     Running   0          
 numalogic-simple-pipeline-train-0-8xjg1            2/2     Running   0          46s
 numalogic-simple-pipeline-daemon-66bbd94c4-hf4k2   1/1     Running   0          46s
 numalogic-simple-pipeline-inference-0-n3asg        2/2     Running   0          46s
+numalogic-simple-pipeline-threshold-0-ypwl8        2/2     Running   0          46s
 numalogic-simple-pipeline-postprocess-0-bw67q      2/2     Running   0          46s
 numalogic-simple-pipeline-out-0-hjb7m              1/1     Running   0          46s
 numalogic-simple-pipeline-in-0-tmd0v               1/1     Running   0          46s
@@ -1052,17 +1067,22 @@ numalogic-simple-pipeline-in-0-tmd0v               1/1     Running   0          
 <div class="highlight"><pre><span></span><code>&gt;<span class="w"> </span>curl<span class="w"> </span>-kq<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://localhost:8443/vertices/in<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;</span>
 
 &gt;<span class="w"> </span>kubectl<span class="w"> </span>logs<span class="w"> </span>numalogic-simple-pipeline-train-0-xxxxx<span class="w"> </span>-c<span class="w"> </span>udf
-<span class="m">2022</span>-10-19<span class="w"> </span><span class="m">22</span>:38:45,431<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>Training<span class="w"> </span>autoencoder<span class="w"> </span>model..
-<span class="m">2022</span>-10-19<span class="w"> </span><span class="m">22</span>:38:45,783<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span>:<span class="w"> </span><span class="m">5</span>,<span class="w"> </span>loss_mean<span class="w"> </span>:<span class="w"> </span><span class="m">0</span>.0744678
-<span class="m">2022</span>-10-19<span class="w"> </span><span class="m">22</span>:38:46,431<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span>:<span class="w"> </span><span class="m">10</span>,<span class="w"> </span>loss_mean<span class="w"> </span>:<span class="w"> </span><span class="m">0</span>.0491540
-...
-<span class="m">2022</span>-10-19<span class="w"> </span><span class="m">22</span>:38:49,645<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span>:<span class="w"> </span><span class="m">95</span>,<span class="w"> </span>loss_mean<span class="w"> </span>:<span class="w"> </span><span class="m">0</span>.0047888
-<span class="m">2022</span>-10-19<span class="w"> </span><span class="m">22</span>:38:49,878<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span>:<span class="w"> </span><span class="m">100</span>,<span class="w"> </span>loss_mean<span class="w"> </span>:<span class="w"> </span><span class="m">0</span>.0043651
-<span class="m">2022</span>-10-19<span class="w"> </span><span class="m">22</span>:38:49,880<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>8b597791-b8a3-41b0-8375-47e168887c54<span class="w"> </span>-<span class="w"> </span>Training<span class="w"> </span><span class="nb">complete</span>
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:36:57,146<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">0</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">2</span>.73
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:36:58,069<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">5</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.00621
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:36:58,918<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">10</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.00595
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:36:59,735<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">15</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.00608
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:37:00,547<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">20</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.00643
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:37:01,339<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">25</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.00693
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:37:02,146<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">30</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.0074
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:37:02,956<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">35</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.00781
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:37:03,754<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">40</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.0083
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:37:04,551<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>epoch<span class="w"> </span><span class="m">45</span>,<span class="w"> </span>loss:<span class="w"> </span><span class="m">0</span>.00851
+<span class="sb">`</span>Trainer.fit<span class="sb">`</span><span class="w"> </span>stopped:<span class="w"> </span><span class="sb">`</span><span class="nv">max_epochs</span><span class="o">=</span><span class="m">50</span><span class="sb">`</span><span class="w"> </span>reached.
 Successfully<span class="w"> </span>registered<span class="w"> </span>model<span class="w"> </span><span class="s1">&#39;ae::model&#39;</span>.
-<span class="m">2022</span>/10/19<span class="w"> </span><span class="m">22</span>:38:52<span class="w"> </span>INFO<span class="w"> </span>mlflow.tracking._model_registry.client:<span class="w"> </span>Waiting<span class="w"> </span>up<span class="w"> </span>to<span class="w"> </span><span class="m">300</span><span class="w"> </span>seconds<span class="w"> </span><span class="k">for</span><span class="w"> </span>model<span class="w"> </span>version<span class="w"> </span>to<span class="w"> </span>finish<span class="w"> </span>creation.<span class="w">                     </span>Model<span class="w"> </span>name:<span class="w"> </span>ae::model,<span class="w"> </span>version<span class="w"> </span><span class="m">1</span>
 Created<span class="w"> </span>version<span class="w"> </span><span class="s1">&#39;1&#39;</span><span class="w"> </span>of<span class="w"> </span>model<span class="w"> </span><span class="s1">&#39;ae::model&#39;</span>.
-<span class="m">2022</span>-10-19<span class="w"> </span><span class="m">22</span>:38:52,920<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>8b597791-b8a3-41b0-8375-47e168887c54<span class="w"> </span>-<span class="w"> </span>Model<span class="w"> </span>Saving<span class="w"> </span><span class="nb">complete</span>
+Successfully<span class="w"> </span>registered<span class="w"> </span>model<span class="w"> </span><span class="s1">&#39;thresh_clf::model&#39;</span>.
+Created<span class="w"> </span>version<span class="w"> </span><span class="s1">&#39;1&#39;</span><span class="w"> </span>of<span class="w"> </span>model<span class="w"> </span><span class="s1">&#39;thresh_clf::model&#39;</span>.
+<span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:37:07,957<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>41d571ca-0e98-4000-bcad-7752e5d5bc81<span class="w"> </span>-<span class="w"> </span>Model<span class="w"> </span>Saving<span class="w"> </span><span class="nb">complete</span>
 </code></pre></div>
 <h3 id="inference">Inference<a class="headerlink" href="#inference" title="Permanent link">&para;</a></h3>
 <p>Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference. </p>
@@ -1084,7 +1104,13 @@ Created<span class="w"> </span>version<span class="w"> </span><span class="s1">&
 <h3 id="mlflow-ui">MLflow UI<a class="headerlink" href="#mlflow-ui" title="Permanent link">&para;</a></h3>
 <p>To see the model in MLflow UI, port forward mlflow-service using the below command and navigate to http://127.0.0.1:5000/
    <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>port-forward<span class="w"> </span>svc/mlflow-service<span class="w"> </span><span class="m">5000</span>
+</code></pre></div>
+<img alt="Mlflow UI" src="../assets/mlflow-ui.png" /></p>
+<h3 id="numaflow-ui">Numaflow UI<a class="headerlink" href="#numaflow-ui" title="Permanent link">&para;</a></h3>
+<p>To see the numaflow pipeline, we can port forward to the UI https://localhost:8000/. 
+<div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>numaflow-system<span class="w"> </span>port-forward<span class="w"> </span>deployment/numaflow-server<span class="w"> </span><span class="m">8000</span>:8443
 </code></pre></div></p>
+<p><img alt="Numaflow UI" src="../assets/example-ui.png" /></p>
 <h3 id="train-on-your-own-data">Train on your own data<a class="headerlink" href="#train-on-your-own-data" title="Permanent link">&para;</a></h3>
 <p>If you want to train an ML model on your own data, replace the <code>train_data.csv</code> file with your own file under <a href="https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources">resources.</a> </p>
 <p>For more details, refer to <a href="https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline">numalogic-simple-pipeline</a> </p>
