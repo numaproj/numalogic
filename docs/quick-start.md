@@ -134,6 +134,7 @@ numalogic-simple-pipeline-preprocess-0-mvuqb       2/2     Running   0          
 numalogic-simple-pipeline-train-0-8xjg1            2/2     Running   0          46s
 numalogic-simple-pipeline-daemon-66bbd94c4-hf4k2   1/1     Running   0          46s
 numalogic-simple-pipeline-inference-0-n3asg        2/2     Running   0          46s
+numalogic-simple-pipeline-threshold-0-ypwl8        2/2     Running   0          46s
 numalogic-simple-pipeline-postprocess-0-bw67q      2/2     Running   0          46s
 numalogic-simple-pipeline-out-0-hjb7m              1/1     Running   0          46s
 numalogic-simple-pipeline-in-0-tmd0v               1/1     Running   0          46s
@@ -166,17 +167,23 @@ The following logs will be seen in the training pod.
 > curl -kq -X POST https://localhost:8443/vertices/in -d '{"data":[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}'
 
 > kubectl logs numalogic-simple-pipeline-train-0-xxxxx -c udf
-2022-10-19 22:38:45,431 - INFO - Training autoencoder model..
-2022-10-19 22:38:45,783 - INFO - epoch : 5, loss_mean : 0.0744678
-2022-10-19 22:38:46,431 - INFO - epoch : 10, loss_mean : 0.0491540
-...
-2022-10-19 22:38:49,645 - INFO - epoch : 95, loss_mean : 0.0047888
-2022-10-19 22:38:49,878 - INFO - epoch : 100, loss_mean : 0.0043651
-2022-10-19 22:38:49,880 - INFO - 8b597791-b8a3-41b0-8375-47e168887c54 - Training complete
+2023-01-06 18:36:57,146 - INFO - epoch 0, loss: 2.73
+2023-01-06 18:36:58,069 - INFO - epoch 5, loss: 0.00621
+2023-01-06 18:36:58,918 - INFO - epoch 10, loss: 0.00595
+2023-01-06 18:36:59,735 - INFO - epoch 15, loss: 0.00608
+2023-01-06 18:37:00,547 - INFO - epoch 20, loss: 0.00643
+2023-01-06 18:37:01,339 - INFO - epoch 25, loss: 0.00693
+2023-01-06 18:37:02,146 - INFO - epoch 30, loss: 0.0074
+2023-01-06 18:37:02,956 - INFO - epoch 35, loss: 0.00781
+2023-01-06 18:37:03,754 - INFO - epoch 40, loss: 0.0083
+2023-01-06 18:37:04,551 - INFO - epoch 45, loss: 0.00851
+`Trainer.fit` stopped: `max_epochs=50` reached.
 Successfully registered model 'ae::model'.
-2022/10/19 22:38:52 INFO mlflow.tracking._model_registry.client: Waiting up to 300 seconds for model version to finish creation.                     Model name: ae::model, version 1
 Created version '1' of model 'ae::model'.
-2022-10-19 22:38:52,920 - INFO - 8b597791-b8a3-41b0-8375-47e168887c54 - Model Saving complete
+Successfully registered model 'thresh_clf::model'.
+Created version '1' of model 'thresh_clf::model'.
+2023-01-06 18:37:07,957 - INFO - 41d571ca-0e98-4000-bcad-7752e5d5bc81 - Model Saving complete
+
 ```
 
 ### Inference
@@ -212,6 +219,16 @@ To see the model in MLflow UI, port forward mlflow-service using the below comma
    ```shell
    kubectl port-forward svc/mlflow-service 5000
    ```
+![Mlflow UI](./assets/mlflow-ui.png)
+
+### Numaflow UI
+
+To see the numaflow pipeline, we can port forward to the UI https://localhost:8000/. 
+```shell
+kubectl -n numaflow-system port-forward deployment/numaflow-server 8000:8443
+```
+
+![Numaflow UI](./assets/example-ui.png)
 
 
 ### Train on your own data
