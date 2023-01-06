@@ -389,6 +389,26 @@
     Installation
   </a>
   
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-pytorch-lightning" class="md-nav__link">
+    Install pytorch-lightning
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-numalogic" class="md-nav__link">
+    Install Numalogic
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -785,6 +805,26 @@
     Installation
   </a>
   
+    <nav class="md-nav" aria-label="Installation">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#install-pytorch-lightning" class="md-nav__link">
+    Install pytorch-lightning
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#install-numalogic" class="md-nav__link">
+    Install Numalogic
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -876,58 +916,86 @@
 
 <h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
-<p>Install Numalogic and experiment with the different tools available.</p>
+<h3 id="install-pytorch-lightning">Install pytorch-lightning<a class="headerlink" href="#install-pytorch-lightning" title="Permanent link">&para;</a></h3>
+<p>Numalogic needs <a href="https://pytorch.org/">PyTorch</a> and 
+<a href="https://pytorch-lightning.readthedocs.io/en/stable/">PyTorch Lightning</a> to work.
+You can install simply by:
+<div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>pytorch-lightning
+</code></pre></div>
+Or you can install your platform specific torch version from their website.</p>
+<h3 id="install-numalogic">Install Numalogic<a class="headerlink" href="#install-numalogic" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>numalogic
 </code></pre></div>
 <h2 id="numalogic-as-a-library">Numalogic as a Library<a class="headerlink" href="#numalogic-as-a-library" title="Permanent link">&para;</a></h2>
 <p>Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using a <code>AutoencoderPipeline</code>. Refer to <a href="../autoencoders/">training section</a> for other available options. </p>
 <p>In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set, there are data points that go out of this range, which the algorithm should be able to detect as anomalies.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder</span> <span class="kn">import</span> <span class="n">AutoencoderPipeline</span>
-<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">Conv1dAE</span>
-<span class="kn">from</span> <span class="nn">numalogic.models.threshold._std</span> <span class="kn">import</span> <span class="n">StdDevThreshold</span>
-<span class="kn">from</span> <span class="nn">numalogic.postprocess</span> <span class="kn">import</span> <span class="n">tanh_norm</span>
-<span class="kn">from</span> <span class="nn">numalogic.preprocess.transformer</span> <span class="kn">import</span> <span class="n">LogTransformer</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder</span> <span class="kn">import</span> <span class="n">AutoencoderTrainer</span>
+<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">VanillaAE</span>
+<span class="kn">from</span> <span class="nn">numalogic.models.threshold</span> <span class="kn">import</span> <span class="n">StdDevThreshold</span>
+<span class="kn">from</span> <span class="nn">numalogic.postprocess</span> <span class="kn">import</span> <span class="n">TanhNorm</span>
+<span class="kn">from</span> <span class="nn">numalogic.tools.data</span> <span class="kn">import</span> <span class="n">StreamingDataset</span>
 
-<span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">100</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">200</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-<span class="c1"># preprocess step</span>
-<span class="n">clf</span> <span class="o">=</span> <span class="n">LogTransformer</span><span class="p">()</span>
-<span class="n">train_data</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
-<span class="n">test_data</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+    <span class="c1"># Preprocess step</span>
+    <span class="n">clf</span> <span class="o">=</span> <span class="n">StandardScaler</span><span class="p">()</span>
+    <span class="n">train_data</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+    <span class="n">test_data</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">test_data</span><span class="p">)</span>
 
-<span class="c1"># Define threshold estimator and call fit()</span>
-<span class="n">thresh_clf</span> <span class="o">=</span> <span class="n">StdDevThreshold</span><span class="p">(</span><span class="n">std_factor</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
-<span class="n">thresh_clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_data</span><span class="p">)</span>
+    <span class="c1"># Set a sequence length.</span>
+    <span class="n">SEQ_LEN</span> <span class="o">=</span> <span class="mi">8</span>
 
-<span class="n">ae_pl</span> <span class="o">=</span> <span class="n">AutoencoderPipeline</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">Conv1dAE</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">enc_channels</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span> <span class="n">seq_len</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">num_epochs</span><span class="o">=</span><span class="mi">30</span>
-<span class="p">)</span>
-<span class="c1"># fit method trains the model on train data set</span>
-<span class="n">ae_pl</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+    <span class="c1"># Define the model. We are using a simple fully connected autoencoder here.</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">VanillaAE</span><span class="p">(</span><span class="n">seq_len</span><span class="o">=</span><span class="n">SEQ_LEN</span><span class="p">,</span> <span class="n">n_features</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="c1"># score method returns the reconstruction error</span>
-<span class="n">anomaly_score</span> <span class="o">=</span> <span class="n">ae_pl</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
+    <span class="c1"># Create a torch dataset</span>
+    <span class="n">train_dataset</span> <span class="o">=</span> <span class="n">StreamingDataset</span><span class="p">(</span><span class="n">train_data</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="n">SEQ_LEN</span><span class="p">)</span>
 
-<span class="c1"># recalibrate score based on threshold estimator</span>
-<span class="n">anomaly_score</span> <span class="o">=</span> <span class="n">thresh_clf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">anomaly_score</span><span class="p">)</span>
+    <span class="c1"># Define the trainer, and fit the model.</span>
+    <span class="n">trainer</span> <span class="o">=</span> <span class="n">AutoencoderTrainer</span><span class="p">(</span><span class="n">max_epochs</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">enable_progress_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_dataloaders</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">))</span>
 
-<span class="c1"># normalizing scores to range between 0-10</span>
-<span class="n">anomaly_score_norm</span> <span class="o">=</span> <span class="n">tanh_norm</span><span class="p">(</span><span class="n">anomaly_score</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Anomaly Scores:&quot;</span><span class="p">,</span> <span class="n">anomaly_score_norm</span><span class="p">)</span>
+    <span class="c1"># Get the training reconstruction error from the model.</span>
+    <span class="n">train_reconerr</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloaders</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">train_reconerr</span><span class="p">)</span>
+
+    <span class="c1"># Define threshold estimator, and find a threshold on the training reconstruction error.</span>
+    <span class="n">thresh_clf</span> <span class="o">=</span> <span class="n">StdDevThreshold</span><span class="p">()</span>
+    <span class="n">thresh_clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_reconerr</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+
+    <span class="c1"># Now it is time for inference on the test data.</span>
+    <span class="c1"># First, let&#39;s get the reconstruction error on the test set.</span>
+    <span class="n">test_dataset</span> <span class="o">=</span> <span class="n">StreamingDataset</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="n">SEQ_LEN</span><span class="p">)</span>
+    <span class="n">test_recon_err</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloaders</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">test_recon_err</span><span class="p">)</span>
+
+    <span class="c1"># The trained threshold estimator can give us the anomaly score</span>
+    <span class="n">anomaly_score</span> <span class="o">=</span> <span class="n">thresh_clf</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">test_recon_err</span><span class="o">.</span><span class="n">numpy</span><span class="p">())</span>
+
+    <span class="c1"># Optionally, we can normalize scores to range between 0-10 to make it more readable</span>
+    <span class="n">postproc_clf</span> <span class="o">=</span> <span class="n">TanhNorm</span><span class="p">()</span>
+    <span class="n">anomaly_score_norm</span> <span class="o">=</span> <span class="n">postproc_clf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">anomaly_score</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Anomaly Scores:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">anomaly_score_norm</span><span class="p">))</span>
 </code></pre></div>
 <p>Below is the sample output, which has logs and anomaly scores printed. Notice the anomaly score for points -20, 40 and 100 in <code>X_test</code> is high.
 <div class="highlight"><pre><span></span><code>...snip<span class="w"> </span>training<span class="w"> </span>logs...
-Anomaly<span class="w"> </span>Scores:<span class="w"> </span><span class="o">[[</span><span class="m">6</span>.4051428<span class="w"> </span><span class="o">]</span>
-<span class="w"> </span><span class="o">[</span><span class="m">5</span>.56049277<span class="o">]</span>
-<span class="w"> </span><span class="o">[</span><span class="m">6</span>.17384938<span class="o">]</span>
-<span class="w"> </span><span class="o">[</span><span class="m">9</span>.3043446<span class="w"> </span><span class="o">]</span>
-<span class="w"> </span><span class="o">[</span><span class="m">0</span>.22345986<span class="o">]</span>
-<span class="w"> </span><span class="o">[</span><span class="m">0</span>.48584632<span class="o">]</span>
-<span class="w"> </span><span class="o">[</span><span class="m">3</span>.18197182<span class="o">]</span>
-<span class="w"> </span><span class="o">[</span><span class="m">6</span>.29744181<span class="o">]</span>
-<span class="w"> </span><span class="o">[</span><span class="m">9</span>.99937961<span class="o">]]</span>
+Anomaly<span class="w"> </span>Scores:
+<span class="w"> </span><span class="o">[[</span><span class="m">6</span>.905296<span class="w">  </span><span class="o">]</span>
+<span class="w"> </span><span class="o">[</span><span class="m">0</span>.1290902<span class="w"> </span><span class="o">]</span>
+<span class="w"> </span><span class="o">[</span><span class="m">0</span>.17081457<span class="o">]</span>
+<span class="w"> </span><span class="o">[</span><span class="m">9</span>.688352<span class="w">  </span><span class="o">]</span>
+<span class="w"> </span><span class="o">[</span><span class="m">0</span>.02224382<span class="o">]</span>
+<span class="w"> </span><span class="o">[</span><span class="m">1</span>.7376249<span class="w"> </span><span class="o">]</span>
+<span class="w"> </span><span class="o">[</span><span class="m">0</span>.33091545<span class="o">]</span>
+<span class="w"> </span><span class="o">[</span><span class="m">0</span>.08399535<span class="o">]</span>
+<span class="w"> </span><span class="o">[</span><span class="m">9</span>.999992<span class="w">  </span><span class="o">]]</span>
 </code></pre></div></p>
 <p>Replace <code>X_train</code> and <code>X_test</code> with your own data, and see the anomaly scores generated.</p>
 <p>For more detailed experimentation, refer to <a href="https://github.com/numaproj/numalogic/blob/main/examples/quick-start.ipynb">quick-start example</a></p>
