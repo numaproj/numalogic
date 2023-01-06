@@ -6,7 +6,7 @@ from sklearn.metrics import r2_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
 
-from numalogic.scores import tanh_norm
+from numalogic.postprocess import tanh_norm
 
 
 class BaselineForecaster:

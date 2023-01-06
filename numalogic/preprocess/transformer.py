@@ -2,17 +2,13 @@ import logging
 
 import numpy as np
 from numpy.typing import ArrayLike
-from sklearn.base import BaseEstimator, TransformerMixin
+
+from numalogic.tools import DataIndependentTransformers
 
 LOGGER = logging.getLogger(__name__)
 
 
-class _DataIndependentTransformers(TransformerMixin, BaseEstimator):
-    def fit(self, _: ArrayLike):
-        return self
-
-
-class LogTransformer(_DataIndependentTransformers):
+class LogTransformer(DataIndependentTransformers):
     def __init__(self, add_factor=2):
         self.add_factor = add_factor
 
@@ -26,7 +22,7 @@ class LogTransformer(_DataIndependentTransformers):
         return np.exp(X) - self.add_factor
 
 
-class StaticPowerTransformer(_DataIndependentTransformers):
+class StaticPowerTransformer(DataIndependentTransformers):
     def __init__(self, n: float, add_factor=0):
         self.add_factor = add_factor
         self.n = n

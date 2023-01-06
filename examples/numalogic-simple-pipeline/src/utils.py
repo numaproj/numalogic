@@ -3,10 +3,9 @@ import os
 from dataclasses import dataclass
 from typing import Sequence
 
-import mlflow
 from dataclasses_json import dataclass_json
-from numalogic.models.autoencoder import AutoencoderPipeline
-from numalogic.registry import MLflowRegistrar
+from numalogic.models.autoencoder.base import BaseAE
+from numalogic.registry import MLflowRegistry
 from numalogic.tools.types import ArtifactDict
 from numpy.typing import ArrayLike
 
@@ -18,25 +17,34 @@ LOGGER = logging.getLogger(__name__)
 
 
 @dataclass_json
-@dataclass
+@dataclass(slots=True)
 class Payload:
     ts_data: ArrayLike = None
     anomaly_score: float = 0.0
     uuid: str = None
+    is_artifact_valid: bool = True
 
 
-def save_model(pl: AutoencoderPipeline, skeys: Sequence[str], dkeys: Sequence[str]) -> None:
-    ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI, artifact_type="pytorch")
-    mlflow.start_run()
-    ml_registry.save(skeys=skeys, dkeys=dkeys, primary_artifact=pl.model, **pl.model_properties)
-    mlflow.end_run()
+def save_artifact(
+    artifact,
+    skeys: Sequence[str],
+    dkeys: Sequence[str],
+) -> None:
+    if isinstance(artifact, BaseAE):
+        ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="pytorch")
+    else:
+        ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="sklearn")
+    ml_registry.save(skeys=skeys, dkeys=dkeys, artifact=artifact)
 
 
-def load_model(skeys: Sequence[str], dkeys: Sequence[str]) -> ArtifactDict:
+def load_artifact(skeys: Sequence[str], dkeys: Sequence[str], type_: str = None) -> ArtifactDict:
     try:
-        ml_registry = MLflowRegistrar(tracking_uri=TRACKING_URI)
+        if type_ == "pytorch":
+            ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="pytorch")
+        else:
+            ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="sklearn")
         artifact_dict = ml_registry.load(skeys=skeys, dkeys=dkeys)
         return artifact_dict
     except Exception as ex:
-        LOGGER.exception("Error while loading model from MLFlow database: %s", ex)
+        LOGGER.exception("Error while loading artifact from MLFlow database: %s", ex)
         return None

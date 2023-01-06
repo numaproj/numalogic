@@ -16,8 +16,7 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	poetry run black numalogic/*
-	poetry run black examples/*
+	poetry run black numalogic/ examples/ tests/
 
 lint: format
 	poetry run flake8 .
@@ -28,7 +27,7 @@ setup:
 
 # test your application (tests in the tests/ directory)
 test:
-	poetry run pytest numalogic/tests/
+	poetry run pytest tests/
 
 publish:
 	@rm -rf dist

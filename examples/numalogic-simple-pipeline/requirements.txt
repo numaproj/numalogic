@@ -1,0 +1,5 @@
+cachetools==5.2.0
+dataclasses-json==0.5.7
+numalogic[mlflow-skinny] @ git+https://github.com/numaproj/numalogic.git@example-0.3
+pytorch-lightning==1.8.6
+pynumaflow==0.2.6

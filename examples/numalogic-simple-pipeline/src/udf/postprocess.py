@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from numalogic.scores import tanh_norm
+from numalogic.postprocess import TanhNorm
 from pynumaflow.function import Messages, Message, Datum
 
 from src.utils import Payload
@@ -24,7 +24,8 @@ def postprocess(key: str, datum: Datum) -> Messages:
     data = np.asarray(payload.ts_data)
 
     # Taking mean of the anomaly scores
-    payload.anomaly_score = tanh_norm(np.mean(data))
+    normalizer = TanhNorm()
+    payload.anomaly_score = normalizer.fit_transform(np.mean(data))
 
     LOGGER.info("%s - The anomaly score is: %s", payload.uuid, payload.anomaly_score)
 

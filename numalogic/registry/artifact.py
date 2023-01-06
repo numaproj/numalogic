@@ -1,7 +1,15 @@
 from abc import ABCMeta, abstractmethod
-from typing import Sequence, Any, Union, Dict
+from dataclasses import dataclass
+from typing import Sequence, Any, Dict
 
 from numalogic.tools.types import Artifact
+
+
+@dataclass
+class ArtifactData:
+    artifact: Artifact
+    metadata: Dict[str, Any]
+    extras: Dict[str, Any]
 
 
 class ArtifactManager(metaclass=ABCMeta):
@@ -17,7 +25,7 @@ class ArtifactManager(metaclass=ABCMeta):
     @abstractmethod
     def load(
         self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
-    ) -> Artifact:
+    ) -> ArtifactData:
         """
         Loads the desired artifact from mlflow registry and returns it.
         Args:
@@ -30,20 +38,14 @@ class ArtifactManager(metaclass=ABCMeta):
 
     @abstractmethod
     def save(
-        self,
-        skeys: Sequence[str],
-        dkeys: Sequence[str],
-        primary_artifact: Artifact,
-        secondary_artifacts: Union[Sequence[Artifact], Dict[str, Artifact], None] = None,
-        **metadata
+        self, skeys: Sequence[str], dkeys: Sequence[str], artifact: Artifact, **metadata
     ) -> Any:
         r"""
         Saves the artifact into mlflow registry and updates version.
         Args:
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            primary_artifact: primary artifact to be saved
-            secondary_artifacts: secondary artifact to be saved
+            artifact: primary artifact to be saved
             metadata: additional metadata surrounding the artifact that needs to be saved
         """
         pass

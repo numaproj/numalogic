@@ -2,47 +2,60 @@
 
 An Autoencoder is a type of Artificial Neural Network, used to learn efficient data representations (encoding) of unlabeled data. 
 
-It mainly consist of 2 components: an encoder and a decoder. The encoder compresses the input into a lower dimensional code, the decoder then reconstructs the input only using this code.
+It mainly consists of 2 components: an encoder and a decoder. The encoder compresses the input into a lower dimensional code, the decoder then reconstructs the input only using this code.
 
-### Autoencoder Pipelines
+## Datamodules
+Pytorch-lightning datamodules abstracts and separates the data functionality from the model and training itself.
+Numalogic provides `TimeseriesDataModule` to help set up and load dataloaders.
 
-Numalogic provides two types of pipelines for Autoencoders. These pipelines serve as a wrapper around the base network models, making it easier to train, predict and generate scores. Also, this module follows the sklearn API.
+```python
+import numpy as np
+from numalogic.tools.data import TimeseriesDataModule
 
-#### AutoencoderPipeline
-
-Here we are using `VanillAE`, a Vanilla Autoencoder model.
-
-```python 
-from numalogic.models.autoencoder.variants import Conv1dAE
-from numalogic.models.autoencoder import SparseAEPipeline
-
-model = AutoencoderPipeline(
-    model=VanillaAE(signal_len=12, n_features=3), seq_len=seq_len
-)
-model.fit(X_train)
+train_data = np.random.randn(100, 3)
+datamodule = TimeseriesDataModule(12, train_data, batch_size=128)
 ```
 
-#### SparseAEPipeline
+## Autoencoder Trainer
 
-A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve an information bottleneck. Specifically the loss function is constructed so that activations are penalized within a layer.
+Numalogic provides a subclass of Pytorch-Lightning Trainer module specifically for Autoencoders. 
+This trainer provides a mechanism to train, validate and infer on data, with all the parameters supported by Lightning Trainer.
 
+Here we are using `VanillaAE`, a Vanilla Autoencoder model.
+
+```python 
+from numalogic.models.autoencoder.variants import VanillaAE
+from numalogic.models.autoencoder import AutoencoderTrainer
+
+model = VanillaAE(seq_len=12, n_features=3)
+trainer = AutoencoderTrainer(max_epochs=50, enable_progress_bar=True)
+trainer.fit(model, datamodule=datamodule)
+```
+
+## Autoencoder Variants
+
+Numalogic supports 2 variants of Autoencoders currently. 
+More details can be found [here](https://www.deeplearningbook.org/contents/autoencoders.html).
+
+### 1. Undercomplete autoencoders
+
+This is the simplest version of autoencoders where it is made sure that the 
+latent dimension is smaller than the encoding and decoding dimesions.
+
+Examples would be `VanillaAE`, `Conv1dAE`, `LSTMAE` and `TransformerAE`
+
+### 2. Sparse autoencoders
+A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve an information bottleneck. 
+Specifically the loss function is constructed so that activations are penalized within a layer.
 So, by adding a sparsity regularization, we will be able to stop the neural network from copying the input and reduce overfitting.
 
-```python 
-from numalogic.models.autoencoder.variants import Conv1dAE
-from numalogic.models.autoencoder import SparseAEPipeline
+Examples would be `SparseVanillaAE`, `SparseConv1dAE`, `SparseLSTMAE` and `SparseTransformerAE`
 
-model = SparseAEPipeline(
-    model=VanillaAE(signal_len=12, n_features=3), seq_len=36, num_epochs=30
-)
-model.fit(X_train)
-```
+## Network architectures
 
-### Autoencoder Variants
+Numalogic currently supports the following architectures.
 
-Numalogic supports the following variants of Autoencoders
-
-#### VanillaAE
+#### Fully Connected
 
 Vanilla Autoencoder model comprising only fully connected layers.
 
@@ -52,17 +65,17 @@ from numalogic.models.autoencoder.variants import VanillaAE
 model = VanillaAE(seq_len=12, n_features=2)
 ```   
 
-#### Conv1dAE
+#### 1d Convolutional
 
 Conv1dAE is a one dimensional Convolutional Autoencoder with multichannel support.
    
 ```python
-from numalogic.models.autoencoder.variants import Conv1dAE
+from numalogic.models.autoencoder.variants import SparseConv1dAE
 
-model=Conv1dAE(in_channels=3, enc_channels=8)
+model = SparseConv1dAE(beta=1e-2, seq_len=12, in_channels=3, enc_channels=8)
 ```
 
-#### LSTMAE
+#### LSTM
 
 An LSTM (Long Short-Term Memory) Autoencoder is an implementation of an autoencoder for sequence data using an Encoder-Decoder LSTM architecture.
 
@@ -73,7 +86,7 @@ model = LSTMAE(seq_len=12, no_features=2, embedding_dim=15)
 
 ```
 
-#### TransformerAE
+#### Transformer
 
 The transformer-based Autoencoder model was inspired from [Attention is all you need](https://arxiv.org/abs/1706.03762) paper. 
 

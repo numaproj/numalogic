@@ -3,15 +3,18 @@ import os
 
 import cachetools
 import pandas as pd
-from numalogic.models.autoencoder import AutoencoderPipeline
+from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
+from numalogic.models.threshold import StdDevThreshold
 from numalogic.preprocess.transformer import LogTransformer
+from numalogic.tools.data import TimeseriesDataModule
 from pynumaflow.function import Datum, Messages, Message
 
-from src.utils import Payload, save_model, TRAIN_DATA_PATH
+from src.utils import Payload, save_artifact, TRAIN_DATA_PATH
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", 64))
 ttl_cache = cachetools.TTLCache(maxsize=128, ttl=120 * 60)
 
 
@@ -48,15 +51,25 @@ def train(key: str, datum: Datum):
 
     # Preprocess training data
     clf = LogTransformer()
-    train_data = clf.fit_transform(data)
+    train_data = clf.fit_transform(data.to_numpy())
 
     # Train step
-    pl = AutoencoderPipeline(model=Conv1dAE(in_channels=1, enc_channels=12), seq_len=WIN_SIZE)
-    pl.fit(train_data.to_numpy())
+    datamodule = TimeseriesDataModule(WIN_SIZE, train_data, batch_size=BATCH_SIZE)
+    model = Conv1dAE(seq_len=WIN_SIZE, in_channels=train_data.shape[1], enc_channels=12)
+    trainer = AutoencoderTrainer(max_epochs=50, enable_progress_bar=True)
+    trainer.fit(model, datamodule=datamodule)
+
+    train_reconerr = trainer.predict(model, dataloaders=datamodule.train_dataloader())
+
     LOGGER.info("%s - Training complete", payload.uuid)
 
+    # Define Threshold method
+    thresh_clf = StdDevThreshold(std_factor=1.2)
+    thresh_clf.fit(train_reconerr.numpy())
+
     # Save to registry
-    save_model(pl, skeys=["ae"], dkeys=["model"])
+    save_artifact(model, skeys=["ae"], dkeys=["model"])
+    save_artifact(thresh_clf, skeys=["thresh_clf"], dkeys=["model"])
     LOGGER.info("%s - Model Saving complete", payload.uuid)
 
     # Train is the last vertex in the graph
