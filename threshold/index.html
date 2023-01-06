@@ -13,7 +13,7 @@
     
     
       
-        <title>Autoencoders - Numalogic - Collection of operational time series ML models and tools</title>
+        <title>Threshold Estimators - Numalogic - Collection of operational time series ML models and tools</title>
       
     
     
@@ -74,7 +74,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#autoencoders" class="md-skip">
+        <a href="#threshold-estimators" class="md-skip">
           Skip to content
         </a>
       
@@ -108,7 +108,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Autoencoders
+              Threshold Estimators
             
           </span>
         </div>
@@ -224,15 +224,13 @@
         
   
   
-    
-  
 
 
   
   
   
     <li class="md-tabs__item">
-      <a href="../data-generator/" class="md-tabs__link md-tabs__link--active">
+      <a href="../data-generator/" class="md-tabs__link">
         User Guide
       </a>
     </li>
@@ -369,14 +367,12 @@
 
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3" type="checkbox" id="__nav_3" >
       
       
       
@@ -411,14 +407,12 @@
               
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2" type="checkbox" id="__nav_3_2" >
       
       
       
@@ -439,14 +433,12 @@
               
   
   
-    
-  
   
     
-    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--nested">
       
       
-        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_1" type="checkbox" id="__nav_3_2_1" checked>
+        <input class="md-nav__toggle md-toggle" data-md-toggle="__nav_3_2_1" type="checkbox" id="__nav_3_2_1" >
       
       
       
@@ -467,127 +459,11 @@
               
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Autoencoders
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../autoencoders/" class="md-nav__link">
         Autoencoders
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#datamodules" class="md-nav__link">
-    Datamodules
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#autoencoder-trainer" class="md-nav__link">
-    Autoencoder Trainer
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#autoencoder-variants" class="md-nav__link">
-    Autoencoder Variants
-  </a>
-  
-    <nav class="md-nav" aria-label="Autoencoder Variants">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-undercomplete-autoencoders" class="md-nav__link">
-    1. Undercomplete autoencoders
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-sparse-autoencoders" class="md-nav__link">
-    2. Sparse autoencoders
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#network-architectures" class="md-nav__link">
-    Network architectures
-  </a>
-  
-    <nav class="md-nav" aria-label="Network architectures">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fully-connected" class="md-nav__link">
-    Fully Connected
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#1d-convolutional" class="md-nav__link">
-    1d Convolutional
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lstm" class="md-nav__link">
-    LSTM
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#transformer" class="md-nav__link">
-    Transformer
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -784,96 +660,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#datamodules" class="md-nav__link">
-    Datamodules
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#autoencoder-trainer" class="md-nav__link">
-    Autoencoder Trainer
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#autoencoder-variants" class="md-nav__link">
-    Autoencoder Variants
-  </a>
-  
-    <nav class="md-nav" aria-label="Autoencoder Variants">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#1-undercomplete-autoencoders" class="md-nav__link">
-    1. Undercomplete autoencoders
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#2-sparse-autoencoders" class="md-nav__link">
-    2. Sparse autoencoders
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#network-architectures" class="md-nav__link">
-    Network architectures
-  </a>
-  
-    <nav class="md-nav" aria-label="Network architectures">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#fully-connected" class="md-nav__link">
-    Fully Connected
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#1d-convolutional" class="md-nav__link">
-    1d Convolutional
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lstm" class="md-nav__link">
-    LSTM
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#transformer" class="md-nav__link">
-    Transformer
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -884,81 +670,40 @@
             <article class="md-content__inner md-typeset">
               
                 
-  <a href="https://github.com/numaproj/numalogic/edit/main/docs/autoencoders.md" title="Edit this page" class="md-content__button md-icon">
+  <a href="https://github.com/numaproj/numalogic/edit/main/docs/threshold.md" title="Edit this page" class="md-content__button md-icon">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
   </a>
 
 
 
-<h1 id="autoencoders">Autoencoders<a class="headerlink" href="#autoencoders" title="Permanent link">&para;</a></h1>
-<p>An Autoencoder is a type of Artificial Neural Network, used to learn efficient data representations (encoding) of unlabeled data. </p>
-<p>It mainly consists of 2 components: an encoder and a decoder. The encoder compresses the input into a lower dimensional code, the decoder then reconstructs the input only using this code.</p>
-<h2 id="datamodules">Datamodules<a class="headerlink" href="#datamodules" title="Permanent link">&para;</a></h2>
-<p>Pytorch-lightning datamodules abstracts and separates the data functionality from the model and training itself.
-Numalogic provides <code>TimeseriesDataModule</code> to help set up and load dataloaders.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">numalogic.tools.data</span> <span class="kn">import</span> <span class="n">TimeseriesDataModule</span>
+<h1 id="threshold-estimators">Threshold Estimators<a class="headerlink" href="#threshold-estimators" title="Permanent link">&para;</a></h1>
+<p>Threshold Estimators are used for identifying the threshold limit above which we regard the datapoint as anomaly. 
+It is a simple Estimator that extends BaseEstimator. </p>
+<p>Currently, the library supports <code>StdDevThreshold</code>. This takes in paramaters <code>min_thresh</code> and <code>std_factor</code>. This model 
+defines threshold as <code>mean + 3 * std_factor</code>. </p>
+<p>Fitting the threshold model
+<div class="highlight"><pre><span></span><code><span class="c1"># preprocess step</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">LogTransformer</span><span class="p">()</span>
+<span class="n">train_data</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+<span class="n">test_data</span> <span class="o">=</span> <span class="n">clf</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 
-<span class="n">train_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-<span class="n">datamodule</span> <span class="o">=</span> <span class="n">TimeseriesDataModule</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="autoencoder-trainer">Autoencoder Trainer<a class="headerlink" href="#autoencoder-trainer" title="Permanent link">&para;</a></h2>
-<p>Numalogic provides a subclass of Pytorch-Lightning Trainer module specifically for Autoencoders. 
-This trainer provides a mechanism to train, validate and infer on data, with all the parameters supported by Lightning Trainer.</p>
-<p>Here we are using <code>VanillaAE</code>, a Vanilla Autoencoder model.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">VanillaAE</span>
-<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder</span> <span class="kn">import</span> <span class="n">AutoencoderTrainer</span>
+<span class="c1"># Fitting the Threshold model </span>
+<span class="n">thresh_clf</span> <span class="o">=</span> <span class="n">StdDevThreshold</span><span class="p">(</span><span class="n">std_factor</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
+</code></pre></div></p>
+<p>Train the model
+<div class="highlight"><pre><span></span><code><span class="c1"># Train the Autoencoder model and fit the model on train data</span>
+<span class="n">ae_pl</span> <span class="o">=</span> <span class="n">AutoencoderPipeline</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">Conv1dAE</span><span class="p">(</span><span class="n">in_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">enc_channels</span><span class="o">=</span><span class="mi">4</span><span class="p">),</span> <span class="n">seq_len</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">num_epochs</span><span class="o">=</span><span class="mi">30</span>
+<span class="p">)</span>
+<span class="n">ae_pl</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">VanillaAE</span><span class="p">(</span><span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">n_features</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">trainer</span> <span class="o">=</span> <span class="n">AutoencoderTrainer</span><span class="p">(</span><span class="n">max_epochs</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">enable_progress_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">datamodule</span><span class="o">=</span><span class="n">datamodule</span><span class="p">)</span>
+<span class="c1"># predict method returns the reconstruction error</span>
+<span class="n">anomaly_score</span> <span class="o">=</span> <span class="n">ae_pl</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span>
 </code></pre></div>
-<h2 id="autoencoder-variants">Autoencoder Variants<a class="headerlink" href="#autoencoder-variants" title="Permanent link">&para;</a></h2>
-<p>Numalogic supports 2 variants of Autoencoders currently. 
-More details can be found <a href="https://www.deeplearningbook.org/contents/autoencoders.html">here</a>.</p>
-<h3 id="1-undercomplete-autoencoders">1. Undercomplete autoencoders<a class="headerlink" href="#1-undercomplete-autoencoders" title="Permanent link">&para;</a></h3>
-<p>This is the simplest version of autoencoders where it is made sure that the 
-latent dimension is smaller than the encoding and decoding dimesions.</p>
-<p>Examples would be <code>VanillaAE</code>, <code>Conv1dAE</code>, <code>LSTMAE</code> and <code>TransformerAE</code></p>
-<h3 id="2-sparse-autoencoders">2. Sparse autoencoders<a class="headerlink" href="#2-sparse-autoencoders" title="Permanent link">&para;</a></h3>
-<p>A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve an information bottleneck. 
-Specifically the loss function is constructed so that activations are penalized within a layer.
-So, by adding a sparsity regularization, we will be able to stop the neural network from copying the input and reduce overfitting.</p>
-<p>Examples would be <code>SparseVanillaAE</code>, <code>SparseConv1dAE</code>, <code>SparseLSTMAE</code> and <code>SparseTransformerAE</code></p>
-<h2 id="network-architectures">Network architectures<a class="headerlink" href="#network-architectures" title="Permanent link">&para;</a></h2>
-<p>Numalogic currently supports the following architectures.</p>
-<h4 id="fully-connected">Fully Connected<a class="headerlink" href="#fully-connected" title="Permanent link">&para;</a></h4>
-<p>Vanilla Autoencoder model comprising only fully connected layers.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">VanillaAE</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">VanillaAE</span><span class="p">(</span><span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">n_features</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-</code></pre></div>
-<h4 id="1d-convolutional">1d Convolutional<a class="headerlink" href="#1d-convolutional" title="Permanent link">&para;</a></h4>
-<p>Conv1dAE is a one dimensional Convolutional Autoencoder with multichannel support.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">SparseConv1dAE</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">SparseConv1dAE</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">in_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">enc_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
-</code></pre></div>
-<h4 id="lstm">LSTM<a class="headerlink" href="#lstm" title="Permanent link">&para;</a></h4>
-<p>An LSTM (Long Short-Term Memory) Autoencoder is an implementation of an autoencoder for sequence data using an Encoder-Decoder LSTM architecture.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">LSTMAE</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">LSTMAE</span><span class="p">(</span><span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">no_features</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
-</code></pre></div>
-<h4 id="transformer">Transformer<a class="headerlink" href="#transformer" title="Permanent link">&para;</a></h4>
-<p>The transformer-based Autoencoder model was inspired from <a href="https://arxiv.org/abs/1706.03762">Attention is all you need</a> paper. </p>
-<p>It consists of an encoder and a decoder which are both stacks of residual attention blocks, i.e a stack of layers set in such a way that the output of a layer is taken and added to another layer deeper in the block.</p>
-<p>These blocks can process an input sequence of variable length n without exhibiting a recurrent structure and allows transformer-based encoder-decoders to be highly parallelizable.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">TransformerAE</span>
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">TransformerAE</span><span class="p">(</span>
-            <span class="n">num_heads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-            <span class="n">seq_length</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
-            <span class="n">dim_feedforward</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
-            <span class="n">num_encoder_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-            <span class="n">num_decoder_layers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-</code></pre></div>
+Predicting score using the threshold model
+<div class="highlight"><pre><span></span><code><span class="c1"># Predict final anomaly score using threshold estimator</span>
+<span class="n">anomaly_score</span> <span class="o">=</span> <span class="n">thresh_clf</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">anomaly_score</span><span class="p">)</span>
+</code></pre></div></p>
 
               
             </article>
@@ -974,42 +719,6 @@ So, by adding a sparsity regularization, we will be able to stop the neural netw
       </main>
       
         <footer class="md-footer">
-  
-    
-    <nav class="md-footer__inner md-grid" aria-label="Footer" >
-      
-        
-        <a href="../data-generator/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Data Generator" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Data Generator
-            </div>
-          </div>
-        </a>
-      
-      
-        
-        <a href="../forecasting/" class="md-footer__link md-footer__link--next" aria-label="Next: Forcasting" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Forcasting
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
   
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
