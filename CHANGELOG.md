@@ -29,6 +29,14 @@
 
  * Avik Basu
 
+## v0.2.10 (2023-01-06)
+
+ * [c00bb14](https://github.com/numaproj/numalogic/commit/c00bb140dc481d90b70f98e8fbb1968db151b9ca) fix: Upgrade torch to 1.13.1 (#128)
+
+### Contributors
+
+ * Avik Basu
+
 ## v0.2.9 (2022-12-21)
 
  * [df20591](https://github.com/numaproj/numalogic/commit/df20591f5a3b45117525c4331e5668c4289bd118) fix: sklearn base import for scikit learn v1.2 (#112)
