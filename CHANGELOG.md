@@ -1,5 +1,20 @@
 # Changelog
 
+## v0.3.1 (2023-01-12)
+
+ * [2923718](https://github.com/numaproj/numalogic/commit/2923718b4bfd66ddaf74a84c2dc9b2a48a3a4a1f) fix: unbatch error on certain cases (#131)
+ * [232302e](https://github.com/numaproj/numalogic/commit/232302ed134c8447c669b5f56e2684e426cb7e95) fix: pin protobuf to v3.20 for pytorch-lightning (#130)
+ * [dca9a7a](https://github.com/numaproj/numalogic/commit/dca9a7a7b39ea229c5f306770967d10aa0285e35) feat!: merge to release v0.3 (#119)
+ * [df20591](https://github.com/numaproj/numalogic/commit/df20591f5a3b45117525c4331e5668c4289bd118) fix: sklearn base import for scikit learn v1.2 (#112)
+ * [d2c6293](https://github.com/numaproj/numalogic/commit/d2c6293f594ed67cc8a6ddabce1f8f0bdd84249f) fix: change example pipeline mlflow port (#96)
+ * [f9c74c9](https://github.com/numaproj/numalogic/commit/f9c74c90c37fca24db3465c24326a639e93bc802) fix: allow only patch updates in torch version due to cuda build errors on mac (#90)
+ * [0a5fcdf](https://github.com/numaproj/numalogic/commit/0a5fcdf6c1ea4732b2c6c97f57d983751cfe2956) fix_readme: mention namespace name when applying the pipeline (#88)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
 ## v0.3.0a1 (2022-12-22)
 
  * [88d26ec](https://github.com/numaproj/numalogic/commit/88d26ec000ee719f967dc90f4f78f57784b1db7e) feat!: convert AE variants to lightning modules (#110)
