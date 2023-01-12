@@ -191,7 +191,6 @@ class VanillaAE(BaseAE):
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.n_features)
         recon_err = self.criterion(batch, recon, reduction="none")
-        print("vanilla recon", recon_err.shape)
         return recon_err
 
 
