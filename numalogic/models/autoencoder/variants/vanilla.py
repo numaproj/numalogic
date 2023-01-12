@@ -189,10 +189,9 @@ class VanillaAE(BaseAE):
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
-        # batch = batch.view(-1, self.n_features, self.seq_len)
         recon = recon.view(-1, self.seq_len, self.n_features)
         recon_err = self.criterion(batch, recon, reduction="none")
-        recon_err = torch.squeeze(recon_err, 0)
+        print("vanilla recon", recon_err.shape)
         return recon_err
 
 
@@ -230,7 +229,7 @@ class SparseVanillaAE(VanillaAE):
             Tensor
         """
         rho_hat = torch.mean(activations, dim=0)
-        rho = torch.full(rho_hat.size(), self.rho)
+        rho = torch.full(rho_hat.size(), self.rho, device=self.device)
         kl_loss = nn.KLDivLoss(reduction="sum")
         _dim = 0 if rho_hat.dim() == 1 else 1
         return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))

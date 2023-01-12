@@ -2,11 +2,11 @@ import logging
 
 import pytorch_lightning as pl
 import torch
+from pytorch_lightning import Trainer
+from torch import Tensor
 
 from numalogic.tools.callbacks import ProgressDetails
 from numalogic.tools.data import TimeseriesDataModule
-from pytorch_lightning import Trainer
-from torch import Tensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,7 +44,6 @@ class AutoencoderTrainer(Trainer):
     def predict(self, model: pl.LightningModule = None, unbatch=True, **kwargs) -> Tensor:
         recon_err = super().predict(model, **kwargs)
         recon_err = torch.vstack(recon_err)
-        # TODO fix when batch size = 1
         if unbatch:
             return TimeseriesDataModule.unbatch_sequences(recon_err)
         return recon_err
