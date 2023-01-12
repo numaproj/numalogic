@@ -16,3 +16,7 @@ class LayerSizeMismatchError(Exception):
 
 class DataModuleError(Exception):
     pass
+
+
+class InvalidDataShapeError(Exception):
+    pass

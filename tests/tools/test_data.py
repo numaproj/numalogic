@@ -5,7 +5,7 @@ import numpy as np
 import torch
 from numalogic._constants import TESTS_DIR
 from numalogic.tools.data import StreamingDataset, TimeseriesDataModule
-from numalogic.tools.exceptions import DataModuleError
+from numalogic.tools.exceptions import DataModuleError, InvalidDataShapeError
 from numpy.testing import assert_allclose
 from torch.utils.data import DataLoader
 
@@ -40,6 +40,10 @@ class TestStreamingDataset(unittest.TestCase):
         dataset = StreamingDataset(self.data, seq_len=SEQ_LEN)
         with self.assertRaises(IndexError):
             _ = dataset[self.m - 5]
+
+    def test_dataset_err_03(self):
+        with self.assertRaises(InvalidDataShapeError):
+            StreamingDataset(self.data.ravel(), seq_len=SEQ_LEN)
 
 
 class TestTimeSeriesDataModule(unittest.TestCase):

@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
 from numalogic.models.autoencoder import AutoencoderTrainer
-from numalogic.models.autoencoder.variants import Conv1dAE
+from numalogic.models.autoencoder.variants import Conv1dAE, LSTMAE, SparseVanillaAE, TransformerAE
 from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
@@ -34,6 +34,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
         cls.x_train = scaler.fit_transform(df[:-480])
         cls.x_val = scaler.transform(df[-480:-240])
         cls.x_test = scaler.transform(df[-240:])
+
         print(cls.x_train.shape, cls.x_val.shape, cls.x_test.shape)
 
     def test_trainer_01(self):
@@ -60,6 +61,42 @@ class TestAutoencoderTrainer(unittest.TestCase):
         streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=BATCH_SIZE)
         y_test_batched = trainer.predict(model, dataloaders=streamloader, unbatch=False)
         self.assertTupleEqual((229, SEQ_LEN, self.x_test.shape[1]), y_test_batched.size())
+
+    def test_trainer_03(self):
+        model = LSTMAE(seq_len=SEQ_LEN, no_features=self.x_train.shape[1], embedding_dim=4)
+        datamodule = TimeseriesDataModule(
+            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
+        )
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True, limit_val_batches=1)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=1)
+        y_test = trainer.predict(model, dataloaders=streamloader, unbatch=True)
+        self.assertTupleEqual(self.x_test.shape, y_test.size())
+
+    def test_trainer_04(self):
+        model = SparseVanillaAE(seq_len=SEQ_LEN, n_features=self.x_train.shape[1])
+        datamodule = TimeseriesDataModule(
+            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
+        )
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True, limit_val_batches=1)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN))
+        y_test = trainer.predict(model, dataloaders=streamloader, unbatch=True)
+        self.assertTupleEqual(self.x_test.shape, y_test.size())
+
+    def test_trainer_05(self):
+        model = TransformerAE(seq_len=SEQ_LEN, n_features=self.x_train.shape[1])
+        datamodule = TimeseriesDataModule(
+            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
+        )
+        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True, limit_val_batches=1)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=1)
+        y_test = trainer.predict(model, dataloaders=streamloader, unbatch=True)
+        self.assertTupleEqual(self.x_test.shape, y_test.size())
 
 
 if __name__ == "__main__":

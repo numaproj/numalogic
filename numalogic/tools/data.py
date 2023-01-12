@@ -1,6 +1,6 @@
 import numpy as np
 import torch
-from numalogic.tools.exceptions import DataModuleError
+from numalogic.tools.exceptions import DataModuleError, InvalidDataShapeError
 from numpy.typing import NDArray
 from pytorch_lightning.utilities.types import TRAIN_DATALOADERS, EVAL_DATALOADERS
 from torch import Tensor
@@ -9,9 +9,15 @@ import pytorch_lightning as pl
 
 
 class StreamingDataset(IterableDataset):
-    def __init__(self, data: NDArray, seq_len: int):
+    def __init__(self, data: NDArray[float], seq_len: int):
         if seq_len > len(data):
             raise ValueError(f"Sequence length: {seq_len} is more than data size: {len(data)}")
+
+        if data.ndim != 2:
+            raise InvalidDataShapeError(
+                f"Input data should have dim=2, received shape: {data.shape}"
+            )
+
         self._seq_len = seq_len
         self._data = data.astype(np.float32)
 

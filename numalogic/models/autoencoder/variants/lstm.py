@@ -142,7 +142,6 @@ class LSTMAE(BaseAE):
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
         recon_err = self.criterion(batch, recon, reduction="none")
-        recon_err = torch.squeeze(recon_err, 0)
         return recon_err
 
 
@@ -180,7 +179,7 @@ class SparseLSTMAE(LSTMAE):
             Tensor
         """
         rho_hat = torch.mean(activations, dim=0)
-        rho = torch.full(rho_hat.size(), self.rho)
+        rho = torch.full(rho_hat.size(), self.rho, device=self.device)
         kl_loss = nn.KLDivLoss(reduction="sum")
         _dim = 0 if rho_hat.dim() == 1 else 1
         return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
