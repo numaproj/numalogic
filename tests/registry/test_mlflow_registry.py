@@ -3,6 +3,8 @@ from contextlib import contextmanager
 from unittest.mock import patch, Mock
 
 from mlflow import ActiveRun
+from mlflow.exceptions import RestException, MlflowException
+from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode
 from sklearn.ensemble import RandomForestRegressor
 
 from numalogic.models.autoencoder.variants import VanillaAE
@@ -54,7 +56,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version)
-    def test_insert_model(self):
+    def test_save_model(self):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
@@ -73,7 +75,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
-    def test_insert_model_sklearn(self):
+    def test_save_model_sklearn(self):
         model = self.model_sklearn
         ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
         skeys = self.skeys
@@ -94,7 +96,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
-    def test_select_model_when_pytorch_model_exist1(self):
+    def test_load_model_when_pytorch_model_exist1(self):
         model = self.model
         ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
         skeys = self.skeys
@@ -111,7 +113,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
-    def test_select_model_when_pytorch_model_exist2(self):
+    def test_load_model_when_pytorch_model_exist2(self):
         model = self.model
         ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch", models_to_retain=2)
         skeys = self.skeys
@@ -133,7 +135,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     @patch("mlflow.sklearn.load_model", Mock(return_value=RandomForestRegressor()))
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
-    def test_select_model_when_sklearn_model_exist(self):
+    def test_load_model_when_sklearn_model_exist(self):
         model = self.model_sklearn
         ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
         skeys = self.skeys
@@ -155,7 +157,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_model_version", mock_get_model_version_obj)
     @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
-    def test_select_model_with_version(self):
+    def test_load_model_with_version(self):
         model = self.model
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
@@ -170,7 +172,7 @@ class TestMLflow(unittest.TestCase):
         self.assertIsNone(data.metadata)
 
     @patch("mlflow.pyfunc.load_model", Mock(side_effect=RuntimeError))
-    def test_select_model_when_no_model_01(self):
+    def test_load_model_when_no_model_01(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
         ml = MLflowRegistry(TRACKING_URI, artifact_type="pyfunc")
@@ -179,7 +181,7 @@ class TestMLflow(unittest.TestCase):
             self.assertTrue(log.output)
 
     @patch("mlflow.tensorflow.load_model", Mock(side_effect=RuntimeError))
-    def test_select_model_when_no_model_02(self):
+    def test_load_model_when_no_model_02(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
         ml = MLflowRegistry(TRACKING_URI, artifact_type="tensorflow")
@@ -237,7 +239,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.pytorch.log_model", Mock(side_effect=RuntimeError))
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_empty_rundata())))
     @patch("mlflow.active_run", Mock(return_value=return_empty_rundata()))
-    def test_insertion_failed(self):
+    def test_save_failed(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
 
@@ -245,6 +247,29 @@ class TestMLflow(unittest.TestCase):
         with self.assertLogs(level="ERROR") as log:
             ml.save(skeys=fake_skeys, dkeys=fake_dkeys, artifact=self.model)
             self.assertTrue(log.output)
+
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
+    @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
+    @patch(
+        "mlflow.pytorch.load_model",
+        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)})),
+    )
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
+    def test_load_no_model_found(self):
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        skeys = self.skeys
+        dkeys = self.dkeys
+        self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys))
+
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
+    @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
+    @patch("mlflow.pytorch.load_model", Mock(side_effect=MlflowException("some random err")))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
+    def test_load_other_mlflow_err(self):
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        skeys = self.skeys
+        dkeys = self.dkeys
+        self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys))
 
 
 if __name__ == "__main__":
