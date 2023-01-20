@@ -3,8 +3,8 @@ from contextlib import contextmanager
 from unittest.mock import patch, Mock
 
 from mlflow import ActiveRun
-from mlflow.exceptions import RestException, MlflowException
-from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode
+from mlflow.exceptions import RestException
+from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode, RESOURCE_LIMIT_EXCEEDED
 from sklearn.ensemble import RandomForestRegressor
 
 from numalogic.models.autoencoder.variants import VanillaAE
@@ -263,7 +263,10 @@ class TestMLflow(unittest.TestCase):
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
-    @patch("mlflow.pytorch.load_model", Mock(side_effect=MlflowException("some random err")))
+    @patch(
+        "mlflow.pytorch.load_model",
+        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_LIMIT_EXCEEDED)})),
+    )
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_load_other_mlflow_err(self):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
