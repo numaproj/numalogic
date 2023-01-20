@@ -1,3 +1,15 @@
+# Copyright 2022 The Numaproj Authors.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
 import logging
 from enum import Enum
 from typing import Optional, Sequence
@@ -6,6 +18,7 @@ import mlflow.pyfunc
 import mlflow.pytorch
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.exceptions import RestException
+from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
 
 from numalogic.registry import ArtifactManager, ArtifactData
@@ -39,9 +52,9 @@ class MLflowRegistry(ArtifactManager):
 
     Examples
     --------
-    >>> from numalogic.models.autoencoder.variants.vanilla import VanillaAE
-    >>> from numalogic.registry.mlflow_registry import MLflowRegistry
-    >>> from sklearn.pipeline import make_pipeline
+    >>> from numalogic.models.autoencoder.variants import VanillaAE
+    >>> from numalogic.registry import MLflowRegistry
+    >>> from sklearn.preprocessing import StandardScaler
     >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler.fit(data)
@@ -50,6 +63,7 @@ class MLflowRegistry(ArtifactManager):
     >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"])
     """
 
+    __slots__ = ("client", "handler", "models_to_retain")
     _TRACKING_URI = None
 
     def __new__(
@@ -132,6 +146,14 @@ class MLflowRegistry(ArtifactManager):
             _LOGGER.info("Successfully loaded model metadata from Mlflow!")
 
             return ArtifactData(artifact=model, metadata=metadata, extras=dict(version_info))
+        except RestException as mlflow_err:
+            if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
+                _LOGGER.info("Model not found with key: %s", model_key)
+            else:
+                _LOGGER.exception(
+                    "Mlflow error when loading a model with key: %s: %r", model_key, mlflow_err
+                )
+            return None
         except Exception as ex:
             _LOGGER.exception("Error when loading a model with key: %s: %r", model_key, ex)
             return None
@@ -164,7 +186,7 @@ class MLflowRegistry(ArtifactManager):
             _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
             return model_version
         except Exception as ex:
-            _LOGGER.exception("Error when saving a model with key: %s: %r", model_key, ex)
+            _LOGGER.exception("Unhandled error when saving a model with key: %s: %r", model_key, ex)
             return None
         finally:
             mlflow.end_run()

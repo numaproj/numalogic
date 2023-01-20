@@ -23,7 +23,7 @@ lint: format
 
 # install all dependencies
 setup:
-	poetry install --with dev --all-extras
+	poetry install --with dev,torch --all-extras --no-root
 
 # test your application (tests in the tests/ directory)
 test:
