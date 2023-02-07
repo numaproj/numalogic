@@ -32,3 +32,7 @@ class DataModuleError(Exception):
 
 class InvalidDataShapeError(Exception):
     pass
+
+
+class UnknownConfigArgsError(Exception):
+    pass
