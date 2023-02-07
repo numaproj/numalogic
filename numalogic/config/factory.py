@@ -40,7 +40,7 @@ class PreprocessFactory(_ObjectFactory):
         "MaxAbsScaler": MaxAbsScaler,
         "RobustScaler": RobustScaler,
         "LogTransformer": LogTransformer,
-        "StaticPowerTransformer": StaticPowerTransformer
+        "StaticPowerTransformer": StaticPowerTransformer,
     }
 
 

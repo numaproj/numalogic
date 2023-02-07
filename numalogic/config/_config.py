@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import List, Optional, Any, Dict
 
-from omegaconf import OmegaConf, MISSING
+from omegaconf import MISSING
 
 
 @dataclass
@@ -37,50 +37,3 @@ class NumalogicConf:
     preprocess: List[ModelInfo] = field(default_factory=list)
     threshold: ModelInfo = field(default_factory=ModelInfo)
     postprocess: ModelInfo = field(default_factory=ModelInfo)
-
-
-def my_app():
-    from numalogic.config.factory import (
-        ModelFactory,
-        PreprocessFactory,
-        PostprocessFactory,
-        ThresholdFactory,
-    )
-    from numalogic.models.autoencoder import AutoencoderTrainer
-    import os
-
-    os.environ["OC_CAUSE"] = "1"
-
-    schema: NumalogicConf = OmegaConf.structured(NumalogicConf)
-    print(type(schema))
-
-    conf = OmegaConf.load("../../conf/cfg.yaml")
-    merged = OmegaConf.merge(schema, conf)
-    print(merged)
-
-    model_info: ModelInfo = OmegaConf.to_object(merged["model"])
-
-    factory = ModelFactory()
-    model = factory.get_model_instance(model_info)
-    print(model)
-
-    trainer_config = merged.trainer
-    trainer = AutoencoderTrainer(**trainer_config)
-    print(trainer)
-
-    postproc_factory = PostprocessFactory()
-    postproc_clf = postproc_factory.get_model_instance(merged.postprocess)
-    print(postproc_clf)
-
-    threshold_factory = ThresholdFactory()
-    thresh_clf = threshold_factory.get_model_instance(merged.threshold)
-    print(thresh_clf)
-
-    preproc_factory = PreprocessFactory()
-    for _cfg in merged.preprocess:
-        print(preproc_factory.get_model_instance(_cfg))
-    # preproc_factory.get_model_instance(merged.preprocess)
-
-
-if __name__ == "__main__":
-    my_app()
