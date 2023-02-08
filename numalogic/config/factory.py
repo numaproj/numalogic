@@ -23,7 +23,7 @@ from numalogic.models.autoencoder.variants import (
     TransformerAE,
     SparseTransformerAE,
 )
-from numalogic.models.threshold import StdDevThreshold
+from numalogic.models.threshold import StdDevThreshold, StaticThreshold
 from numalogic.postprocess import TanhNorm
 from numalogic.preprocess import LogTransformer, StaticPowerTransformer
 from numalogic.tools.exceptions import UnknownConfigArgsError
@@ -62,7 +62,7 @@ class PostprocessFactory(_ObjectFactory):
 
 
 class ThresholdFactory(_ObjectFactory):
-    _CLS_MAP = {"StdDevThreshold": StdDevThreshold}
+    _CLS_MAP = {"StdDevThreshold": StdDevThreshold, "StaticThreshold": StaticThreshold}
 
 
 class ModelFactory(_ObjectFactory):
