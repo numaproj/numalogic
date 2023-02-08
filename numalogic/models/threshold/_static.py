@@ -34,9 +34,9 @@ class StaticThreshold(BaseEstimator):
     __slots__ = ("upper_limit", "outlier_score", "inlier_score")
 
     def __init__(self, upper_limit: float, outlier_score: float = 10.0, inlier_score: float = 0.5):
-        self.upper_limit = upper_limit
-        self.outlier_score = outlier_score
-        self.inlier_score = inlier_score
+        self.upper_limit = float(upper_limit)
+        self.outlier_score = float(outlier_score)
+        self.inlier_score = float(inlier_score)
 
         assert (
             self.outlier_score > self.inlier_score
@@ -46,15 +46,15 @@ class StaticThreshold(BaseEstimator):
         """Does not do anything. Only for API compatibility"""
         return self
 
-    def predict(self, x_test: npt.NDArray[float]) -> npt.NDArray[float]:
+    def predict(self, x_test: npt.NDArray[float]) -> npt.NDArray[int]:
         """
-        Returns an array of same shape as input.
+        Returns an integer array of same shape as input.
         1 denotes anomaly.
         """
-        x_test = x_test.copy()
-        x_test[x_test < self.upper_limit] = 0.0
-        x_test[x_test >= self.upper_limit] = 1.0
-        return x_test
+        y_test = x_test.copy()
+        y_test[x_test < self.upper_limit] = 0
+        y_test[x_test >= self.upper_limit] = 1
+        return y_test
 
     def score_samples(self, x_test: npt.NDArray[float]) -> npt.NDArray[float]:
         """
