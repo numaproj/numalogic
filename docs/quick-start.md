@@ -34,51 +34,51 @@ from numalogic.models.threshold import StdDevThreshold
 from numalogic.postprocess import TanhNorm
 from numalogic.tools.data import StreamingDataset
 
-if __name__ == "__main__":
-   X_train = np.array([1, 3, 5, 2, 5, 1, 4, 5, 1, 4, 5, 8, 9, 1, 2, 4, 5, 1, 3]).reshape(-1, 1)
-   X_test = np.array([-20, 3, 5, 60, 5, 10, 4, 5, 200]).reshape(-1, 1)
+# Create some synthetic data
+X_train = np.array([1, 3, 5, 2, 5, 1, 4, 5, 1, 4, 5, 8, 9, 1, 2, 4, 5, 1, 3]).reshape(-1, 1)
+X_test = np.array([-20, 3, 5, 60, 5, 10, 4, 5, 200]).reshape(-1, 1)
 
-   # Preprocess step
-   clf = StandardScaler()
-   train_data = clf.fit_transform(X_train)
-   test_data = clf.transform(X_test)
-   print(train_data)
-   print(test_data)
+# Preprocess step
+clf = StandardScaler()
+train_data = clf.fit_transform(X_train)
+test_data = clf.transform(X_test)
+print(train_data)
+print(test_data)
 
-   # Set a sequence length.
-   SEQ_LEN = 8
+# Set a sequence length.
+SEQ_LEN = 8
 
-   # Define the model. We are using a simple fully connected autoencoder here.
-   model = VanillaAE(seq_len=SEQ_LEN, n_features=1)
+# Define the model. We are using a simple fully connected autoencoder here.
+model = VanillaAE(seq_len=SEQ_LEN, n_features=1)
 
-   # Create a torch dataset
-   train_dataset = StreamingDataset(train_data, seq_len=SEQ_LEN)
+# Create a torch dataset
+train_dataset = StreamingDataset(train_data, seq_len=SEQ_LEN)
 
-   # Define the trainer, and fit the model.
-   trainer = AutoencoderTrainer(max_epochs=30, enable_progress_bar=True)
-   trainer.fit(model, train_dataloaders=DataLoader(train_dataset))
+# Define the trainer, and fit the model.
+trainer = AutoencoderTrainer(max_epochs=30, enable_progress_bar=True)
+trainer.fit(model, train_dataloaders=DataLoader(train_dataset))
 
-   # Get the training reconstruction error from the model.
-   train_reconerr = trainer.predict(model, dataloaders=DataLoader(train_dataset, batch_size=2))
-   print(train_reconerr)
+# Get the training reconstruction error from the model.
+train_reconerr = trainer.predict(model, dataloaders=DataLoader(train_dataset, batch_size=2))
+print(train_reconerr)
 
-   # Define threshold estimator, and find a threshold on the training reconstruction error.
-   thresh_clf = StdDevThreshold()
-   thresh_clf.fit(train_reconerr.numpy())
+# Define threshold estimator, and find a threshold on the training reconstruction error.
+thresh_clf = StdDevThreshold()
+thresh_clf.fit(train_reconerr.numpy())
 
-   # Now it is time for inference on the test data.
-   # First, let's get the reconstruction error on the test set.
-   test_dataset = StreamingDataset(test_data, seq_len=SEQ_LEN)
-   test_recon_err = trainer.predict(model, dataloaders=DataLoader(test_dataset, batch_size=2))
-   print(test_recon_err)
+# Now it is time for inference on the test data.
+# First, let's get the reconstruction error on the test set.
+test_dataset = StreamingDataset(test_data, seq_len=SEQ_LEN)
+test_recon_err = trainer.predict(model, dataloaders=DataLoader(test_dataset, batch_size=2))
+print(test_recon_err)
 
-   # The trained threshold estimator can give us the anomaly score
-   anomaly_score = thresh_clf.score_samples(test_recon_err.numpy())
+# The trained threshold estimator can give us the anomaly score
+anomaly_score = thresh_clf.score_samples(test_recon_err.numpy())
 
-   # Optionally, we can normalize scores to range between 0-10 to make it more readable
-   postproc_clf = TanhNorm()
-   anomaly_score_norm = postproc_clf.fit_transform(anomaly_score)
-   print("Anomaly Scores:\n", str(anomaly_score_norm))
+# Optionally, we can normalize scores to range between 0-10 to make it more readable
+postproc_clf = TanhNorm()
+anomaly_score_norm = postproc_clf.fit_transform(anomaly_score)
+print("Anomaly Scores:\n", str(anomaly_score_norm))
 
 ```
 
