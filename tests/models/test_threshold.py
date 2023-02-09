@@ -13,13 +13,13 @@ class TestStdDevThreshold(unittest.TestCase):
     def test_estimator_predict(self):
         clf = StdDevThreshold()
         clf.fit(self.x_train)
-        score = clf.predict(self.x_test)
-        self.assertAlmostEqual(0.93317, np.mean(score), places=2)
+        y = clf.predict(self.x_test)
+        self.assertAlmostEqual(0.4, np.mean(y), places=1)
 
     def test_estimator_score(self):
         clf = StdDevThreshold()
         clf.fit(self.x_train)
-        score = clf.score(self.x_test)
+        score = clf.score_samples(self.x_test)
         self.assertAlmostEqual(0.93317, np.mean(score), places=2)
 
 
