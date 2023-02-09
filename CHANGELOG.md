@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.3.3 (2023-02-08)
+
+ * [4eae629](https://github.com/numaproj/numalogic/commit/4eae6290bf297dcad6c58b265ef75b4112ff8ffd) fix!: consistency with threshold methods (#138)
+ * [2ac1c2f](https://github.com/numaproj/numalogic/commit/2ac1c2f0564d170a52c4259aecb985c4412884d3) feat: static threshold estimator (#136)
+ * [d3488c9](https://github.com/numaproj/numalogic/commit/d3488c9e0c6fa017ce965ddb78d41e3ea1209fa8) feat: initial config schema (#135)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.3.2 (2023-01-20)
+
+
+### Contributors
+
+
 ## v0.3.1 (2023-01-12)
 
  * [2923718](https://github.com/numaproj/numalogic/commit/2923718b4bfd66ddaf74a84c2dc9b2a48a3a4a1f) fix: unbatch error on certain cases (#131)
