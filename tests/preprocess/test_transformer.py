@@ -2,6 +2,7 @@ import unittest
 
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_less
+from sklearn.pipeline import make_pipeline
 
 from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
 
@@ -25,11 +26,19 @@ class TestTransformers(unittest.TestCase):
         assert_almost_equal(transformer.fit_transform(x), x_prime)
         assert_almost_equal(transformer.inverse_transform(x_prime), x, decimal=4)
 
-    def test_tanh_scaler(self):
+    def test_tanh_scaler_1(self):
         x = 1 + np.random.randn(5, 3)
         scaler = TanhScaler()
         x_scaled = scaler.fit_transform(x)
 
+        assert_array_less(x_scaled, np.ones_like(x_scaled))
+        assert_array_less(np.zeros_like(x_scaled), x_scaled)
+
+    def test_tanh_scaler_2(self):
+        x = 1 + np.random.randn(5, 3)
+        pl = make_pipeline(LogTransformer(), TanhScaler())
+
+        x_scaled = pl.fit_transform(x)
         assert_array_less(x_scaled, np.ones_like(x_scaled))
         assert_array_less(np.zeros_like(x_scaled), x_scaled)
 

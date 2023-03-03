@@ -15,7 +15,7 @@ import logging
 import numpy as np
 import numpy.typing as npt
 from numpy.typing import ArrayLike
-from sklearn.base import BaseEstimator
+from sklearn.base import TransformerMixin, OneToOneFeatureMixin
 from typing_extensions import Self
 
 from numalogic.tools import DataIndependentTransformers
@@ -52,7 +52,7 @@ class StaticPowerTransformer(DataIndependentTransformers):
         return np.power(X, 1.0 / self.n) - self.add_factor
 
 
-class TanhScaler(BaseEstimator):
+class TanhScaler(OneToOneFeatureMixin, TransformerMixin):
     r"""
     Tanh Estimator applies tanh normalization to the Z-score,
     and scales the values between 0 and 1.
@@ -84,6 +84,5 @@ class TanhScaler(BaseEstimator):
         x_std_scaled = (x - self._mean) / self._std
         return 0.5 * (np.tanh(self._coeff * x_std_scaled) + 1)
 
-    def fit_transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
-        self.fit(x)
-        return self.transform(x)
+    def fit_transform(self, x: npt.NDArray[float], y=None, **_) -> npt.NDArray[float]:
+        return self.fit(x).transform(x)
