@@ -13,7 +13,10 @@
 import logging
 
 import numpy as np
+import numpy.typing as npt
 from numpy.typing import ArrayLike
+from sklearn.base import BaseEstimator
+from typing_extensions import Self
 
 from numalogic.tools import DataIndependentTransformers
 
@@ -24,14 +27,14 @@ class LogTransformer(DataIndependentTransformers):
     def __init__(self, add_factor=2):
         self.add_factor = add_factor
 
-    def fit_transform(self, X, y=None, **fit_params):
-        return self.transform(X)
+    def fit_transform(self, x: npt.NDArray[float], y=None, **fit_params) -> npt.NDArray[float]:
+        return self.transform(x)
 
-    def transform(self, X):
-        return np.log(X + self.add_factor)
+    def transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
+        return np.log(x + self.add_factor)
 
-    def inverse_transform(self, X) -> ArrayLike:
-        return np.exp(X) - self.add_factor
+    def inverse_transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
+        return np.exp(x) - self.add_factor
 
 
 class StaticPowerTransformer(DataIndependentTransformers):
@@ -47,3 +50,40 @@ class StaticPowerTransformer(DataIndependentTransformers):
 
     def inverse_transform(self, X) -> ArrayLike:
         return np.power(X, 1.0 / self.n) - self.add_factor
+
+
+class TanhScaler(BaseEstimator):
+    r"""
+    Tanh Estimator applies tanh normalization to the Z-score,
+    and scales the values between 0 and 1.
+
+    After scaling, the data has a mean of 0.5.
+
+    The coeff parameter determines the spread of the scores.
+    Higher the value, the linear portion of the curve will have a higher slope
+    but will reach the asymptote (flatten out) earlier.
+
+    References:
+        Nandakumar, Jain, Ross. 2005. Score Normalization in
+        Multimodal Biometric Systems, Pattern Recognition 38, 2270-2285.
+        https://web.cse.msu.edu/~rossarun/pubs/RossScoreNormalization_PR05.pdf
+    """
+    __slots__ = ("_coeff", "_std", "_mean")
+
+    def __init__(self, coeff: float = 0.2):
+        self._coeff = coeff
+        self._std = None
+        self._mean = None
+
+    def fit(self, x: npt.NDArray[float]) -> Self:
+        self._mean = np.mean(x, axis=0)
+        self._std = np.std(x, axis=0)
+        return self
+
+    def transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
+        x_std_scaled = (x - self._mean) / self._std
+        return 0.5 * (np.tanh(self._coeff * x_std_scaled) + 1)
+
+    def fit_transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
+        self.fit(x)
+        return self.transform(x)
