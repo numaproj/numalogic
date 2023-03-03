@@ -17,17 +17,22 @@ Now, with `add_factor`, each data point x is converted to log(x + add_factor)
 Log transformation reduces the variance in some distributions, especially with large outliers.
 
 ```python
+import numpy as np
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler
 from numalogic.preprocess.transformer import LogTransformer
 
-transformer = LogTransformer(add_factor=1)
+# Generate some random train and test data
+x_train = np.random.randn(100, 3)
+x_test = np.random.randn(20, 3)
+
+transformer = LogTransformer(add_factor=4)
 scaler = MinMaxScaler()
 
 pipeline = make_pipeline(transformer, scaler)
 
-X_train = transformer.transform(train_df.to_numpy())
-X_test = scaler.transform(test_df.to_numpy())
+x_train_scaled = pipeline.fit_transform(x_train)
+X_test_scaled = pipeline.transform(x_test)
 ```
 
 ### Static Power Transformer
@@ -37,15 +42,37 @@ Static Power Transformer converts each data point x to x<sup>n</sup>.
 When `add_factor` is provided, each data point x is converted to (x + add_factor)<sup>n</sup>
 
 ```python
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 from numalogic.preprocess.transformer import StaticPowerTransformer
 
+# Generate some random train and test data
+x_train = np.random.randn(100, 3)
+x_test = np.random.randn(20, 3)
+
 transformer = StaticPowerTransformer(n=3, add_factor=2)
-scaler = MinMaxScaler()
 
-pipeline = make_pipeline(transformer, scaler)
+# Since this transformer is stateless, we can just call transform()
+x_train_scaled = transformer.transform(x_train)
+X_test_scaled = transformer.transform(x_test)
+```
 
-X_train = transformer.transform(train_df.to_numpy())
-X_test = scaler.transform(test_df.to_numpy())
+### Tanh Scaler
+
+Tanh Scaler is a stateful estimator that applies tanh normalization to the Z-score,
+and scales the values between 0 and 1. 
+This scaler is seen to be more efficient as well as robust to the effect of outliers
+in the data. 
+
+```python
+import numpy as np
+from numalogic.preprocess import TanhScaler
+
+# Generate some random train and test data
+x_train = np.random.randn(100, 3)
+x_test = np.random.randn(20, 3)
+
+scaler = TanhScaler()
+
+x_train_scaled = scaler.fit_transform(x_train)
+x_test_scaled = scaler.transform(x_test)
 ```

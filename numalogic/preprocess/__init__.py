@@ -9,6 +9,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from numalogic.preprocess.transformer import LogTransformer, StaticPowerTransformer
+from numalogic.preprocess.transformer import LogTransformer, StaticPowerTransformer, TanhScaler
 
-__all__ = ["LogTransformer", "StaticPowerTransformer"]
+__all__ = ["LogTransformer", "StaticPowerTransformer", "TanhScaler"]

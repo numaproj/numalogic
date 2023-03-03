@@ -25,7 +25,7 @@ from numalogic.models.autoencoder.variants import (
 )
 from numalogic.models.threshold import StdDevThreshold, StaticThreshold
 from numalogic.postprocess import TanhNorm
-from numalogic.preprocess import LogTransformer, StaticPowerTransformer
+from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 
@@ -54,6 +54,7 @@ class PreprocessFactory(_ObjectFactory):
         "RobustScaler": RobustScaler,
         "LogTransformer": LogTransformer,
         "StaticPowerTransformer": StaticPowerTransformer,
+        "TanhScaler": TanhScaler,
     }
 
 
