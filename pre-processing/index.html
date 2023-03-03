@@ -591,6 +591,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tanh-scaler" class="md-nav__link">
+    Tanh Scaler
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -736,6 +743,13 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#tanh-scaler" class="md-nav__link">
+    Tanh Scaler
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -763,32 +777,55 @@
 <p>Log transformation is a data transformation method in which it replaces each data point x with a log(x). </p>
 <p>Now, with <code>add_factor</code>, each data point x is converted to log(x + add_factor)</p>
 <p>Log transformation reduces the variance in some distributions, especially with large outliers.</p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">make_pipeline</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">make_pipeline</span>
 <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">MinMaxScaler</span>
 <span class="kn">from</span> <span class="nn">numalogic.preprocess.transformer</span> <span class="kn">import</span> <span class="n">LogTransformer</span>
 
-<span class="n">transformer</span> <span class="o">=</span> <span class="n">LogTransformer</span><span class="p">(</span><span class="n">add_factor</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Generate some random train and test data</span>
+<span class="n">x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">x_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">transformer</span> <span class="o">=</span> <span class="n">LogTransformer</span><span class="p">(</span><span class="n">add_factor</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">scaler</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span>
 
 <span class="n">pipeline</span> <span class="o">=</span> <span class="n">make_pipeline</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">scaler</span><span class="p">)</span>
 
-<span class="n">X_train</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">train_df</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
-<span class="n">X_test</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">test_df</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+<span class="n">x_train_scaled</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>
+<span class="n">X_test_scaled</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="static-power-transformer">Static Power Transformer<a class="headerlink" href="#static-power-transformer" title="Permanent link">&para;</a></h3>
 <p>Static Power Transformer converts each data point x to x<sup>n</sup>. </p>
 <p>When <code>add_factor</code> is provided, each data point x is converted to (x + add_factor)<sup>n</sup></p>
-<div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">make_pipeline</span>
-<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">MinMaxScaler</span>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numalogic.preprocess.transformer</span> <span class="kn">import</span> <span class="n">StaticPowerTransformer</span>
 
+<span class="c1"># Generate some random train and test data</span>
+<span class="n">x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">x_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
 <span class="n">transformer</span> <span class="o">=</span> <span class="n">StaticPowerTransformer</span><span class="p">(</span><span class="n">n</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">add_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">scaler</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span>
 
-<span class="n">pipeline</span> <span class="o">=</span> <span class="n">make_pipeline</span><span class="p">(</span><span class="n">transformer</span><span class="p">,</span> <span class="n">scaler</span><span class="p">)</span>
+<span class="c1"># Since this transformer is stateless, we can just call transform()</span>
+<span class="n">x_train_scaled</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>
+<span class="n">X_test_scaled</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="tanh-scaler">Tanh Scaler<a class="headerlink" href="#tanh-scaler" title="Permanent link">&para;</a></h3>
+<p>Tanh Scaler is a stateful estimator that applies tanh normalization to the Z-score,
+and scales the values between 0 and 1. 
+This scaler is seen to be more efficient as well as robust to the effect of outliers
+in the data. </p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numalogic.preprocess</span> <span class="kn">import</span> <span class="n">TanhScaler</span>
 
-<span class="n">X_train</span> <span class="o">=</span> <span class="n">transformer</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">train_df</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
-<span class="n">X_test</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">test_df</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">())</span>
+<span class="c1"># Generate some random train and test data</span>
+<span class="n">x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">x_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+<span class="n">scaler</span> <span class="o">=</span> <span class="n">TanhScaler</span><span class="p">()</span>
+
+<span class="n">x_train_scaled</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>
+<span class="n">x_test_scaled</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
 </code></pre></div>
 
               
