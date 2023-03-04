@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.4 (2023-03-03)
+
+ * [ec8401d](https://github.com/numaproj/numalogic/commit/ec8401d3bbcb6a435af58101eccbfc489c37a4f2) feat: tanh preprocessing (#139)
+
+### Contributors
+
+ * Avik Basu
+
 ## v0.3.3 (2023-02-08)
 
  * [4eae629](https://github.com/numaproj/numalogic/commit/4eae6290bf297dcad6c58b265ef75b4112ff8ffd) fix!: consistency with threshold methods (#138)
