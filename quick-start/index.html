@@ -941,7 +941,7 @@ Or you can install your platform specific torch version from their website.</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>numalogic
 </code></pre></div>
 <h2 id="numalogic-as-a-library">Numalogic as a Library<a class="headerlink" href="#numalogic-as-a-library" title="Permanent link">&para;</a></h2>
-<p>Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using a <code>AutoencoderPipeline</code>. Refer to <a href="../autoencoders/">training section</a> for other available options. </p>
+<p>Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using the <code>AutoencoderTrainer</code>. Refer to <a href="../autoencoders/">training section</a> for other available options. </p>
 <p>In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set, there are data points that go out of this range, which the algorithm should be able to detect as anomalies.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
