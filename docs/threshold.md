@@ -6,31 +6,22 @@ It is a simple Estimator that extends BaseEstimator.
 Currently, the library supports `StdDevThreshold`. This takes in paramaters `min_thresh` and `std_factor`. This model 
 defines threshold as `mean + 3 * std_factor`. 
 
-
-Fitting the threshold model
 ```python
-# preprocess step
-clf = LogTransformer()
-train_data = clf.fit_transform(X_train)
-test_data = clf.transform(X_test)
+import numpy as np
+from numalogic.models.threshold import StdDevThreshold
 
-# Fitting the Threshold model 
-thresh_clf = StdDevThreshold(std_factor=1.2)
-```
+# Generate positive random data
+x_train = np.abs(np.random.randn(1000, 3))
+x_test = np.abs(np.random.randn(30, 3))
 
-Train the model
-```python
-# Train the Autoencoder model and fit the model on train data
-ae_pl = AutoencoderPipeline(
-    model=Conv1dAE(in_channels=1, enc_channels=4), seq_len=8, num_epochs=30
-)
-ae_pl.fit(X_train)
+# Here we want a threshold such that anything 
+# outside 5 deviations from the mean will be anomalous.
+thresh_clf = StdDevThreshold(std_factor=5)
+thresh_clf.fit(x_train)
 
-# predict method returns the reconstruction error
-anomaly_score = ae_pl.predict(X_test)
-```
-Predicting score using the threshold model
-```python
-# Predict final anomaly score using threshold estimator
-anomaly_score = thresh_clf.predict(anomaly_score)
+# Let's get the predictions
+y_pred = thresh_clf.predict(x_test)
+
+# Anomaly scores can be given by, score_samples method
+y_score = thresh_clf.score_samples(x_test)
 ```

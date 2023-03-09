@@ -30,7 +30,7 @@ class StdDevThreshold(BaseEstimator):
         min_threshold: clip the threshold value to be above this value
     """
 
-    def __init__(self, std_factor: float = 3.0, min_threshold: float = 0.1):
+    def __init__(self, std_factor: float = 3.0, min_threshold: float = 0.0):
         self.std_factor = std_factor
         self.min_threshold = min_threshold
 
