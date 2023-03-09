@@ -60,11 +60,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        status = ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=self.model,
-        )
+        status = ml.save(skeys=skeys, dkeys=dkeys, artifact=self.model, run_id="1234")
         print(status)
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)

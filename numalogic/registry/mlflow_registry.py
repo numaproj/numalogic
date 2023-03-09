@@ -163,6 +163,7 @@ class MLflowRegistry(ArtifactManager):
         skeys: Sequence[str],
         dkeys: Sequence[str],
         artifact: Artifact,
+        run_id: str = None,
         **metadata: str,
     ) -> Optional[ModelVersion]:
         """
@@ -171,6 +172,7 @@ class MLflowRegistry(ArtifactManager):
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             artifact: primary artifact to be saved
+            run_id: mlflow run id
             metadata: additional metadata surrounding the artifact that needs to be saved
 
         Returns:
@@ -178,7 +180,7 @@ class MLflowRegistry(ArtifactManager):
         """
         model_key = self.construct_key(skeys, dkeys)
         try:
-            mlflow.start_run()
+            mlflow.start_run(run_id=run_id)
             self.handler.log_model(artifact, "model", registered_model_name=model_key)
             if metadata:
                 mlflow.log_params(metadata)
