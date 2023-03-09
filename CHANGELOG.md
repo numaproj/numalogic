@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.5 (2023-03-09)
+
+ * [ea01b44](https://github.com/numaproj/numalogic/commit/ea01b44a3b6261d4b5ff02e4fd8e5cde53e838ba) feat: Sigmoid threshold (#141)
+
+### Contributors
+
+ * Avik Basu
+
 ## v0.3.4 (2023-03-03)
 
  * [ec8401d](https://github.com/numaproj/numalogic/commit/ec8401d3bbcb6a435af58101eccbfc489c37a4f2) feat: tanh preprocessing (#139)
