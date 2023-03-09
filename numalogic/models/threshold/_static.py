@@ -8,8 +8,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
+import numpy as np
 import numpy.typing as npt
 from sklearn.base import BaseEstimator
 from typing_extensions import Self
@@ -46,22 +45,70 @@ class StaticThreshold(BaseEstimator):
         """Does not do anything. Only for API compatibility"""
         return self
 
-    def predict(self, x_test: npt.NDArray[float]) -> npt.NDArray[int]:
+    def predict(self, x: npt.NDArray[float]) -> npt.NDArray[int]:
         """
         Returns an integer array of same shape as input.
         1 denotes anomaly.
         """
-        y_test = x_test.copy()
-        y_test[x_test < self.upper_limit] = 0
-        y_test[x_test >= self.upper_limit] = 1
-        return y_test
+        y = x.copy()
+        y[x < self.upper_limit] = 0
+        y[x >= self.upper_limit] = 1
+        return y
 
-    def score_samples(self, x_test: npt.NDArray[float]) -> npt.NDArray[float]:
+    def score_samples(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
         """
         Returns an array of same shape as input
         with values being anomaly scores.
         """
-        x_test = x_test.copy()
-        x_test[x_test < self.upper_limit] = self.inlier_score
-        x_test[x_test >= self.upper_limit] = self.outlier_score
-        return x_test
+        x = x.copy()
+        x[x < self.upper_limit] = self.inlier_score
+        x[x >= self.upper_limit] = self.outlier_score
+        return x
+
+
+class SigmoidThreshold(BaseEstimator):
+    r"""
+    Smooth and stateless static thesholding using sigmoid function as an estimator.
+    The values produced
+
+    Score is given by:
+            score = score_limit * 1/ exp(-coeff * (x - upper_limit))
+
+    Args:
+        upper_limit: is the desired threshold limit of x
+        slope_factor: determines the slope of the curve
+        score_limit: is the scaler multiplier for the score
+            e.g. a value of 10 means that the output score
+            will be between 0 and 10.
+    """
+    __slots__ = ("upper_limit", "coeff", "score_limit")
+
+    def __init__(self, upper_limit: float, slope_factor: int = 5, score_limit: int = 10):
+        self.upper_limit = float(upper_limit)
+        self.coeff = slope_factor * np.pi
+        self.score_limit = score_limit
+
+    def fit(self, _: npt.NDArray[float]) -> Self:
+        """Does not do anything. Only for API compatibility"""
+        return self
+
+    def predict(self, x: npt.NDArray[float]) -> npt.NDArray[int]:
+        """
+        Returns an integer array of same shape as input.
+        1 denotes anomaly.
+
+        This is calculated as a hard threshold at upper limit.
+        """
+        y = x.copy()
+        y[x < self.upper_limit] = 0
+        y[x >= self.upper_limit] = 1
+        return y
+
+    def score_samples(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
+        """
+        Returns an array of same shape as input
+        with values being anomaly scores.
+        """
+        x = x.copy()
+        y = 10 / (1 + np.exp(-self.coeff * (x - self.upper_limit)))
+        return y

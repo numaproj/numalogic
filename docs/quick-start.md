@@ -20,7 +20,7 @@ pip install numalogic
 
 ## Numalogic as a Library
 
-Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using a `AutoencoderPipeline`. Refer to [training section](autoencoders.md) for other available options. 
+Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using the `AutoencoderTrainer`. Refer to [training section](autoencoders.md) for other available options. 
 
 In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set, there are data points that go out of this range, which the algorithm should be able to detect as anomalies.
 
