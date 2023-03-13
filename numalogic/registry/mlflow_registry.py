@@ -146,6 +146,7 @@ class MLflowRegistry(ArtifactManager):
                 # No model exists in PRODUCTION or STAGING
                 else:
                     raise Exception("No model in Production or staging")
+
                 model = self.handler.load_model(
                     model_uri=f"models:/{model_key}/{version_info.version}"
                 )
