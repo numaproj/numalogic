@@ -128,12 +128,28 @@ class MLflowRegistry(ArtifactManager):
         model_key = self.construct_key(skeys, dkeys)
         try:
             if latest:
-                model = self.handler.load_model(
-                    model_uri=f"models:/{model_key}/{ModelStage.PRODUCTION}"
-                )
-                version_info = self.client.get_latest_versions(
+                prd_version_info = self.client.get_latest_versions(
                     model_key, stages=[ModelStage.PRODUCTION]
-                )[-1]
+                )
+                stage_version_info = self.client.get_latest_versions(
+                    model_key, stages=[ModelStage.STAGE]
+                )
+
+                # Check if there exists any model version in PRODUCTION stage
+                if prd_version_info:
+                    version_info = prd_version_info[-1]
+
+                # Check if there exists any model version in STAGING stage
+                elif stage_version_info:
+                    version_info = stage_version_info[-1]
+
+                # No model exists in PRODUCTION or STAGING
+                else:
+                    raise Exception("No model in Production or staging")
+                model = self.handler.load_model(
+                    model_uri=f"models:/{model_key}/{version_info.version}"
+                )
+
             elif version is not None:
                 model = self.handler.load_model(model_uri=f"models:/{model_key}/{version}")
                 version_info = self.client.get_model_version(model_key, version)
