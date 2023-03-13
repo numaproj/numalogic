@@ -160,7 +160,7 @@ def mock_get_model_version(*_, **__):
     return [
         ModelVersion(
             creation_timestamp=1653402941169,
-            current_stage="Production",
+            current_stage="Staging",
             description="",
             last_updated_timestamp=1653402941191,
             name="test::error",
