@@ -12,7 +12,7 @@
 
 import logging
 from enum import Enum
-from typing import Optional, Sequence, List
+from typing import Optional, Sequence
 
 import mlflow.pyfunc
 import mlflow.pytorch
