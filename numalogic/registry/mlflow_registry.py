@@ -12,7 +12,7 @@
 
 import logging
 from enum import Enum
-from typing import Optional, Sequence
+from typing import Optional, Sequence, List
 
 import mlflow.pyfunc
 import mlflow.pytorch
@@ -226,22 +226,27 @@ class MLflowRegistry(ArtifactManager):
         """
         model_name = self.construct_key(skeys, dkeys)
         try:
-            version = int(self.get_version(model_name=model_name))
+            current_production = self.client.get_latest_versions(
+                name=model_name, stages=["Production"]
+            )
+            current_staging = self.client.get_latest_versions(name=model_name, stages=["Staging"])
+            latest = self.client.get_latest_versions(name=model_name, stages=["None"])
+
             latest_model_data = self.client.transition_model_version_stage(
                 name=model_name,
-                version=str(version),
+                version=str(latest[-1].version),
                 stage=ModelStage.PRODUCTION,
             )
-            if version - 1 > 0:
+            if current_production:
                 self.client.transition_model_version_stage(
                     name=model_name,
-                    version=str(version - 1),
+                    version=str(current_production[-1].version),
                     stage=ModelStage.STAGE,
                 )
-            if version - 2 > 0:
+            if current_staging:
                 self.client.transition_model_version_stage(
                     name=model_name,
-                    version=str(version - 2),
+                    version=str(current_staging[-1].version),
                     stage=ModelStage.ARCHIVE,
                 )
 
@@ -256,18 +261,4 @@ class MLflowRegistry(ArtifactManager):
             _LOGGER.exception(
                 "Error when transitioning a model: %s to different stage: %r", model_name, ex
             )
-            return None
-
-    def get_version(self, model_name: str) -> Optional[ModelVersion]:
-        """
-        Get model's latest version given the model name
-        Args:
-            model_name: model name for which the version has to be identified.
-        Returns:
-            version from mlflow ModelVersion instance
-        """
-        try:
-            return self.client.get_latest_versions(name=model_name, stages=[])[-1].version
-        except RestException as ex:
-            _LOGGER.error("Error when getting model version: %r", ex)
             return None
