@@ -188,7 +188,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch(
         "mlflow.tracking.MlflowClient.transition_model_version_stage",
-        Mock(side_effect=RuntimeError),
+        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)})),
     )
     def test_transition_stage_fail(self):
         fake_skeys = ["Fakemodel_"]
