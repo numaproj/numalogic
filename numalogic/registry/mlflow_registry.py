@@ -251,10 +251,7 @@ class MLflowRegistry(ArtifactManager):
                 )
 
             # only keep "models_to_retain" number of models.
-            list_model_versions = list(self.client.search_model_versions(f"name='{model_name}'"))
-            models_to_delete = list_model_versions[: -self.models_to_retain]
-            for stale_model in models_to_delete:
-                self.delete(skeys=skeys, dkeys=dkeys, version=stale_model.version)
+            self.__delete_stale_models(skeys=skeys, dkeys=dkeys)
             _LOGGER.info("Successfully transitioned model to Production stage")
             return latest_model_data
         except Exception as ex:
@@ -262,3 +259,11 @@ class MLflowRegistry(ArtifactManager):
                 "Error when transitioning a model: %s to different stage: %r", model_name, ex
             )
             return None
+
+    def __delete_stale_models(self, skeys: Sequence[str], dkeys: Sequence[str]):
+        model_name = self.construct_key(skeys, dkeys)
+        list_model_versions = list(self.client.search_model_versions(f"name='{model_name}'"))
+        models_to_delete = list_model_versions[: -self.models_to_retain]
+        for stale_model in models_to_delete:
+            self.delete(skeys=skeys, dkeys=dkeys, version=stale_model.version)
+        _LOGGER.info("Deleted Stale models")
