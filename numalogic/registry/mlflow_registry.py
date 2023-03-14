@@ -257,7 +257,7 @@ class MLflowRegistry(ArtifactManager):
 
             _LOGGER.info("Successfully transitioned model to Production stage")
             return latest_model_data
-        except Exception as ex:
+        except RestException as ex:
             _LOGGER.exception(
                 "Error when transitioning a model: %s to different stage: %r", model_name, ex
             )
@@ -270,4 +270,4 @@ class MLflowRegistry(ArtifactManager):
             models_to_delete = list_model_versions[self.models_to_retain :]
             for stale_model in models_to_delete:
                 self.delete(skeys=skeys, dkeys=dkeys, version=stale_model.version)
-            _LOGGER.info("Deleted Stale models")
+                _LOGGER.debug("Deleted stale model version : %s", stale_model.version)
