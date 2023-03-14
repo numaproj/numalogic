@@ -232,6 +232,18 @@ class TestMLflow(unittest.TestCase):
             print(log.output)
             self.assertTrue(log.output)
 
+    @patch("mlflow.pytorch.log_model", Mock(side_effect=RuntimeError))
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_empty_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_empty_rundata()))
+    def test_save_failed(self):
+        fake_skeys = ["Fakemodel_"]
+        fake_dkeys = ["error"]
+
+        ml = MLflowRegistry(TRACKING_URI)
+        with self.assertLogs(level="ERROR") as log:
+            ml.save(skeys=fake_skeys, dkeys=fake_dkeys, artifact=self.model)
+            self.assertTrue(log.output)
+
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch(
@@ -244,18 +256,6 @@ class TestMLflow(unittest.TestCase):
         skeys = self.skeys
         dkeys = self.dkeys
         self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys))
-
-    @patch("mlflow.pytorch.log_model", Mock(side_effect=RuntimeError))
-    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_empty_rundata())))
-    @patch("mlflow.active_run", Mock(return_value=return_empty_rundata()))
-    def test_save_failed(self):
-        fake_skeys = ["Fakemodel_"]
-        fake_dkeys = ["error"]
-
-        ml = MLflowRegistry(TRACKING_URI)
-        with self.assertLogs(level="ERROR") as log:
-            ml.save(skeys=fake_skeys, dkeys=fake_dkeys, artifact=self.model)
-            self.assertTrue(log.output)
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
