@@ -12,7 +12,7 @@
 
 import logging
 from enum import Enum
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Dict, Any, Tuple
 
 import mlflow.pyfunc
 import mlflow.pytorch
@@ -49,6 +49,9 @@ class MLflowRegistry(ArtifactManager):
                               supported values include:
                               {"pytorch", "sklearn", "tensorflow", "pyfunc"}
         models_to_retain: number of models to retain in the DB (default = 5)
+        model_stage: Staging environment from where to load the latest model from (mlflow )
+                            supported values include:
+                              {"Staging", "Production", "Archived"}(default = "Production")
 
     Examples
     --------
@@ -63,7 +66,7 @@ class MLflowRegistry(ArtifactManager):
     >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"])
     """
 
-    __slots__ = ("client", "handler", "models_to_retain")
+    __slots__ = ("client", "handler", "models_to_retain", "model_stage")
     _TRACKING_URI = None
 
     def __new__(
@@ -71,6 +74,7 @@ class MLflowRegistry(ArtifactManager):
         tracking_uri: Optional[str],
         artifact_type: str = "pytorch",
         models_to_retain: int = 5,
+        model_stage: ModelStage = ModelStage.PRODUCTION,
         *args,
         **kwargs,
     ):
@@ -80,13 +84,18 @@ class MLflowRegistry(ArtifactManager):
         return instance
 
     def __init__(
-        self, tracking_uri: str, artifact_type: str = "pytorch", models_to_retain: int = 5
+        self,
+        tracking_uri: str,
+        artifact_type: str = "pytorch",
+        models_to_retain: int = 5,
+        model_stage: str = ModelStage.PRODUCTION,
     ):
         super().__init__(tracking_uri)
         mlflow.set_tracking_uri(tracking_uri)
         self.client = MlflowClient()
         self.handler = self.mlflow_handler(artifact_type)
         self.models_to_retain = models_to_retain
+        self.model_stage = model_stage
 
     @staticmethod
     def construct_key(skeys: Sequence[str], dkeys: Sequence[str]) -> str:
@@ -127,25 +136,20 @@ class MLflowRegistry(ArtifactManager):
     ) -> Optional[ArtifactData]:
         model_key = self.construct_key(skeys, dkeys)
         try:
-            if latest:
-                model = self.handler.load_model(
-                    model_uri=f"models:/{model_key}/{ModelStage.PRODUCTION}"
-                )
-                version_info = self.client.get_latest_versions(
-                    model_key, stages=[ModelStage.PRODUCTION]
-                )[-1]
-            elif version is not None:
-                model = self.handler.load_model(model_uri=f"models:/{model_key}/{version}")
-                version_info = self.client.get_model_version(model_key, version)
-            else:
+
+            if (latest and version) or (not latest and not version):
                 raise ValueError("One of 'latest' or 'version' needed in load method call")
-            _LOGGER.info("Successfully loaded model %s from Mlflow", model_key)
 
-            run_info = mlflow.get_run(version_info.run_id)
-            metadata = run_info.data.params or None
-            _LOGGER.info("Successfully loaded model metadata from Mlflow!")
-
+            elif latest:
+                version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
+                if not version_info:
+                    raise ValueError("No Model found in %s" % self.model_stage)
+                version_info = version_info[-1]
+            else:
+                version_info = self.client.get_model_version(model_key, version)
+            model, metadata = self.__load_artifacts(skeys, dkeys, version_info)
             return ArtifactData(artifact=model, metadata=metadata, extras=dict(version_info))
+
         except RestException as mlflow_err:
             if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
                 _LOGGER.info("Model not found with key: %s", model_key)
@@ -226,24 +230,16 @@ class MLflowRegistry(ArtifactManager):
         """
         model_name = self.construct_key(skeys, dkeys)
         try:
-            current_production = self.client.get_latest_versions(
-                name=model_name, stages=["Production"]
+            current_staging = self.client.get_latest_versions(
+                name=model_name, stages=[self.model_stage]
             )
-            current_staging = self.client.get_latest_versions(name=model_name, stages=["Staging"])
             latest = self.client.get_latest_versions(name=model_name, stages=["None"])
 
             latest_model_data = self.client.transition_model_version_stage(
                 name=model_name,
                 version=str(latest[-1].version),
-                stage=ModelStage.PRODUCTION,
+                stage=self.model_stage,
             )
-
-            if current_production:
-                self.client.transition_model_version_stage(
-                    name=model_name,
-                    version=str(current_production[-1].version),
-                    stage=ModelStage.STAGE,
-                )
 
             if current_staging:
                 self.client.transition_model_version_stage(
@@ -271,3 +267,15 @@ class MLflowRegistry(ArtifactManager):
             for stale_model in models_to_delete:
                 self.delete(skeys=skeys, dkeys=dkeys, version=stale_model.version)
                 _LOGGER.debug("Deleted stale model version : %s", stale_model.version)
+
+    def __load_artifacts(
+        self, skeys: Sequence[str], dkeys: Sequence[str], version_info: ModelVersion
+    ) -> Tuple[Artifact, Dict[str, Any]]:
+        model_key = self.construct_key(skeys, dkeys)
+        model = self.handler.load_model(model_uri=f"models:/{model_key}/{version_info.version}")
+        _LOGGER.info("Successfully loaded model %s from Mlflow", model_key)
+
+        run_info = mlflow.get_run(version_info.run_id)
+        metadata = run_info.data.params or None
+        _LOGGER.info("Successfully loaded model metadata from Mlflow!")
+        return model, metadata
