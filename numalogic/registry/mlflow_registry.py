@@ -40,9 +40,10 @@ class ModelStage(str, Enum):
 
 class MLflowRegistry(ArtifactManager):
     """
-    Model saving and loading using MLFlow Registry. The parameter model_stage determines what environment we are using.
-    The old models are moved to 'Archived' state and the latest model comes to 'Staging' or 'Production' depending
-     on model_stage parameter.
+    Model saving and loading using MLFlow Registry. The parameter model_stage
+    determines what environment we are using. The old models are moved to
+    'Archived' state and the latest model comes to 'Staging' or 'Production'
+    depending on model_stage parameter.
 
     More details here: https://mlflow.org/docs/latest/model-registry.html
 
