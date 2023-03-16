@@ -22,6 +22,7 @@ from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
 
 from numalogic.registry import ArtifactManager, ArtifactData
+from numalogic.tools.exceptions import ModelVersionError
 from numalogic.tools.types import Artifact
 
 _LOGGER = logging.getLogger()
@@ -138,12 +139,12 @@ class MLflowRegistry(ArtifactManager):
         try:
 
             if (latest and version) or (not latest and not version):
-                raise ValueError("One of 'latest' or 'version' needed in load method call")
+                raise ValueError("Either One of 'latest' or 'version' needed in load method call")
 
             elif latest:
                 version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
                 if not version_info:
-                    raise ValueError("No Model found in %s" % self.model_stage)
+                    raise ModelVersionError
                 version_info = version_info[-1]
             else:
                 version_info = self.client.get_model_version(model_key, version)
@@ -158,8 +159,11 @@ class MLflowRegistry(ArtifactManager):
                     "Mlflow error when loading a model with key: %s: %r", model_key, mlflow_err
                 )
             return None
+        except ModelVersionError as model_missing_err:
+            _LOGGER.exception("No Model found in %s", self.model_stage, model_missing_err)
+            return None
         except Exception as ex:
-            _LOGGER.exception("Error when loading a model with key: %s: %r", model_key, ex)
+            _LOGGER.exception("Unexpected error: %s", ex)
             return None
 
     def save(
@@ -277,5 +281,9 @@ class MLflowRegistry(ArtifactManager):
 
         run_info = mlflow.get_run(version_info.run_id)
         metadata = run_info.data.params or None
-        _LOGGER.info("Successfully loaded model metadata from Mlflow!")
+        _LOGGER.info(
+            "Successfully loaded model = %s with version %s Mlflow!",
+            model_key,
+            version_info.version,
+        )
         return model, metadata
