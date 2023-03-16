@@ -5,6 +5,7 @@ from unittest.mock import patch, Mock
 from mlflow import ActiveRun
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode, RESOURCE_LIMIT_EXCEEDED
+from mlflow.store.entities import PagedList
 from sklearn.ensemble import RandomForestRegressor
 
 from numalogic.models.autoencoder.variants import VanillaAE
@@ -171,13 +172,17 @@ class TestMLflow(unittest.TestCase):
 
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
-    @patch("mlflow.tracking.MlflowClient.get_latest_versions", Mock(side_effect=ModelVersionError))
+    @patch(
+        "mlflow.tracking.MlflowClient.get_latest_versions",
+        Mock(return_value=PagedList(items=[], token=None)),
+    )
     @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
     def test_staging_model_load_error(self):
         ml = MLflowRegistry(TRACKING_URI, model_stage=ModelStage.STAGE)
         skeys = self.skeys
         dkeys = self.dkeys
+        ml.load(skeys=skeys, dkeys=dkeys)
         self.assertRaises(ModelVersionError)
 
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)

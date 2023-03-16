@@ -162,7 +162,7 @@ class MLflowRegistry(ArtifactManager):
                 )
             return None
         except ModelVersionError as model_missing_err:
-            _LOGGER.exception("No Model found in %s", self.model_stage, model_missing_err)
+            _LOGGER.exception("No Model found in %s %r", self.model_stage, model_missing_err)
             return None
         except Exception as ex:
             _LOGGER.exception("Unexpected error: %s", ex)
