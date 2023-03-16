@@ -40,7 +40,9 @@ class ModelStage(str, Enum):
 
 class MLflowRegistry(ArtifactManager):
     """
-    Model saving and loading using MLFlow Registry.
+    Model saving and loading using MLFlow Registry. The parameter model_stage determines what environment we are using.
+    The old models are moved to 'Archived' state and the latest model comes to 'Staging' or 'Production' depending
+     on model_stage parameter.
 
     More details here: https://mlflow.org/docs/latest/model-registry.html
 
@@ -137,7 +139,6 @@ class MLflowRegistry(ArtifactManager):
     ) -> Optional[ArtifactData]:
         model_key = self.construct_key(skeys, dkeys)
         try:
-
             if (latest and version) or (not latest and not version):
                 raise ValueError("Either One of 'latest' or 'version' needed in load method call")
 
@@ -280,7 +281,7 @@ class MLflowRegistry(ArtifactManager):
         _LOGGER.info("Successfully loaded model %s from Mlflow", model_key)
 
         run_info = mlflow.get_run(version_info.run_id)
-        metadata = run_info.data.params or None
+        metadata = run_info.data.params or {}
         _LOGGER.info(
             "Successfully loaded model = %s with version %s Mlflow!",
             model_key,
