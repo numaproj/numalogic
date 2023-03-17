@@ -146,7 +146,7 @@ class MLflowRegistry(ArtifactManager):
             elif latest:
                 version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
                 if not version_info:
-                    raise ModelVersionError
+                    raise ModelVersionError("Model version missing for key = %s" % model_key)
                 version_info = version_info[-1]
             else:
                 version_info = self.client.get_model_version(model_key, version)
@@ -162,7 +162,11 @@ class MLflowRegistry(ArtifactManager):
                 )
             return None
         except ModelVersionError as model_missing_err:
-            _LOGGER.exception("No Model found in %s %r", self.model_stage, model_missing_err)
+            _LOGGER.error(
+                "No Model found found in %s ERROR: %r",
+                self.model_stage,
+                model_missing_err,
+            )
             return None
         except Exception as ex:
             _LOGGER.exception("Unexpected error: %s", ex)
