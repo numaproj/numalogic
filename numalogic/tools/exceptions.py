@@ -36,3 +36,7 @@ class InvalidDataShapeError(Exception):
 
 class UnknownConfigArgsError(Exception):
     pass
+
+
+class ModelVersionError(Exception):
+    pass
