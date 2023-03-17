@@ -5,10 +5,13 @@ from unittest.mock import patch, Mock
 from mlflow import ActiveRun
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode, RESOURCE_LIMIT_EXCEEDED
+from mlflow.store.entities import PagedList
 from sklearn.ensemble import RandomForestRegressor
 
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import MLflowRegistry
+from numalogic.registry.mlflow_registry import ModelStage
+from numalogic.tools.exceptions import ModelVersionError
 from tests.registry._mlflow_utils import (
     model_sklearn,
     create_model,
@@ -120,7 +123,7 @@ class TestMLflow(unittest.TestCase):
             artifact=model,
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
-        self.assertIsNone(data.metadata)
+        self.assertEqual(data.metadata, {})
         self.assertIsInstance(data.artifact, VanillaAE)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
@@ -143,7 +146,7 @@ class TestMLflow(unittest.TestCase):
         )
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertIsInstance(data.artifact, RandomForestRegressor)
-        self.assertIsNone(data.metadata)
+        self.assertEqual(data.metadata, {})
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_empty_rundata())))
@@ -165,7 +168,35 @@ class TestMLflow(unittest.TestCase):
         )
         data = ml.load(skeys=skeys, dkeys=dkeys, version="5", latest=False)
         self.assertIsInstance(data.artifact, VanillaAE)
-        self.assertIsNone(data.metadata)
+        self.assertEqual(data.metadata, {})
+
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch(
+        "mlflow.tracking.MlflowClient.get_latest_versions",
+        Mock(return_value=PagedList(items=[], token=None)),
+    )
+    @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
+    def test_staging_model_load_error(self):
+        ml = MLflowRegistry(TRACKING_URI, model_stage=ModelStage.STAGE)
+        skeys = self.skeys
+        dkeys = self.dkeys
+        ml.load(skeys=skeys, dkeys=dkeys)
+        self.assertRaises(ModelVersionError)
+
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version())
+    @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
+    def test_both_version_latest_model_with_version(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        skeys = self.skeys
+        dkeys = self.dkeys
+        with self.assertLogs(level="ERROR") as log:
+            ml.load(skeys=skeys, dkeys=dkeys, latest=False)
+            self.assertTrue(log.output)
 
     @patch("mlflow.pyfunc.load_model", Mock(side_effect=RuntimeError))
     def test_load_model_when_no_model_01(self):
