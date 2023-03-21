@@ -20,7 +20,7 @@ class TestAnomalyGenerator(unittest.TestCase):
             ax2 = plt.subplot(212)
             test_df[cols].plot(ax=ax2, title="Original")
         plt.show()
-        self.assertEqual(test_df.shape, outlier_df.shape)
+        self.assertNotEqual(test_df.shape, outlier_df.shape)
         other_cols = test_df.columns.difference(cols)
         self.assertTrue(test_df[other_cols].equals(outlier_df[other_cols]))
         self.assertFalse(test_df.equals(outlier_df))
@@ -30,7 +30,9 @@ class TestAnomalyGenerator(unittest.TestCase):
         ts_df = ts_generator.gen_tseries()
         train_df, test_df = ts_generator.train_test_split(ts_df, 1440)
 
-        anomaly_generator = AnomalyGenerator(train_df, anomaly_type="contextual")
+        anomaly_generator = AnomalyGenerator(
+            train_df, anomaly_type="contextual", anomaly_sign="negative"
+        )
         cols = ["s1", "s2"]
         outlier_df = anomaly_generator.inject_anomalies(test_df, cols=cols)
         if plot:
@@ -39,7 +41,7 @@ class TestAnomalyGenerator(unittest.TestCase):
             ax2 = plt.subplot(212)
             test_df[cols].plot(ax=ax2, title="Original")
         plt.show()
-        self.assertEqual(test_df.shape, outlier_df.shape)
+        self.assertNotEqual(test_df.shape, outlier_df.shape)
         self.assertFalse(test_df.equals(outlier_df))
         other_cols = test_df.columns.difference(cols)
         self.assertTrue(test_df[other_cols].equals(outlier_df[other_cols]))
@@ -58,7 +60,7 @@ class TestAnomalyGenerator(unittest.TestCase):
             ax2 = plt.subplot(212)
             test_df[cols].plot(ax=ax2, title="Original")
         plt.show()
-        self.assertEqual(test_df.shape, outlier_df.shape)
+        self.assertNotEqual(test_df.shape, outlier_df.shape)
         self.assertFalse(test_df.equals(outlier_df))
         other_cols = test_df.columns.difference(cols)
         self.assertTrue(test_df[other_cols].equals(outlier_df[other_cols]))
@@ -77,7 +79,7 @@ class TestAnomalyGenerator(unittest.TestCase):
             ax2 = plt.subplot(212)
             test_df[cols].plot(ax=ax2, title="Original")
         plt.show()
-        self.assertEqual(test_df.shape, outlier_df.shape)
+        self.assertNotEqual(test_df.shape, outlier_df.shape)
         self.assertFalse(test_df.equals(outlier_df))
         other_cols = test_df.columns.difference(cols)
         self.assertTrue(test_df[other_cols].equals(outlier_df[other_cols]))
@@ -100,7 +102,7 @@ class TestAnomalyGenerator(unittest.TestCase):
         anomaly_generator = AnomalyGenerator(train_df, anomaly_type="causal")
         outlier_df = anomaly_generator.inject_anomalies(test_df)
 
-        self.assertEqual(test_df.shape, outlier_df.shape)
+        self.assertNotEqual(test_df.shape, outlier_df.shape)
         self.assertFalse(test_df.equals(outlier_df))
         self.assertEqual(2, len(anomaly_generator.injected_cols))
 
@@ -110,6 +112,15 @@ class TestAnomalyGenerator(unittest.TestCase):
         train_df, test_df = ts_generator.train_test_split(ts_df, 1440)
 
         anomaly_generator = AnomalyGenerator(train_df, anomaly_type="Hahaha")
+        with self.assertRaises(AttributeError):
+            anomaly_generator.inject_anomalies(test_df)
+
+    def test_invalid_anomaly_sign(self):
+        ts_generator = SyntheticTSGenerator(7200, 5, seasonal_ts_prob=1.0)
+        ts_df = ts_generator.gen_tseries()
+        train_df, test_df = ts_generator.train_test_split(ts_df, 1440)
+
+        anomaly_generator = AnomalyGenerator(train_df, anomaly_sign="random")
         with self.assertRaises(AttributeError):
             anomaly_generator.inject_anomalies(test_df)
 
