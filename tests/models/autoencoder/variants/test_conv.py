@@ -46,9 +46,13 @@ class TestConvAE(unittest.TestCase):
         self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
     def test_conv1d_2(self):
-        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1],
-                         enc_channels=[8, 16, 4], enc_kernel_sizes=[3, 3, 3],
-                         dec_activation="sigmoid")
+        model = Conv1dAE(
+            seq_len=SEQ_LEN,
+            in_channels=self.X_train.shape[1],
+            enc_channels=[8, 16, 4],
+            enc_kernel_sizes=[3, 3, 3],
+            dec_activation="sigmoid",
+        )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=2, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
@@ -59,9 +63,13 @@ class TestConvAE(unittest.TestCase):
         self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
     def test_conv1d_encode(self):
-        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1],
-                         enc_channels=[8, 16, 4], enc_kernel_sizes=[3, 3, 3],
-                         dec_activation="sigmoid")
+        model = Conv1dAE(
+            seq_len=SEQ_LEN,
+            in_channels=self.X_train.shape[1],
+            enc_channels=[8, 16, 4],
+            enc_kernel_sizes=[3, 3, 3],
+            dec_activation="sigmoid",
+        )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
@@ -74,23 +82,39 @@ class TestConvAE(unittest.TestCase):
 
     def test_conv1d_err(self):
         with self.assertRaises(AssertionError):
-            Conv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1],
-                     enc_channels=[8, 16, 4], enc_kernel_sizes=[3, 3])
+            Conv1dAE(
+                seq_len=SEQ_LEN,
+                in_channels=self.X_train.shape[1],
+                enc_channels=[8, 16, 4],
+                enc_kernel_sizes=[3, 3],
+            )
 
         with self.assertRaises(ValueError):
-            Conv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1],
-                     enc_channels=[8, 16, 4], enc_kernel_sizes=[3, 3, 3],
-                     dec_activation="random")
+            Conv1dAE(
+                seq_len=SEQ_LEN,
+                in_channels=self.X_train.shape[1],
+                enc_channels=[8, 16, 4],
+                enc_kernel_sizes=[3, 3, 3],
+                dec_activation="random",
+            )
 
         with self.assertRaises(ValueError):
-            Conv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1],
-                     enc_channels=[8, 16, 4], enc_kernel_sizes={3, 3, 3},
-                     dec_activation="random")
+            Conv1dAE(
+                seq_len=SEQ_LEN,
+                in_channels=self.X_train.shape[1],
+                enc_channels=[8, 16, 4],
+                enc_kernel_sizes={3, 3, 3},
+                dec_activation="random",
+            )
 
     def test_sparse_conv1d(self):
         model = SparseConv1dAE(
-            seq_len=SEQ_LEN, in_channels=self.X_train.shape[1], enc_channels=(16, 4), enc_kernel_sizes=(5, 3),
-            loss_fn="mse", dec_activation="relu"
+            seq_len=SEQ_LEN,
+            in_channels=self.X_train.shape[1],
+            enc_channels=(16, 4),
+            enc_kernel_sizes=(5, 3),
+            loss_fn="mse",
+            dec_activation="relu",
         )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=2, enable_progress_bar=True)
@@ -102,8 +126,13 @@ class TestConvAE(unittest.TestCase):
         self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
 
     def test_native_train(self):
-        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1], enc_channels=[8, 16, 4],
-                         enc_kernel_sizes=(3, 3, 5), dec_activation="tanh")
+        model = Conv1dAE(
+            seq_len=SEQ_LEN,
+            in_channels=self.X_train.shape[1],
+            enc_channels=[8, 16, 4],
+            enc_kernel_sizes=(3, 3, 5),
+            dec_activation="tanh",
+        )
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
         criterion = nn.HuberLoss(delta=0.5)
 
