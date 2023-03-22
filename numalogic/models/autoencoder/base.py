@@ -11,6 +11,7 @@
 
 
 from abc import ABCMeta
+from typing import Any, Dict
 
 import pytorch_lightning as pl
 import torch.nn.functional as F
@@ -47,7 +48,13 @@ class BaseAE(pl.LightningModule, metaclass=ABCMeta):
             return optim.RMSprop(self.parameters(), lr=self.lr)
         raise NotImplementedError(f"Unsupported optimizer value provided: {optim_algo}")
 
-    def _get_reconstruction_loss(self, batch):
+    def configure_shape(self, batch: Tensor) -> Tensor:
+        """
+        Method to configure the batch shape for each type of model architecture.
+        """
+        return batch
+
+    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         _, recon = self.forward(batch)
         return self.criterion(batch, recon)
 
@@ -55,14 +62,14 @@ class BaseAE(pl.LightningModule, metaclass=ABCMeta):
         _, recon = self.forward(batch)
         return recon
 
-    def configure_optimizers(self):
+    def configure_optimizers(self) -> Dict[str, Any]:
         optimizer = self.init_optimizer(self.optim_algo)
         return {"optimizer": optimizer}
 
-    def training_step(self, batch, batch_idx):
+    def training_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         loss = self._get_reconstruction_loss(batch)
         return loss
 
-    def validation_step(self, batch, batch_idx):
+    def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         loss = self._get_reconstruction_loss(batch)
         return loss
