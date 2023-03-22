@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.3.6 (2023-03-22)
+
+ * [cb5509a](https://github.com/numaproj/numalogic/commit/cb5509a2320026ec5bb8e9bca416859b48ab5ea2) add: anomaly sign and return labels for anomalies generated (#146)
+ * [b6f63ef](https://github.com/numaproj/numalogic/commit/b6f63efc11fce355367834e707fb255549c06d39) fix: latest model calling (#145)
+ * [6ee3446](https://github.com/numaproj/numalogic/commit/6ee34469e73ddd96a96e0a1c13e7fc3d48cea6d8) fix: transition (#144)
+
+### Contributors
+
+ * Kushal Batra
+
 ## v0.3.5 (2023-03-09)
 
  * [ea01b44](https://github.com/numaproj/numalogic/commit/ea01b44a3b6261d4b5ff02e4fd8e5cde53e838ba) feat: Sigmoid threshold (#141)
