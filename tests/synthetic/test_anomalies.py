@@ -31,7 +31,7 @@ class TestAnomalyGenerator(unittest.TestCase):
         train_df, test_df = ts_generator.train_test_split(ts_df, 1440)
 
         anomaly_generator = AnomalyGenerator(
-            train_df, anomaly_type="contextual", anomaly_sign="negative"
+            train_df, anomaly_type="contextual", anomaly_sign="negative", mu=1, sigma=0.5
         )
         cols = ["s1", "s2"]
         outlier_df = anomaly_generator.inject_anomalies(test_df, cols=cols)
