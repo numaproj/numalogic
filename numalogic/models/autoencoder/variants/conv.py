@@ -40,6 +40,7 @@ class ConvBlock(nn.Module):
     - batch norm
     - relu activation
     """
+
     def __init__(
         self,
         out_channels: int,
@@ -66,6 +67,7 @@ class ConvTransposeBlock(nn.Module):
     - batch norm
     - relu activation
     """
+
     def __init__(
         self,
         out_channels: int,
@@ -95,6 +97,7 @@ class Encoder(nn.Module):
     """
     Enoder network for Conv1dAE.
     """
+
     def __init__(
         self, num_channels: Sequence[int], kernel_sizes: Sequence[int], pool_kernel_size: int
     ):
@@ -138,6 +141,7 @@ class Decoder(nn.Module):
     """
     Decoder network for Conv1dAE.
     """
+
     def __init__(
         self,
         num_channels: Sequence[int],
