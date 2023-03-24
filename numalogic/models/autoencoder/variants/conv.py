@@ -11,7 +11,7 @@
 
 
 import logging
-from typing import Tuple, Sequence, TypeVar, Union
+from typing import Tuple, Sequence, Union
 
 import torch
 from torch import nn, Tensor
@@ -20,7 +20,6 @@ from torch.nn.init import calculate_gain
 from numalogic.models.autoencoder.base import BaseAE
 
 LOGGER = logging.getLogger(__name__)
-T = TypeVar("T", bound="Tensor")
 
 
 def _get_activation_function(activation_name: str):
@@ -56,7 +55,7 @@ class ConvBlock(nn.Module):
         self.bnorm = nn.BatchNorm1d(out_channels)
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self, input_: T) -> T:
+    def forward(self, input_: Tensor) -> Tensor:
         return self.relu(self.bnorm(self.conv(input_)))
 
 
@@ -89,7 +88,7 @@ class ConvTransposeBlock(nn.Module):
         self.bnorm = nn.BatchNorm1d(out_channels)
         self.relu = nn.ReLU(inplace=True)
 
-    def forward(self, input_: T) -> T:
+    def forward(self, input_: Tensor) -> Tensor:
         return self.relu(self.bnorm(self.convtranspose(input_)))
 
 
@@ -133,7 +132,7 @@ class Encoder(nn.Module):
             )
         return layers
 
-    def forward(self, input_: T) -> T:
+    def forward(self, input_: Tensor) -> Tensor:
         return self.encoder(input_)
 
 
@@ -184,7 +183,7 @@ class Decoder(nn.Module):
                 layers.append(_get_activation_function(final_activation))
         return layers
 
-    def forward(self, latent: T) -> T:
+    def forward(self, latent: Tensor) -> Tensor:
         return self.decoder(latent)
 
 
@@ -266,25 +265,25 @@ class Conv1dAE(BaseAE):
             if isinstance(module, (nn.Conv1d, nn.ConvTranspose1d)):
                 nn.init.xavier_normal_(module.weight, gain=calculate_gain("relu"))
 
-    def forward(self, batch: T) -> Tuple[T, T]:
+    def forward(self, batch: Tensor) -> Tuple[Tensor, Tensor]:
         batch = self.configure_shape(batch)
         encoded = self.encoder(batch)
         decoded = self.decoder(encoded)
         return encoded, decoded
 
-    def configure_shape(self, batch: T) -> T:
+    def configure_shape(self, batch: Tensor) -> Tensor:
         return batch.view(-1, self.in_channels, self.seq_len)
 
-    def encode(self, batch: T) -> T:
+    def encode(self, batch: Tensor) -> Tensor:
         batch = self.configure_shape(batch)
         return self.encoder(batch)
 
-    def _get_reconstruction_loss(self, batch: T) -> T:
+    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         _, recon = self.forward(batch)
         x = batch.view(-1, self.in_channels, self.seq_len)
         return self.criterion(x, recon)
 
-    def predict_step(self, batch: T, batch_idx: int, dataloader_idx: int = 0) -> T:
+    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0) -> Tensor:
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.in_channels)

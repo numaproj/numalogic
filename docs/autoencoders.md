@@ -37,10 +37,11 @@ trainer.fit(model, datamodule=datamodule)
 Numalogic supports 2 variants of Autoencoders currently. 
 More details can be found [here](https://www.deeplearningbook.org/contents/autoencoders.html).
 
-### 1. Undercomplete autoencoders
+### 1. Autoencoders
 
-This is the simplest version of autoencoders where it is made sure that the 
-latent dimension is smaller than the encoding and decoding dimesions.
+Basic autoencoders aim to find representations of the input data in a latent dimensional space.
+Ideally, in order for the network to learn meaningful patterns, it is recommended that undercomplete
+architectures are used, i.e. the latent space dimension being less than the input dimension.
 
 Examples would be `VanillaAE`, `Conv1dAE`, `LSTMAE` and `TransformerAE`
 
@@ -65,14 +66,18 @@ from numalogic.models.autoencoder.variants import VanillaAE
 model = VanillaAE(seq_len=12, n_features=2)
 ```   
 
-#### 1d Convolutional
+#### Convolutional
 
-Conv1dAE is a one dimensional Convolutional Autoencoder with multichannel support.
+Conv1dAE is a 1D convolutional autoencoder. 
+
+The encoder network consists of convolutional layers and max pooling layers.
+The decoder network tries to reconstruct the same input shape by corresponding transposed
+convolutional and upsampling layers.
    
 ```python
 from numalogic.models.autoencoder.variants import SparseConv1dAE
 
-model = SparseConv1dAE(beta=1e-2, seq_len=12, in_channels=3, enc_channels=8)
+model = SparseConv1dAE(beta=1e-2, seq_len=12, in_channels=3, enc_channels=[8, 4])
 ```
 
 #### LSTM
