@@ -525,8 +525,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-undercomplete-autoencoders" class="md-nav__link">
-    1. Undercomplete autoencoders
+  <a href="#1-autoencoders" class="md-nav__link">
+    1. Autoencoders
   </a>
   
 </li>
@@ -559,8 +559,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#1d-convolutional" class="md-nav__link">
-    1d Convolutional
+  <a href="#convolutional" class="md-nav__link">
+    Convolutional
   </a>
   
 </li>
@@ -813,8 +813,8 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#1-undercomplete-autoencoders" class="md-nav__link">
-    1. Undercomplete autoencoders
+  <a href="#1-autoencoders" class="md-nav__link">
+    1. Autoencoders
   </a>
   
 </li>
@@ -847,8 +847,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#1d-convolutional" class="md-nav__link">
-    1d Convolutional
+  <a href="#convolutional" class="md-nav__link">
+    Convolutional
   </a>
   
 </li>
@@ -916,9 +916,10 @@ This trainer provides a mechanism to train, validate and infer on data, with all
 <h2 id="autoencoder-variants">Autoencoder Variants<a class="headerlink" href="#autoencoder-variants" title="Permanent link">&para;</a></h2>
 <p>Numalogic supports 2 variants of Autoencoders currently. 
 More details can be found <a href="https://www.deeplearningbook.org/contents/autoencoders.html">here</a>.</p>
-<h3 id="1-undercomplete-autoencoders">1. Undercomplete autoencoders<a class="headerlink" href="#1-undercomplete-autoencoders" title="Permanent link">&para;</a></h3>
-<p>This is the simplest version of autoencoders where it is made sure that the 
-latent dimension is smaller than the encoding and decoding dimesions.</p>
+<h3 id="1-autoencoders">1. Autoencoders<a class="headerlink" href="#1-autoencoders" title="Permanent link">&para;</a></h3>
+<p>Basic autoencoders aim to find representations of the input data in a latent dimensional space.
+Ideally, in order for the network to learn meaningful patterns, it is recommended that undercomplete
+architectures are used, i.e. the latent space dimension being less than the input dimension.</p>
 <p>Examples would be <code>VanillaAE</code>, <code>Conv1dAE</code>, <code>LSTMAE</code> and <code>TransformerAE</code></p>
 <h3 id="2-sparse-autoencoders">2. Sparse autoencoders<a class="headerlink" href="#2-sparse-autoencoders" title="Permanent link">&para;</a></h3>
 <p>A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve an information bottleneck. 
@@ -933,11 +934,14 @@ So, by adding a sparsity regularization, we will be able to stop the neural netw
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">VanillaAE</span><span class="p">(</span><span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">n_features</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </code></pre></div>
-<h4 id="1d-convolutional">1d Convolutional<a class="headerlink" href="#1d-convolutional" title="Permanent link">&para;</a></h4>
-<p>Conv1dAE is a one dimensional Convolutional Autoencoder with multichannel support.</p>
+<h4 id="convolutional">Convolutional<a class="headerlink" href="#convolutional" title="Permanent link">&para;</a></h4>
+<p>Conv1dAE is a 1D convolutional autoencoder. </p>
+<p>The encoder network consists of convolutional layers and max pooling layers.
+The decoder network tries to reconstruct the same input shape by corresponding transposed
+convolutional and upsampling layers.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">SparseConv1dAE</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">SparseConv1dAE</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">in_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">enc_channels</span><span class="o">=</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">SparseConv1dAE</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">1e-2</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">in_channels</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">enc_channels</span><span class="o">=</span><span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">])</span>
 </code></pre></div>
 <h4 id="lstm">LSTM<a class="headerlink" href="#lstm" title="Permanent link">&para;</a></h4>
 <p>An LSTM (Long Short-Term Memory) Autoencoder is an implementation of an autoencoder for sequence data using an Encoder-Decoder LSTM architecture.</p>
