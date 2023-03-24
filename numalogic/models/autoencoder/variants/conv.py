@@ -11,7 +11,7 @@
 
 
 import logging
-from typing import Tuple
+from typing import Tuple, Sequence, Union
 
 import torch
 from torch import nn, Tensor
@@ -22,82 +22,268 @@ from numalogic.models.autoencoder.base import BaseAE
 LOGGER = logging.getLogger(__name__)
 
 
+def _get_activation_function(activation_name: str):
+    if activation_name == "sigmoid":
+        return nn.Sigmoid()
+    if activation_name == "tanh":
+        return nn.Tanh()
+    if activation_name == "relu":
+        return nn.ReLU()
+    raise ValueError(f"Unsupported activation function provided: {activation_name}")
+
+
+class ConvBlock(nn.Module):
+    """
+    Basic convolutional block consisting of:
+    - convolutional layer
+    - batch norm
+    - relu activation
+    """
+
+    def __init__(
+        self,
+        out_channels: int,
+        kernel_size: int,
+        stride: int = 1,
+        padding: int = 0,
+        dilation: int = 1,
+    ):
+        super().__init__()
+        self.conv = nn.LazyConv1d(
+            out_channels, kernel_size, stride=stride, dilation=dilation, padding=padding
+        )
+        self.bnorm = nn.BatchNorm1d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, input_: Tensor) -> Tensor:
+        return self.relu(self.bnorm(self.conv(input_)))
+
+
+class ConvTransposeBlock(nn.Module):
+    """
+    Basic transpose convolutional block consisting of:
+    - transpose convolutional layer
+    - batch norm
+    - relu activation
+    """
+
+    def __init__(
+        self,
+        out_channels: int,
+        kernel_size: int,
+        stride: int = 1,
+        padding: int = 0,
+        dilation: int = 1,
+        output_padding: int = 0,
+    ):
+        super().__init__()
+        self.convtranspose = nn.LazyConvTranspose1d(
+            out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            output_padding=output_padding,
+        )
+        self.bnorm = nn.BatchNorm1d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, input_: Tensor) -> Tensor:
+        return self.relu(self.bnorm(self.convtranspose(input_)))
+
+
+class Encoder(nn.Module):
+    """
+    Enoder network for Conv1dAE.
+    """
+
+    def __init__(
+        self, num_channels: Sequence[int], kernel_sizes: Sequence[int], pool_kernel_size: int
+    ):
+        super().__init__()
+        layers = self._construct_layers(num_channels, kernel_sizes, pool_kernel_size)
+        self.encoder = nn.Sequential(*layers)
+
+    @staticmethod
+    def _construct_layers(
+        num_filters: Sequence[int], kernel_sizes: Sequence[int], pool_k_size: int
+    ):
+        layers = nn.ModuleList()
+
+        # Non-final layers
+        for idx in range(len(num_filters) - 1):
+            layers.extend(
+                [
+                    ConvBlock(
+                        out_channels=num_filters[idx], kernel_size=kernel_sizes[idx], padding=1
+                    ),
+                    nn.MaxPool1d(pool_k_size),
+                ]
+            )
+        # Latent layer
+        else:
+            layers.extend(
+                [
+                    nn.LazyConv1d(
+                        out_channels=num_filters[-1], kernel_size=kernel_sizes[-1], padding=1
+                    ),
+                    nn.ReLU(),
+                ]
+            )
+        return layers
+
+    def forward(self, input_: Tensor) -> Tensor:
+        return self.encoder(input_)
+
+
+class Decoder(nn.Module):
+    """
+    Decoder network for Conv1dAE.
+    """
+
+    def __init__(
+        self,
+        num_channels: Sequence[int],
+        kernel_sizes: Sequence[int],
+        upsample_scale_factor: int,
+        final_activation: str,
+    ):
+        super().__init__()
+        layers = self._construct_layers(
+            num_channels, kernel_sizes, final_activation, upsample_scale_factor
+        )
+        self.decoder = nn.Sequential(*layers)
+
+    @staticmethod
+    def _construct_layers(
+        num_filters: Sequence[int],
+        kernel_sizes: Sequence[int],
+        final_activation: str,
+        upscale_factor: int,
+    ):
+        layers = nn.ModuleList()
+
+        # Non-final layers
+        for idx in range(len(num_filters) - 1):
+            layers.append(
+                ConvTransposeBlock(
+                    out_channels=num_filters[idx], kernel_size=kernel_sizes[idx], padding=1
+                )
+            )
+            layers.append(nn.Upsample(scale_factor=upscale_factor, mode="linear"))
+
+        # Output layer
+        else:
+            layers.append(
+                nn.LazyConvTranspose1d(
+                    out_channels=num_filters[-1], kernel_size=kernel_sizes[-1], padding=1
+                ),
+            )
+            if final_activation:
+                layers.append(_get_activation_function(final_activation))
+        return layers
+
+    def forward(self, latent: Tensor) -> Tensor:
+        return self.decoder(latent)
+
+
 class Conv1dAE(BaseAE):
     r"""
-    One dimensional Convolutional Autoencoder with multichannel support.
+    1D Convolutional Autoencoder.
+    Encoder has convolutional layers and max pool layers.
+
+    Decoder has trnanspose convolutional layers and
+    upsampling layers.
 
     Args:
         seq_len: length of input sequence
         in_channels: Number of channels in the input
-        enc_channels: Number of channels produced by the convolution
-        kernel_size: kernel size (default=7)
-        stride: stride length (default=2)
-        padding: padding parameter for encoder (default=3)
-        output_padding: padding parameter for decoder (default=1)
+        enc_channels: Number of channels (filters) in each layer of the encoder
+        enc_kernel_sizes: Size of convolutional kernel for each layer
+                          Can be both a tuple/list or an integer.
+                          If integer, then the same kernel size is applied to all layers.
+        pool_kernel_size: Kernel size of the maxpool layer (encoder)
+                          and upsample layer (decoder)
+        dec_activation: The final activation for the decoder
+                        Supported values include: ("sigmoid", "tanh", "relu")
+                        If None then no output activation is added
+
+    Note: Length of list/tuple of enc_channels and enc_kernel_sizes must be equal
     """
 
     def __init__(
         self,
         seq_len: int,
         in_channels: int,
-        enc_channels: int,
-        kernel_size=7,
-        stride=2,
-        padding=3,
-        output_padding=1,
-        **kwargs
+        enc_channels: Sequence[int] = (16, 8),
+        enc_kernel_sizes: Union[int, Sequence[int]] = 3,
+        pool_kernel_size: int = 2,
+        dec_activation: str = None,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.seq_len = seq_len
         self.in_channels = in_channels
 
-        self.encoder = nn.Sequential(
-            nn.Conv1d(
-                in_channels, enc_channels, kernel_size=kernel_size, stride=stride, padding=padding
-            ),
-            nn.BatchNorm1d(enc_channels),
-            nn.ReLU(inplace=True),
-            nn.MaxPool1d(2),
+        if isinstance(enc_kernel_sizes, int):
+            enc_kernel_sizes = [enc_kernel_sizes for _ in range(len(enc_channels))]
+
+        elif isinstance(enc_kernel_sizes, (tuple, list)):
+            assert len(enc_channels) == len(
+                enc_kernel_sizes
+            ), "enc_channels and enc_kernel_sizes should be of the same length"
+        else:
+            raise ValueError(f"Invalid enc_kernel_sizes type provided: {enc_kernel_sizes}")
+
+        self.encoder = Encoder(
+            num_channels=enc_channels,
+            kernel_sizes=enc_kernel_sizes,
+            pool_kernel_size=pool_kernel_size,
         )
 
-        self.decoder = nn.Sequential(
-            nn.ConvTranspose1d(
-                enc_channels,
-                enc_channels,
-                kernel_size=kernel_size,
-                stride=stride,
-                padding=padding,
-                output_padding=output_padding,
-            ),
-            nn.BatchNorm1d(enc_channels),
-            nn.ReLU(inplace=True),
-            nn.ConvTranspose1d(enc_channels, in_channels, kernel_size=7, padding=3),
-            nn.Upsample(scale_factor=2),
+        dec_channels = list(reversed((enc_channels[:-1])))
+        dec_channels.append(in_channels)
+
+        dec_kernel_sizes = list(reversed(enc_kernel_sizes))
+        self.decoder = Decoder(
+            num_channels=dec_channels,
+            kernel_sizes=dec_kernel_sizes,
+            upsample_scale_factor=pool_kernel_size,
+            final_activation=dec_activation,
         )
 
-        self.encoder.apply(self.init_weights)
-        self.decoder.apply(self.init_weights)
+        # Do a dry run to initialize lazy modules
+        self.forward(torch.rand(1, self.seq_len, self.in_channels))
+        self._init_weights()
 
-    @staticmethod
-    def init_weights(m: nn.Module) -> None:
+    def _init_weights(self) -> None:
         r"""
-        Initiate parameters in the transformer model.
+        Initiate parameters in the convolutional
+        and transpose convolutional layers.
         """
-        if type(m) in (nn.ConvTranspose1d, nn.Conv1d):
-            nn.init.xavier_normal_(m.weight, gain=calculate_gain("relu"))
+        for module in self.modules():
+            if isinstance(module, (nn.Conv1d, nn.ConvTranspose1d)):
+                nn.init.xavier_normal_(module.weight, gain=calculate_gain("relu"))
 
     def forward(self, batch: Tensor) -> Tuple[Tensor, Tensor]:
-        batch = batch.view(-1, self.in_channels, self.seq_len)
+        batch = self.configure_shape(batch)
         encoded = self.encoder(batch)
         decoded = self.decoder(encoded)
         return encoded, decoded
 
-    def _get_reconstruction_loss(self, batch):
+    def configure_shape(self, batch: Tensor) -> Tensor:
+        return batch.view(-1, self.in_channels, self.seq_len)
+
+    def encode(self, batch: Tensor) -> Tensor:
+        batch = self.configure_shape(batch)
+        return self.encoder(batch)
+
+    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         _, recon = self.forward(batch)
         x = batch.view(-1, self.in_channels, self.seq_len)
         return self.criterion(x, recon)
 
-    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
+    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0) -> Tensor:
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.in_channels)

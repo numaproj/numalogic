@@ -83,7 +83,8 @@ class TestFactory(unittest.TestCase):
         factory = ModelFactory()
         model = factory.get_instance(
             ModelInfo(
-                name="SparseConv1dAE", conf={"seq_len": 12, "in_channels": 2, "enc_channels": 6}
+                name="SparseConv1dAE",
+                conf={"seq_len": 12, "in_channels": 2, "enc_channels": [8, 16]},
             )
         )
         self.assertIsInstance(model, SparseConv1dAE)
@@ -96,9 +97,7 @@ class TestFactory(unittest.TestCase):
     def test_instance_err(self):
         factory = ModelFactory()
         with self.assertRaises(UnknownConfigArgsError):
-            factory.get_instance(
-                ModelInfo(name="Random", conf={"seq_len": 12, "in_channels": 2, "enc_channels": 6})
-            )
+            factory.get_instance(ModelInfo(name="Random", conf={"seq_len": 12, "in_channels": 2}))
 
     def test_cls_err(self):
         factory = ModelFactory()

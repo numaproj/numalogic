@@ -38,7 +38,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
         print(cls.x_train.shape, cls.x_val.shape, cls.x_test.shape)
 
     def test_trainer_01(self):
-        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=4)
+        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=(4, 8))
         datamodule = TimeseriesDataModule(
             SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
         )
@@ -50,7 +50,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
         self.assertTupleEqual(self.x_test.shape, y_test.size())
 
     def test_trainer_02(self):
-        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=4)
+        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=(4,))
         datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
