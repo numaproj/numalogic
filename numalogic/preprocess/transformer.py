@@ -54,7 +54,7 @@ class StaticPowerTransformer(DataIndependentTransformers):
 
 class TanhScaler(OneToOneFeatureMixin, TransformerMixin):
     r"""
-    Tanh Estimator applies tanh normalization to the Z-score,
+    Tanh Estimator applies column-wise tanh normalization to the Z-score,
     and scales the values between 0 and 1.
 
     After scaling, the data has a mean of 0.5.
@@ -63,21 +63,29 @@ class TanhScaler(OneToOneFeatureMixin, TransformerMixin):
     Higher the value, the linear portion of the curve will have a higher slope
     but will reach the asymptote (flatten out) earlier.
 
+    Args:
+        coeff: float value determining the spread of the scores
+        eps: minimum value below which the feature will be treated as constant.
+             In order to avoid division by zero or a very small number,
+             standard deviation will be set as 1 for that feature.
+
     References:
         Nandakumar, Jain, Ross. 2005. Score Normalization in
         Multimodal Biometric Systems, Pattern Recognition 38, 2270-2285.
         https://web.cse.msu.edu/~rossarun/pubs/RossScoreNormalization_PR05.pdf
     """
-    __slots__ = ("_coeff", "_std", "_mean")
+    __slots__ = ("_coeff", "_std", "_mean", "_eps")
 
-    def __init__(self, coeff: float = 0.2):
+    def __init__(self, coeff: float = 0.2, eps: float = 1e-10):
         self._coeff = coeff
         self._std = None
         self._mean = None
+        self._eps = eps
 
     def fit(self, x: npt.NDArray[float]) -> Self:
         self._mean = np.mean(x, axis=0)
         self._std = np.std(x, axis=0)
+        self._check_if_constant(x)
         return self
 
     def transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
@@ -86,3 +94,7 @@ class TanhScaler(OneToOneFeatureMixin, TransformerMixin):
 
     def fit_transform(self, x: npt.NDArray[float], y=None, **_) -> npt.NDArray[float]:
         return self.fit(x).transform(x)
+
+    def _check_if_constant(self, x: npt.NDArray[float]) -> None:
+        delta = np.max(x, axis=0) - np.min(x, axis=0)
+        self._std[delta < self._eps] = 1.0
