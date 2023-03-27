@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.7 (2023-03-27)
+
+ * [b61ac1f](https://github.com/numaproj/numalogic/commit/b61ac1fbd639f482b7ecb661da47254695139299) fix: Tanhscaler nan output for constant feature (#153)
+ * [69006eb](https://github.com/numaproj/numalogic/commit/69006ebfb396262d9e31cbc3ada2da7ed274e6a4) Update CODEOWNERS (#151)
+ * [6b38465](https://github.com/numaproj/numalogic/commit/6b38465a0ce703215abcb7874211f0def10040f4) feat: more generic convolutional ae (#149)
+
+### Contributors
+
+ * Avik Basu
+ * Vigith Maurice
+
 ## v0.3.6 (2023-03-22)
 
  * [cb5509a](https://github.com/numaproj/numalogic/commit/cb5509a2320026ec5bb8e9bca416859b48ab5ea2) add: anomaly sign and return labels for anomalies generated (#146)
