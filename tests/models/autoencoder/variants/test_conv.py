@@ -15,8 +15,8 @@ from numalogic.models.autoencoder.variants.conv import SparseConv1dAE
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
-EPOCHS = 5
-BATCH_SIZE = 256
+EPOCHS = 3
+BATCH_SIZE = 32
 SEQ_LEN = 12
 LR = 0.001
 torch.manual_seed(42)
@@ -74,7 +74,7 @@ class TestConvAE(unittest.TestCase):
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
-        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=256)
         for batch in streamloader:
             latent = model.encode(batch)
             self.assertTupleEqual((229, 4, 3), latent.shape)

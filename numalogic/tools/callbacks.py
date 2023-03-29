@@ -43,4 +43,9 @@ class ProgressDetails(ProgressBarBase):
         metrics = self.get_metrics(trainer, pl_module)
         curr_epoch = trainer.current_epoch
         if curr_epoch % self._log_freq == 0:
-            _LOGGER.info("epoch %s, loss: %s", curr_epoch, metrics["loss"])
+            _LOGGER.info("epoch=%s, training_loss=%s", curr_epoch, metrics["loss"])
+
+    def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
+        super().on_validation_epoch_end(trainer, pl_module)
+        metrics = self.get_metrics(trainer, pl_module)
+        _LOGGER.info("validation_loss=%s", metrics["loss"])

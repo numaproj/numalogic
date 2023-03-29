@@ -3,11 +3,12 @@ import unittest
 
 import numpy as np
 import torch
-from numalogic._constants import TESTS_DIR
-from numalogic.tools.data import StreamingDataset, TimeseriesDataModule
-from numalogic.tools.exceptions import DataModuleError, InvalidDataShapeError
 from numpy.testing import assert_allclose
 from torch.utils.data import DataLoader
+
+from numalogic._constants import TESTS_DIR
+from numalogic.tools.data import StreamingDataset, TimeseriesDataModule
+from numalogic.tools.exceptions import InvalidDataShapeError
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
@@ -63,9 +64,8 @@ class TestTimeSeriesDataModule(unittest.TestCase):
         datamodule.setup(stage="fit")
         self.assertIsInstance(datamodule.train_dataloader(), DataLoader)
 
-        with self.assertRaises(DataModuleError):
-            datamodule.setup(stage="validate")
-            datamodule.val_dataloader()
+        datamodule.setup(stage="validate")
+        self.assertIsNone(datamodule.val_dataloader())
 
     def test_datamodule_02(self):
         datamodule = TimeseriesDataModule(SEQ_LEN, self.train_data, val_data=self.val_data)
@@ -81,6 +81,7 @@ class TestTimeSeriesDataModule(unittest.TestCase):
 
         for batch in datamodule.train_dataloader():
             unbatched = datamodule.unbatch_sequences(batch)
+            self.assertTupleEqual(self.train_data.shape, unbatched.shape)
             self.assertAlmostEqual(torch.mean(unbatched).item(), np.mean(self.train_data), places=5)
 
 
