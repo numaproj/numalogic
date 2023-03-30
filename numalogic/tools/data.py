@@ -27,7 +27,7 @@ _LOGGER = logging.getLogger(__name__)
 
 class StreamingDataset(IterableDataset):
     r"""
-    An iterable Dataset designed for streaming time seris input.
+    An iterable Dataset designed for streaming time series input.
 
     Args:
         data: A numpy array containing the input data in the shape of (batch, num_features).
@@ -62,7 +62,7 @@ class StreamingDataset(IterableDataset):
             input_: A numpy array containing the input data.
         """
         idx = 0
-        while idx < len(self._data) - self._seq_len + 1:
+        while idx < len(self):
             yield input_[idx : idx + self._seq_len]
             idx += 1
 
@@ -84,13 +84,13 @@ class StreamingDataset(IterableDataset):
         r"""
         Retrieves a sequence from the input data at the specified index.
         """
-        if idx >= len(self._data) - self._seq_len + 1:
+        if idx >= len(self):
             raise IndexError(f"{idx} out of bound!")
         return self._data[idx : idx + self._seq_len]
 
 
 class TimeseriesDataModule(pl.LightningDataModule):
-    """
+    r"""
     A time series data module for use in PyTorch Lightning,
     using a StreamingDataset for training and validation datasets.
 
@@ -118,7 +118,7 @@ class TimeseriesDataModule(pl.LightningDataModule):
         self.val_dataset = None
 
     def setup(self, stage: str) -> None:
-        """
+        r"""
         Sets up the data module by initializing the train and validation datasets.
         """
         if stage == "fit":
@@ -128,7 +128,7 @@ class TimeseriesDataModule(pl.LightningDataModule):
             self.val_dataset = StreamingDataset(self.val_data, self.seq_len)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
-        """
+        r"""
         Creates and returns a DataLoader for the training dataset.
         """
         return DataLoader(self.train_dataset, batch_size=self.batch_size)

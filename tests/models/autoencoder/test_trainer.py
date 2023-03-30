@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
 from numalogic.models.autoencoder import AutoencoderTrainer
-from numalogic.models.autoencoder.variants import Conv1dAE, LSTMAE, SparseVanillaAE, TransformerAE
+from numalogic.models.autoencoder.variants import Conv1dAE, LSTMAE, SparseVanillaAE, TransformerAE, SparseConv1dAE
 from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
@@ -121,7 +121,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
         self.assertTupleEqual((229, SEQ_LEN, self.x_test.shape[1]), y_test_batched.size())
 
     def test_trainer_07_wo_val(self):
-        model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=(2,))
+        model = SparseConv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=(2,))
         train_dataset = StreamingDataset(self.x_train, SEQ_LEN)
 
         test_dataset = StreamingDataset(self.x_test, SEQ_LEN)
