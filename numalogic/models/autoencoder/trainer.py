@@ -29,11 +29,9 @@ class AutoencoderTrainer(Trainer):
         max_epochs=100,
         logger=False,
         check_val_every_n_epoch=5,
-        log_every_n_steps=20,
         enable_checkpointing=False,
         enable_progress_bar=False,
         enable_model_summary=False,
-        limit_val_batches=0,
         callbacks=None,
         **trainer_kw
     ):
@@ -43,12 +41,10 @@ class AutoencoderTrainer(Trainer):
         super().__init__(
             logger=logger,
             max_epochs=max_epochs,
-            log_every_n_steps=log_every_n_steps,
             check_val_every_n_epoch=check_val_every_n_epoch,
             enable_checkpointing=enable_checkpointing,
             enable_progress_bar=enable_progress_bar,
             enable_model_summary=enable_model_summary,
-            limit_val_batches=limit_val_batches,
             callbacks=callbacks,
             **trainer_kw
         )
