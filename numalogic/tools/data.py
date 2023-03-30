@@ -138,7 +138,7 @@ class TimeseriesDataModule(pl.LightningDataModule):
         Creates and returns a DataLoader for the validation dataset if validation data is provided.
         """
         if self.val_data is None:
-            _LOGGER.warning("Validation data not provided")
+            _LOGGER.warning("Validation data not provided in TimeseriesDataModule.")
             return None
         return DataLoader(self.val_dataset, batch_size=self.batch_size)
 
