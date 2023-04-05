@@ -18,16 +18,22 @@ from numalogic.tools.exceptions import InvalidDataShapeError
 
 def _allow_only_single_feature(data: npt.NDArray[float]) -> None:
     if data.ndim > 2:
-        raise InvalidDataShapeError(f"Input data can only be 2 dimensions or less, input size: {data.shape}")
+        raise InvalidDataShapeError(
+            f"Input data can only be 2 dimensions or less, input size: {data.shape}"
+        )
     if data.ndim > 1 and data.shape[1] > 1:
-        raise InvalidDataShapeError(f"Input data can only have 1 feature column, input shape: {data.shape}")
+        raise InvalidDataShapeError(
+            f"Input data can only have 1 feature column, input shape: {data.shape}"
+        )
 
 
 def tanh_norm(scores: npt.NDArray[float], scale_factor=10, smooth_factor=10) -> npt.NDArray[float]:
     return scale_factor * np.tanh(scores / smooth_factor)
 
 
-def expmov_avg_aggregator(arr: npt.NDArray[float], beta: float, bias_correction: bool = True) -> float:
+def expmov_avg_aggregator(
+    arr: npt.NDArray[float], beta: float, bias_correction: bool = True
+) -> float:
     """
     Aggregate a window of data into an expoentially weighted moving average value.
 
