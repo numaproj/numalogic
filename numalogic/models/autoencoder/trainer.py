@@ -11,6 +11,8 @@
 
 
 import logging
+import sys
+import warnings
 
 import pytorch_lightning as pl
 import torch
@@ -37,6 +39,9 @@ class AutoencoderTrainer(Trainer):
     ):
         if (not callbacks) and enable_progress_bar:
             callbacks = ProgressDetails()
+
+        if not sys.warnoptions:
+            warnings.simplefilter("ignore", category=UserWarning)
 
         super().__init__(
             logger=logger,

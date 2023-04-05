@@ -70,9 +70,14 @@ class StreamingDataset(IterableDataset):
         r"""
         Returns an iterator for the StreamingDataset object.
 
-        # TODO implement multi worker iter
+        Raises:
+            NotImplementedError: If multiple worker input is provided
         """
-        return iter(self.create_seq(self._data))
+        worker_info = torch.utils.data.get_worker_info()
+        if not worker_info or worker_info.num_workers == 1:
+            return self.create_seq(self._data)
+
+        raise NotImplementedError("Multiple workers are not supported yet for Streaming Dataset")
 
     def __len__(self) -> int:
         r"""

@@ -4,6 +4,7 @@ import unittest
 import numpy as np
 import torch
 from numpy.testing import assert_allclose
+from torch.testing import assert_close
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
@@ -24,7 +25,8 @@ class TestStreamingDataset(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.m = 30
         cls.n = 3
-        cls.data = np.random.randn(cls.m, cls.n)
+        cls.data = np.arange(cls.m * cls.n).reshape(30, 3)
+        # cls.data = np.random.randn(cls.m, cls.n)
 
     def test_dataset(self):
         dataset = StreamingDataset(self.data, seq_len=SEQ_LEN)
@@ -32,6 +34,28 @@ class TestStreamingDataset(unittest.TestCase):
             self.assertTupleEqual((SEQ_LEN, self.n), seq.shape)
         self.assertEqual(self.data.shape[0] - SEQ_LEN + 1, len(dataset))
         assert_allclose(np.ravel(dataset[0]), np.ravel(self.data[:12, :]))
+
+    def test_w_dataloader(self):
+        batch_size = 4
+        dl = DataLoader(
+            StreamingDataset(self.data, seq_len=SEQ_LEN),
+            batch_size=batch_size,
+            num_workers=1,
+            drop_last=True,
+        )
+        for idx, batch in enumerate(dl):
+            assert_close(batch[0, 1, :], batch[1, 0, :])
+            assert_close(batch[2, 1, :], batch[3, 0, :])
+
+        with self.assertRaises(NotImplementedError):
+            dl = DataLoader(
+                StreamingDataset(self.data, seq_len=SEQ_LEN),
+                batch_size=batch_size,
+                drop_last=True,
+                num_workers=2,
+            )
+            for _ in dl:
+                pass
 
     def test_dataset_err_01(self):
         with self.assertRaises(ValueError):
