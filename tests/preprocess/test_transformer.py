@@ -1,4 +1,5 @@
 import unittest
+import warnings
 
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_less
@@ -58,8 +59,9 @@ class TestTransformers(unittest.TestCase):
         x[:, 1] = np.zeros(5)
 
         scaler = TanhScaler(eps=0.0)
-
-        x_scaled = scaler.fit_transform(x)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            x_scaled = scaler.fit_transform(x)
         self.assertTrue(np.isnan(x_scaled[:, 1]).all())
 
 

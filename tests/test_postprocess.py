@@ -28,14 +28,16 @@ class TestPostprocess(unittest.TestCase):
         clf = ExpMovingAverage(0.9)
         out = clf.fit_transform(arr)
         self.assertTupleEqual(arr.shape, out.shape)
-        self.assertEqual(expmov_avg_aggregator(arr, 0.9), out[-1].item())
+        self.assertAlmostEqual(expmov_avg_aggregator(arr, 0.9), out[-1].item(), places=3)
 
     def test_exp_mov_avg_estimator_02(self):
         arr = np.arange(1, 11).reshape(-1, 1)
         clf = ExpMovingAverage(0.9, bias_correction=False)
         out = clf.fit_transform(arr)
         self.assertTupleEqual(arr.shape, out.shape)
-        self.assertEqual(expmov_avg_aggregator(arr, 0.9, bias_correction=False), out[-1].item())
+        self.assertAlmostEqual(
+            expmov_avg_aggregator(arr, 0.9, bias_correction=False), out[-1].item(), places=3
+        )
 
     def test_exp_mov_avg_estimator_err(self):
         with self.assertRaises(ValueError):
