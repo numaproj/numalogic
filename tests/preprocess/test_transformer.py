@@ -10,7 +10,7 @@ from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhSca
 
 class TestTransformers(unittest.TestCase):
     def test_logtransformer(self):
-        x = 1 + np.random.randn(5, 3)
+        x = 3 + np.random.randn(5, 3)
         transformer = LogTransformer(add_factor=1)
         x_prime = transformer.transform(x)
 
@@ -36,7 +36,7 @@ class TestTransformers(unittest.TestCase):
         assert_array_less(np.zeros_like(x_scaled), x_scaled)
 
     def test_tanh_scaler_2(self):
-        x = 1 + np.random.randn(5, 3)
+        x = 3 + np.random.randn(5, 3)
         pl = make_pipeline(LogTransformer(), TanhScaler())
 
         x_scaled = pl.fit_transform(x)
