@@ -8,8 +8,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 
 from numalogic.config._config import ModelInfo
@@ -23,8 +21,8 @@ from numalogic.models.autoencoder.variants import (
     TransformerAE,
     SparseTransformerAE,
 )
-from numalogic.models.threshold import StdDevThreshold, StaticThreshold
-from numalogic.postprocess import TanhNorm
+from numalogic.models.threshold import StdDevThreshold, StaticThreshold, SigmoidThreshold
+from numalogic.postprocess import TanhNorm, ExpMovingAverage
 from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
@@ -59,11 +57,18 @@ class PreprocessFactory(_ObjectFactory):
 
 
 class PostprocessFactory(_ObjectFactory):
-    _CLS_MAP = {"TanhNorm": TanhNorm}
+    _CLS_MAP = {
+        "TanhNorm": TanhNorm,
+        "ExpMovingAverage": ExpMovingAverage,
+    }
 
 
 class ThresholdFactory(_ObjectFactory):
-    _CLS_MAP = {"StdDevThreshold": StdDevThreshold, "StaticThreshold": StaticThreshold}
+    _CLS_MAP = {
+        "StdDevThreshold": StdDevThreshold,
+        "StaticThreshold": StaticThreshold,
+        "SigmoidThreshold": SigmoidThreshold,
+    }
 
 
 class ModelFactory(_ObjectFactory):
