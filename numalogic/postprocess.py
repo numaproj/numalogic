@@ -50,24 +50,21 @@ def expmov_avg_aggregator(
         ValueError: if beta is not between 0 and 1
         InvalidDataShapeError: if input array is not single featured
     """
-    if beta < 0.0 or beta > 1.0:
-        raise ValueError("beta only accepts values between 0 and 1")
+    if beta <= 0.0 or beta >= 1.0:
+        raise ValueError("beta only accepts values between 0 and 1 (not inclusive)")
     _allow_only_single_feature(arr)
 
     # alpha is the weight given to the latest element
     alpha = 1.0 - beta
     n = len(arr)
-    theta = arr.reshape(1, -1)
-    powers = np.arange(1, n + 1)
+    theta = arr.reshape(-1, 1)
+    powers = np.arange(n - 1, -1, -1)
 
-    # Calculate increasing powers of beta of the form [beta, beta**2, .., beta**n]
-    beta_powers = np.power(beta, powers)
+    # Calculate decreasing powers of beta of the form
+    # [beta**(n-1), beta**(n-2), .., beta**0]
+    beta_powers = np.power(beta, powers).reshape(1, -1)
 
-    # Calculate the reciprocals of beta powers
-    # [beta**(-1), beta**(-2), .., beta**(-n)]
-    beta_arr_inv = np.reciprocal(beta_powers.reshape(-1, 1))
-
-    exp_avg = alpha * beta_powers[-1] * (theta @ beta_arr_inv)
+    exp_avg = alpha * (beta_powers @ theta)
     if not bias_correction:
         return exp_avg.item()
 
@@ -115,8 +112,8 @@ class ExpMovingAverage(DataIndependentTransformers):
     __slots__ = ("beta", "bias_correction")
 
     def __init__(self, beta: float, bias_correction: bool = True):
-        if beta < 0.0 or beta > 1.0:
-            raise ValueError("beta only accepts values between 0 to 1")
+        if beta <= 0.0 or beta >= 1.0:
+            raise ValueError("beta only accepts values between 0 and 1 (not inclusive)")
         self.beta = beta
         self.bias_correction = bias_correction
 

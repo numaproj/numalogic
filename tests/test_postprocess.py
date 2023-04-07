@@ -44,7 +44,10 @@ class TestPostprocess(unittest.TestCase):
             ExpMovingAverage(1.1)
 
         with self.assertRaises(ValueError):
-            ExpMovingAverage(-1)
+            ExpMovingAverage(0.0)
+
+        with self.assertRaises(ValueError):
+            ExpMovingAverage(1.0)
 
         with self.assertRaises(InvalidDataShapeError):
             clf = ExpMovingAverage(0.1)
