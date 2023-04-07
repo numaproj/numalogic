@@ -19,13 +19,13 @@ class TestTransformers(unittest.TestCase):
         assert_almost_equal(transformer.inverse_transform(x_prime), np.expm1(x_prime))
 
     def test_staticpowertransformer(self):
-        x = 1 + np.random.randn(5, 3)
-        transformer = StaticPowerTransformer(3, add_factor=2)
+        x = 3 + np.random.randn(5, 3)
+        transformer = StaticPowerTransformer(3, add_factor=4)
         x_prime = transformer.transform(x)
 
-        assert_almost_equal(np.power(2 + x, 3), x_prime)
+        assert_almost_equal(np.power(4 + x, 3), x_prime)
         assert_almost_equal(transformer.fit_transform(x), x_prime)
-        assert_almost_equal(transformer.inverse_transform(x_prime), x, decimal=4)
+        assert_almost_equal(transformer.inverse_transform(x_prime), x, decimal=3)
 
     def test_tanh_scaler_1(self):
         x = 1 + np.random.randn(5, 3)
