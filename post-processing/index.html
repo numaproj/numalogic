@@ -567,9 +567,47 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Post Processing
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Post Processing
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tanh-score-normalization" class="md-nav__link">
+    Tanh Score Normalization
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exponentially-weighted-moving-average" class="md-nav__link">
+    Exponentially Weighted Moving Average
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -678,6 +716,28 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#tanh-score-normalization" class="md-nav__link">
+    Tanh Score Normalization
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exponentially-weighted-moving-average" class="md-nav__link">
+    Exponentially Weighted Moving Average
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -695,7 +755,10 @@
 
 
 <h1 id="post-processing">Post Processing<a class="headerlink" href="#post-processing" title="Permanent link">&para;</a></h1>
-<p>Post-processing step is again an optional step, where we normalize the anomalies between 0-10. This is mostly to make the scores more understandable.</p>
+<p>After the raw scores have been generated, we might need to do some additional postprocessing, 
+for various reasons. </p>
+<h3 id="tanh-score-normalization">Tanh Score Normalization<a class="headerlink" href="#tanh-score-normalization" title="Permanent link">&para;</a></h3>
+<p>Tanh normalization step is an optional step, where we normalize the anomalies between 0-10. This is mostly to make the scores more understandable.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numalogic.postprocess</span> <span class="kn">import</span> <span class="n">tanh_norm</span>
 
@@ -711,6 +774,25 @@
 <span class="n">norm</span> <span class="o">=</span> <span class="n">TanhNorm</span><span class="p">(</span><span class="n">scale_factor</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">smooth_factor</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
 <span class="n">norm_score</span> <span class="o">=</span> <span class="n">norm</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span>
 </code></pre></div></p>
+<h3 id="exponentially-weighted-moving-average">Exponentially Weighted Moving Average<a class="headerlink" href="#exponentially-weighted-moving-average" title="Permanent link">&para;</a></h3>
+<p>The Exponentially Weighted Moving Average (EWMA) serves as an effective smoothing function, 
+emphasizing the importance of more recent anomaly scores over those of previous elements within a sliding window. </p>
+<p>This approach proves particularly beneficial in streaming inference scenarios, as it allows for 
+earlier increases in anomaly scores when a new outlier data point is encountered. 
+Consequently, the EMA enables a more responsive and dynamic assessment of streaming data, 
+facilitating timely detection and response to potential anomalies.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numalogic.postprocess</span> <span class="kn">import</span> <span class="n">ExpMovingAverage</span>
+
+<span class="n">raw_score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.5</span><span class="p">,</span> <span class="mf">1.2</span><span class="p">,</span> <span class="mf">3.5</span><span class="p">,</span> <span class="mf">2.7</span><span class="p">,</span> <span class="mf">5.6</span><span class="p">,</span> <span class="mf">7.1</span><span class="p">,</span> <span class="mf">6.9</span><span class="p">,</span> <span class="mf">4.2</span><span class="p">,</span> <span class="mf">1.1</span><span class="p">]</span>
+<span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+<span class="n">postproc_clf</span> <span class="o">=</span> <span class="n">ExpMovingAverage</span><span class="p">(</span><span class="n">beta</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">postproc_clf</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span>
+
+<span class="c1"># out: [[1.3], [1.433], [1.333], [2.473], [2.591], [4.119], [5.621], [6.263], [5.229], [3.163]]</span>
+</code></pre></div>
 
               
             </article>
