@@ -13,13 +13,12 @@
 import logging
 
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ProgressBarBase
-
+from pytorch_lightning.callbacks import ProgressBar
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class ProgressDetails(ProgressBarBase):
+class ProgressDetails(ProgressBar):
     r"""
     A lightweight training progress detail producer.
 
@@ -40,12 +39,14 @@ class ProgressDetails(ProgressBarBase):
 
     def on_train_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         super().on_train_epoch_end(trainer, pl_module)
-        metrics = self.get_metrics(trainer, pl_module)
+        loss = pl_module.total_train_loss / trainer.num_training_batches
         curr_epoch = trainer.current_epoch
         if curr_epoch % self._log_freq == 0:
-            _LOGGER.info("epoch=%s, training_loss=%s", curr_epoch, metrics["loss"])
+            _LOGGER.info("epoch=%s, training_loss=%.5f", curr_epoch, loss)
+        pl_module.reset_train_loss()
 
     def on_validation_epoch_end(self, trainer: pl.Trainer, pl_module: pl.LightningModule) -> None:
         super().on_validation_epoch_end(trainer, pl_module)
-        metrics = self.get_metrics(trainer, pl_module)
-        _LOGGER.info("validation_loss=%s", metrics["loss"])
+        loss = pl_module.total_val_loss / trainer.num_val_batches[0]
+        _LOGGER.info("validation_loss=%.5f", loss)
+        pl_module.reset_val_loss()

@@ -1,3 +1,4 @@
+import math
 import os
 import unittest
 
@@ -20,7 +21,7 @@ from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
 EPOCHS = 5
-BATCH_SIZE = 256
+BATCH_SIZE = 64
 SEQ_LEN = 12
 LR = 0.001
 torch.manual_seed(42)
@@ -38,16 +39,14 @@ class TestAutoencoderTrainer(unittest.TestCase):
 
         scaler = StandardScaler()
         cls.x_train = scaler.fit_transform(df[:-480])
-        cls.x_val = scaler.transform(df[-480:-240])
+        cls.x_val = scaler.transform(df[-1000:])
         cls.x_test = scaler.transform(df[-240:])
 
         print(cls.x_train.shape, cls.x_val.shape, cls.x_test.shape)
 
     def test_trainer_01(self):
         model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=(4, 8))
-        datamodule = TimeseriesDataModule(
-            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
-        )
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True, limit_val_batches=1)
         trainer.fit(model, datamodule=datamodule)
 
@@ -57,12 +56,14 @@ class TestAutoencoderTrainer(unittest.TestCase):
 
     def test_trainer_02(self):
         model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=(4,))
-        datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
+        datamodule = TimeseriesDataModule(
+            SEQ_LEN, self.x_train, val_split_ratio=0.1, batch_size=BATCH_SIZE
+        )
         trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
-
         y_train = trainer.predict(model, dataloaders=datamodule.train_dataloader())
-        self.assertTupleEqual(self.x_train.shape, y_train.size())
+        val_size = math.floor(0.1 * len(self.x_train))
+        self.assertTupleEqual(self.x_train[:-val_size, :].shape, y_train.size())
 
         streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=BATCH_SIZE)
         y_test_batched = trainer.predict(model, dataloaders=streamloader, unbatch=False)
@@ -71,9 +72,9 @@ class TestAutoencoderTrainer(unittest.TestCase):
     def test_trainer_03(self):
         model = LSTMAE(seq_len=SEQ_LEN, no_features=self.x_train.shape[1], embedding_dim=4)
         datamodule = TimeseriesDataModule(
-            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
+            SEQ_LEN, self.x_train, val_split_ratio=0.3, batch_size=BATCH_SIZE
         )
-        trainer = AutoencoderTrainer(max_epochs=20, enable_progress_bar=True)
+        trainer = AutoencoderTrainer(max_epochs=20, barebones=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=16)
@@ -82,10 +83,8 @@ class TestAutoencoderTrainer(unittest.TestCase):
 
     def test_trainer_04(self):
         model = SparseVanillaAE(seq_len=SEQ_LEN, n_features=self.x_train.shape[1])
-        datamodule = TimeseriesDataModule(
-            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
-        )
-        trainer = AutoencoderTrainer(max_epochs=15, enable_progress_bar=True, limit_val_batches=1)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
+        trainer = AutoencoderTrainer(max_epochs=5, barebones=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN))
@@ -95,9 +94,9 @@ class TestAutoencoderTrainer(unittest.TestCase):
     def test_trainer_05(self):
         model = TransformerAE(seq_len=SEQ_LEN, n_features=self.x_train.shape[1])
         datamodule = TimeseriesDataModule(
-            SEQ_LEN, self.x_train, val_data=self.x_val, batch_size=BATCH_SIZE
+            SEQ_LEN, self.x_train, val_split_ratio=0.25, batch_size=BATCH_SIZE
         )
-        trainer = AutoencoderTrainer(max_epochs=5, enable_progress_bar=True, limit_val_batches=1)
+        trainer = AutoencoderTrainer(max_epochs=5, barebones=True, limit_val_batches=1)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=1)
@@ -134,7 +133,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
 
         test_dataset = StreamingDataset(self.x_test, SEQ_LEN)
 
-        trainer = AutoencoderTrainer(max_epochs=25, enable_progress_bar=True)
+        trainer = AutoencoderTrainer(max_epochs=5)
         trainer.fit(model, train_dataloaders=DataLoader(train_dataset, batch_size=BATCH_SIZE))
 
         y_train = trainer.predict(

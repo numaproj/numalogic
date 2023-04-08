@@ -39,7 +39,7 @@ mlflow = ["mlflow-skinny"]
 optional = true
 
 [tool.poetry.group.torch.dependencies]
-pytorch-lightning = "^1.8"
+pytorch-lightning = "^2.0"
 
 [tool.poetry.group.dev]
 optional = true
