@@ -44,7 +44,6 @@ class AutoencoderTrainer(Trainer):
             warnings.simplefilter("ignore", category=UserWarning)
 
         super().__init__(
-            accelerator="cpu",
             logger=logger,
             max_epochs=max_epochs,
             check_val_every_n_epoch=check_val_every_n_epoch,
