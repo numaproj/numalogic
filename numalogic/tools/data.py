@@ -118,7 +118,7 @@ class TimeseriesDataModule(pl.LightningDataModule):
         self.seq_len = seq_len
         self.data = data
 
-        if 0.0 >= val_split_ratio >= 1.0:
+        if val_split_ratio <= 0.0 or val_split_ratio >= 1.0:
             raise ValueError("val_split_ratio can only accept values between 0.0 and 1.0")
 
         self.val_split_ratio = val_split_ratio

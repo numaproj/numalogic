@@ -91,6 +91,10 @@ class TestTimeSeriesDataModule(unittest.TestCase):
         datamodule.setup(stage="validate")
         self.assertIsInstance(datamodule.val_dataloader(), DataLoader)
 
+    def test_datamodule_err(self):
+        with self.assertRaises(ValueError):
+            TimeseriesDataModule(SEQ_LEN, self.train_data, val_split_ratio=1.2)
+
     def test_unbatch_sequences(self):
         ratio = 0.2
         datamodule = TimeseriesDataModule(
