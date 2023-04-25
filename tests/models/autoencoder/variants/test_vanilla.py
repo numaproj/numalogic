@@ -37,7 +37,7 @@ class TESTVanillaAE(unittest.TestCase):
     def test_vanilla(self):
         model = VanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1])
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(max_epochs=EPOCHS, enable_progress_bar=True)
+        trainer = AutoencoderTrainer(fast_dev_run=True, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
@@ -50,7 +50,7 @@ class TESTVanillaAE(unittest.TestCase):
             seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1", optim_algo="adagrad"
         )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(max_epochs=EPOCHS, enable_progress_bar=True)
+        trainer = AutoencoderTrainer(fast_dev_run=True, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
