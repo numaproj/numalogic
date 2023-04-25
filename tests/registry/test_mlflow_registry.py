@@ -198,6 +198,9 @@ class TestMLflow(unittest.TestCase):
             ml.load(skeys=skeys, dkeys=dkeys, latest=False)
             self.assertTrue(log.output)
 
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version())
     @patch("mlflow.pyfunc.load_model", Mock(side_effect=RuntimeError))
     def test_load_model_when_no_model_01(self):
         fake_skeys = ["Fakemodel_"]
@@ -207,6 +210,9 @@ class TestMLflow(unittest.TestCase):
             ml.load(skeys=fake_skeys, dkeys=fake_dkeys)
             self.assertTrue(log.output)
 
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version())
     @patch("mlflow.tensorflow.load_model", Mock(side_effect=RuntimeError))
     def test_load_model_when_no_model_02(self):
         fake_skeys = ["Fakemodel_"]

@@ -26,7 +26,7 @@ homepage = "https://numalogic.numaproj.io/"
 [tool.poetry.dependencies]
 python = ">=3.8, <3.11"
 numpy = "^1.23"
-pandas = "^1.4"
+pandas = "^2.0"
 scikit-learn = "^1.0"
 mlflow-skinny = { version = ">2.0, <2.3", optional = true }
 protobuf = "~3.20" # needed to support pytorch-lightning
@@ -39,7 +39,7 @@ mlflow = ["mlflow-skinny"]
 optional = true
 
 [tool.poetry.group.torch.dependencies]
-pytorch-lightning = "^1.8"
+pytorch-lightning = "^2.0"
 
 [tool.poetry.group.dev]
 optional = true

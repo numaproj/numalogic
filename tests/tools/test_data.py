@@ -73,7 +73,7 @@ class TestStreamingDataset(unittest.TestCase):
 
 class TestTimeSeriesDataModule(unittest.TestCase):
     train_data = None
-    val_data = None
+    test_data = None
     m = None
     n = None
 
@@ -81,32 +81,42 @@ class TestTimeSeriesDataModule(unittest.TestCase):
     def setUpClass(cls) -> None:
         cls.n = 3
         cls.train_data = np.random.randn(100, cls.n)
-        cls.val_data = np.random.randn(20, cls.n)
+        cls.test_data = np.random.randn(20, cls.n)
 
-    def test_datamodule_01(self):
-        datamodule = TimeseriesDataModule(SEQ_LEN, self.train_data)
-        datamodule.setup(stage="fit")
-        self.assertIsInstance(datamodule.train_dataloader(), DataLoader)
-
-        datamodule.setup(stage="validate")
-        self.assertIsNone(datamodule.val_dataloader())
-
-    def test_datamodule_02(self):
-        datamodule = TimeseriesDataModule(SEQ_LEN, self.train_data, val_data=self.val_data)
+    def test_datamodule(self):
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.train_data, val_split_ratio=0.2)
         datamodule.setup(stage="fit")
         self.assertIsInstance(datamodule.train_dataloader(), DataLoader)
 
         datamodule.setup(stage="validate")
         self.assertIsInstance(datamodule.val_dataloader(), DataLoader)
 
+    def test_datamodule_err(self):
+        with self.assertRaises(ValueError):
+            TimeseriesDataModule(SEQ_LEN, self.train_data, val_split_ratio=1.2)
+
     def test_unbatch_sequences(self):
-        datamodule = TimeseriesDataModule(SEQ_LEN, self.train_data, batch_size=256)
+        ratio = 0.2
+        datamodule = TimeseriesDataModule(
+            SEQ_LEN, self.train_data, val_split_ratio=ratio, batch_size=256
+        )
         datamodule.setup(stage="fit")
+
+        val_size = int(ratio * len(self.train_data))
 
         for batch in datamodule.train_dataloader():
             unbatched = datamodule.unbatch_sequences(batch)
-            self.assertTupleEqual(self.train_data.shape, unbatched.shape)
-            self.assertAlmostEqual(torch.mean(unbatched).item(), np.mean(self.train_data), places=5)
+            self.assertTupleEqual(self.train_data[:-val_size].shape, unbatched.shape)
+            self.assertAlmostEqual(
+                torch.mean(unbatched).item(), np.mean(self.train_data[:-val_size]), places=5
+            )
+
+        for batch in datamodule.val_dataloader():
+            unbatched = datamodule.unbatch_sequences(batch)
+            self.assertTupleEqual(self.train_data[-val_size:].shape, unbatched.shape)
+            self.assertAlmostEqual(
+                torch.mean(unbatched).item(), np.mean(self.train_data[-val_size:]), places=5
+            )
 
 
 if __name__ == "__main__":

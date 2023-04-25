@@ -101,23 +101,27 @@ class TimeseriesDataModule(pl.LightningDataModule):
 
     Args:
         seq_len: The length of the sequences to be generated from the input data.
-        train_data: A numpy array containing the training data in the shape of (batch, num_features)
-        val_data: A numpy array containing the validation data in the shape of (batch, num_features)
+        data: A numpy array containing the training data in the shape of (batch, num_features)
+        val_split_ratio: ratio of data to be used for validation set
         batch_size: The size of each batch of data. Defaults to 64.
     """
 
     def __init__(
         self,
         seq_len: int,
-        train_data: npt.NDArray[float],
-        val_data: npt.NDArray[float] = None,
+        data: npt.NDArray[float],
+        val_split_ratio: float = 0.1,
         batch_size: int = 64,
     ):
         super().__init__()
         self.batch_size = batch_size
         self.seq_len = seq_len
-        self.train_data = train_data
-        self.val_data = val_data
+        self.data = data
+
+        if val_split_ratio <= 0.0 or val_split_ratio >= 1.0:
+            raise ValueError("val_split_ratio can only accept values between 0.0 and 1.0")
+
+        self.val_split_ratio = val_split_ratio
 
         self.train_dataset = None
         self.val_dataset = None
@@ -127,10 +131,9 @@ class TimeseriesDataModule(pl.LightningDataModule):
         Sets up the data module by initializing the train and validation datasets.
         """
         if stage == "fit":
-            self.train_dataset = StreamingDataset(self.train_data, self.seq_len)
-            if self.val_data is None:
-                return
-            self.val_dataset = StreamingDataset(self.val_data, self.seq_len)
+            val_size = np.floor(self.val_split_ratio * len(self.data)).astype(int)
+            self.train_dataset = StreamingDataset(self.data[:-val_size, :], self.seq_len)
+            self.val_dataset = StreamingDataset(self.data[-val_size:, :], self.seq_len)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
         r"""
@@ -142,9 +145,6 @@ class TimeseriesDataModule(pl.LightningDataModule):
         r"""
         Creates and returns a DataLoader for the validation dataset if validation data is provided.
         """
-        if self.val_data is None:
-            _LOGGER.warning("Validation data not provided in TimeseriesDataModule.")
-            return None
         return DataLoader(self.val_dataset, batch_size=self.batch_size)
 
     @staticmethod
