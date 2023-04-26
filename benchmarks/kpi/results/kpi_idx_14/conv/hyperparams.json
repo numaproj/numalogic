@@ -1,0 +1,14 @@
+{
+  "BATCH_SIZE": 64,
+  "SPLIT_RATIOS": [0.5, 0.2, 0.3],
+  "TRAINER": {"accelerator": "cpu", "max_epochs": 30},
+  "MODEL": {
+    "name": "Conv1dAE",
+    "conf": {
+      "seq_len": 16,
+      "in_channels": 1,
+      "enc_channels": [4, 8, 16, 2],
+      "weight_decay": 1e-4
+    }
+  }
+}

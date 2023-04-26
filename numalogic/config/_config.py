@@ -50,7 +50,7 @@ class LightningTrainerConf:
     More details on the arguments are provided here:
     https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#trainer-class-api
     """
-
+    accelerator: str = "auto"
     max_epochs: int = 100
     logger: bool = False
     check_val_every_n_epoch: int = 5

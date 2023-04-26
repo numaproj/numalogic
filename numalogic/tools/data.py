@@ -53,6 +53,13 @@ class StreamingDataset(IterableDataset):
         self._seq_len = seq_len
         self._data = data.astype(np.float32)
 
+    @property
+    def data(self) -> npt.NDArray[float]:
+        """
+        Returns the reference data in the input shape
+        """
+        return self._data
+
     def create_seq(self, input_: npt.NDArray[float]) -> Generator[npt.NDArray[float], None, None]:
         r"""
         A generator function that yields sequences of specified length from the input data.
@@ -132,6 +139,8 @@ class TimeseriesDataModule(pl.LightningDataModule):
         """
         if stage == "fit":
             val_size = np.floor(self.val_split_ratio * len(self.data)).astype(int)
+            _LOGGER.info("Size of validation set: %s", val_size)
+
             self.train_dataset = StreamingDataset(self.data[:-val_size, :], self.seq_len)
             self.val_dataset = StreamingDataset(self.data[-val_size:, :], self.seq_len)
 

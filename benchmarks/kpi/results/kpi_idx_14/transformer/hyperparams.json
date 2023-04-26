@@ -1,0 +1,13 @@
+{
+  "BATCH_SIZE": 64,
+  "SPLIT_RATIOS": [0.5, 0.2, 0.3],
+  "TRAINER": {"accelerator": "cpu", "max_epochs": 30},
+  "MODEL": {
+    "name": "TransformerAE",
+    "conf": {
+      "seq_len": 16,
+      "n_features": 1,
+      "dim_feedforward": 128
+    }
+  }
+}
