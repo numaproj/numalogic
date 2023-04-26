@@ -19,8 +19,16 @@ from torch import Tensor, optim
 
 
 class BaseAE(pl.LightningModule, metaclass=ABCMeta):
-    """
+    r"""
     Abstract Base class for all Pytorch based autoencoder models for time-series data.
+
+    Args:
+        loss_fn: loss function used to train the model
+                 supported values include: {huber, l1, mae}
+        optim_algo: optimizer algo to be used for training
+                    supported values include: {adam, adagrad, rmsprop}
+        lr: learning rate (default: 1e-3)
+        weight_decay: weight decay factor weight for regularization (default: 0.0)
     """
 
     def __init__(
