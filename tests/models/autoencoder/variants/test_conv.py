@@ -53,6 +53,8 @@ class TestConvAE(unittest.TestCase):
             enc_channels=[8, 16, 4],
             enc_kernel_sizes=[3, 3, 3],
             dec_activation="sigmoid",
+            weight_decay=1e-3,
+            optim_algo="rmsprop",
         )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(
