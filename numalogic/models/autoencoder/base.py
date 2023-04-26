@@ -23,11 +23,18 @@ class BaseAE(pl.LightningModule, metaclass=ABCMeta):
     Abstract Base class for all Pytorch based autoencoder models for time-series data.
     """
 
-    def __init__(self, loss_fn: str = "huber", optim_algo: str = "adam", lr: float = 1e-3):
+    def __init__(
+        self,
+        loss_fn: str = "huber",
+        optim_algo: str = "adam",
+        lr: float = 1e-3,
+        weight_decay: float = 0.0,
+    ):
         super().__init__()
         self.lr = lr
         self.optim_algo = optim_algo
         self.criterion = self.init_criterion(loss_fn)
+        self.weight_decay = weight_decay
 
         self._total_train_loss = 0.0
         self._total_val_loss = 0.0
@@ -58,11 +65,11 @@ class BaseAE(pl.LightningModule, metaclass=ABCMeta):
 
     def init_optimizer(self, optim_algo: str):
         if optim_algo == "adam":
-            return optim.Adam(self.parameters(), lr=self.lr)
+            return optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         if optim_algo == "adagrad":
-            return optim.Adagrad(self.parameters(), lr=self.lr)
+            return optim.Adagrad(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         if optim_algo == "rmsprop":
-            return optim.RMSprop(self.parameters(), lr=self.lr)
+            return optim.RMSprop(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         raise NotImplementedError(f"Unsupported optimizer value provided: {optim_algo}")
 
     def configure_shape(self, batch: Tensor) -> Tensor:

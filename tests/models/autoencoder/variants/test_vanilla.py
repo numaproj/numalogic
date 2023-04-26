@@ -35,7 +35,7 @@ class TESTVanillaAE(unittest.TestCase):
         cls.X_val = scaler.transform(df[-240:])
 
     def test_vanilla(self):
-        model = VanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1])
+        model = VanillaAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], weight_decay=1e-3)
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(fast_dev_run=True, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
