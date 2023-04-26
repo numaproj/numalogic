@@ -34,6 +34,7 @@ class TestStreamingDataset(unittest.TestCase):
             self.assertTupleEqual((SEQ_LEN, self.n), seq.shape)
         self.assertEqual(self.data.shape[0] - SEQ_LEN + 1, len(dataset))
         assert_allclose(np.ravel(dataset[0]), np.ravel(self.data[:12, :]))
+        assert_allclose(self.data, dataset.data)
 
     def test_w_dataloader(self):
         batch_size = 4
