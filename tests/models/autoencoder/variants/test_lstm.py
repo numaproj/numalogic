@@ -36,7 +36,7 @@ class TestLSTMAE(unittest.TestCase):
         cls.X_val = scaler.transform(df[-240:])
 
     def test_lstm_ae(self):
-        model = LSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15)
+        model = LSTMAE(seq_len=SEQ_LEN, no_features=2, embedding_dim=15, weight_decay=1e-3)
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = AutoencoderTrainer(
             accelerator=ACCELERATOR, fast_dev_run=True, enable_progress_bar=True

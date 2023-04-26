@@ -71,6 +71,7 @@ class TestTransformerAE(unittest.TestCase):
             dim_feedforward=64,
             num_encoder_layers=3,
             num_decoder_layers=1,
+            weight_decay=1e-3,
         )
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
         criterion = nn.HuberLoss(delta=0.5)
