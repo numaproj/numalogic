@@ -114,6 +114,7 @@ class KPIDataModule(TimeseriesDataModule):
         self.unique_kpis = df["KPI ID"].unique()
         grouped = df.groupby(["KPI ID", "timestamp"]).sum()
         kpi_id = self.get_kpi(self.kpi_idx)
+        print(f"Using KPI ID: {kpi_id}")
         return grouped.loc[kpi_id]
 
     def val_dataloader(self):
