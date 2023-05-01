@@ -32,6 +32,7 @@ class KPIDataModule(TimeseriesDataModule):
         split_ratios: weights of train, validation and test sets respectively
         *args, **kwargs: extra kwargs for TimeseriesDataModule
     """
+
     def __init__(
         self,
         data_dir: str,
