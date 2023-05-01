@@ -7,4 +7,4 @@ Note that efforts have not really been made on hyperparameter tuning. This is ju
 idea on how each algorithm is suitable for different kinds of data, and shows how they can do
 their own benchmarking too.
 
-This is an ongoing process, and will add more benchmarking results in the near future.
+This is an ongoing process, and we will add more benchmarking results in the near future.

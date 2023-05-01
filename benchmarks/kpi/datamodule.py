@@ -1,7 +1,9 @@
 from typing import Optional, Sequence
 
 import numpy as np
+import numpy.typing as npt
 import pandas as pd
+from pytorch_lightning.utilities.types import EVAL_DATALOADERS
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
@@ -9,6 +11,27 @@ from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 
 
 class KPIDataModule(TimeseriesDataModule):
+    r"""
+    Data Module to help set up train, test and validation datasets for
+    KPI Anomaly detection. This data module splits a single dataset
+    into train, validation and test sets using a specified split ratio.
+
+    The dataset can be found in https://github.com/NetManAIOps/KPI-Anomaly-Detection
+    Details about the dataset can be found in https://arxiv.org/pdf/2208.03938.pdf
+
+    The dataset is expected to be in the format of:
+
+    |timestamp  | value  | label  | KPI ID |
+    |-----------|--------|--------|--------|
+    |1476460800| 0.01260 |    0   |da10a69 |
+
+    Args:
+        data_dir: data directory where csv data files are stored
+        kpi_idx: index of the KPI to use
+        preproc_transforms: list of sklearn compatible preprocessing transformations
+        split_ratios: weights of train, validation and test sets respectively
+        *args, **kwargs: extra kwargs for TimeseriesDataModule
+    """
     def __init__(
         self,
         data_dir: str,
@@ -46,7 +69,7 @@ class KPIDataModule(TimeseriesDataModule):
 
         self._kpi_df = self.get_kpi_df()
 
-    def _preprocess(self, df: pd.DataFrame):
+    def _preprocess(self, df: pd.DataFrame) -> npt.NDArray[float]:
         if self.transforms:
             return self.transforms.fit_transform(df[["value"]].to_numpy())
         return df[["value"]].to_numpy()
@@ -78,27 +101,27 @@ class KPIDataModule(TimeseriesDataModule):
             print(f"Test size: {test_data.shape}")
 
     @property
-    def val_data(self):
+    def val_data(self) -> npt.NDArray[float]:
         return self.val_dataset.data
 
     @property
-    def train_data(self):
+    def train_data(self) -> npt.NDArray[float]:
         return self.train_dataset.data
 
     @property
-    def test_data(self):
+    def test_data(self) -> npt.NDArray[float]:
         return self.test_dataset.data
 
     @property
-    def val_labels(self):
+    def val_labels(self) -> npt.NDArray[int]:
         return self._val_labels.to_numpy()
 
     @property
-    def train_labels(self):
+    def train_labels(self) -> npt.NDArray[int]:
         return self._train_labels.to_numpy()
 
     @property
-    def test_labels(self):
+    def test_labels(self) -> npt.NDArray[int]:
         return self._test_labels.to_numpy()
 
     def get_kpi(self, idx: int) -> Optional[str]:
@@ -117,11 +140,11 @@ class KPIDataModule(TimeseriesDataModule):
         print(f"Using KPI ID: {kpi_id}")
         return grouped.loc[kpi_id]
 
-    def val_dataloader(self):
+    def val_dataloader(self) -> EVAL_DATALOADERS:
         r"""
         Creates and returns a DataLoader for the validation dataset if validation data is provided.
         """
         return DataLoader(self.val_dataset, batch_size=self.batch_size)
 
-    def predict_dataloader(self):
+    def predict_dataloader(self) -> EVAL_DATALOADERS:
         return DataLoader(self.test_dataset, batch_size=self.batch_size)
