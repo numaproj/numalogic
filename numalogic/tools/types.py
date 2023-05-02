@@ -10,9 +10,20 @@
 # limitations under the License.
 
 
-from typing import Union, TypeVar
+from typing import Union, TypeVar, Sequence
 
 from sklearn.base import BaseEstimator
 from torch import nn
 
 artifact_t = TypeVar("artifact_t", bound=Union[nn.Module, BaseEstimator])
+S_KEYS = TypeVar("S_KEYS", bound=Sequence[str], covariant=True)
+D_KEYS = TypeVar("D_KEYS", bound=Sequence[str], covariant=True)
+
+
+class Singleton(type):
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]

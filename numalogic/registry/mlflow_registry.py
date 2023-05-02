@@ -23,10 +23,11 @@ from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
 
 from numalogic.registry import ArtifactManager, ArtifactData
+from numalogic.registry.artifact import ArtifactCache
 from numalogic.tools.exceptions import ModelVersionError
 from numalogic.tools.types import artifact_t
 
-_LOGGER = logging.getLogger()
+_LOGGER = logging.getLogger(__name__)
 
 
 class ModelStage(str, Enum):
@@ -71,7 +72,7 @@ class MLflowRegistry(ArtifactManager):
     >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"])
     """
 
-    __slots__ = ("client", "handler", "models_to_retain", "model_stage")
+    __slots__ = ("client", "handler", "models_to_retain", "model_stage", "cache_registry")
     _TRACKING_URI = None
 
     def __new__(
@@ -80,6 +81,7 @@ class MLflowRegistry(ArtifactManager):
         artifact_type: str = "pytorch",
         models_to_retain: int = 5,
         model_stage: ModelStage = ModelStage.PRODUCTION,
+        cache_registry: ArtifactCache = None,
         *args,
         **kwargs,
     ):
@@ -94,6 +96,7 @@ class MLflowRegistry(ArtifactManager):
         artifact_type: str = "pytorch",
         models_to_retain: int = 5,
         model_stage: str = ModelStage.PRODUCTION,
+        cache_registry: ArtifactCache = None,
     ):
         super().__init__(tracking_uri)
         mlflow.set_tracking_uri(tracking_uri)
@@ -101,21 +104,7 @@ class MLflowRegistry(ArtifactManager):
         self.handler = self.mlflow_handler(artifact_type)
         self.models_to_retain = models_to_retain
         self.model_stage = model_stage
-
-    @staticmethod
-    def construct_key(skeys: Sequence[str], dkeys: Sequence[str]) -> str:
-        """
-        Returns a single key comprising static and dynamic key fields.
-        Args:
-            skeys: static key fields as list/tuple of strings
-            dkeys: dynamic key fields as list/tuple of strings
-
-        Returns:
-            key
-        """
-        _static_key = ":".join(skeys)
-        _dynamic_key = ":".join(dkeys)
-        return "::".join([_static_key, _dynamic_key])
+        self.cache_registry = cache_registry
 
     @staticmethod
     def mlflow_handler(artifact_type: str):
@@ -132,6 +121,20 @@ class MLflowRegistry(ArtifactManager):
             return mlflow.pyfunc
         raise NotImplementedError("Artifact Type not Implemented")
 
+    def _load_from_cache(self, key: str) -> Optional[ArtifactData]:
+        if not self.cache_registry:
+            return None
+        return self.cache_registry.load(key)
+
+    def _save_in_cache(self, key: str, artifact_data: ArtifactData) -> None:
+        if self.cache_registry:
+            self.cache_registry.save(key, artifact_data)
+
+    def _clear_cache(self, key: str) -> Optional[ArtifactData]:
+        if self.cache_registry:
+            return self.cache_registry.delete(key)
+        return None
+
     def load(
         self,
         skeys: Sequence[str],
@@ -140,11 +143,15 @@ class MLflowRegistry(ArtifactManager):
         version: str = None,
     ) -> Optional[ArtifactData]:
         model_key = self.construct_key(skeys, dkeys)
-        try:
-            if (latest and version) or (not latest and not version):
-                raise ValueError("Either One of 'latest' or 'version' needed in load method call")
 
-            elif latest:
+        if (latest and version) or (not latest and not version):
+            raise ValueError("Either One of 'latest' or 'version' needed in load method call")
+
+        try:
+            if latest:
+                cached_artifact = self._load_from_cache(model_key)
+                if cached_artifact:
+                    return cached_artifact
                 version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
                 if not version_info:
                     raise ModelVersionError("Model version missing for key = %s" % model_key)
@@ -152,8 +159,6 @@ class MLflowRegistry(ArtifactManager):
             else:
                 version_info = self.client.get_model_version(model_key, version)
             model, metadata = self.__load_artifacts(skeys, dkeys, version_info)
-            return ArtifactData(artifact=model, metadata=metadata, extras=dict(version_info))
-
         except RestException as mlflow_err:
             if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
                 _LOGGER.info("Model not found with key: %s", model_key)
@@ -172,6 +177,12 @@ class MLflowRegistry(ArtifactManager):
         except Exception as ex:
             _LOGGER.exception("Unexpected error: %s", ex)
             return None
+        else:
+            artifact_data = ArtifactData(
+                artifact=model, metadata=metadata, extras=dict(version_info)
+            )
+            self._save_in_cache(model_key, artifact_data)
+            return artifact_data
 
     def save(
         self,
@@ -226,6 +237,8 @@ class MLflowRegistry(ArtifactManager):
             _LOGGER.info("Successfully deleted model %s", model_key)
         except Exception as ex:
             _LOGGER.exception("Error when deleting a model with key: %s: %r", model_key, ex)
+        else:
+            self._clear_cache(model_key)
 
     def transition_stage(
         self, skeys: Sequence[str], dkeys: Sequence[str]

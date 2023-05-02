@@ -194,9 +194,8 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        with self.assertLogs(level="ERROR") as log:
+        with self.assertRaises(ValueError):
             ml.load(skeys=skeys, dkeys=dkeys, latest=False)
-            self.assertTrue(log.output)
 
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
