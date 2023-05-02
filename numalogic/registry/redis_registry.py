@@ -1,8 +1,7 @@
 import logging
 import time
-from typing import Optional, Sequence, Dict, Any, Union
+from typing import Optional, Sequence, Dict, Any
 
-import redis
 from redis.client import Redis
 
 from numalogic.registry import ArtifactManager, ArtifactData
