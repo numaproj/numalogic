@@ -2,7 +2,18 @@ import time
 import unittest
 
 from numalogic.models.autoencoder.variants import VanillaAE
-from numalogic.registry import LocalLRUCache, ArtifactData
+from numalogic.registry import LocalLRUCache, ArtifactData, ArtifactCache
+
+
+class TestArtifactCache(unittest.TestCase):
+    def test_cache(self):
+        cache_reg = ArtifactCache(cachesize=2, ttl=2)
+        with self.assertRaises(NotImplementedError):
+            cache_reg.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
+        with self.assertRaises(NotImplementedError):
+            cache_reg.load("m1")
+        with self.assertRaises(NotImplementedError):
+            cache_reg.delete("m1")
 
 
 class TestLocalLRUCache(unittest.TestCase):
@@ -15,6 +26,8 @@ class TestLocalLRUCache(unittest.TestCase):
         self.assertIsNone(cache_registry.load("m1"))
         self.assertIsInstance(cache_registry.load("m2"), ArtifactData)
         self.assertIsInstance(cache_registry.load("m3"), ArtifactData)
+        self.assertEqual(2, cache_registry.cachesize)
+        self.assertEqual(1, cache_registry.ttl)
 
     def test_cache_overwrite(self):
         cache_registry = LocalLRUCache(cachesize=2, ttl=1)
