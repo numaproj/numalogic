@@ -1,14 +1,9 @@
-import json
 import logging
-import socket
 import time
-from typing import Optional, Sequence, Dict, Any
+from typing import Optional, Sequence, Dict, Any, Union
 
 import redis
-from redis.backoff import ExponentialBackoff
-from redis.client import AbstractRedis
-from redis.exceptions import RedisClusterException, RedisError
-from redis.retry import Retry
+from redis.client import Redis
 
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry._serialize import loads, dumps
@@ -18,43 +13,11 @@ from numalogic.tools.types import Artifact
 _LOGGER = logging.getLogger()
 
 
-def get_ipv4_by_hostname(hostname: str, port=0) -> list:
-    return list(
-        idx[4][0]
-        for idx in socket.getaddrinfo(hostname, port)
-        if idx[0] is socket.AddressFamily.AF_INET and idx[1] is socket.SocketKind.SOCK_RAW
-    )
-
-
-def is_host_reachable(hostname: str, port=None, max_retries=5, sleep_sec=5) -> bool:
-    retries = 0
-    assert max_retries >= 1, "Max retries has to be at least 1"
-
-    while retries < max_retries:
-        try:
-            get_ipv4_by_hostname(hostname, port)
-        except socket.gaierror as ex:
-            retries += 1
-            _LOGGER.warning(
-                "Failed to resolve hostname: %s: error: %r", hostname, ex, exc_info=True
-            )
-            time.sleep(sleep_sec)
-        else:
-            return True
-    _LOGGER.error("Failed to resolve hostname: %s even after retries!")
-    return False
-
-
 class RedisRegistry(ArtifactManager):
     """
-    Model saving and loading using Redis Registry. The RedisRegistry takes in any Redis client or
-    can generates a new client using host, port and password arguemnts.
+    Model saving and loading using Redis Registry.
     Args:
         client: Take in the reids client already established/created
-        host: hostname for redis client
-        port: port for redis client
-        password: password for redis client
-        decode_responses: decode the response that we get from redis (default = False)
         ttl: Total Time to Live for the key when saving in redis (dafault = 5000)
 
     Examples
@@ -72,58 +35,31 @@ class RedisRegistry(ArtifactManager):
     >>> registry.load(skeys, dkeys, artifact=model)
     """
 
-    __slots__ = ("client", "ttl", "pipe")
+    __slots__ = ("client", "ttl")
     _HOST = None
 
     def __new__(
         cls,
-        client: redis.client = None,
-        host: str = None,
-        port: str = None,
-        password: str = None,
-        decode_responses: bool = False,
+        client: Redis = None,
         ttl: int = 50000,
         *args,
         **kwargs,
     ):
         instance = super().__new__(cls, *args, **kwargs)
-        if (not cls._HOST) or (cls._HOST != host):
-            cls._HOST = host
+        if not cls._HOST:
+            cls._HOST = "None"
         return instance
 
     def __init__(
         self,
-        client: Optional[AbstractRedis] = None,
-        host: str = None,
-        port: str = None,
-        password: str = None,
-        decode_responses: bool = False,
+        client: Redis = None,
         ttl: int = 50000,
     ):
-        super().__init__(host)
-        if (client and (host and port)) or (not client and not (host and port)):
-            raise ValueError("Either One of 'client' or 'host and port' information is missing")
         if client:
+            super().__init__("None")
             self.client = client
         else:
-            redis_params = {
-                "host": host,
-                "port": port,
-                "password": password,
-                "decode_responses": decode_responses,
-            }
-            _LOGGER.info("Redis params: %s", json.dumps(redis_params, indent=4))
-
-            if not is_host_reachable(host, port):
-                _LOGGER.error("Redis Cluster is unreachable after retries!")
-
-            retry = Retry(
-                ExponentialBackoff(cap=2, base=1),
-                3,
-                supported_errors=(ConnectionError, TimeoutError, RedisClusterException, RedisError),
-            )
-            pool = redis.ConnectionPool(**redis_params, retry=retry)
-            self.client = redis.Redis(connection_pool=pool)
+            raise ValueError("Missing Redis Client")
         self.ttl = ttl
 
     @staticmethod
