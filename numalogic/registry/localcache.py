@@ -17,9 +17,15 @@ from numalogic.registry.artifact import ArtifactCache, ArtifactData
 from numalogic.tools.types import Singleton
 
 
-class ArtifactTTLCache(ArtifactCache, metaclass=Singleton):
-    """ """
+class LocalLRUCache(ArtifactCache, metaclass=Singleton):
+    r"""
+    A local in-memory LRU cache with per item Time-to-live support.
 
+    Args:
+        cachesize: Size of the cache,
+                   i.e. number of elements the cache can hold
+        ttl: Time to live for each item in seconds
+    """
     __cache: Optional[TTLCache] = None
 
     def __init__(self, cachesize: int = 512, ttl: int = 300):

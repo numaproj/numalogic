@@ -11,17 +11,17 @@
 
 
 from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
-from numalogic.registry.ttlcache import ArtifactTTLCache
+from numalogic.registry.localcache import LocalLRUCache
 
 try:
     from numalogic.registry.mlflow_registry import MLflowRegistry
 except ImportError:
-    __all__ = ["ArtifactManager", "ArtifactData", "ArtifactCache", "ArtifactTTLCache"]
+    __all__ = ["ArtifactManager", "ArtifactData", "ArtifactCache", "LocalLRUCache"]
 else:
     __all__ = [
         "ArtifactManager",
         "ArtifactData",
         "MLflowRegistry",
         "ArtifactCache",
-        "ArtifactTTLCache",
+        "LocalLRUCache",
     ]
