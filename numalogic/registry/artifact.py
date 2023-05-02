@@ -38,14 +38,18 @@ class ArtifactManager(metaclass=ABCMeta):
 
     @abstractmethod
     def load(
-        self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
+        self,
+        skeys: Sequence[str],
+        dkeys: Sequence[str],
+        production: bool = True,
+        version: str = None,
     ) -> ArtifactData:
         """
         Loads the desired artifact from mlflow registry and returns it.
         Args:
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            latest: boolean field to determine if latest version is desired or not
+            production: boolean field to determine if latest version is desired or not
             version: explicit artifact version
         """
         pass

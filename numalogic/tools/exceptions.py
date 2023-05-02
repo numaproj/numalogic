@@ -40,3 +40,7 @@ class UnknownConfigArgsError(Exception):
 
 class ModelVersionError(Exception):
     pass
+
+
+class ModelKeyNotFound(Exception):
+    pass

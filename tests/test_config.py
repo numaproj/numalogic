@@ -26,11 +26,13 @@ from numalogic.config import (
     NumalogicConf,
     ModelInfo,
 )
+from numalogic.config.factory import RegistryFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import SparseVanillaAE, SparseConv1dAE, LSTMAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.postprocess import TanhNorm
 from numalogic.preprocess import LogTransformer
+from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 os.environ["OC_CAUSE"] = "1"
@@ -76,6 +78,11 @@ class TestNumalogicConfig(unittest.TestCase):
         trainer = AutoencoderTrainer(**trainer_cfg)
         self.assertIsInstance(trainer, AutoencoderTrainer)
         self.assertEqual(trainer.max_epochs, 40)
+
+    def test_registry(self):
+        model_factory = RegistryFactory()
+        model = model_factory.get_instance(self.conf.registry)
+        self.assertIsInstance(model, RedisRegistry)
 
 
 class TestFactory(unittest.TestCase):
