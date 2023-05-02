@@ -11,12 +11,12 @@
 
 
 from dataclasses import dataclass
-from typing import Sequence, Any, Generic, TypeVar
+from typing import Sequence, Any, Generic, TypeVar, Union
 
 from numalogic.tools.types import artifact_t, S_KEYS, D_KEYS
 
-META_T = TypeVar("META_T", bound=dict[str, str | list | dict])
-EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, str | list | dict])
+META_T = TypeVar("META_T", bound=dict[str, Union[str, list, dict]])
+EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
 
 
 @dataclass
