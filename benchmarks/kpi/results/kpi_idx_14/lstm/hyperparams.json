@@ -1,0 +1,16 @@
+{
+  "BATCH_SIZE": 64,
+  "SPLIT_RATIOS": [0.5, 0.2, 0.3],
+  "TRAINER": {"accelerator": "cpu", "max_epochs": 30},
+  "MODEL": {
+    "name": "LSTMAE",
+    "conf": {
+      "seq_len": 32,
+      "no_features": 1,
+      "embedding_dim": 4,
+      "encoder_layers": 2,
+      "decoder_layers": 2,
+      "weight_decay": 0.0001
+    }
+  }
+}
