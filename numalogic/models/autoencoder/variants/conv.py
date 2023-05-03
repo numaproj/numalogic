@@ -176,7 +176,7 @@ class Decoder(nn.Module):
         layers.append(
             nn.LazyConvTranspose1d(
                 out_channels=num_filters[-1], kernel_size=kernel_sizes[-1], padding=1
-            ),
+            )
         )
         if final_activation:
             layers.append(_get_activation_function(final_activation))
@@ -286,8 +286,7 @@ class Conv1dAE(BaseAE):
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.in_channels)
-        recon_err = self.criterion(batch, recon, reduction="none")
-        return recon_err
+        return self.criterion(batch, recon, reduction="none")
 
 
 class SparseConv1dAE(Conv1dAE):

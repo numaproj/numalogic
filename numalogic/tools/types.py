@@ -10,7 +10,8 @@
 # limitations under the License.
 
 
-from typing import Union, TypeVar, Sequence
+from typing import Union, TypeVar
+from collections.abc import Sequence
 
 from sklearn.base import BaseEstimator
 from torch import nn
@@ -28,5 +29,5 @@ class Singleton(type):
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
-            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+            cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]

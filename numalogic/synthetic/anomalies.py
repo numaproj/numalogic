@@ -59,9 +59,7 @@ class AnomalyGenerator:
 
         self.scaler = StandardScaler()
         scaled_ref_df = pd.DataFrame(
-            self.scaler.fit_transform(ref_df.to_numpy()),
-            index=ref_df.index,
-            columns=ref_df.columns,
+            self.scaler.fit_transform(ref_df.to_numpy()), index=ref_df.index, columns=ref_df.columns
         )
         self.ref_stats_df = scaled_ref_df.describe()
         self.__injected_cols = []

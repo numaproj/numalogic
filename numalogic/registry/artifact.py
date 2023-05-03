@@ -11,7 +11,8 @@
 
 
 from dataclasses import dataclass
-from typing import Sequence, Any, Generic, TypeVar, Union
+from typing import Any, Generic, TypeVar, Union
+from collections.abc import Sequence
 
 from numalogic.tools.types import artifact_t, S_KEYS, D_KEYS
 

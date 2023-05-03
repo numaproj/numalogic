@@ -136,11 +136,7 @@ class MLflowRegistry(ArtifactManager):
         return None
 
     def load(
-        self,
-        skeys: Sequence[str],
-        dkeys: Sequence[str],
-        latest: bool = True,
-        version: str = None,
+        self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
     ) -> Optional[ArtifactData]:
         model_key = self.construct_key(skeys, dkeys)
 
@@ -169,9 +165,7 @@ class MLflowRegistry(ArtifactManager):
             return None
         except ModelVersionError as model_missing_err:
             _LOGGER.error(
-                "No Model found found in %s ERROR: %r",
-                self.model_stage,
-                model_missing_err,
+                "No Model found found in %s ERROR: %r", self.model_stage, model_missing_err
             )
             return None
         except Exception as ex:
@@ -261,9 +255,7 @@ class MLflowRegistry(ArtifactManager):
             latest = self.client.get_latest_versions(name=model_name, stages=["None"])
 
             latest_model_data = self.client.transition_model_version_stage(
-                name=model_name,
-                version=str(latest[-1].version),
-                stage=self.model_stage,
+                name=model_name, version=str(latest[-1].version), stage=self.model_stage
             )
 
             if current_staging:

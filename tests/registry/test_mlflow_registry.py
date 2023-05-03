@@ -79,11 +79,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
         skeys = self.skeys
         dkeys = self.dkeys
-        status = ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=model,
-        )
+        status = ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
 
@@ -117,11 +113,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch", models_to_retain=2)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=model,
-        )
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertEqual(data.metadata, {})
         self.assertIsInstance(data.artifact, VanillaAE)
@@ -139,11 +131,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=model,
-        )
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertIsInstance(data.artifact, RandomForestRegressor)
         self.assertEqual(data.metadata, {})
@@ -161,11 +149,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=model,
-        )
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
         data = ml.load(skeys=skeys, dkeys=dkeys, version="5", latest=False)
         self.assertIsInstance(data.artifact, VanillaAE)
         self.assertEqual(data.metadata, {})
