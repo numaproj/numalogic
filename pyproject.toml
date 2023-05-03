@@ -86,8 +86,8 @@ exclude = '''
 
 [tool.ruff]
 line-length = 100
-select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN"]
 src = ["numalogic", "tests"]
+select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN"]
 ignore = ["TRY003", "TRY301"]
 target-version = "py39"
 

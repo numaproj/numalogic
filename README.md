@@ -64,12 +64,7 @@ Numalogic needs [PyTorch](https://pytorch.org/) and
 But since these packages are platform dependendent,
 they are not included in the numalogic package itself. Kindly install them first.
 
-Numalogic supports the following pytorch versions:
-- 1.11.x
-- 1.12.x
-- 1.13.x
-
-Other versions do work, it is just that they are not tested.
+Numalogic supports pytorch versions `2.0.0` and above.
 
 numalogic can be installed using pip.
 ```shell
