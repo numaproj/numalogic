@@ -65,7 +65,6 @@ ipython-autotime = "^0.3.1"
 
 [tool.black]
 line-length = 100
-skip_magic_trailing_comma = true
 include = '\.pyi?$'
 exclude = '''
 /(

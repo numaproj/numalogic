@@ -16,7 +16,7 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	poetry run black numalogic/ examples/ tests/ benchmarks/ --diff --color
+	poetry run black numalogic/ examples/ tests/ benchmarks/
 
 lint: format
 	poetry run ruff check --fix .

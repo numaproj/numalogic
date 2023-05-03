@@ -15,7 +15,7 @@ jobs:
       - uses: psf/black@stable
         with:
           options: "--check --verbose"
-          version: "~= 23.0"
+          version: "~= 23.3"
 
   ruff:
     runs-on: ubuntu-latest
