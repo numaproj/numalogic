@@ -5,7 +5,8 @@ repos:
   rev: 23.3.0
   hooks:
   -   id: black
-      args: [--config=pyproject.toml, -tpy39, --diff, --color ]
+      language_version: python3.9
+      args: [--config=pyproject.toml, --diff, --color ]
 - repo: https://github.com/charliermarsh/ruff-pre-commit
   # Ruff version.
   rev: 'v0.0.264'
