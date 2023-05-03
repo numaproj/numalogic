@@ -10,7 +10,7 @@ Numalogic provides the following tranformers for pre-processing the training or 
 
 ### Log Transformer
 
-Log transformation is a data transformation method in which it replaces each data point x with a log(x). 
+Log transformation is a data transformation method in which it replaces each data point x with a log(x).
 
 Now, with `add_factor`, each data point x is converted to log(x + add_factor)
 
@@ -37,7 +37,7 @@ X_test_scaled = pipeline.transform(x_test)
 
 ### Static Power Transformer
 
-Static Power Transformer converts each data point x to x<sup>n</sup>. 
+Static Power Transformer converts each data point x to x<sup>n</sup>.
 
 When `add_factor` is provided, each data point x is converted to (x + add_factor)<sup>n</sup>
 
@@ -59,9 +59,9 @@ X_test_scaled = transformer.transform(x_test)
 ### Tanh Scaler
 
 Tanh Scaler is a stateful estimator that applies tanh normalization to the Z-score,
-and scales the values between 0 and 1. 
+and scales the values between 0 and 1.
 This scaler is seen to be more efficient as well as robust to the effect of outliers
-in the data. 
+in the data.
 
 ```python
 import numpy as np

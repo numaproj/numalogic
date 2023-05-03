@@ -11,7 +11,6 @@
 
 
 import logging
-from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -145,7 +144,7 @@ class LSTMAE(BaseAE):
             else:
                 nn.init.xavier_normal_(param, gain=calculate_gain("tanh"))
 
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return encoded, decoded

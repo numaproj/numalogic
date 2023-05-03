@@ -10,8 +10,6 @@
 # limitations under the License.
 
 
-from typing import Tuple
-
 import torch
 import torch.nn.functional
 from numalogic.models.autoencoder.base import BaseAE
@@ -349,7 +347,7 @@ class TransformerAE(BaseAE):
         if type(m) in (nn.Linear,):
             nn.init.xavier_uniform_(m.weight, gain=2**0.5)
 
-    def forward(self, batch: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
         batch = batch.view(-1, self.n_features, self.seq_len)
         encoded = self.encoder(batch)
         decoded = self.decoder(batch, encoded)

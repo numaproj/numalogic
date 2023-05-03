@@ -8,9 +8,12 @@ from sklearn.pipeline import make_pipeline
 from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
 
 
+RNG = np.random.default_rng(42)
+
+
 class TestTransformers(unittest.TestCase):
     def test_logtransformer(self):
-        x = 3 + np.random.randn(5, 3)
+        x = 3 + RNG.random((5, 3))
         transformer = LogTransformer(add_factor=1)
         x_prime = transformer.transform(x)
 
@@ -19,7 +22,7 @@ class TestTransformers(unittest.TestCase):
         assert_almost_equal(transformer.inverse_transform(x_prime), np.expm1(x_prime))
 
     def test_staticpowertransformer(self):
-        x = 3 + np.random.randn(5, 3)
+        x = 3 + RNG.random((5, 3))
         transformer = StaticPowerTransformer(3, add_factor=4)
         x_prime = transformer.transform(x)
 
@@ -28,7 +31,7 @@ class TestTransformers(unittest.TestCase):
         assert_almost_equal(transformer.inverse_transform(x_prime), x, decimal=3)
 
     def test_tanh_scaler_1(self):
-        x = 1 + np.random.randn(5, 3)
+        x = 1 + RNG.random((5, 3))
         scaler = TanhScaler()
         x_scaled = scaler.fit_transform(x)
 
@@ -36,7 +39,7 @@ class TestTransformers(unittest.TestCase):
         assert_array_less(np.zeros_like(x_scaled), x_scaled)
 
     def test_tanh_scaler_2(self):
-        x = 3 + np.random.randn(5, 3)
+        x = 3 + RNG.random((5, 3))
         pl = make_pipeline(LogTransformer(), TanhScaler())
 
         x_scaled = pl.fit_transform(x)
@@ -44,7 +47,7 @@ class TestTransformers(unittest.TestCase):
         assert_array_less(np.zeros_like(x_scaled), x_scaled)
 
     def test_tanh_scaler_3(self):
-        x = np.random.randn(5, 3)
+        x = RNG.random((5, 3))
         x[:, 1] = np.zeros(5)
 
         scaler = TanhScaler()
@@ -55,7 +58,7 @@ class TestTransformers(unittest.TestCase):
         assert_array_less(np.zeros_like(x_scaled), x_scaled)
 
     def test_tanh_scaler_nan(self):
-        x = np.random.randn(5, 3)
+        x = RNG.random((5, 3))
         x[:, 1] = np.zeros(5)
 
         scaler = TanhScaler(eps=0.0)

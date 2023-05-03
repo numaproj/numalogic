@@ -103,7 +103,7 @@ class TestConvAE(unittest.TestCase):
                 dec_activation="random",
             )
 
-        with self.assertRaises(ValueError):
+        with self.assertRaises(TypeError):
             Conv1dAE(
                 seq_len=SEQ_LEN,
                 in_channels=self.X_train.shape[1],

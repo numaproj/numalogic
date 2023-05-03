@@ -10,15 +10,9 @@
 # limitations under the License.
 
 
-from typing import Union, Dict, NewType, TypeVar, Sequence, Optional
+from typing import Union, TypeVar
 
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
+from sklearn.base import BaseEstimator
 from torch import nn
 
-Artifact = NewType("Artifact", Union[nn.Module, BaseEstimator, TransformerMixin, Pipeline])
-ArtifactDict = NewType(
-    "ArtifactDict",
-    Optional[Dict[str, Union[Sequence[Artifact], Dict[str, Artifact], Artifact, None]]],
-)
-AutoencoderModel = TypeVar("AutoencoderModel", bound="TorchAE")
+artifact_t = TypeVar("artifact_t", bound=Union[nn.Module, BaseEstimator])
