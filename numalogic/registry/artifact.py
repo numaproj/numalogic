@@ -41,7 +41,7 @@ class ArtifactManager(metaclass=ABCMeta):
         self,
         skeys: Sequence[str],
         dkeys: Sequence[str],
-        production: bool = True,
+        latest: bool = True,
         version: str = None,
     ) -> ArtifactData:
         """
@@ -49,7 +49,7 @@ class ArtifactManager(metaclass=ABCMeta):
         Args:
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            production: boolean field to determine if latest version is desired or not
+            latest: boolean field to determine if latest version is desired or not
             version: explicit artifact version
         """
         pass

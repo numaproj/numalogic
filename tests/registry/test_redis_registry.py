@@ -76,19 +76,17 @@ class TestRedisRegistry(unittest.TestCase):
         version = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
-        data = self.registry.load(
-            skeys=self.skeys, dkeys=self.dkeys, version=version, production=False
-        )
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys, version=version, latest=False)
         self.assertIsNotNone(data.artifact)
         self.assertIsNone(data.metadata)
         self.assertEqual(data.extras["model_version"], version)
 
     def test_both_version_latest_model_with_version(self):
         with self.assertRaises(ValueError):
-            self.registry.load(skeys=self.skeys, dkeys=self.dkeys, production=False)
+            self.registry.load(skeys=self.skeys, dkeys=self.dkeys, latest=False)
 
     def test_load_model_with_wrong_version(self):
-        self.registry.load(skeys=self.skeys, dkeys=self.dkeys, version=str(100), production=False)
+        self.registry.load(skeys=self.skeys, dkeys=self.dkeys, version=str(100), latest=False)
         self.assertRaises(ModelKeyNotFound)
 
     def test_load_model_when_no_model(self):
