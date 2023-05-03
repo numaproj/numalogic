@@ -166,7 +166,7 @@ class TestMLflow(unittest.TestCase):
             dkeys=dkeys,
             artifact=model,
         )
-        data = ml.load(skeys=skeys, dkeys=dkeys, version="5", latest=False)
+        data = ml.load(skeys=skeys, dkeys=dkeys, version="5", production=False)
         self.assertIsInstance(data.artifact, VanillaAE)
         self.assertEqual(data.metadata, {})
 
@@ -195,7 +195,7 @@ class TestMLflow(unittest.TestCase):
         skeys = self.skeys
         dkeys = self.dkeys
         with self.assertLogs(level="ERROR") as log:
-            ml.load(skeys=skeys, dkeys=dkeys, latest=False)
+            ml.load(skeys=skeys, dkeys=dkeys, production=False)
             self.assertTrue(log.output)
 
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)

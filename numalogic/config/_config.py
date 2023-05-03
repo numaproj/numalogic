@@ -11,7 +11,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Any, Dict
+from typing import Optional, Any
 
 from omegaconf import MISSING
 
@@ -29,18 +29,17 @@ class ModelInfo:
     """
 
     name: str = MISSING
-    conf: Dict[str, Any] = field(default_factory=dict)
+    conf: dict[str, Any] = field(default_factory=dict)
     stateful: bool = True
 
 
 @dataclass
-class RegistryInfo:
+class RegistryConf:
     # TODO implement this
     """
     Registry config base class
     """
-    name: str = MISSING
-    conf: Dict[str, Any] = field(default_factory=dict)
+    pass
 
 
 @dataclass
@@ -72,7 +71,7 @@ class NumalogicConf:
 
     model: ModelInfo = field(default_factory=ModelInfo)
     trainer: LightningTrainerConf = field(default_factory=LightningTrainerConf)
-    registry: RegistryInfo = field(default_factory=RegistryInfo)
-    preprocess: List[ModelInfo] = field(default_factory=list)
+    registry: RegistryConf = field(default_factory=RegistryConf)
+    preprocess: list[ModelInfo] = field(default_factory=list)
     threshold: ModelInfo = field(default_factory=ModelInfo)
     postprocess: ModelInfo = field(default_factory=ModelInfo)

@@ -27,7 +27,3 @@ postprocess:
   stateful: false
   conf:
     scale_factor: 5
-registry:
-  name: "RedisRegistry"
-  conf:
-    ttl: 5000

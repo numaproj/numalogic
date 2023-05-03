@@ -136,15 +136,15 @@ class MLflowRegistry(ArtifactManager):
         self,
         skeys: Sequence[str],
         dkeys: Sequence[str],
-        latest: bool = True,
+        production: bool = True,
         version: str = None,
     ) -> Optional[ArtifactData]:
         model_key = self.construct_key(skeys, dkeys)
         try:
-            if (latest and version) or (not latest and not version):
+            if (production and version) or (not production and not version):
                 raise ValueError("Either One of 'latest' or 'version' needed in load method call")
 
-            elif latest:
+            elif production:
                 version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
                 if not version_info:
                     raise ModelVersionError("Model version missing for key = %s" % model_key)

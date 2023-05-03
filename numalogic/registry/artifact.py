@@ -39,11 +39,7 @@ class ArtifactManager(metaclass=ABCMeta):
 
     @abstractmethod
     def load(
-        self,
-        skeys: Sequence[str],
-        dkeys: Sequence[str],
-        latest: bool = True,
-        version: str = None,
+        self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
     ) -> ArtifactData:
         """
         Loads the desired artifact from mlflow registry and returns it.

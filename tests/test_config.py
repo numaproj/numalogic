@@ -27,13 +27,11 @@ from numalogic.config import (
     NumalogicConf,
     ModelInfo,
 )
-from numalogic.config.factory import RegistryFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import SparseVanillaAE, SparseConv1dAE, LSTMAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.postprocess import TanhNorm
 from numalogic.preprocess import LogTransformer
-from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 os.environ["OC_CAUSE"] = "1"
