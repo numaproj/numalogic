@@ -10,7 +10,7 @@
 # limitations under the License.
 
 
-from numalogic.config._config import NumalogicConf, ModelInfo, LightningTrainerConf, RegistryConf
+from numalogic.config._config import NumalogicConf, ModelInfo, LightningTrainerConf
 from numalogic.config.factory import (
     ModelFactory,
     PreprocessFactory,

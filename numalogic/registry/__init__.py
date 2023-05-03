@@ -15,6 +15,7 @@ from numalogic.registry.localcache import LocalLRUCache
 
 try:
     from numalogic.registry.mlflow_registry import MLflowRegistry
+    from numalogic.registry.redis_registry import RedisRegistry
 except ImportError:
     __all__ = ["ArtifactManager", "ArtifactData", "ArtifactCache", "LocalLRUCache"]
 else:
@@ -24,4 +25,5 @@ else:
         "MLflowRegistry",
         "ArtifactCache",
         "LocalLRUCache",
+        "RedisRegistry",
     ]
