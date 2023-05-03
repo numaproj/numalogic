@@ -10,13 +10,18 @@
 # limitations under the License.
 
 
-from numalogic.registry.artifact import ArtifactManager
-from numalogic.registry.artifact import ArtifactData
+from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
+from numalogic.registry.localcache import LocalLRUCache
 
 try:
     from numalogic.registry.mlflow_registry import MLflowRegistry
-except ImportError as err:
-    print("HERE", err)
-    __all__ = ["ArtifactManager", "ArtifactData"]
+except ImportError:
+    __all__ = ["ArtifactManager", "ArtifactData", "ArtifactCache", "LocalLRUCache"]
 else:
-    __all__ = ["ArtifactManager", "ArtifactData", "MLflowRegistry"]
+    __all__ = [
+        "ArtifactManager",
+        "ArtifactData",
+        "MLflowRegistry",
+        "ArtifactCache",
+        "LocalLRUCache",
+    ]

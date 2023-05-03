@@ -68,8 +68,7 @@ class SyntheticTSGenerator:
         return pd.DataFrame(all_series, index=self.dt_index)
 
     def baseline(self) -> float:
-        baseline = self._rnd_gen.uniform(*self.baseline_range)
-        return baseline
+        return self._rnd_gen.uniform(*self.baseline_range)
 
     def trend(self) -> NDArray[float]:
         slope = self._rnd_gen.uniform(*self.slope_range)
@@ -83,9 +82,7 @@ class SyntheticTSGenerator:
         season_time = ((self.time_steps + phase) % period) / period
 
         seasonal_pattern = np.where(
-            season_time < cosine_ratio,
-            np.cos(season_time * 2 * np.pi),
-            season_time,
+            season_time < cosine_ratio, np.cos(season_time * 2 * np.pi), season_time
         )
         return amplitude * seasonal_pattern
 

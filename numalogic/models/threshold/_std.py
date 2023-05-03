@@ -75,5 +75,4 @@ class StdDevThreshold(BaseEstimator):
         """
         Returns an anomaly score array with the same shape as input.
         """
-        y_scores = x_test / self.threshold
-        return y_scores
+        return x_test / self.threshold

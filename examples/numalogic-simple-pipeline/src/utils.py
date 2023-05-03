@@ -25,11 +25,7 @@ class Payload:
     is_artifact_valid: bool = True
 
 
-def save_artifact(
-    artifact,
-    skeys: Sequence[str],
-    dkeys: Sequence[str],
-) -> None:
+def save_artifact(artifact, skeys: Sequence[str], dkeys: Sequence[str]) -> None:
     if isinstance(artifact, BaseAE):
         ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="pytorch")
     else:

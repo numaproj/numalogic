@@ -110,5 +110,4 @@ class SigmoidThreshold(BaseEstimator):
         with values being anomaly scores.
         """
         x = x.copy()
-        y = 10 / (1 + np.exp(-self.coeff * (x - self.upper_limit)))
-        return y
+        return 10 / (1 + np.exp(-self.coeff * (x - self.upper_limit)))
