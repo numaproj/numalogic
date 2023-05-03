@@ -1,6 +1,7 @@
 import logging
 import time
-from typing import Optional, Sequence, Dict, Any
+from typing import Optional, Any
+from collections.abc import Sequence
 
 from redis.client import Redis, Pipeline
 from redis.exceptions import RedisError
@@ -8,7 +9,7 @@ from redis.exceptions import RedisError
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry.serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound
-from numalogic.tools.types import Artifact
+from numalogic.tools.types import artifact_t
 
 _LOGGER = logging.getLogger()
 
@@ -32,7 +33,7 @@ class RedisRegistry(ArtifactManager):
     >>> dkeys = ['d', 'a']
     >>> model = VanillaAE(10)
     >>> registry.save(skeys, dkeys, artifact=model, **{'lr': 0.01})
-    >>> registry.load(skeys, dkeys, artifact=model)
+    >>> registry.load(skeys, dkeys)
     """
 
     __slots__ = ("client", "ttl")
@@ -86,14 +87,14 @@ class RedisRegistry(ArtifactManager):
         version_number = key.split("::")
         return version_number[-1]
 
-    def __load_metadata(self, model_key: str) -> Dict[str, Any]:
+    def __load_metadata(self, model_key: str) -> dict[str, Any]:
         metadata = None
         if self.client.hexists(name=model_key, key="metadata"):
             serialized_metadata = self.client.hget(name=model_key, key="metadata")
             metadata = loads(serialized_metadata)
         return metadata
 
-    def __save_metadata(self, pipe: Pipeline, metadata: Dict[str, Any], key: str):
+    def __save_metadata(self, pipe: Pipeline, metadata: dict[str, Any], key: str):
         serialized_metadata = dumps(metadata)
         pipe.hset(
             name=key,
@@ -107,13 +108,13 @@ class RedisRegistry(ArtifactManager):
             production_key = self.construct_key(skeys, dkeys, ["PRODUCTION"])
             if not production_key:
                 raise ModelKeyNotFound(
-                    "Production key: %s, Not Found !!!\n Exiting....." % (production_key,)
+                    f"Production key: {production_key}, Not Found !!!\n Exiting....."
                 )
             model_key = self.client.get(production_key)
             if not model_key:
                 raise ModelKeyNotFound(
-                    "Production key = %s is pointing to the key: %s that "
-                    "is missing the redis registry" % (production_key, model_key)
+                    "Production key = {} is pointing to the key: {} that "
+                    "is missing the redis registry".format(production_key, model_key)
                 )
         else:
             model_key = self.construct_key(skeys, dkeys, [version])
@@ -122,7 +123,7 @@ class RedisRegistry(ArtifactManager):
         return model_key
 
     def __save_artifact(
-        self, pipe, artifact: Artifact, skeys: Sequence[str], dkeys: Sequence[str], version: str
+        self, pipe, artifact: artifact_t, skeys: Sequence[str], dkeys: Sequence[str], version: str
     ):
         new_version_key = self.construct_key(skeys, dkeys, [version])
         production_key = self.construct_key(skeys, dkeys, ["PRODUCTION"])
@@ -187,7 +188,7 @@ class RedisRegistry(ArtifactManager):
         self,
         skeys: Sequence[str],
         dkeys: Sequence[str],
-        artifact: Artifact,
+        artifact: artifact_t,
         **metadata: str,
     ) -> Optional[str]:
         """

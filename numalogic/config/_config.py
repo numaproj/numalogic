@@ -34,12 +34,15 @@ class ModelInfo:
 
 
 @dataclass
-class RegistryConf:
-    # TODO implement this
+class RegistryInfo:
     """
-    Registry config base class
+    Args:
+        name: name of the Registry
+        conf: kwargs for instantiating the model class
     """
-    pass
+
+    name: str = MISSING
+    conf: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -71,7 +74,7 @@ class NumalogicConf:
 
     model: ModelInfo = field(default_factory=ModelInfo)
     trainer: LightningTrainerConf = field(default_factory=LightningTrainerConf)
-    registry: RegistryConf = field(default_factory=RegistryConf)
+    registry: RegistryInfo = field(default_factory=RegistryInfo)
     preprocess: list[ModelInfo] = field(default_factory=list)
     threshold: ModelInfo = field(default_factory=ModelInfo)
     postprocess: ModelInfo = field(default_factory=ModelInfo)

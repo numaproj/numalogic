@@ -1,5 +1,4 @@
 import unittest
-from contextlib import contextmanager
 from unittest.mock import patch, Mock
 
 import fakeredis
@@ -28,13 +27,6 @@ class TestRedisRegistry(unittest.TestCase):
 
     def tearDown(self) -> None:
         self.registry.client.flushall()
-
-    @contextmanager
-    def assertNotRaises(self, exc_type):
-        try:
-            yield None
-        except exc_type:
-            raise self.failureException("{} raised".format(exc_type.__name__))
 
     def test_client_missing(self):
         with self.assertRaises(ValueError):

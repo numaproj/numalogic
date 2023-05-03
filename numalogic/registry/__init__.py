@@ -18,7 +18,6 @@ try:
     from numalogic.registry.redis_registry import RedisRegistry
 except ImportError as err:
     print("HERE", err)
-except ImportError:
     __all__ = ["ArtifactManager", "ArtifactData"]
 else:
     __all__ = ["ArtifactManager", "ArtifactData", "MLflowRegistry", "RedisRegistry"]
