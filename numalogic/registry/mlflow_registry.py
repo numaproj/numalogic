@@ -12,7 +12,8 @@
 
 import logging
 from enum import Enum
-from typing import Optional, Sequence, Dict, Any, Tuple
+from typing import Optional, Any
+from collections.abc import Sequence
 
 import mlflow.pyfunc
 import mlflow.pytorch
@@ -23,7 +24,7 @@ from mlflow.tracking import MlflowClient
 
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import ModelVersionError
-from numalogic.tools.types import Artifact
+from numalogic.tools.types import artifact_t
 
 _LOGGER = logging.getLogger()
 
@@ -176,7 +177,7 @@ class MLflowRegistry(ArtifactManager):
         self,
         skeys: Sequence[str],
         dkeys: Sequence[str],
-        artifact: Artifact,
+        artifact: artifact_t,
         run_id: str = None,
         **metadata: str,
     ) -> Optional[ModelVersion]:
@@ -199,11 +200,12 @@ class MLflowRegistry(ArtifactManager):
             if metadata:
                 mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
-            _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
-            return model_version
         except Exception as ex:
             _LOGGER.exception("Unhandled error when saving a model with key: %s: %r", model_key, ex)
             return None
+        else:
+            _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
+            return model_version
         finally:
             mlflow.end_run()
 
@@ -260,14 +262,14 @@ class MLflowRegistry(ArtifactManager):
 
             # only keep "models_to_retain" number of models.
             self.__delete_stale_models(skeys=skeys, dkeys=dkeys)
-
-            _LOGGER.info("Successfully transitioned model to Production stage")
-            return latest_model_data
         except RestException as ex:
             _LOGGER.exception(
                 "Error when transitioning a model: %s to different stage: %r", model_name, ex
             )
             return None
+        else:
+            _LOGGER.info("Successfully transitioned model to Production stage")
+            return latest_model_data
 
     def __delete_stale_models(self, skeys: Sequence[str], dkeys: Sequence[str]):
         model_name = self.construct_key(skeys, dkeys)
@@ -280,7 +282,7 @@ class MLflowRegistry(ArtifactManager):
 
     def __load_artifacts(
         self, skeys: Sequence[str], dkeys: Sequence[str], version_info: ModelVersion
-    ) -> Tuple[Artifact, Dict[str, Any]]:
+    ) -> tuple[artifact_t, dict[str, Any]]:
         model_key = self.construct_key(skeys, dkeys)
         model = self.handler.load_model(model_uri=f"models:/{model_key}/{version_info.version}")
         _LOGGER.info("Successfully loaded model %s from Mlflow", model_key)

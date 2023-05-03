@@ -11,7 +11,8 @@
 
 
 import logging
-from typing import Tuple, Sequence, Union
+from typing import Union
+from collections.abc import Sequence
 
 import torch
 from torch import nn, Tensor
@@ -121,15 +122,14 @@ class Encoder(nn.Module):
                 ]
             )
         # Latent layer
-        else:
-            layers.extend(
-                [
-                    nn.LazyConv1d(
-                        out_channels=num_filters[-1], kernel_size=kernel_sizes[-1], padding=1
-                    ),
-                    nn.ReLU(),
-                ]
-            )
+        layers.extend(
+            [
+                nn.LazyConv1d(
+                    out_channels=num_filters[-1], kernel_size=kernel_sizes[-1], padding=1
+                ),
+                nn.ReLU(),
+            ]
+        )
         return layers
 
     def forward(self, input_: Tensor) -> Tensor:
@@ -173,14 +173,13 @@ class Decoder(nn.Module):
             layers.append(nn.Upsample(scale_factor=upscale_factor, mode="linear"))
 
         # Output layer
-        else:
-            layers.append(
-                nn.LazyConvTranspose1d(
-                    out_channels=num_filters[-1], kernel_size=kernel_sizes[-1], padding=1
-                ),
-            )
-            if final_activation:
-                layers.append(_get_activation_function(final_activation))
+        layers.append(
+            nn.LazyConvTranspose1d(
+                out_channels=num_filters[-1], kernel_size=kernel_sizes[-1], padding=1
+            ),
+        )
+        if final_activation:
+            layers.append(_get_activation_function(final_activation))
         return layers
 
     def forward(self, latent: Tensor) -> Tensor:
@@ -233,7 +232,7 @@ class Conv1dAE(BaseAE):
                 enc_kernel_sizes
             ), "enc_channels and enc_kernel_sizes should be of the same length"
         else:
-            raise ValueError(f"Invalid enc_kernel_sizes type provided: {enc_kernel_sizes}")
+            raise TypeError(f"Invalid enc_kernel_sizes type provided: {enc_kernel_sizes}")
 
         self.encoder = Encoder(
             num_channels=enc_channels,
@@ -241,7 +240,7 @@ class Conv1dAE(BaseAE):
             pool_kernel_size=pool_kernel_size,
         )
 
-        dec_channels = list(reversed((enc_channels[:-1])))
+        dec_channels = list(reversed(enc_channels[:-1]))
         dec_channels.append(in_channels)
 
         dec_kernel_sizes = list(reversed(enc_kernel_sizes))
@@ -265,7 +264,7 @@ class Conv1dAE(BaseAE):
             if isinstance(module, (nn.Conv1d, nn.ConvTranspose1d)):
                 nn.init.xavier_normal_(module.weight, gain=calculate_gain("relu"))
 
-    def forward(self, batch: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
         batch = self.configure_shape(batch)
         encoded = self.encoder(batch)
         decoded = self.decoder(encoded)

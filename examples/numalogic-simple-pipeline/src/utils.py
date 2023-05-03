@@ -1,7 +1,7 @@
 import logging
 import os
 from dataclasses import dataclass
-from typing import Sequence
+from collections.abc import Sequence
 
 from dataclasses_json import dataclass_json
 from numalogic.models.autoencoder.base import BaseAE
@@ -44,7 +44,8 @@ def load_artifact(skeys: Sequence[str], dkeys: Sequence[str], type_: str = None)
         else:
             ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="sklearn")
         artifact_dict = ml_registry.load(skeys=skeys, dkeys=dkeys)
-        return artifact_dict
     except Exception as ex:
         LOGGER.exception("Error while loading artifact from MLFlow database: %s", ex)
         return None
+    else:
+        return artifact_dict

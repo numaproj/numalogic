@@ -37,7 +37,7 @@ registry.save(
     skeys=static_keys,
     dkeys=dynamic_keys,
     primary_artifact=model,
-    secondary_artifacts={"preproc": scaler}
+    secondary_artifacts={"preproc": scaler},
 )
 ```
 
@@ -47,9 +47,7 @@ Once, the models are save to MLflow, the `load` function of `MLflowRegistry` can
 
 ```python
 registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080")
-artifact_dict = registry.load(
-    skeys=static_keys, dkeys=dynamic_keys
-)
+artifact_dict = registry.load(skeys=static_keys, dkeys=dynamic_keys)
 scaler = artifact_dict["secondary_artifacts"]["preproc"]
 model = artifact_dict["primary_artifact"]
 ```

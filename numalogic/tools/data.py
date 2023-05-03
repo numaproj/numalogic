@@ -10,7 +10,8 @@
 # limitations under the License.
 
 import logging
-from typing import Optional, Generator, Iterator
+from typing import Optional
+from collections.abc import Generator, Iterator
 
 import numpy as np
 import numpy.typing as npt

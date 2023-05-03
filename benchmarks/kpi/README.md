@@ -1,11 +1,11 @@
 ## KPI Anomaly dataset
 
-KPI anomaly dataset consists of KPI (key performace index) time series data from 
-many real scenarios of Internet companies with ground truth label. 
+KPI anomaly dataset consists of KPI (key performace index) time series data from
+many real scenarios of Internet companies with ground truth label.
 The dataset can be found (here)[https://github.com/NetManAIOps/KPI-Anomaly-Detection]
 
 The full dataset contains multiple KPI IDs. Different KPI time series have different structures
-and patterns. 
+and patterns.
 For our purpose, we are running anomaly detection for some of these KPI indices.
 
 The performance table is shown below, although note that the hyperparameters have not been tuned.
