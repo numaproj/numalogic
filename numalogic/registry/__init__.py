@@ -15,7 +15,8 @@ from numalogic.registry.artifact import ArtifactData
 
 try:
     from numalogic.registry.mlflow_registry import MLflowRegistry
-except ImportError:
+except ImportError as err:
+    print("HERE", err)
     __all__ = ["ArtifactManager", "ArtifactData"]
 else:
     __all__ = ["ArtifactManager", "ArtifactData", "MLflowRegistry"]

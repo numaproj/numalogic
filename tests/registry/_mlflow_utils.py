@@ -20,16 +20,14 @@ def create_model():
     model = torch.nn.Sequential(torch.nn.Linear(3, 1), torch.nn.Flatten(0, 1))
 
     loss_fn = torch.nn.MSELoss(reduction="sum")
+    optim = torch.optim.Adam(model.parameters(), lr=1e-6)
 
-    learning_rate = 1e-6
     for t in range(1000):
         y_pred = model(xx)
         loss = loss_fn(y_pred, y)
         model.zero_grad()
         loss.backward()
-        with torch.no_grad():
-            for param in model.parameters():
-                param -= learning_rate * param.grad
+        optim.step()
 
     return model
 

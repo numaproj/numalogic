@@ -11,7 +11,7 @@
 
 
 from abc import ABCMeta
-from typing import Any, Dict
+from typing import Any
 
 import pytorch_lightning as pl
 import torch.nn.functional as F
@@ -94,7 +94,7 @@ class BaseAE(pl.LightningModule, metaclass=ABCMeta):
         _, recon = self.forward(batch)
         return recon
 
-    def configure_optimizers(self) -> Dict[str, Any]:
+    def configure_optimizers(self) -> dict[str, Any]:
         optimizer = self.init_optimizer(self.optim_algo)
         return {"optimizer": optimizer}
 

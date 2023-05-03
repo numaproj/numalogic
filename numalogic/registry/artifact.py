@@ -12,16 +12,17 @@
 
 from abc import ABCMeta, abstractmethod
 from dataclasses import dataclass
-from typing import Sequence, Any, Dict
+from typing import Any
+from collections.abc import Sequence
 
-from numalogic.tools.types import Artifact
+from numalogic.tools.types import artifact_t
 
 
 @dataclass
 class ArtifactData:
-    artifact: Artifact
-    metadata: Dict[str, Any]
-    extras: Dict[str, Any]
+    artifact: artifact_t
+    metadata: dict[str, Any]
+    extras: dict[str, Any]
 
 
 class ArtifactManager(metaclass=ABCMeta):
@@ -52,7 +53,7 @@ class ArtifactManager(metaclass=ABCMeta):
 
     @abstractmethod
     def save(
-        self, skeys: Sequence[str], dkeys: Sequence[str], artifact: Artifact, **metadata
+        self, skeys: Sequence[str], dkeys: Sequence[str], artifact: artifact_t, **metadata
     ) -> Any:
         r"""
         Saves the artifact into mlflow registry and updates version.
