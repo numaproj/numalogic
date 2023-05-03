@@ -30,5 +30,4 @@ postprocess:
 registry:
   name: "RedisRegistry"
   conf:
-    host: "localhost"
-    port: "6739"
+    ttl: 5000

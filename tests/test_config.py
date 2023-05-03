@@ -13,6 +13,7 @@
 import os
 import unittest
 
+import fakeredis
 from omegaconf import OmegaConf
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -81,8 +82,12 @@ class TestNumalogicConfig(unittest.TestCase):
 
     def test_registry(self):
         model_factory = RegistryFactory()
-        model = model_factory.get_instance(self.conf.registry)
-        self.assertIsInstance(model, RedisRegistry)
+        server = fakeredis.FakeServer()
+        redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
+        registry_obj = model_factory.get_cls(self.conf.registry)(
+            redis_cli, **self.conf.registry.conf
+        )
+        self.assertIsInstance(registry_obj, RedisRegistry)
 
 
 class TestFactory(unittest.TestCase):
