@@ -3,9 +3,10 @@ import time
 from typing import Optional, Sequence, Dict, Any
 
 from redis.client import Redis
+from redis.exceptions import RedisError
 
 from numalogic.registry import ArtifactManager, ArtifactData
-from numalogic.registry._serialize import loads, dumps
+from numalogic.registry.serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound
 from numalogic.tools.types import Artifact
 
@@ -181,7 +182,7 @@ class RedisRegistry(ArtifactManager):
         except ModelKeyNotFound as model_key_error:
             _LOGGER.exception("Missing Key: %s", model_key_error)
             return None
-        except Exception as ex:
+        except RedisError as ex:
             _LOGGER.exception("Unexpected error: %s", ex)
             return None
 
@@ -216,7 +217,7 @@ class RedisRegistry(ArtifactManager):
             self.client.expire(name=new_version_key, time=self.ttl)
             _LOGGER.info("Model is successfully with the key = %s", new_version_key)
             return str(version)
-        except Exception as ex:
+        except RedisError as ex:
             _LOGGER.exception("Unexpected error: %s", ex)
             return None
 
@@ -241,6 +242,6 @@ class RedisRegistry(ArtifactManager):
         except ModelKeyNotFound as model_key_error:
             _LOGGER.exception("Missing Key: %s", model_key_error)
             return None
-        except Exception as ex:
+        except RedisError as ex:
             _LOGGER.exception("Unexpected error: %s", ex)
             return None

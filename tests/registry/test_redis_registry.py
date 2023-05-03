@@ -1,7 +1,9 @@
 import unittest
 from contextlib import contextmanager
+from unittest.mock import patch, Mock
 
 import fakeredis
+from redis.exceptions import RedisError, ConnectionError, ResponseError
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 
@@ -33,6 +35,10 @@ class TestRedisRegistry(unittest.TestCase):
             yield None
         except exc_type:
             raise self.failureException("{} raised".format(exc_type.__name__))
+
+    def test_client_missing(self):
+        with self.assertRaises(ValueError):
+            RedisRegistry()
 
     def test_construct_key(self):
         key = RedisRegistry.construct_key(["model_", "nnet"], ["error1"], ["prod"])
@@ -78,9 +84,12 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertEqual(data.extras["model_version"], version)
 
     def test_both_version_latest_model_with_version(self):
-        with self.assertLogs(level="ERROR") as log:
+        with self.assertRaises(ValueError):
             self.registry.load(skeys=self.skeys, dkeys=self.dkeys, production=False)
-            self.assertTrue(log.output)
+
+    def test_load_model_with_wrong_version(self):
+        self.registry.load(skeys=self.skeys, dkeys=self.dkeys, version=str(100), production=False)
+        self.assertRaises(ModelKeyNotFound)
 
     def test_load_model_when_no_model(self):
         self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
@@ -106,3 +115,21 @@ class TestRedisRegistry(unittest.TestCase):
         self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
         self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version=str(8))
         self.assertRaises(ModelKeyNotFound)
+
+    @patch("numalogic.registry.redis_registry.RedisRegistry.delete", Mock(side_effect=RedisError))
+    def test_exception_call1(self):
+        with self.assertRaises(RedisError):
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+            self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version="0")
+
+    @patch(
+        "numalogic.registry.redis_registry.RedisRegistry.client", Mock(side_effect=ConnectionError)
+    )
+    def test_exception_call2(self):
+        with self.assertRaises(RedisError):
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+
+    @patch("numalogic.registry.redis_registry.RedisRegistry.load", Mock(side_effect=ResponseError))
+    def test_exception_call3(self):
+        self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+        self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
