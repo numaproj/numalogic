@@ -774,7 +774,7 @@
 <p>Quality decisions must be based on quality data. Data Preprocessing is important to get this quality data, without which it would just be a Garbage In, Garbage Out scenario.</p>
 <p>Numalogic provides the following tranformers for pre-processing the training or testing data sets. You can also pair it with scalers like <code>MinMaxScaler</code> from <a href="https://scikit-learn.org/stable/modules/preprocessing.html#preprocessing">scikit-learn pre-processing</a> tools.</p>
 <h3 id="log-transformer">Log Transformer<a class="headerlink" href="#log-transformer" title="Permanent link">&para;</a></h3>
-<p>Log transformation is a data transformation method in which it replaces each data point x with a log(x). </p>
+<p>Log transformation is a data transformation method in which it replaces each data point x with a log(x).</p>
 <p>Now, with <code>add_factor</code>, each data point x is converted to log(x + add_factor)</p>
 <p>Log transformation reduces the variance in some distributions, especially with large outliers.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
@@ -795,7 +795,7 @@
 <span class="n">X_test_scaled</span> <span class="o">=</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">x_test</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="static-power-transformer">Static Power Transformer<a class="headerlink" href="#static-power-transformer" title="Permanent link">&para;</a></h3>
-<p>Static Power Transformer converts each data point x to x<sup>n</sup>. </p>
+<p>Static Power Transformer converts each data point x to x<sup>n</sup>.</p>
 <p>When <code>add_factor</code> is provided, each data point x is converted to (x + add_factor)<sup>n</sup></p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numalogic.preprocess.transformer</span> <span class="kn">import</span> <span class="n">StaticPowerTransformer</span>
@@ -812,9 +812,9 @@
 </code></pre></div>
 <h3 id="tanh-scaler">Tanh Scaler<a class="headerlink" href="#tanh-scaler" title="Permanent link">&para;</a></h3>
 <p>Tanh Scaler is a stateful estimator that applies tanh normalization to the Z-score,
-and scales the values between 0 and 1. 
+and scales the values between 0 and 1.
 This scaler is seen to be more efficient as well as robust to the effect of outliers
-in the data. </p>
+in the data.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numalogic.preprocess</span> <span class="kn">import</span> <span class="n">TanhScaler</span>
 

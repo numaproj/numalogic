@@ -891,7 +891,7 @@
 
 
 <h1 id="autoencoders">Autoencoders<a class="headerlink" href="#autoencoders" title="Permanent link">&para;</a></h1>
-<p>An Autoencoder is a type of Artificial Neural Network, used to learn efficient data representations (encoding) of unlabeled data. </p>
+<p>An Autoencoder is a type of Artificial Neural Network, used to learn efficient data representations (encoding) of unlabeled data.</p>
 <p>It mainly consists of 2 components: an encoder and a decoder. The encoder compresses the input into a lower dimensional code, the decoder then reconstructs the input only using this code.</p>
 <h2 id="datamodules">Datamodules<a class="headerlink" href="#datamodules" title="Permanent link">&para;</a></h2>
 <p>Pytorch-lightning datamodules abstracts and separates the data functionality from the model and training itself.
@@ -903,7 +903,7 @@ Numalogic provides <code>TimeseriesDataModule</code> to help set up and load dat
 <span class="n">datamodule</span> <span class="o">=</span> <span class="n">TimeseriesDataModule</span><span class="p">(</span><span class="mi">12</span><span class="p">,</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="autoencoder-trainer">Autoencoder Trainer<a class="headerlink" href="#autoencoder-trainer" title="Permanent link">&para;</a></h2>
-<p>Numalogic provides a subclass of Pytorch-Lightning Trainer module specifically for Autoencoders. 
+<p>Numalogic provides a subclass of Pytorch-Lightning Trainer module specifically for Autoencoders.
 This trainer provides a mechanism to train, validate and infer on data, with all the parameters supported by Lightning Trainer.</p>
 <p>Here we are using <code>VanillaAE</code>, a Vanilla Autoencoder model.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">VanillaAE</span>
@@ -914,7 +914,7 @@ This trainer provides a mechanism to train, validate and infer on data, with all
 <span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">datamodule</span><span class="o">=</span><span class="n">datamodule</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="autoencoder-variants">Autoencoder Variants<a class="headerlink" href="#autoencoder-variants" title="Permanent link">&para;</a></h2>
-<p>Numalogic supports 2 variants of Autoencoders currently. 
+<p>Numalogic supports 2 variants of Autoencoders currently.
 More details can be found <a href="https://www.deeplearningbook.org/contents/autoencoders.html">here</a>.</p>
 <h3 id="1-autoencoders">1. Autoencoders<a class="headerlink" href="#1-autoencoders" title="Permanent link">&para;</a></h3>
 <p>Basic autoencoders aim to find representations of the input data in a latent dimensional space.
@@ -922,7 +922,7 @@ Ideally, in order for the network to learn meaningful patterns, it is recommende
 architectures are used, i.e. the latent space dimension being less than the input dimension.</p>
 <p>Examples would be <code>VanillaAE</code>, <code>Conv1dAE</code>, <code>LSTMAE</code> and <code>TransformerAE</code></p>
 <h3 id="2-sparse-autoencoders">2. Sparse autoencoders<a class="headerlink" href="#2-sparse-autoencoders" title="Permanent link">&para;</a></h3>
-<p>A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve an information bottleneck. 
+<p>A Sparse Autoencoder is a type of autoencoder that employs sparsity to achieve an information bottleneck.
 Specifically the loss function is constructed so that activations are penalized within a layer.
 So, by adding a sparsity regularization, we will be able to stop the neural network from copying the input and reduce overfitting.</p>
 <p>Examples would be <code>SparseVanillaAE</code>, <code>SparseConv1dAE</code>, <code>SparseLSTMAE</code> and <code>SparseTransformerAE</code></p>
@@ -935,7 +935,7 @@ So, by adding a sparsity regularization, we will be able to stop the neural netw
 <span class="n">model</span> <span class="o">=</span> <span class="n">VanillaAE</span><span class="p">(</span><span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">n_features</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="convolutional">Convolutional<a class="headerlink" href="#convolutional" title="Permanent link">&para;</a></h4>
-<p>Conv1dAE is a 1D convolutional autoencoder. </p>
+<p>Conv1dAE is a 1D convolutional autoencoder.</p>
 <p>The encoder network consists of convolutional layers and max pooling layers.
 The decoder network tries to reconstruct the same input shape by corresponding transposed
 convolutional and upsampling layers.</p>
@@ -950,18 +950,18 @@ convolutional and upsampling layers.</p>
 <span class="n">model</span> <span class="o">=</span> <span class="n">LSTMAE</span><span class="p">(</span><span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">no_features</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">15</span><span class="p">)</span>
 </code></pre></div>
 <h4 id="transformer">Transformer<a class="headerlink" href="#transformer" title="Permanent link">&para;</a></h4>
-<p>The transformer-based Autoencoder model was inspired from <a href="https://arxiv.org/abs/1706.03762">Attention is all you need</a> paper. </p>
+<p>The transformer-based Autoencoder model was inspired from <a href="https://arxiv.org/abs/1706.03762">Attention is all you need</a> paper.</p>
 <p>It consists of an encoder and a decoder which are both stacks of residual attention blocks, i.e a stack of layers set in such a way that the output of a layer is taken and added to another layer deeper in the block.</p>
 <p>These blocks can process an input sequence of variable length n without exhibiting a recurrent structure and allows transformer-based encoder-decoders to be highly parallelizable.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">TransformerAE</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">TransformerAE</span><span class="p">(</span>
-            <span class="n">num_heads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-            <span class="n">seq_length</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
-            <span class="n">dim_feedforward</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
-            <span class="n">num_encoder_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
-            <span class="n">num_decoder_layers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
+    <span class="n">num_heads</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+    <span class="n">seq_length</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+    <span class="n">dim_feedforward</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+    <span class="n">num_encoder_layers</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">num_decoder_layers</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span>
 </code></pre></div>
 
               

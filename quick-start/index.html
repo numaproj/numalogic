@@ -931,7 +931,7 @@
 <h1 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h1>
 <h2 id="installation">Installation<a class="headerlink" href="#installation" title="Permanent link">&para;</a></h2>
 <h3 id="install-pytorch-lightning">Install pytorch-lightning<a class="headerlink" href="#install-pytorch-lightning" title="Permanent link">&para;</a></h3>
-<p>Numalogic needs <a href="https://pytorch.org/">PyTorch</a> and 
+<p>Numalogic needs <a href="https://pytorch.org/">PyTorch</a> and
 <a href="https://pytorch-lightning.readthedocs.io/en/stable/">PyTorch Lightning</a> to work.
 You can install simply by:
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>pytorch-lightning
@@ -941,7 +941,7 @@ Or you can install your platform specific torch version from their website.</p>
 <div class="highlight"><pre><span></span><code>pip<span class="w"> </span>install<span class="w"> </span>numalogic
 </code></pre></div>
 <h2 id="numalogic-as-a-library">Numalogic as a Library<a class="headerlink" href="#numalogic-as-a-library" title="Permanent link">&para;</a></h2>
-<p>Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using the <code>AutoencoderTrainer</code>. Refer to <a href="../autoencoders/">training section</a> for other available options. </p>
+<p>Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using the <code>AutoencoderTrainer</code>. Refer to <a href="../autoencoders/">training section</a> for other available options.</p>
 <p>In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set, there are data points that go out of this range, which the algorithm should be able to detect as anomalies.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
@@ -953,7 +953,9 @@ Or you can install your platform specific torch version from their website.</p>
 <span class="kn">from</span> <span class="nn">numalogic.tools.data</span> <span class="kn">import</span> <span class="n">StreamingDataset</span>
 
 <span class="c1"># Create some synthetic data</span>
-<span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">X_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+    <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span>
+<span class="p">)</span>
 <span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">60</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">200</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
 <span class="c1"># Preprocess step</span>
@@ -977,7 +979,9 @@ Or you can install your platform specific torch version from their website.</p>
 <span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">train_dataloaders</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">))</span>
 
 <span class="c1"># Get the training reconstruction error from the model.</span>
-<span class="n">train_reconerr</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloaders</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">train_reconerr</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">dataloaders</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">train_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">train_reconerr</span><span class="p">)</span>
 
 <span class="c1"># Define threshold estimator, and find a threshold on the training reconstruction error.</span>
@@ -987,7 +991,9 @@ Or you can install your platform specific torch version from their website.</p>
 <span class="c1"># Now it is time for inference on the test data.</span>
 <span class="c1"># First, let&#39;s get the reconstruction error on the test set.</span>
 <span class="n">test_dataset</span> <span class="o">=</span> <span class="n">StreamingDataset</span><span class="p">(</span><span class="n">test_data</span><span class="p">,</span> <span class="n">seq_len</span><span class="o">=</span><span class="n">SEQ_LEN</span><span class="p">)</span>
-<span class="n">test_recon_err</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloaders</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">))</span>
+<span class="n">test_recon_err</span> <span class="o">=</span> <span class="n">trainer</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">dataloaders</span><span class="o">=</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">test_dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">test_recon_err</span><span class="p">)</span>
 
 <span class="c1"># The trained threshold estimator can give us the anomaly score</span>
@@ -1057,12 +1063,12 @@ numalogic-simple-pipeline-in-0-tmd0v               1/1     Running   0          
 <p>Send the data to the pod via curl
    <div class="highlight"><pre><span></span><code>curl<span class="w"> </span>-kq<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://localhost:8443/vertices/in<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;</span>
 </code></pre></div>
-   Note: only send an array of length 12 in data, as the sequence length used for training is 12.   </p>
+   Note: only send an array of length 12 in data, as the sequence length used for training is 12.</p>
 </li>
 </ol>
 <h3 id="training">Training<a class="headerlink" href="#training" title="Permanent link">&para;</a></h3>
-<p>Initially, there is no ML model present; to trigger training do a curl command and send any data to the pipeline. </p>
-<p>The training data is from <a href="https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources/train_data.csv">train_data.csv</a>, which follows a sinusoidal pattern where values fall in the range 200-350. </p>
+<p>Initially, there is no ML model present; to trigger training do a curl command and send any data to the pipeline.</p>
+<p>The training data is from <a href="https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources/train_data.csv">train_data.csv</a>, which follows a sinusoidal pattern where values fall in the range 200-350.</p>
 <p>The following logs will be seen in the training pod.</p>
 <div class="highlight"><pre><span></span><code>&gt;<span class="w"> </span>curl<span class="w"> </span>-kq<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://localhost:8443/vertices/in<span class="w"> </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;data&quot;:[0.9,0.1,0.2,0.9,0.9,0.9,0.9,0.8,1,0.9,0.9,0.7]}&#39;</span>
 
@@ -1085,10 +1091,10 @@ Created<span class="w"> </span>version<span class="w"> </span><span class="s1">&
 <span class="m">2023</span>-01-06<span class="w"> </span><span class="m">18</span>:37:07,957<span class="w"> </span>-<span class="w"> </span>INFO<span class="w"> </span>-<span class="w"> </span>41d571ca-0e98-4000-bcad-7752e5d5bc81<span class="w"> </span>-<span class="w"> </span>Model<span class="w"> </span>Saving<span class="w"> </span><span class="nb">complete</span>
 </code></pre></div>
 <h3 id="inference">Inference<a class="headerlink" href="#inference" title="Permanent link">&para;</a></h3>
-<p>Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference. </p>
+<p>Now, the pipeline is ready for inference with the model trained above, data can be sent to the pipeline for ML inference.</p>
 <p>After sending the data, look for logs in the output pod, which shows the anomaly score.</p>
 <p>Since we trained the model with data that follows a sinusoidal pattern where values range from 200-350, any value within this range is considered to be non-anomalous. And any value out of this range is considered to be anomalous.</p>
-<p>Sending non-anomalous data: 
+<p>Sending non-anomalous data:
 <div class="highlight"><pre><span></span><code>&gt; curl -kq -X POST https://localhost:8443/vertices/in -d &#39;{&quot;data&quot;:[358.060687,326.253469,329.023996,346.168602,339.511273,359.080987,341.036110,333.584121,376.034150,351.065394,355.379422,333.347769]}&#39;
 
 &gt; kubectl logs numalogic-simple-pipeline-out-0-xxxxx
@@ -1107,13 +1113,13 @@ Created<span class="w"> </span>version<span class="w"> </span><span class="s1">&
 </code></pre></div>
 <img alt="Mlflow UI" src="../assets/mlflow-ui.png" /></p>
 <h3 id="numaflow-ui">Numaflow UI<a class="headerlink" href="#numaflow-ui" title="Permanent link">&para;</a></h3>
-<p>To see the numaflow pipeline, we can port forward to the UI https://localhost:8000/. 
+<p>To see the numaflow pipeline, we can port forward to the UI https://localhost:8000/.
 <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>-n<span class="w"> </span>numaflow-system<span class="w"> </span>port-forward<span class="w"> </span>deployment/numaflow-server<span class="w"> </span><span class="m">8000</span>:8443
 </code></pre></div></p>
 <p><img alt="Numaflow UI" src="../assets/example-ui.png" /></p>
 <h3 id="train-on-your-own-data">Train on your own data<a class="headerlink" href="#train-on-your-own-data" title="Permanent link">&para;</a></h3>
-<p>If you want to train an ML model on your own data, replace the <code>train_data.csv</code> file with your own file under <a href="https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources">resources.</a> </p>
-<p>For more details, refer to <a href="https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline">numalogic-simple-pipeline</a> </p>
+<p>If you want to train an ML model on your own data, replace the <code>train_data.csv</code> file with your own file under <a href="https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources">resources.</a></p>
+<p>For more details, refer to <a href="https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline">numalogic-simple-pipeline</a></p>
 
               
             </article>

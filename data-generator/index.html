@@ -751,7 +751,7 @@
 
 
 <h1 id="data-generator">Data Generator<a class="headerlink" href="#data-generator" title="Permanent link">&para;</a></h1>
-<p>Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.  </p>
+<p>Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.</p>
 <p>Using the synthetic data, we can:</p>
 <ol>
 <li>Compare and evaluate different ML algorithms, since we have labeled anomalies</li>
@@ -776,14 +776,14 @@
 <span class="p">)</span>
 
 <span class="c1"># shape: (8000, 3) with column names [s1, s2, s3]</span>
-<span class="n">ts_df</span> <span class="o">=</span> <span class="n">ts_generator</span><span class="o">.</span><span class="n">gen_tseries</span><span class="p">()</span>  
+<span class="n">ts_df</span> <span class="o">=</span> <span class="n">ts_generator</span><span class="o">.</span><span class="n">gen_tseries</span><span class="p">()</span>
 
 <span class="c1"># Split into test and train</span>
 <span class="n">train_df</span><span class="p">,</span> <span class="n">test_df</span> <span class="o">=</span> <span class="n">ts_generator</span><span class="o">.</span><span class="n">train_test_split</span><span class="p">(</span><span class="n">ts_df</span><span class="p">,</span> <span class="n">test_size</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 </code></pre></div>
 <img alt="Train and Test sets" src="../assets/train_test.png" /></p>
 <h3 id="inject-anomalies">Inject anomalies<a class="headerlink" href="#inject-anomalies" title="Permanent link">&para;</a></h3>
-<p>Now, once we generate the synthetic data like above, we can inject anomalies into the test data set using <code>AnomalyGenerator</code>. </p>
+<p>Now, once we generate the synthetic data like above, we can inject anomalies into the test data set using <code>AnomalyGenerator</code>.</p>
 <p><code>AnomalyGenerator</code> supports the following types of anomalies:</p>
 <ol>
 <li>global: Outliers in the global context</li>
@@ -795,7 +795,7 @@
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.synthetic</span> <span class="kn">import</span> <span class="n">AnomalyGenerator</span>
 
 <span class="c1"># columns to inject anomalies</span>
-<span class="n">injected_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;s1&quot;</span><span class="p">,</span> <span class="s2">&quot;s2&quot;</span><span class="p">]</span>  
+<span class="n">injected_cols</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;s1&quot;</span><span class="p">,</span> <span class="s2">&quot;s2&quot;</span><span class="p">]</span>
 <span class="n">anomaly_generator</span> <span class="o">=</span> <span class="n">AnomalyGenerator</span><span class="p">(</span>
     <span class="n">train_df</span><span class="p">,</span> <span class="n">anomaly_type</span><span class="o">=</span><span class="s2">&quot;contextual&quot;</span><span class="p">,</span> <span class="n">anomaly_ratio</span><span class="o">=</span><span class="mf">0.3</span>
 <span class="p">)</span>

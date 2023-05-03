@@ -677,10 +677,10 @@
 
 
 <h1 id="threshold-estimators">Threshold Estimators<a class="headerlink" href="#threshold-estimators" title="Permanent link">&para;</a></h1>
-<p>Threshold Estimators are used for identifying the threshold limit above which we regard the datapoint as anomaly. 
-It is a simple Estimator that extends BaseEstimator. </p>
-<p>Currently, the library supports <code>StdDevThreshold</code>. This takes in paramaters <code>min_thresh</code> and <code>std_factor</code>. This model 
-defines threshold as <code>mean + 3 * std_factor</code>. </p>
+<p>Threshold Estimators are used for identifying the threshold limit above which we regard the datapoint as anomaly.
+It is a simple Estimator that extends BaseEstimator.</p>
+<p>Currently, the library supports <code>StdDevThreshold</code>. This takes in paramaters <code>min_thresh</code> and <code>std_factor</code>. This model
+defines threshold as <code>mean + 3 * std_factor</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">numalogic.models.threshold</span> <span class="kn">import</span> <span class="n">StdDevThreshold</span>
 
@@ -688,7 +688,7 @@ defines threshold as <code>mean + 3 * std_factor</code>. </p>
 <span class="n">x_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 <span class="n">x_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
 
-<span class="c1"># Here we want a threshold such that anything </span>
+<span class="c1"># Here we want a threshold such that anything</span>
 <span class="c1"># outside 5 deviations from the mean will be anomalous.</span>
 <span class="n">thresh_clf</span> <span class="o">=</span> <span class="n">StdDevThreshold</span><span class="p">(</span><span class="n">std_factor</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">thresh_clf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">x_train</span><span class="p">)</span>

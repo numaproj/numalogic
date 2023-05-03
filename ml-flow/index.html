@@ -792,15 +792,13 @@ which has already been installed optionally via <code>poetry</code> dependency, 
     <span class="n">skeys</span><span class="o">=</span><span class="n">static_keys</span><span class="p">,</span>
     <span class="n">dkeys</span><span class="o">=</span><span class="n">dynamic_keys</span><span class="p">,</span>
     <span class="n">primary_artifact</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">secondary_artifacts</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;preproc&quot;</span><span class="p">:</span> <span class="n">scaler</span><span class="p">}</span>
+    <span class="n">secondary_artifacts</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;preproc&quot;</span><span class="p">:</span> <span class="n">scaler</span><span class="p">},</span>
 <span class="p">)</span>
 </code></pre></div>
 <h3 id="model-loading">Model loading<a class="headerlink" href="#model-loading" title="Permanent link">&para;</a></h3>
 <p>Once, the models are save to MLflow, the <code>load</code> function of <code>MLflowRegistry</code> can be used to load the model.</p>
 <div class="highlight"><pre><span></span><code><span class="n">registry</span> <span class="o">=</span> <span class="n">MLflowRegistry</span><span class="p">(</span><span class="n">tracking_uri</span><span class="o">=</span><span class="s2">&quot;http://0.0.0.0:8080&quot;</span><span class="p">)</span>
-<span class="n">artifact_dict</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
-    <span class="n">skeys</span><span class="o">=</span><span class="n">static_keys</span><span class="p">,</span> <span class="n">dkeys</span><span class="o">=</span><span class="n">dynamic_keys</span>
-<span class="p">)</span>
+<span class="n">artifact_dict</span> <span class="o">=</span> <span class="n">registry</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">skeys</span><span class="o">=</span><span class="n">static_keys</span><span class="p">,</span> <span class="n">dkeys</span><span class="o">=</span><span class="n">dynamic_keys</span><span class="p">)</span>
 <span class="n">scaler</span> <span class="o">=</span> <span class="n">artifact_dict</span><span class="p">[</span><span class="s2">&quot;secondary_artifacts&quot;</span><span class="p">][</span><span class="s2">&quot;preproc&quot;</span><span class="p">]</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">artifact_dict</span><span class="p">[</span><span class="s2">&quot;primary_artifact&quot;</span><span class="p">]</span>
 </code></pre></div>
