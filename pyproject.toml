@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.4.dev0"
+version = "0.4.dev1"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -48,9 +48,9 @@ matplotlib = "^3.4.2"
 black = "^22.6"
 pytest = "^7.1"
 pytest-cov = "^4.0"
-pylint = "^2.14.2"
-flake8 = "^5.0"
 torchinfo = "^1.7.2"
+ruff = "^0.0.264"
+pre-commit = "^3.3.1"
 
 [tool.poetry.group.jupyter]
 optional = true
@@ -83,6 +83,13 @@ exclude = '''
   | tests/.*/setup.py
 )/
 '''
+
+[tool.ruff]
+line-length = 100
+src = ["numalogic", "tests"]
+select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN"]
+ignore = ["TRY003", "TRY301"]
+target-version = "py39"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

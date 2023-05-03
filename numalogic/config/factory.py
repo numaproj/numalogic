@@ -33,15 +33,19 @@ class _ObjectFactory:
     def get_instance(self, model_info: ModelInfo):
         try:
             _cls = self._CLS_MAP[model_info.name]
-        except KeyError:
-            raise UnknownConfigArgsError(f"Invalid model info instance provided: {model_info}")
+        except KeyError as err:
+            raise UnknownConfigArgsError(
+                f"Invalid model info instance provided: {model_info}"
+            ) from err
         return _cls(**model_info.conf)
 
     def get_cls(self, model_info: ModelInfo):
         try:
             return self._CLS_MAP[model_info.name]
-        except KeyError:
-            raise UnknownConfigArgsError(f"Invalid model info instance provided: {model_info}")
+        except KeyError as err:
+            raise UnknownConfigArgsError(
+                f"Invalid model info instance provided: {model_info}"
+            ) from err
 
 
 class PreprocessFactory(_ObjectFactory):

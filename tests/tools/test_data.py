@@ -14,6 +14,7 @@ from numalogic.tools.exceptions import InvalidDataShapeError
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
 SEQ_LEN = 12
+RNG = np.random.default_rng(42)
 
 
 class TestStreamingDataset(unittest.TestCase):
@@ -26,7 +27,6 @@ class TestStreamingDataset(unittest.TestCase):
         cls.m = 30
         cls.n = 3
         cls.data = np.arange(cls.m * cls.n).reshape(30, 3)
-        # cls.data = np.random.randn(cls.m, cls.n)
 
     def test_dataset(self):
         dataset = StreamingDataset(self.data, seq_len=SEQ_LEN)
@@ -81,8 +81,8 @@ class TestTimeSeriesDataModule(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.n = 3
-        cls.train_data = np.random.randn(100, cls.n)
-        cls.test_data = np.random.randn(20, cls.n)
+        cls.train_data = RNG.random((100, cls.n))
+        cls.test_data = RNG.random((20, cls.n))
 
     def test_datamodule(self):
         datamodule = TimeseriesDataModule(SEQ_LEN, self.train_data, val_split_ratio=0.2)

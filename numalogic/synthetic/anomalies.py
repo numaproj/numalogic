@@ -10,7 +10,7 @@
 # limitations under the License.
 
 
-from typing import Sequence, List
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
@@ -28,6 +28,7 @@ class AnomalyGenerator:
         anomaly_sign: str = "positive",
         mu: float = 0.1,
         sigma: float = 0.01,
+        random_seed: int = 42,
     ):
         """
         Class to inject synthetic anomaly to the input time series based on parameters.
@@ -47,6 +48,7 @@ class AnomalyGenerator:
                     - "negative": lower outliers injected compared to the current actual value
             mu: Distributions mean of the Gaussian Noise injected
             sigma: Distributions std of the Gaussian Noise injected
+            random_seed: seed for random number generator
         """
 
         self.anomaly_type = anomaly_type
@@ -64,9 +66,10 @@ class AnomalyGenerator:
         self.ref_stats_df = scaled_ref_df.describe()
         self.__injected_cols = []
         self.block_size = None
+        self._rnd_gen = np.random.default_rng(random_seed)
 
     @property
-    def injected_cols(self) -> List[str]:
+    def injected_cols(self) -> list[str]:
         return self.__injected_cols
 
     def add_impact_sign(self) -> int:
@@ -110,7 +113,7 @@ class AnomalyGenerator:
             factor = abs(self.ref_stats_df.loc["max", col] - outlier_block.mean())
 
             # Add gaussian noise to the data
-            noise = np.random.normal(self.mu, self.sigma, outlier_block.shape)
+            noise = self._rnd_gen.normal(self.mu, self.sigma, outlier_block.shape)
             outlier_block += noise + impact * factor * abs(outlier_block) * self.add_impact_sign()
 
             # Add labels to the data
@@ -139,7 +142,7 @@ class AnomalyGenerator:
             outlier_block = tseries[idx_start.values[0] : idx_end.values[0]]
 
             # Add gaussian noise to the data
-            noise = np.random.normal(self.mu, self.sigma, outlier_block.shape)
+            noise = self._rnd_gen.normal(self.mu, self.sigma, outlier_block.shape)
 
             dist_from_min = np.linalg.norm(
                 outlier_block.to_numpy() - self.ref_stats_df.loc["min", col]
@@ -185,7 +188,7 @@ class AnomalyGenerator:
             outlier_block = tseries[idx_start.values[0] : idx_end.values[0]]
 
             # Add gaussian noise to the data
-            noise = np.random.normal(self.mu, self.sigma, outlier_block.shape)
+            noise = self._rnd_gen.normal(self.mu, self.sigma, outlier_block.shape)
 
             dist_from_min = np.linalg.norm(
                 outlier_block.to_numpy() - self.ref_stats_df.loc["min", col]
@@ -228,9 +231,9 @@ class AnomalyGenerator:
             idx_end = idx_start + (self.block_size * self.freq)
             outlier_block = tseries[idx_start.values[0] : idx_end.values[0]]
             # Add gaussian noise to the data
-            noise = np.random.normal(self.mu, self.sigma, outlier_block.shape)
+            noise = self._rnd_gen.normal(self.mu, self.sigma, outlier_block.shape)
 
-            if np.random.binomial(1, 0.5):
+            if self._rnd_gen.binomial(1, 0.5):
                 factor = abs(self.ref_stats_df.loc["min", col] - outlier_block.mean())
                 outlier_block -= (
                     noise + impact * factor * abs(outlier_block) * self.add_impact_sign()
@@ -244,7 +247,7 @@ class AnomalyGenerator:
             anomaly_col = anomaly_df["is_anomaly"]
             anomaly_block = anomaly_col[idx_start.values[0] : idx_end.values[0]]
             anomaly_block += self.add_impact_sign()
-            gap = np.random.randint(*gap_range)
+            gap = self._rnd_gen.integers(*gap_range)
             idx_start = idx_end + (gap * self.freq)
 
         return pd.DataFrame(
@@ -262,6 +265,6 @@ class AnomalyGenerator:
         )
         self.block_size = np.ceil(target_df.shape[0] * self.anomaly_ratio).astype(int)
         if not cols:
-            cols = np.random.choice(target_df.columns, self.__MIN_COLUMNS[self.anomaly_type])
+            cols = self._rnd_gen.choice(target_df.columns, self.__MIN_COLUMNS[self.anomaly_type])
         self.__injected_cols = cols
         return target_df

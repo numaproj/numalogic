@@ -19,7 +19,7 @@ format: clean
 	poetry run black numalogic/ examples/ tests/ benchmarks/
 
 lint: format
-	poetry run flake8 .
+	poetry run ruff check --fix .
 
 # install all dependencies
 setup:

@@ -43,8 +43,8 @@ class TestMLflow(unittest.TestCase):
     def assertNotRaises(self, exc_type):
         try:
             yield None
-        except exc_type:
-            raise self.failureException("{} raised".format(exc_type.__name__))
+        except exc_type as err:
+            raise self.failureException(f"{exc_type.__name__} raised") from err
 
     def test_construct_key(self):
         skeys = ["model_", "nnet"]

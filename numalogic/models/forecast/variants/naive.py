@@ -1,5 +1,3 @@
-from typing import Dict, Tuple
-
 import numpy as np
 import pandas as pd
 from sklearn.metrics import r2_score
@@ -29,7 +27,7 @@ class BaselineForecaster:
     def inverse_normalize(self, df: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(self.pipeline.inverse_transform(df), index=df.index, columns=df.columns)
 
-    def find_threshold(self, train_df: pd.DataFrame, k=3) -> Dict[str, Tuple[float, float]]:
+    def find_threshold(self, train_df: pd.DataFrame, k=3) -> dict[str, tuple[float, float]]:
         for col in train_df.columns:
             mean = train_df[col].mean()
             std = max(1e-2, train_df[col].std())
@@ -39,7 +37,7 @@ class BaselineForecaster:
             self.means[col] = mean
         return self.thresholds
 
-    def fit(self, train_df: pd.DataFrame) -> Dict[str, Tuple[float, float]]:
+    def fit(self, train_df: pd.DataFrame) -> dict[str, tuple[float, float]]:
         self.pipeline.fit(train_df)
         scaled_train_df = self.normalize(train_df)
         return self.find_threshold(scaled_train_df)
