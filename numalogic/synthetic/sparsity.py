@@ -36,7 +36,6 @@ class SparsityGenerator:
         rows = random.sample(range(0, shape[0]), int(shape[0] * self.sparse_ratio))
 
         for row in rows:
-
             # identifying the columns to which the data is going to be imputed with 0.
             columns = random.sample(range(0, shape[1]), int(shape[1] * self.sparse_ratio))
             self._data.iloc[row, columns] = 0

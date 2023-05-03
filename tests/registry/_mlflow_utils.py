@@ -34,8 +34,7 @@ def create_model():
 
 def model_sklearn():
     params = {"n_estimators": 5, "random_state": 42}
-    sk_learn_rfr = RandomForestRegressor(**params)
-    return sk_learn_rfr
+    return RandomForestRegressor(**params)
 
 
 def mock_log_state_dict(*_, **__):
@@ -300,11 +299,7 @@ def return_sklearn_rundata():
             status="RUNNING",
             user_id="lol",
         ),
-        run_data=RunData(
-            metrics={},
-            tags={},
-            params={},
-        ),
+        run_data=RunData(metrics={}, tags={}, params={}),
     )
 
 

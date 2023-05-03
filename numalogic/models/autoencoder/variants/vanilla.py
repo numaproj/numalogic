@@ -149,7 +149,6 @@ class VanillaAE(BaseAE):
         dropout_p: float = 0.25,
         **kwargs,
     ):
-
         super().__init__(**kwargs)
         self.seq_len = seq_len
         self.dropout_prob = dropout_p
@@ -202,8 +201,7 @@ class VanillaAE(BaseAE):
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.n_features)
-        recon_err = self.criterion(batch, recon, reduction="none")
-        return recon_err
+        return self.criterion(batch, recon, reduction="none")
 
 
 class SparseVanillaAE(VanillaAE):

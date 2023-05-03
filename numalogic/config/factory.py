@@ -61,10 +61,7 @@ class PreprocessFactory(_ObjectFactory):
 
 
 class PostprocessFactory(_ObjectFactory):
-    _CLS_MAP = {
-        "TanhNorm": TanhNorm,
-        "ExpMovingAverage": ExpMovingAverage,
-    }
+    _CLS_MAP = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage}
 
 
 class ThresholdFactory(_ObjectFactory):
