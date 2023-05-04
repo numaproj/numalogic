@@ -17,7 +17,7 @@ class RedisRegistry(ArtifactManager):
     Model saving and loading using Redis Registry.
     Args:
         client: Take in the reids client already established/created
-        ttl: Total Time to Live for the key when saving in redis (dafault = 5000)
+        ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
 
     Examples
     --------

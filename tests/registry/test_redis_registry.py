@@ -1,12 +1,14 @@
 import unittest
+from unittest.mock import Mock, patch
 
 import fakeredis
+from redis import ConnectionError, InvalidResponse, TimeoutError
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry
-from numalogic.tools.exceptions import ModelKeyNotFound
+from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 
 
 class TestRedisRegistry(unittest.TestCase):
@@ -99,3 +101,18 @@ class TestRedisRegistry(unittest.TestCase):
         with self.assertRaises(ModelKeyNotFound):
             self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
             self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version=str(8))
+
+    @patch("redis.Redis.set", Mock(side_effect=ConnectionError))
+    def test_exception_call1(self):
+        with self.assertRaises(RedisRegistryError):
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+
+    @patch("redis.Redis.get", Mock(side_effect=InvalidResponse))
+    def test_exception_call2(self):
+        with self.assertRaises(RedisRegistryError):
+            self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+
+    @patch("redis.Redis.exists", Mock(side_effect=TimeoutError))
+    def test_exception_call3(self):
+        with self.assertRaises(RedisRegistryError):
+            self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version="0")
