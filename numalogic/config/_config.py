@@ -36,6 +36,8 @@ class ModelInfo:
 @dataclass
 class RegistryInfo:
     """
+    Registry config base class
+
     Args:
         name: name of the registry
         conf: kwargs for instantiating the model class

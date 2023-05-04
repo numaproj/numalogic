@@ -132,7 +132,8 @@ class RedisRegistry(ArtifactManager):
         version: str = None,
     ) -> Optional[ArtifactData]:
         """
-        Saves the artifact into mlflow registry and updates version.
+        Loads the artifact from redis registry. Either latest or version (one of the arguments)
+         is needed to load the respective artifact.
         Args:
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
@@ -140,7 +141,7 @@ class RedisRegistry(ArtifactManager):
             version: version to load
 
         Returns:
-            mlflow ModelVersion instance
+            ArtifactData instance
         """
         if (latest and version) or (not latest and not version):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")

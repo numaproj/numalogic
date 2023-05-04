@@ -10,7 +10,7 @@
 # limitations under the License.
 
 
-from numalogic.config._config import NumalogicConf, ModelInfo, LightningTrainerConf
+from numalogic.config._config import NumalogicConf, ModelInfo, LightningTrainerConf, RegistryInfo
 from numalogic.config.factory import (
     ModelFactory,
     PreprocessFactory,
@@ -23,7 +23,7 @@ __all__ = [
     "NumalogicConf",
     "ModelInfo",
     "LightningTrainerConf",
-    "RegistryConf",
+    "RegistryInfo",
     "ModelFactory",
     "PreprocessFactory",
     "PostprocessFactory",
