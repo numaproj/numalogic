@@ -13,7 +13,6 @@
 import logging
 from enum import Enum
 from typing import Optional, Any
-from collections.abc import Sequence
 
 import mlflow.pyfunc
 import mlflow.pytorch
@@ -25,7 +24,7 @@ from mlflow.tracking import MlflowClient
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry.artifact import ArtifactCache
 from numalogic.tools.exceptions import ModelVersionError
-from numalogic.tools.types import artifact_t
+from numalogic.tools.types import artifact_t, KEYS, META_T
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -136,7 +135,7 @@ class MLflowRegistry(ArtifactManager):
         return None
 
     def load(
-        self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
+        self, skeys: KEYS, dkeys: KEYS, latest: bool = True, version: str = None
     ) -> Optional[ArtifactData]:
         model_key = self.construct_key(skeys, dkeys)
 
@@ -180,11 +179,11 @@ class MLflowRegistry(ArtifactManager):
 
     def save(
         self,
-        skeys: Sequence[str],
-        dkeys: Sequence[str],
+        skeys: KEYS,
+        dkeys: KEYS,
         artifact: artifact_t,
         run_id: str = None,
-        **metadata: str,
+        **metadata: META_T,
     ) -> Optional[ModelVersion]:
         """
         Saves the artifact into mlflow registry and updates version.
@@ -214,7 +213,7 @@ class MLflowRegistry(ArtifactManager):
         finally:
             mlflow.end_run()
 
-    def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
+    def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
         """
         Deletes the artifact with a specified version from mlflow registry.
         Args:
@@ -234,9 +233,7 @@ class MLflowRegistry(ArtifactManager):
         else:
             self._clear_cache(model_key)
 
-    def transition_stage(
-        self, skeys: Sequence[str], dkeys: Sequence[str]
-    ) -> Optional[ModelVersion]:
+    def transition_stage(self, skeys: KEYS, dkeys: KEYS) -> Optional[ModelVersion]:
         """
         Changes stage information for the given model. Sets new model to "Production". The old
         production model is set to "Staging" and the rest model versions are set to "Archived".
@@ -276,7 +273,7 @@ class MLflowRegistry(ArtifactManager):
             _LOGGER.info("Successfully transitioned model to Production stage")
             return latest_model_data
 
-    def __delete_stale_models(self, skeys: Sequence[str], dkeys: Sequence[str]):
+    def __delete_stale_models(self, skeys: KEYS, dkeys: KEYS):
         model_name = self.construct_key(skeys, dkeys)
         list_model_versions = list(self.client.search_model_versions(f"name='{model_name}'"))
         if len(list_model_versions) > self.models_to_retain:
@@ -286,7 +283,7 @@ class MLflowRegistry(ArtifactManager):
                 _LOGGER.debug("Deleted stale model version : %s", stale_model.version)
 
     def __load_artifacts(
-        self, skeys: Sequence[str], dkeys: Sequence[str], version_info: ModelVersion
+        self, skeys: KEYS, dkeys: KEYS, version_info: ModelVersion
     ) -> tuple[artifact_t, dict[str, Any]]:
         model_key = self.construct_key(skeys, dkeys)
         model = self.handler.load_model(model_uri=f"models:/{model_key}/{version_info.version}")
