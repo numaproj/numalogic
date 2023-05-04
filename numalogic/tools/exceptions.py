@@ -42,5 +42,9 @@ class ModelVersionError(Exception):
     pass
 
 
-class ModelKeyNotFound(Exception):
+class RedisRegistryError(Exception):
+    pass
+
+
+class ModelKeyNotFound(RedisRegistryError):
     pass

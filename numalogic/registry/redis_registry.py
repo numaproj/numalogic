@@ -1,15 +1,13 @@
 import logging
 import time
-from typing import Optional, Any
-from collections.abc import Sequence
+from typing import Optional
 
-from redis.client import Redis, Pipeline
 from redis.exceptions import RedisError
 
 from numalogic.registry import ArtifactManager, ArtifactData
-from numalogic.registry.serialize import loads, dumps
-from numalogic.tools.exceptions import ModelKeyNotFound
-from numalogic.tools.types import artifact_t
+from numalogic.registry._serialize import loads, dumps
+from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
+from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T
 
 _LOGGER = logging.getLogger()
 
@@ -37,115 +35,99 @@ class RedisRegistry(ArtifactManager):
     """
 
     __slots__ = ("client", "ttl")
-    _HOST = None
-
-    def __new__(
-        cls,
-        client: Redis = None,
-        ttl: int = 604800,
-        *args,
-        **kwargs,
-    ):
-        instance = super().__new__(cls, *args, **kwargs)
-        if not cls._HOST:
-            cls._HOST = "None"
-        return instance
 
     def __init__(
         self,
-        client: Redis = None,
+        client: redis_client_t,
         ttl: int = 604800,
     ):
-        super().__init__("None")
+        super().__init__("")
         self.client = client
-        if not client:
-            raise ValueError("Missing Redis Client")
         self.ttl = ttl
 
     @staticmethod
-    def construct_key(*keys: [Sequence[str]]) -> str:
+    def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
         """
         Returns a single key comprising static and dynamic key fields.
+        Override this method if customization is needed.
         Args:
-            keys: Sequence of strings sequence combined to form key
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings
+
         Returns:
             key
         """
-        key = "::".join([":".join(key) for key in keys])
-        return key
+        _static_key = ":".join(skeys)
+        _dynamic_key = ":".join(dkeys)
+        return "::".join([_static_key, _dynamic_key])
+
+    @staticmethod
+    def __construct_production_key(key: str):
+        return RedisRegistry.construct_key(skeys=[key], dkeys=["PROD"])
+
+    @staticmethod
+    def __construct_version_key(key: str, version: str):
+        return RedisRegistry.construct_key(skeys=[key], dkeys=[version])
 
     @staticmethod
     def get_version(key: str) -> str:
         """
         get version number from the string
         Args:
-            key: key
+            key: full model key
 
         Returns:
             version
         """
-        version_number = key.split("::")
-        return version_number[-1]
+        return key.split("::")[-1]
 
-    def __load_metadata(self, model_key: str) -> dict[str, Any]:
-        metadata = None
-        if self.client.hexists(name=model_key, key="metadata"):
-            serialized_metadata = self.client.hget(name=model_key, key="metadata")
-            metadata = loads(serialized_metadata)
-        return metadata
-
-    def __save_metadata(self, pipe: Pipeline, metadata: dict[str, Any], key: str):
-        serialized_metadata = dumps(metadata)
-        pipe.hset(
-            name=key,
-            mapping={"metadata": serialized_metadata},
-        )
-
-    def __get_model_key(
-        self, latest: bool, version: str, skeys: Sequence[str], dkeys: Sequence[str]
-    ) -> str:
+    def __get_model_key(self, latest: bool, version: str, key: str) -> str:
         if latest:
-            production_key = self.construct_key(skeys, dkeys, ["PRODUCTION"])
-            if not production_key:
+            production_key = self.__construct_production_key(key)
+            if not self.client.exists(production_key):
                 raise ModelKeyNotFound(
                     f"Production key: {production_key}, Not Found !!!\n Exiting....."
                 )
             model_key = self.client.get(production_key)
-            if not model_key:
+            if not self.client.exists(model_key):
                 raise ModelKeyNotFound(
                     "Production key = {} is pointing to the key: {} that "
                     "is missing the redis registry".format(production_key, model_key)
                 )
         else:
-            model_key = self.construct_key(skeys, dkeys, [version])
+            model_key = self.__construct_version_key(key, version)
             if not self.client.exists(model_key):
                 raise ModelKeyNotFound("Could not find model key with key: %s" % model_key)
         return model_key
 
     def __save_artifact(
-        self, pipe, artifact: artifact_t, skeys: Sequence[str], dkeys: Sequence[str], version: str
-    ):
-        new_version_key = self.construct_key(skeys, dkeys, [version])
-        production_key = self.construct_key(skeys, dkeys, ["PRODUCTION"])
+        self, pipe, artifact: artifact_t, metadata: META_T, key: KEYS, version: str
+    ) -> str:
+        new_version_key = self.__construct_version_key(key, version)
+        production_key = self.__construct_production_key(key)
         pipe.set(name=production_key, value=new_version_key)
         _LOGGER.info(
             "Setting Production key : %d ,to this new key = %s", production_key, new_version_key
         )
-        serialized_object = dumps(deserialized_object=artifact)
+        serialized_metadata = ""
+        if metadata:
+            serialized_metadata = dumps(deserialized_object=metadata)
+        serialized_artifact = dumps(deserialized_object=artifact)
         pipe.hset(
             name=new_version_key,
             mapping={
-                "model": serialized_object,
+                "artifact": serialized_artifact,
                 "version": str(version),
                 "timestamp": int(time.time()),
+                "metadata": serialized_metadata,
             },
         )
         return new_version_key
 
     def load(
         self,
-        skeys: Sequence[str],
-        dkeys: Sequence[str],
+        skeys: KEYS,
+        dkeys: KEYS,
         latest: bool = True,
         version: str = None,
     ) -> Optional[ArtifactData]:
@@ -160,36 +142,41 @@ class RedisRegistry(ArtifactManager):
         Returns:
             mlflow ModelVersion instance
         """
+        if (latest and version) or (not latest and not version):
+            raise ValueError("Either One of 'latest' or 'version' needed in load method call")
+        key = self.construct_key(skeys, dkeys)
         try:
-            if (latest and version) or (not latest and not version):
-                raise ValueError("Either One of 'latest' or 'version' needed in load method call")
-            model_key = self.__get_model_key(latest, version, skeys, dkeys)
-            serialized_model, model_version, model_timestamp = self.client.hmget(
-                name=model_key, keys=["model", "version", "timestamp"]
+            model_key = self.__get_model_key(latest, version, key)
+            (
+                serialized_artifact,
+                artifact_version,
+                artifact_timestamp,
+                serialized_metadata,
+            ) = self.client.hmget(
+                name=model_key, keys=["artifact", "version", "timestamp", "metadata"]
             )
-            deserialized_model = loads(serialized_model)
-            metadata = self.__load_metadata(model_key)
+            deserialized_artifact = loads(serialized_artifact)
+            deserialized_metadata = None
+            if serialized_metadata:
+                deserialized_metadata = loads(serialized_metadata)
+        except RedisError as err:
+            raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
+        else:
             return ArtifactData(
-                artifact=deserialized_model,
-                metadata=metadata,
+                artifact=deserialized_artifact,
+                metadata=deserialized_metadata,
                 extras={
-                    "model_timestamp": int(model_timestamp.decode()),
-                    "model_version": model_version.decode(),
+                    "timestamp": artifact_timestamp.decode(),
+                    "version": artifact_version.decode(),
                 },
             )
-        except ModelKeyNotFound as model_key_error:
-            _LOGGER.exception("Missing Key: %s", model_key_error)
-            return None
-        except RedisError as ex:
-            _LOGGER.exception("Unexpected error: %s", ex)
-            return None
 
     def save(
         self,
-        skeys: Sequence[str],
-        dkeys: Sequence[str],
+        skeys: KEYS,
+        dkeys: KEYS,
         artifact: artifact_t,
-        **metadata: str,
+        **metadata: META_T,
     ) -> Optional[str]:
         """
         Saves the artifact into redis registry and updates version.
@@ -202,46 +189,42 @@ class RedisRegistry(ArtifactManager):
         Returns:
             model version
         """
+        key = self.construct_key(skeys, dkeys)
+        production_key = self.__construct_production_key(key)
+        version = 0
         try:
-            production_key = self.construct_key(skeys, dkeys, ["PRODUCTION"])
-            version = 0
             if self.client.exists(production_key):
-                _LOGGER.info("Production key exists for the model")
+                _LOGGER.debug("Production key exists for the model")
                 version_key = self.client.get(name=production_key)
                 version = int(self.get_version(version_key.decode())) + 1
             with self.client.pipeline() as pipe:
-                new_version_key = self.__save_artifact(pipe, artifact, skeys, dkeys, str(version))
-                if metadata:
-                    self.__save_metadata(pipe, metadata, new_version_key)
+                new_version_key = self.__save_artifact(pipe, artifact, metadata, key, str(version))
                 pipe.expire(name=new_version_key, time=self.ttl)
                 _LOGGER.info("Model is successfully with the key = %s", new_version_key)
                 pipe.execute()
-                return str(version)
-        except RedisError as ex:
-            _LOGGER.exception("Unexpected error: %s", ex)
-            return None
+        except RedisError as err:
+            raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
+        else:
+            return str(version)
 
-    def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
+    def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
         """
-        Saves the artifact into mlflow registry and updates version.
+        Deletes the model version from registry.
         Args:
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             version: model version to delete
         """
+        key = self.construct_key(skeys, dkeys)
+        del_key = self.__construct_version_key(key, version)
         try:
-            with self.client.pipeline() as pipe:
-                del_key = self.construct_key(skeys, dkeys, [version])
-                if pipe.exists(del_key):
-                    pipe.delete(del_key)
-                    _LOGGER.info("Model with the key = %s, deleted successfully", del_key)
-                else:
-                    raise ModelKeyNotFound(
-                        "Key to delete: %s, Not Found !!!\n Exiting....." % del_key,
-                    )
-        except ModelKeyNotFound as model_key_error:
-            _LOGGER.exception("Missing Key: %s", model_key_error)
-            return
-        except RedisError as ex:
-            _LOGGER.exception("Unexpected error: %s", ex)
-            return
+            if self.client.exists(del_key):
+                self.client.delete(del_key)
+                _LOGGER.info("Model with the key = %s, deleted successfully", del_key)
+            else:
+                _LOGGER.debug("Key to delete: %s, Not Found !!!\n Exiting.....", del_key)
+                raise ModelKeyNotFound(
+                    "Key to delete: %s, Not Found !!!\n Exiting....." % del_key,
+                )
+        except RedisError as err:
+            raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
