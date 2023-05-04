@@ -40,3 +40,11 @@ class UnknownConfigArgsError(Exception):
 
 class ModelVersionError(Exception):
     pass
+
+
+class RedisRegistryError(Exception):
+    pass
+
+
+class ModelKeyNotFound(RedisRegistryError):
+    pass

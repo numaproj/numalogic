@@ -11,13 +11,9 @@
 
 
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar, Union
-from collections.abc import Sequence
+from typing import Any, Generic, TypeVar
 
-from numalogic.tools.types import artifact_t, S_KEYS, D_KEYS
-
-META_T = TypeVar("META_T", bound=dict[str, Union[str, list, dict]])
-EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
+from numalogic.tools.types import artifact_t, KEYS, META_T, EXTRA_T
 
 
 @dataclass
@@ -33,7 +29,7 @@ A_D = TypeVar("A_D", bound=ArtifactData, covariant=True)
 M_K = TypeVar("M_K", bound=str)
 
 
-class ArtifactManager(Generic[S_KEYS, D_KEYS, A_D]):
+class ArtifactManager(Generic[KEYS, A_D]):
     """
     Abstract base class for artifact save, load and delete.
 
@@ -46,7 +42,7 @@ class ArtifactManager(Generic[S_KEYS, D_KEYS, A_D]):
         self.uri = uri
 
     def load(
-        self, skeys: Sequence[str], dkeys: Sequence[str], latest: bool = True, version: str = None
+        self, skeys: KEYS, dkeys: KEYS, latest: bool = True, version: str = None
     ) -> ArtifactData:
         """
         Loads the desired artifact from mlflow registry and returns it.
@@ -58,9 +54,7 @@ class ArtifactManager(Generic[S_KEYS, D_KEYS, A_D]):
         """
         raise NotImplementedError("Please implement this method!")
 
-    def save(
-        self, skeys: Sequence[str], dkeys: Sequence[str], artifact: artifact_t, **metadata
-    ) -> Any:
+    def save(self, skeys: KEYS, dkeys: KEYS, artifact: artifact_t, **metadata: META_T) -> Any:
         r"""
         Saves the artifact into mlflow registry and updates version.
         Args:
@@ -71,7 +65,7 @@ class ArtifactManager(Generic[S_KEYS, D_KEYS, A_D]):
         """
         raise NotImplementedError("Please implement this method!")
 
-    def delete(self, skeys: Sequence[str], dkeys: Sequence[str], version: str) -> None:
+    def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
         """
         Deletes the artifact with a specified version from mlflow registry.
         Args:
@@ -82,7 +76,7 @@ class ArtifactManager(Generic[S_KEYS, D_KEYS, A_D]):
         raise NotImplementedError("Please implement this method!")
 
     @staticmethod
-    def construct_key(skeys: Sequence[str], dkeys: Sequence[str]) -> str:
+    def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
         """
         Returns a single key comprising static and dynamic key fields.
         Override this method if customization is needed.
