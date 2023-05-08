@@ -34,16 +34,18 @@ class RedisRegistry(ArtifactManager):
     >>> loaded_artifact = registry.load(skeys, dkeys)
     """
 
-    __slots__ = ("client", "ttl")
+    __slots__ = ("client", "ttl", "cache_registry")
 
     def __init__(
         self,
         client: redis_client_t,
         ttl: int = 604800,
+        cache_registry: ArtifactCache = None,
     ):
         super().__init__("")
         self.client = client
         self.ttl = ttl
+        self.cache_registry = cache_registry
 
     @staticmethod
     def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
@@ -81,8 +83,48 @@ class RedisRegistry(ArtifactManager):
         """
         return key.split("::")[-1]
 
-    def __get_model_key(self, latest: bool, version: str, key: str) -> str:
+    def _load_from_cache(self, key: str) -> Optional[ArtifactData]:
+        if not self.cache_registry:
+            return None
+        return self.cache_registry.load(key)
+
+    def _save_in_cache(self, key: str, artifact_data: ArtifactData) -> None:
+        if self.cache_registry:
+            self.cache_registry.save(key, artifact_data)
+
+    def _clear_cache(self, key: str) -> Optional[ArtifactData]:
+        if self.cache_registry:
+            return self.cache_registry.delete(key)
+        return None
+
+    def __get_artifact_data(
+        self,
+        model_key: str,
+    ) -> ArtifactData:
+        (
+            serialized_artifact,
+            artifact_version,
+            artifact_timestamp,
+            serialized_metadata,
+        ) = self.client.hmget(name=model_key, keys=["artifact", "version", "timestamp", "metadata"])
+        deserialized_artifact = loads(serialized_artifact)
+        deserialized_metadata = None
+        if serialized_metadata:
+            deserialized_metadata = loads(serialized_metadata)
+        return ArtifactData(
+            artifact=deserialized_artifact,
+            metadata=deserialized_metadata,
+            extras={
+                "timestamp": int(artifact_timestamp.decode()),
+                "version": artifact_version.decode(),
+            },
+        )
+
+    def __load_artifact(self, latest: bool, version: str, key: str) -> ArtifactData:
         if latest:
+            cached_artifact = self._load_from_cache(key)
+            if cached_artifact:
+                return cached_artifact
             production_key = self.__construct_production_key(key)
             if not self.client.exists(production_key):
                 raise ModelKeyNotFound(
@@ -98,7 +140,10 @@ class RedisRegistry(ArtifactManager):
             model_key = self.__construct_version_key(key, version)
             if not self.client.exists(model_key):
                 raise ModelKeyNotFound("Could not find model key with key: %s" % model_key)
-        return model_key
+
+        return self.__get_artifact_data(
+            model_key=model_key,
+        )
 
     def __save_artifact(
         self, pipe, artifact: artifact_t, metadata: META_T, key: KEYS, version: str
@@ -147,30 +192,12 @@ class RedisRegistry(ArtifactManager):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")
         key = self.construct_key(skeys, dkeys)
         try:
-            model_key = self.__get_model_key(latest, version, key)
-            (
-                serialized_artifact,
-                artifact_version,
-                artifact_timestamp,
-                serialized_metadata,
-            ) = self.client.hmget(
-                name=model_key, keys=["artifact", "version", "timestamp", "metadata"]
-            )
-            deserialized_artifact = loads(serialized_artifact)
-            deserialized_metadata = None
-            if serialized_metadata:
-                deserialized_metadata = loads(serialized_metadata)
+            artifact_data = self.__load_artifact(latest, version, key)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
-            return ArtifactData(
-                artifact=deserialized_artifact,
-                metadata=deserialized_metadata,
-                extras={
-                    "timestamp": artifact_timestamp.decode(),
-                    "version": artifact_version.decode(),
-                },
-            )
+            self._save_in_cache(key, artifact_data)
+            return artifact_data
 
     def save(
         self,
@@ -229,6 +256,8 @@ class RedisRegistry(ArtifactManager):
                 )
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
+        else:
+            self._clear_cache(del_key)
 
     @staticmethod
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
