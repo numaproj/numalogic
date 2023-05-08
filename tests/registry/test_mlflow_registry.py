@@ -4,7 +4,7 @@ from unittest.mock import patch, Mock
 
 from mlflow import ActiveRun
 from mlflow.exceptions import RestException
-from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode, RESOURCE_LIMIT_EXCEEDED
+from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode
 from mlflow.store.entities import PagedList
 from sklearn.ensemble import RandomForestRegressor
 
@@ -64,7 +64,6 @@ class TestMLflow(unittest.TestCase):
         skeys = self.skeys
         dkeys = self.dkeys
         status = ml.save(skeys=skeys, dkeys=dkeys, artifact=self.model, run_id="1234")
-        print(status)
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
 
@@ -249,7 +248,6 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
             ml.delete(skeys=fake_skeys, dkeys=fake_dkeys, version="1")
-            print(log.output)
             self.assertTrue(log.output)
 
     @patch("mlflow.pytorch.log_model", Mock(side_effect=RuntimeError))
@@ -267,7 +265,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch(
-        "mlflow.pytorch.load_model",
+        "mlflow.tracking.MlflowClient.get_latest_versions",
         Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)})),
     )
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
@@ -275,20 +273,22 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
         skeys = self.skeys
         dkeys = self.dkeys
-        self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys))
+        data = ml.load(skeys=skeys, dkeys=dkeys)
+        self.assertIsNone(data)
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch(
-        "mlflow.pytorch.load_model",
-        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_LIMIT_EXCEEDED)})),
+        "mlflow.tracking.MlflowClient.get_latest_versions",
+        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)})),
     )
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_load_other_mlflow_err(self):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
         skeys = self.skeys
         dkeys = self.dkeys
-        self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys))
+        data = ml.load(skeys=skeys, dkeys=dkeys)
+        self.assertIsNone(data)
 
 
 if __name__ == "__main__":
