@@ -147,3 +147,10 @@ class ArtifactCache(Generic[M_K, A_D]):
         Implement this method for your custom cache.
         """
         raise NotImplementedError("Please implement this method!")
+
+    def clear(self) -> None:
+        r"""
+        Clears the cache.
+        Implement this method for your custom cache.
+        """
+        raise NotImplementedError("Please implement this method!")

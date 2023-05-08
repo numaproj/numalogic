@@ -19,6 +19,7 @@ class RedisRegistry(ArtifactManager):
     Args:
         client: Take in the reids client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
+        cache_registry: Cache registry to use (default = None)
 
     Examples
     --------

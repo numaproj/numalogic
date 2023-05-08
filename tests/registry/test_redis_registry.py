@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 
 from numalogic.models.autoencoder.variants import VanillaAE
-from numalogic.registry import RedisRegistry
+from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 
 
@@ -24,10 +24,15 @@ class TestRedisRegistry(unittest.TestCase):
         cls.redis_client = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
 
     def setUp(self):
-        self.registry = RedisRegistry(client=self.redis_client)
+        self.cache = LocalLRUCache(cachesize=4, ttl=2)
+        self.registry = RedisRegistry(
+            client=self.redis_client,
+            cache_registry=self.cache,
+        )
 
     def tearDown(self) -> None:
         self.registry.client.flushall()
+        self.cache.clear()
 
     def test_construct_key(self):
         key = RedisRegistry.construct_key(["model_", "nnet"], ["error1"])
@@ -42,6 +47,8 @@ class TestRedisRegistry(unittest.TestCase):
         )
         self.assertEqual(save_version, "0")
         self.assertEqual(resave_version, "1")
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(data.extras["version"], resave_version)
 
     def test_load_model_without_metadata(self):
         version = self.registry.save(
