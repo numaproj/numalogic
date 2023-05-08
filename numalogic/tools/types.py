@@ -10,15 +10,27 @@
 # limitations under the License.
 
 
-from typing import Union, Dict, NewType, TypeVar, Sequence, Optional
+from typing import Union, TypeVar
+from collections.abc import Sequence
 
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.pipeline import Pipeline
+from redis.client import AbstractRedis
+from sklearn.base import BaseEstimator
 from torch import nn
 
-Artifact = NewType("Artifact", Union[nn.Module, BaseEstimator, TransformerMixin, Pipeline])
-ArtifactDict = NewType(
-    "ArtifactDict",
-    Optional[Dict[str, Union[Sequence[Artifact], Dict[str, Artifact], Artifact, None]]],
-)
-AutoencoderModel = TypeVar("AutoencoderModel", bound="TorchAE")
+artifact_t = TypeVar("artifact_t", bound=Union[nn.Module, BaseEstimator])
+META_T = TypeVar("META_T", bound=dict[str, Union[str, list, dict]])
+EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
+redis_client_t = TypeVar("redis_client_t", bound=AbstractRedis, covariant=True)
+KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
+
+
+class Singleton(type):
+    r"""
+    Helper metaclass to use as a Singleton class.
+    """
+    _instances = {}
+
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super().__call__(*args, **kwargs)
+        return cls._instances[cls]

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.3.7"
+version = "0.4.dev3"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -15,7 +15,6 @@ classifiers = [
     "License :: OSI Approved :: Apache Software License",
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10"
 ]
@@ -24,16 +23,19 @@ documentation = "https://numalogic.numaproj.io/"
 homepage = "https://numalogic.numaproj.io/"
 
 [tool.poetry.dependencies]
-python = ">=3.8, <3.11"
+python = ">=3.9, <3.11"
 numpy = "^1.23"
-pandas = "^1.4"
+pandas = "^2.0"
 scikit-learn = "^1.0"
 mlflow-skinny = { version = ">2.0, <2.3", optional = true }
 protobuf = "~3.20" # needed to support pytorch-lightning
 omegaconf = "^2.3.0"
+cachetools = "^5.3.0"
+redis = {extras = ["hiredis"], version = "^4.5.4", optional = true}
 
 [tool.poetry.extras]
 mlflow = ["mlflow-skinny"]
+redis = ["redis"]
 
 [tool.poetry.group.torch]
 optional = true
@@ -46,12 +48,13 @@ optional = true
 
 [tool.poetry.group.dev.dependencies]
 matplotlib = "^3.4.2"
-black = "^22.6"
+black = "^23.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"
-pylint = "^2.14.2"
-flake8 = "^5.0"
 torchinfo = "^1.7.2"
+ruff = "^0.0.264"
+pre-commit = "^3.3.1"
+fakeredis = "^2.11.2"
 
 [tool.poetry.group.jupyter]
 optional = true
@@ -60,7 +63,6 @@ optional = true
 jupyter = "^1.0.0"
 ipykernel = "^6.15.1"
 nb-black = "^1.0.7"
-black = "^22.6.0"
 ipympl = "^0.9.1"
 ipython-autotime = "^0.3.1"
 
@@ -84,6 +86,15 @@ exclude = '''
   | tests/.*/setup.py
 )/
 '''
+
+[tool.ruff]
+line-length = 100
+src = ["numalogic", "tests"]
+select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q"]
+ignore = ["TRY003", "TRY301"]
+target-version = "py39"
+show-fixes = true
+show-source = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -13,6 +13,7 @@
 import os
 import unittest
 
+import fakeredis
 from omegaconf import OmegaConf
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -26,11 +27,13 @@ from numalogic.config import (
     NumalogicConf,
     ModelInfo,
 )
+from numalogic.config.factory import RegistryFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import SparseVanillaAE, SparseConv1dAE, LSTMAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.postprocess import TanhNorm
 from numalogic.preprocess import LogTransformer
+from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 os.environ["OC_CAUSE"] = "1"
@@ -76,6 +79,15 @@ class TestNumalogicConfig(unittest.TestCase):
         trainer = AutoencoderTrainer(**trainer_cfg)
         self.assertIsInstance(trainer, AutoencoderTrainer)
         self.assertEqual(trainer.max_epochs, 40)
+
+    def test_registry(self):
+        model_factory = RegistryFactory()
+        server = fakeredis.FakeServer()
+        redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
+        registry_obj = model_factory.get_cls(self.conf.registry)(
+            redis_cli, **self.conf.registry.conf
+        )
+        self.assertIsInstance(registry_obj, RedisRegistry)
 
 
 class TestFactory(unittest.TestCase):

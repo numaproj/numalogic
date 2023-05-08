@@ -43,8 +43,8 @@ class TestMLflow(unittest.TestCase):
     def assertNotRaises(self, exc_type):
         try:
             yield None
-        except exc_type:
-            raise self.failureException("{} raised".format(exc_type.__name__))
+        except exc_type as err:
+            raise self.failureException(f"{exc_type.__name__} raised") from err
 
     def test_construct_key(self):
         skeys = ["model_", "nnet"]
@@ -79,11 +79,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
         skeys = self.skeys
         dkeys = self.dkeys
-        status = ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=model,
-        )
+        status = ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
 
@@ -117,11 +113,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch", models_to_retain=2)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=model,
-        )
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertEqual(data.metadata, {})
         self.assertIsInstance(data.artifact, VanillaAE)
@@ -139,11 +131,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=model,
-        )
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
         data = ml.load(skeys=skeys, dkeys=dkeys)
         self.assertIsInstance(data.artifact, RandomForestRegressor)
         self.assertEqual(data.metadata, {})
@@ -161,11 +149,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(
-            skeys=skeys,
-            dkeys=dkeys,
-            artifact=model,
-        )
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
         data = ml.load(skeys=skeys, dkeys=dkeys, version="5", latest=False)
         self.assertIsInstance(data.artifact, VanillaAE)
         self.assertEqual(data.metadata, {})
@@ -194,10 +178,12 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        with self.assertLogs(level="ERROR") as log:
+        with self.assertRaises(ValueError):
             ml.load(skeys=skeys, dkeys=dkeys, latest=False)
-            self.assertTrue(log.output)
 
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version())
     @patch("mlflow.pyfunc.load_model", Mock(side_effect=RuntimeError))
     def test_load_model_when_no_model_01(self):
         fake_skeys = ["Fakemodel_"]
@@ -207,6 +193,9 @@ class TestMLflow(unittest.TestCase):
             ml.load(skeys=fake_skeys, dkeys=fake_dkeys)
             self.assertTrue(log.output)
 
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version())
     @patch("mlflow.tensorflow.load_model", Mock(side_effect=RuntimeError))
     def test_load_model_when_no_model_02(self):
         fake_skeys = ["Fakemodel_"]

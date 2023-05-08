@@ -10,7 +10,7 @@
 # limitations under the License.
 
 
-from typing import Tuple, Sequence
+from collections.abc import Sequence
 
 import torch
 from torch import nn, Tensor
@@ -149,8 +149,7 @@ class VanillaAE(BaseAE):
         dropout_p: float = 0.25,
         **kwargs,
     ):
-
-        super(VanillaAE, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self.seq_len = seq_len
         self.dropout_prob = dropout_p
         self.n_features = n_features
@@ -187,7 +186,7 @@ class VanillaAE(BaseAE):
         if type(m) == nn.Linear:
             nn.init.xavier_normal_(m.weight)
 
-    def forward(self, batch: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
         batch = batch.view(-1, self.n_features, self.seq_len)
         encoded = self.encoder(batch)
         decoded = self.decoder(encoded)
@@ -202,8 +201,7 @@ class VanillaAE(BaseAE):
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.n_features)
-        recon_err = self.criterion(batch, recon, reduction="none")
-        return recon_err
+        return self.criterion(batch, recon, reduction="none")
 
 
 class SparseVanillaAE(VanillaAE):

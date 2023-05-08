@@ -5,4 +5,4 @@ from src.udf.train import train
 from src.udf.threshold import threshold
 
 
-__all__ = ["preprocess", "inference", "postprocess", "train", threshold]
+__all__ = ["preprocess", "inference", "postprocess", "train", "threshold"]

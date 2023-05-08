@@ -2,57 +2,23 @@ name: Lint
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "release/*" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "release/*" ]
 
 jobs:
   black:
     name: Black format
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.9"]
-
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+          version: "~= 23.3"
 
-    - name: Install poetry
-      run: pipx install poetry
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'poetry'
-
-    - name: Install dependencies
-      run: |
-        poetry env use ${{ matrix.python-version }}
-        poetry install --with dev
-
-    - name: Black format check
-      run: poetry run black --check .
-
-  flake8:
-    name: flake8 check
+  ruff:
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ "3.9" ]
-
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: flake8 Lint
-      uses: py-actions/flake8@v2
-      with:
-        config: "./.flake8"
-        path: "numalogic"
+      - uses: actions/checkout@v3
+      - uses: chartboost/ruff-action@v1

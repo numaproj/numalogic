@@ -10,8 +10,6 @@
 # limitations under the License.
 
 
-from typing import Tuple
-
 import torch
 import torch.nn.functional
 from numalogic.models.autoencoder.base import BaseAE
@@ -37,9 +35,7 @@ def _scaled_dot_product(query: Tensor, key: Tensor, value: Tensor) -> Tensor:
 
 
 def _positional_encoding(
-    feature: int,
-    seq_len: int,
-    device: torch.device = torch.device("cpu"),
+    feature: int, seq_len: int, device: torch.device = torch.device("cpu")
 ) -> Tensor:
     r"""
     Positional Encoding as described in
@@ -70,9 +66,7 @@ def _feed_forward(dim_input: int = 10, dim_feedforward: int = 2048) -> nn.Module
         nn.Module type
     """
     return nn.Sequential(
-        nn.Linear(dim_input, dim_feedforward),
-        nn.ReLU(),
-        nn.Linear(dim_feedforward, dim_input),
+        nn.Linear(dim_input, dim_feedforward), nn.ReLU(), nn.Linear(dim_feedforward, dim_input)
     )
 
 
@@ -166,9 +160,7 @@ class _EncoderLayer(nn.Module):
             dropout=dropout,
         )
         self.feed_forward = _Residual(
-            _feed_forward(dim_model, dim_feedforward),
-            dimension=dim_model,
-            dropout=dropout,
+            _feed_forward(dim_model, dim_feedforward), dimension=dim_model, dropout=dropout
         )
 
     def forward(self, src: Tensor) -> Tensor:
@@ -195,7 +187,6 @@ class Encoder(nn.Module):
         dim_feedforward: int = 2048,
         dropout: float = 0.1,
     ):
-
         super().__init__()
         self.layers = nn.ModuleList(
             [
@@ -243,9 +234,7 @@ class _DecoderLayer(nn.Module):
             dropout=dropout,
         )
         self.feed_forward = _Residual(
-            _feed_forward(dim_model, dim_feedforward),
-            dimension=dim_model,
-            dropout=dropout,
+            _feed_forward(dim_model, dim_feedforward), dimension=dim_model, dropout=dropout
         )
 
     def forward(self, tgt: Tensor, memory: Tensor) -> Tensor:
@@ -349,7 +338,7 @@ class TransformerAE(BaseAE):
         if type(m) in (nn.Linear,):
             nn.init.xavier_uniform_(m.weight, gain=2**0.5)
 
-    def forward(self, batch: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
         batch = batch.view(-1, self.n_features, self.seq_len)
         encoded = self.encoder(batch)
         decoded = self.decoder(batch, encoded)
@@ -364,8 +353,7 @@ class TransformerAE(BaseAE):
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.n_features)
-        recon_err = self.criterion(batch, recon, reduction="none")
-        return recon_err
+        return self.criterion(batch, recon, reduction="none")
 
 
 class SparseTransformerAE(TransformerAE):

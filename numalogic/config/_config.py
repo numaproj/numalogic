@@ -11,7 +11,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Any, Dict
+from typing import Optional, Any
 
 from omegaconf import MISSING
 
@@ -29,17 +29,22 @@ class ModelInfo:
     """
 
     name: str = MISSING
-    conf: Dict[str, Any] = field(default_factory=dict)
+    conf: dict[str, Any] = field(default_factory=dict)
     stateful: bool = True
 
 
 @dataclass
-class RegistryConf:
-    # TODO implement this
+class RegistryInfo:
     """
     Registry config base class
+
+    Args:
+        name: name of the registry
+        conf: kwargs for instantiating the model class
     """
-    pass
+
+    name: str = MISSING
+    conf: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -51,6 +56,7 @@ class LightningTrainerConf:
     https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#trainer-class-api
     """
 
+    accelerator: str = "auto"
     max_epochs: int = 100
     logger: bool = False
     check_val_every_n_epoch: int = 5
@@ -70,7 +76,7 @@ class NumalogicConf:
 
     model: ModelInfo = field(default_factory=ModelInfo)
     trainer: LightningTrainerConf = field(default_factory=LightningTrainerConf)
-    registry: RegistryConf = field(default_factory=RegistryConf)
-    preprocess: List[ModelInfo] = field(default_factory=list)
+    registry: RegistryInfo = field(default_factory=RegistryInfo)
+    preprocess: list[ModelInfo] = field(default_factory=list)
     threshold: ModelInfo = field(default_factory=ModelInfo)
     postprocess: ModelInfo = field(default_factory=ModelInfo)

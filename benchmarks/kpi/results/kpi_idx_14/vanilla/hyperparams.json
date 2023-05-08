@@ -1,0 +1,18 @@
+{
+  "BATCH_SIZE": 64,
+  "SPLIT_RATIOS": [
+    0.5,
+    0.2,
+    0.3
+  ],
+  "TRAINER": {
+    "accelerator": "cpu",
+    "max_epochs": 30
+  },
+  "MODEL": {
+    "name": "VanillaAE",
+    "conf": {
+      "seq_len": 10
+    }
+  }
+}

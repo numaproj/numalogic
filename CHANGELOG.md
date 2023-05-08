@@ -1,5 +1,14 @@
 # Changelog
 
+## v0.3.8 (2023-04-18)
+
+ * [3160c2b](https://github.com/numaproj/numalogic/commit/3160c2b4a248f974bc6c6e4893e7c68c1fdd7890) feat: exponential moving average postprocessing (#156)
+ * [9de8e4c](https://github.com/numaproj/numalogic/commit/9de8e4cfa7438047b8e7bd22c84bdcf859edc292) fix: validation loss not being logged (#155)
+
+### Contributors
+
+ * Avik Basu
+
 ## v0.3.7 (2023-03-27)
 
  * [b61ac1f](https://github.com/numaproj/numalogic/commit/b61ac1fbd639f482b7ecb661da47254695139299) fix: Tanhscaler nan output for constant feature (#153)
@@ -203,4 +212,3 @@
 ### Contributors
 
  * Kushal Batra
-

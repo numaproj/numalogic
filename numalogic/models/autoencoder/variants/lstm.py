@@ -11,7 +11,6 @@
 
 
 import logging
-from typing import Tuple
 
 import torch
 import torch.nn as nn
@@ -85,8 +84,7 @@ class _Decoder(nn.Module):
         x = x.unsqueeze(1).repeat(1, self.seq_len, 1)
         x, (_, __) = self.lstm(x)
         x = x.reshape((-1, self.seq_len, self.hidden_size))
-        out = self.fc(x)
-        return out
+        return self.fc(x)
 
 
 class LSTMAE(BaseAE):
@@ -145,7 +143,7 @@ class LSTMAE(BaseAE):
             else:
                 nn.init.xavier_normal_(param, gain=calculate_gain("tanh"))
 
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor) -> tuple[Tensor, Tensor]:
         encoded = self.encoder(x)
         decoded = self.decoder(encoded)
         return encoded, decoded
@@ -153,8 +151,7 @@ class LSTMAE(BaseAE):
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
         """Returns reconstruction for streaming input"""
         recon = self.reconstruction(batch)
-        recon_err = self.criterion(batch, recon, reduction="none")
-        return recon_err
+        return self.criterion(batch, recon, reduction="none")
 
 
 class SparseLSTMAE(LSTMAE):

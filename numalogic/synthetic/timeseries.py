@@ -10,8 +10,6 @@
 # limitations under the License.
 
 
-from typing import Tuple
-
 import numpy as np
 import pandas as pd
 from datetime import date
@@ -33,7 +31,8 @@ class SyntheticTSGenerator:
         amplitude_range=(10, 40),
         cosine_ratio_range=(0.5, 0.9),
         noise_range=(5, 15),
-        phase_shift_range: Tuple[int, int] = None,
+        phase_shift_range: tuple[int, int] = None,
+        random_seed: int = 42,
     ):
         self.seq_len = seq_len
         self.num_series = num_series
@@ -50,10 +49,12 @@ class SyntheticTSGenerator:
         self.primary_period = primary_period
         self.secondary_period = secondary_period
         self.seasonal_ts_prob = seasonal_ts_prob
+        self.seed = random_seed
+        self._rnd_gen = np.random.default_rng(random_seed)
 
     def gen_tseries(self) -> pd.DataFrame:
         all_series = {}
-        is_seasonal = np.random.binomial(1, self.seasonal_ts_prob, self.num_series)
+        is_seasonal = self._rnd_gen.binomial(1, self.seasonal_ts_prob, self.num_series)
 
         for s_idx in range(self.num_series):
             if is_seasonal[s_idx]:
@@ -67,34 +68,30 @@ class SyntheticTSGenerator:
         return pd.DataFrame(all_series, index=self.dt_index)
 
     def baseline(self) -> float:
-        baseline = np.random.uniform(*self.baseline_range)
-        return baseline
+        return self._rnd_gen.uniform(*self.baseline_range)
 
     def trend(self) -> NDArray[float]:
-        slope = np.random.uniform(*self.slope_range)
+        slope = self._rnd_gen.uniform(*self.slope_range)
         return slope * self.time_steps
 
     def seasonality(self, period: int, amp_reduction_factor=1) -> NDArray[float]:
-        phase = np.random.uniform(*self.phase_range) if self.phase_range else 0
-        cosine_ratio = np.random.uniform(*self.cos_ratio_range)
-        amplitude = np.random.uniform(*self.amplitude_range) / amp_reduction_factor
+        phase = self._rnd_gen.uniform(*self.phase_range) if self.phase_range else 0
+        cosine_ratio = self._rnd_gen.uniform(*self.cos_ratio_range)
+        amplitude = self._rnd_gen.uniform(*self.amplitude_range) / amp_reduction_factor
 
         season_time = ((self.time_steps + phase) % period) / period
 
         seasonal_pattern = np.where(
-            season_time < cosine_ratio,
-            np.cos(season_time * 2 * np.pi),
-            season_time,
+            season_time < cosine_ratio, np.cos(season_time * 2 * np.pi), season_time
         )
         return amplitude * seasonal_pattern
 
-    def noise(self, seed=42) -> NDArray[float]:
-        rnd = np.random.RandomState(seed)
-        noise_level = np.random.uniform(*self.noise_range)
-        return rnd.randn(self.seq_len) * noise_level
+    def noise(self) -> NDArray[float]:
+        noise_level = self._rnd_gen.uniform(*self.noise_range)
+        return self._rnd_gen.standard_normal(self.seq_len) * noise_level
 
     @classmethod
     def train_test_split(
         cls, df: pd.DataFrame, test_size: int
-    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         return df[:-test_size], df[-test_size:]

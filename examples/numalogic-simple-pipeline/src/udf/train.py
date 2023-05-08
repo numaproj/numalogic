@@ -14,7 +14,7 @@ from src.utils import Payload, save_artifact, TRAIN_DATA_PATH
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))
-BATCH_SIZE = int(os.getenv("BATCH_SIZE", 64))
+BATCH_SIZE = int(os.getenv("BATCH_SIZE", "64"))
 ttl_cache = cachetools.TTLCache(maxsize=128, ttl=120 * 60)
 
 

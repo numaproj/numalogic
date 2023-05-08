@@ -10,12 +10,20 @@
 # limitations under the License.
 
 
-from numalogic.registry.artifact import ArtifactManager
-from numalogic.registry.artifact import ArtifactData
+from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
+from numalogic.registry.localcache import LocalLRUCache
 
 try:
     from numalogic.registry.mlflow_registry import MLflowRegistry
+    from numalogic.registry.redis_registry import RedisRegistry
 except ImportError:
-    __all__ = ["ArtifactManager", "ArtifactData"]
+    __all__ = ["ArtifactManager", "ArtifactData", "ArtifactCache", "LocalLRUCache"]
 else:
-    __all__ = ["ArtifactManager", "ArtifactData", "MLflowRegistry"]
+    __all__ = [
+        "ArtifactManager",
+        "ArtifactData",
+        "MLflowRegistry",
+        "ArtifactCache",
+        "LocalLRUCache",
+        "RedisRegistry",
+    ]

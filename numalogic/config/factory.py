@@ -8,9 +8,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Union
+
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
 
-from numalogic.config._config import ModelInfo
+from numalogic.config._config import ModelInfo, RegistryInfo
 from numalogic.models.autoencoder.variants import (
     VanillaAE,
     SparseVanillaAE,
@@ -24,24 +26,29 @@ from numalogic.models.autoencoder.variants import (
 from numalogic.models.threshold import StdDevThreshold, StaticThreshold, SigmoidThreshold
 from numalogic.postprocess import TanhNorm, ExpMovingAverage
 from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
+from numalogic.registry import MLflowRegistry, RedisRegistry
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 
 class _ObjectFactory:
     _CLS_MAP = {}
 
-    def get_instance(self, model_info: ModelInfo):
+    def get_instance(self, object_info: Union[ModelInfo, RegistryInfo]):
         try:
-            _cls = self._CLS_MAP[model_info.name]
-        except KeyError:
-            raise UnknownConfigArgsError(f"Invalid model info instance provided: {model_info}")
-        return _cls(**model_info.conf)
+            _cls = self._CLS_MAP[object_info.name]
+        except KeyError as err:
+            raise UnknownConfigArgsError(
+                f"Invalid model info instance provided: {object_info}"
+            ) from err
+        return _cls(**object_info.conf)
 
-    def get_cls(self, model_info: ModelInfo):
+    def get_cls(self, object_info: Union[ModelInfo, RegistryInfo]):
         try:
-            return self._CLS_MAP[model_info.name]
-        except KeyError:
-            raise UnknownConfigArgsError(f"Invalid model info instance provided: {model_info}")
+            return self._CLS_MAP[object_info.name]
+        except KeyError as err:
+            raise UnknownConfigArgsError(
+                f"Invalid model info instance provided: {object_info}"
+            ) from err
 
 
 class PreprocessFactory(_ObjectFactory):
@@ -57,10 +64,7 @@ class PreprocessFactory(_ObjectFactory):
 
 
 class PostprocessFactory(_ObjectFactory):
-    _CLS_MAP = {
-        "TanhNorm": TanhNorm,
-        "ExpMovingAverage": ExpMovingAverage,
-    }
+    _CLS_MAP = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage}
 
 
 class ThresholdFactory(_ObjectFactory):
@@ -81,4 +85,11 @@ class ModelFactory(_ObjectFactory):
         "SparseLSTMAE": SparseLSTMAE,
         "TransformerAE": TransformerAE,
         "SparseTransformerAE": SparseTransformerAE,
+    }
+
+
+class RegistryFactory(_ObjectFactory):
+    _CLS_MAP = {
+        "RedisRegistry": RedisRegistry,
+        "MLflowRegistry": MLflowRegistry,
     }

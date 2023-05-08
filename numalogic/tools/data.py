@@ -10,7 +10,8 @@
 # limitations under the License.
 
 import logging
-from typing import Optional, Generator, Iterator
+from typing import Optional
+from collections.abc import Generator, Iterator
 
 import numpy as np
 import numpy.typing as npt
@@ -52,6 +53,13 @@ class StreamingDataset(IterableDataset):
 
         self._seq_len = seq_len
         self._data = data.astype(np.float32)
+
+    @property
+    def data(self) -> npt.NDArray[float]:
+        """
+        Returns the reference data in the input shape
+        """
+        return self._data
 
     def create_seq(self, input_: npt.NDArray[float]) -> Generator[npt.NDArray[float], None, None]:
         r"""
@@ -118,7 +126,7 @@ class TimeseriesDataModule(pl.LightningDataModule):
         self.seq_len = seq_len
         self.data = data
 
-        if 0.0 >= val_split_ratio >= 1.0:
+        if val_split_ratio <= 0.0 or val_split_ratio >= 1.0:
             raise ValueError("val_split_ratio can only accept values between 0.0 and 1.0")
 
         self.val_split_ratio = val_split_ratio
@@ -132,6 +140,8 @@ class TimeseriesDataModule(pl.LightningDataModule):
         """
         if stage == "fit":
             val_size = np.floor(self.val_split_ratio * len(self.data)).astype(int)
+            _LOGGER.info("Size of validation set: %s", val_size)
+
             self.train_dataset = StreamingDataset(self.data[:-val_size, :], self.seq_len)
             self.val_dataset = StreamingDataset(self.data[-val_size:, :], self.seq_len)
 

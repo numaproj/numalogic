@@ -15,7 +15,7 @@ from numalogic.models.autoencoder.variants.transformer import SparseTransformerA
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
 DATA_FILE = os.path.join(ROOT_DIR, "interactionstatus.csv")
-EPOCHS = 5
+EPOCHS = 2
 BATCH_SIZE = 256
 SEQ_LEN = 12
 LR = 0.001
@@ -44,22 +44,22 @@ class TestTransformerAE(unittest.TestCase):
             num_decoder_layers=1,
         )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(max_epochs=EPOCHS, enable_progress_bar=True)
+        trainer = AutoencoderTrainer(accelerator="cpu", fast_dev_run=True, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
-        stream_trainer = AutoencoderTrainer()
+        stream_trainer = AutoencoderTrainer(accelerator="cpu")
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
         self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
     def test_sparse_transformer(self):
         model = SparseTransformerAE(seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1")
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(max_epochs=EPOCHS, enable_progress_bar=True)
+        trainer = AutoencoderTrainer(accelerator="cpu", fast_dev_run=True, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
-        stream_trainer = AutoencoderTrainer()
+        stream_trainer = AutoencoderTrainer(accelerator="cpu")
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
         self.assertListEqual([229, SEQ_LEN, self.X_train.shape[1]], list(test_reconerr.size()))
 
@@ -71,6 +71,7 @@ class TestTransformerAE(unittest.TestCase):
             dim_feedforward=64,
             num_encoder_layers=3,
             num_decoder_layers=1,
+            weight_decay=1e-3,
         )
         optimizer = torch.optim.Adam(model.parameters(), lr=LR)
         criterion = nn.HuberLoss(delta=0.5)

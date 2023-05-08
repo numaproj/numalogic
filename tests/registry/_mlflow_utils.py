@@ -20,24 +20,21 @@ def create_model():
     model = torch.nn.Sequential(torch.nn.Linear(3, 1), torch.nn.Flatten(0, 1))
 
     loss_fn = torch.nn.MSELoss(reduction="sum")
+    optim = torch.optim.Adam(model.parameters(), lr=1e-6)
 
-    learning_rate = 1e-6
     for t in range(1000):
         y_pred = model(xx)
         loss = loss_fn(y_pred, y)
         model.zero_grad()
         loss.backward()
-        with torch.no_grad():
-            for param in model.parameters():
-                param -= learning_rate * param.grad
+        optim.step()
 
     return model
 
 
 def model_sklearn():
     params = {"n_estimators": 5, "random_state": 42}
-    sk_learn_rfr = RandomForestRegressor(**params)
-    return sk_learn_rfr
+    return RandomForestRegressor(**params)
 
 
 def mock_log_state_dict(*_, **__):
@@ -302,11 +299,7 @@ def return_sklearn_rundata():
             status="RUNNING",
             user_id="lol",
         ),
-        run_data=RunData(
-            metrics={},
-            tags={},
-            params={},
-        ),
+        run_data=RunData(metrics={}, tags={}, params={}),
     )
 
 
