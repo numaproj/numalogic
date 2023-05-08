@@ -41,3 +41,6 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
 
     def delete(self, key: str) -> Optional[ArtifactData]:
         return self.__cache.pop(key, default=None)
+
+    def clear(self) -> None:
+        self.__cache.clear()
