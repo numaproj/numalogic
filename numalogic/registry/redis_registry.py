@@ -1,5 +1,6 @@
 import logging
 import time
+from datetime import datetime, timedelta
 from typing import Optional
 
 from redis.exceptions import RedisError
@@ -7,7 +8,7 @@ from redis.exceptions import RedisError
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
-from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T
+from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT
 
 _LOGGER = logging.getLogger()
 
@@ -24,14 +25,13 @@ class RedisRegistry(ArtifactManager):
     >>> import redis
     >>> from numalogic.models.autoencoder.variants import VanillaAE
     >>> from numalogic.registry.redis_registry import RedisRegistry
+    >>> ...
     >>> r = redis.StrictRedis(host='127.0.0.1', port=6379)
-    >>> cli = r.client()
-    >>> registry = RedisRegistry(client=cli)
-    >>> skeys = ['c', 'a']
-    >>> dkeys = ['d', 'a']
-    >>> model = VanillaAE(10)
+    >>> registry = RedisRegistry(client=r)
+    >>> skeys, dkeys = ("mymetric", "ae"), ("vanilla", "seq10")
+    >>> model = VanillaAE(seq_len=10)
     >>> registry.save(skeys, dkeys, artifact=model, **{'lr': 0.01})
-    >>> registry.load(skeys, dkeys)
+    >>> loaded_artifact = registry.load(skeys, dkeys)
     """
 
     __slots__ = ("client", "ttl")
@@ -177,7 +177,7 @@ class RedisRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         artifact: artifact_t,
-        **metadata: META_T,
+        **metadata: META_VT,
     ) -> Optional[str]:
         """
         Saves the artifact into redis registry and updates version.
@@ -229,3 +229,22 @@ class RedisRegistry(ArtifactManager):
                 )
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
+
+    @staticmethod
+    def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
+        """
+        Returns whether the given artifact is stale or not, i.e. if
+        more time has elasped since it was last retrained.
+        Args:
+            artifact_data: ArtifactData object to look into
+            freq_hr: Frequency of retraining in hours
+
+        """
+        try:
+            artifact_ts = float(artifact_data.extras["timestamp"])
+        except (KeyError, TypeError) as err:
+            raise RedisRegistryError("Error fetching timestamp information") from err
+        stale_ts = (datetime.now() - timedelta(hours=freq_hr)).timestamp()
+        if stale_ts > artifact_ts:
+            return True
+        return False

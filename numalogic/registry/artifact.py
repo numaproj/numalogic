@@ -13,7 +13,7 @@
 from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
 
-from numalogic.tools.types import artifact_t, KEYS, META_T, EXTRA_T
+from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T
 
 
 @dataclass
@@ -54,7 +54,7 @@ class ArtifactManager(Generic[KEYS, A_D]):
         """
         raise NotImplementedError("Please implement this method!")
 
-    def save(self, skeys: KEYS, dkeys: KEYS, artifact: artifact_t, **metadata: META_T) -> Any:
+    def save(self, skeys: KEYS, dkeys: KEYS, artifact: artifact_t, **metadata: META_VT) -> Any:
         r"""
         Saves the artifact into mlflow registry and updates version.
         Args:
@@ -72,6 +72,18 @@ class ArtifactManager(Generic[KEYS, A_D]):
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             version: explicit artifact version
+        """
+        raise NotImplementedError("Please implement this method!")
+
+    @staticmethod
+    def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
+        """
+        Returns whether the given artifact is stale or not, i.e. if
+        more time has elasped since it was last retrained.
+        Args:
+            artifact_data: ArtifactData object to look into
+            freq_hr: Frequency of retraining in hours
+
         """
         raise NotImplementedError("Please implement this method!")
 
