@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 
 from numalogic.models.autoencoder.variants import VanillaAE
-from numalogic.registry import RedisRegistry
+from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 
 
@@ -24,24 +24,73 @@ class TestRedisRegistry(unittest.TestCase):
         cls.redis_client = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
 
     def setUp(self):
-        self.registry = RedisRegistry(client=self.redis_client)
+        self.cache = LocalLRUCache(cachesize=4, ttl=300)
+        self.registry = RedisRegistry(
+            client=self.redis_client,
+            cache_registry=self.cache,
+        )
+        self.registry_no_cache = RedisRegistry(client=self.redis_client)
 
     def tearDown(self) -> None:
         self.registry.client.flushall()
+        self.registry_no_cache.client.flushall()
+        self.cache.clear()
+
+    def test_no_cache(self):
+        self.assertIsNone(
+            self.registry_no_cache._save_in_cache(
+                "key", ArtifactData(artifact=self.pytorch_model, extras={}, metadata={})
+            )
+        )
+        self.assertIsNone(self.registry_no_cache._load_from_cache("key"))
+        self.assertIsNone(self.registry_no_cache._clear_cache("key"))
 
     def test_construct_key(self):
         key = RedisRegistry.construct_key(["model_", "nnet"], ["error1"])
         self.assertEqual("model_:nnet::error1", key)
 
-    def test_save_model_without_metadata(self):
+    def test_save_model_without_metadata_cache_hit(self):
         save_version = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
-        resave_version = self.registry.save(
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(data.extras["version"], save_version)
+        resave_version1 = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
+        resave_data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertEqual(save_version, "0")
-        self.assertEqual(resave_version, "1")
+        self.assertEqual(resave_version1, "1")
+        self.assertEqual(resave_data.extras["version"], "0")
+
+    def test_save_load_without_cache(self):
+        save_version = self.registry_no_cache.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        data = self.registry_no_cache.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(data.extras["version"], save_version)
+        resave_version1 = self.registry_no_cache.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        resave_data = self.registry_no_cache.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(save_version, "0")
+        self.assertEqual(resave_version1, "1")
+        self.assertEqual(resave_data.extras["version"], "1")
+
+    def test_save_model_without_metadata_cache_miss(self):
+        save_version = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(data.extras["version"], save_version)
+        resave_version1 = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        self.cache.clear()
+        resave_data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(save_version, "0")
+        self.assertEqual(resave_version1, "1")
+        self.assertEqual(resave_data.extras["version"], "1")
 
     def test_load_model_without_metadata(self):
         version = self.registry.save(
@@ -60,6 +109,14 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertIsNotNone(data.artifact)
         self.assertIsNotNone(data.metadata)
         self.assertEqual(data.extras["version"], version)
+
+    def test_delete_model(self):
+        version = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version=version)
+        with self.assertRaises(ModelKeyNotFound):
+            self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
 
     def test_load_model_with_version(self):
         version = self.registry.save(

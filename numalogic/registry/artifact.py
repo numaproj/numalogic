@@ -76,18 +76,6 @@ class ArtifactManager(Generic[KEYS, A_D]):
         raise NotImplementedError("Please implement this method!")
 
     @staticmethod
-    def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
-        """
-        Returns whether the given artifact is stale or not, i.e. if
-        more time has elasped since it was last retrained.
-        Args:
-            artifact_data: ArtifactData object to look into
-            freq_hr: Frequency of retraining in hours
-
-        """
-        raise NotImplementedError("Please implement this method!")
-
-    @staticmethod
     def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
         """
         Returns a single key comprising static and dynamic key fields.
@@ -144,6 +132,13 @@ class ArtifactCache(Generic[M_K, A_D]):
     def delete(self, key: str) -> None:
         r"""
         Deletes the ArtifactData object from the cache.
+        Implement this method for your custom cache.
+        """
+        raise NotImplementedError("Please implement this method!")
+
+    def clear(self) -> None:
+        r"""
+        Clears the cache.
         Implement this method for your custom cache.
         """
         raise NotImplementedError("Please implement this method!")

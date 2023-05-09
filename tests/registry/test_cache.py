@@ -14,6 +14,8 @@ class TestArtifactCache(unittest.TestCase):
             cache_reg.load("m1")
         with self.assertRaises(NotImplementedError):
             cache_reg.delete("m1")
+        with self.assertRaises(NotImplementedError):
+            cache_reg.clear()
 
 
 class TestLocalLRUCache(unittest.TestCase):
@@ -61,6 +63,12 @@ class TestLocalLRUCache(unittest.TestCase):
         cache_registry = LocalLRUCache(cachesize=2, ttl=1)
         cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         cache_registry.delete("m1")
+        self.assertIsNone(cache_registry.load("m1"))
+
+    def test_clear(self):
+        cache_registry = LocalLRUCache(cachesize=2, ttl=1)
+        cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
+        cache_registry.clear()
         self.assertIsNone(cache_registry.load("m1"))
 
 
