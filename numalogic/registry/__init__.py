@@ -13,17 +13,20 @@
 from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
 from numalogic.registry.localcache import LocalLRUCache
 
+
+__all__ = ["ArtifactManager", "ArtifactData", "ArtifactCache", "LocalLRUCache"]
+
+
 try:
-    from numalogic.registry.mlflow_registry import MLflowRegistry
-    from numalogic.registry.redis_registry import RedisRegistry
+    from numalogic.registry.mlflow_registry import MLflowRegistry  # noqa: F401
 except ImportError:
-    __all__ = ["ArtifactManager", "ArtifactData", "ArtifactCache", "LocalLRUCache"]
+    pass
 else:
-    __all__ = [
-        "ArtifactManager",
-        "ArtifactData",
-        "MLflowRegistry",
-        "ArtifactCache",
-        "LocalLRUCache",
-        "RedisRegistry",
-    ]
+    __all__.append("MLflowRegistry")
+
+try:
+    from numalogic.registry.redis_registry import RedisRegistry  # noqa: F401
+except ImportError:
+    pass
+else:
+    __all__.append("RedisRegistry")
