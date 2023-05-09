@@ -38,7 +38,7 @@ class TestRedisRegistry(unittest.TestCase):
         key = RedisRegistry.construct_key(["model_", "nnet"], ["error1"])
         self.assertEqual("model_:nnet::error1", key)
 
-    def test_save_model_without_metadata(self):
+    def test_save_model_without_metadata_cache_hit(self):
         save_version = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
@@ -51,6 +51,21 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertEqual(save_version, "0")
         self.assertEqual(resave_version1, "1")
         self.assertEqual(resave_data.extras["version"], "0")
+
+    def test_save_model_without_metadata_cache_miss(self):
+        save_version = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(data.extras["version"], save_version)
+        resave_version1 = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        self.cache.clear()
+        resave_data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(save_version, "0")
+        self.assertEqual(resave_version1, "1")
+        self.assertEqual(resave_data.extras["version"], "1")
 
     def test_load_model_without_metadata(self):
         version = self.registry.save(
@@ -69,6 +84,14 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertIsNotNone(data.artifact)
         self.assertIsNotNone(data.metadata)
         self.assertEqual(data.extras["version"], version)
+
+    def test_delete_model(self):
+        version = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version=version)
+        with self.assertRaises(ModelKeyNotFound):
+            self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
 
     def test_load_model_with_version(self):
         version = self.registry.save(
