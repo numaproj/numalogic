@@ -162,7 +162,7 @@ class RedisRegistry(ArtifactManager):
             mapping={
                 "artifact": serialized_artifact,
                 "version": str(version),
-                "timestamp": float(time.time()),
+                "timestamp": time.time(),
                 "metadata": serialized_metadata,
             },
         )
