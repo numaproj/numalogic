@@ -93,9 +93,11 @@ class RedisRegistry(ArtifactManager):
         if self.cache_registry:
             self.cache_registry.save(key, artifact_data)
 
-    def _clear_cache(self, key: str) -> Optional[ArtifactData]:
+    def _clear_cache(self, key: Optional[str] = None) -> Optional[ArtifactData]:
         if self.cache_registry:
-            return self.cache_registry.delete(key)
+            if key:
+                return self.cache_registry.delete(key)
+            return self.cache_registry.clear()
         return None
 
     def __get_artifact_data(
@@ -121,27 +123,29 @@ class RedisRegistry(ArtifactManager):
             },
         )
 
-    def __load_artifact(self, latest: bool, version: str, key: str) -> ArtifactData:
-        if latest:
-            cached_artifact = self._load_from_cache(key)
-            if cached_artifact:
-                return cached_artifact
-            production_key = self.__construct_production_key(key)
-            if not self.client.exists(production_key):
-                raise ModelKeyNotFound(
-                    f"Production key: {production_key}, Not Found !!!\n Exiting....."
-                )
-            model_key = self.client.get(production_key)
-            if not self.client.exists(model_key):
-                raise ModelKeyNotFound(
-                    "Production key = {} is pointing to the key: {} that "
-                    "is missing the redis registry".format(production_key, model_key)
-                )
-        else:
-            model_key = self.__construct_version_key(key, version)
-            if not self.client.exists(model_key):
-                raise ModelKeyNotFound("Could not find model key with key: %s" % model_key)
+    def __load_latest_artifact(self, key: str) -> ArtifactData:
+        cached_artifact = self._load_from_cache(key)
+        if cached_artifact:
+            return cached_artifact
+        production_key = self.__construct_production_key(key)
+        if not self.client.exists(production_key):
+            raise ModelKeyNotFound(
+                f"Production key: {production_key}, Not Found !!!\n Exiting....."
+            )
+        model_key = self.client.get(production_key)
+        if not self.client.exists(model_key):
+            raise ModelKeyNotFound(
+                "Production key = {} is pointing to the key: {} that "
+                "is missing the redis registry".format(production_key, model_key)
+            )
+        return self.__get_artifact_data(
+            model_key=model_key.decode(),
+        )
 
+    def __load_version_artifact(self, version: str, key: str) -> ArtifactData:
+        model_key = self.__construct_version_key(key, version)
+        if not self.client.exists(model_key):
+            raise ModelKeyNotFound("Could not find model key with key: %s" % model_key)
         return self.__get_artifact_data(
             model_key=model_key,
         )
@@ -193,11 +197,14 @@ class RedisRegistry(ArtifactManager):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")
         key = self.construct_key(skeys, dkeys)
         try:
-            artifact_data = self.__load_artifact(latest, version, key)
+            if latest:
+                artifact_data = self.__load_latest_artifact(key)
+                self._save_in_cache(key, artifact_data)
+            else:
+                artifact_data = self.__load_version_artifact(version, key)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
-            self._save_in_cache(key, artifact_data)
             return artifact_data
 
     def save(

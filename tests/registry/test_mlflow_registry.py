@@ -5,7 +5,7 @@ from unittest.mock import patch, Mock
 from freezegun import freeze_time
 from mlflow import ActiveRun
 from mlflow.exceptions import RestException
-from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode
+from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode, RESOURCE_LIMIT_EXCEEDED
 from mlflow.store.entities import PagedList
 from sklearn.ensemble import RandomForestRegressor
 
@@ -208,7 +208,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch(
         "mlflow.tracking.MlflowClient.transition_model_version_stage",
-        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)})),
+        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_LIMIT_EXCEEDED)})),
     )
     def test_transition_stage_fail(self):
         fake_skeys = ["Fakemodel_"]
