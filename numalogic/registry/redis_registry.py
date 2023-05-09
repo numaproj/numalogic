@@ -245,6 +245,4 @@ class RedisRegistry(ArtifactManager):
         except (KeyError, TypeError) as err:
             raise RedisRegistryError("Error fetching timestamp information") from err
         stale_ts = (datetime.now() - timedelta(hours=freq_hr)).timestamp()
-        if stale_ts > artifact_ts:
-            return True
-        return False
+        return stale_ts > artifact_ts

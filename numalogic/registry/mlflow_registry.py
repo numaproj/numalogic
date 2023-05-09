@@ -226,9 +226,7 @@ class MLflowRegistry(ArtifactManager):
         """
         date_updated = artifact_data.extras["last_updated_timestamp"] / 1000
         stale_date = (datetime.now() - timedelta(hours=freq_hr)).timestamp()
-        if date_updated < stale_date:
-            return True
-        return False
+        return date_updated < stale_date
 
     def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
         """
