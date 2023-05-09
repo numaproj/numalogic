@@ -10,23 +10,7 @@
 # limitations under the License.
 from typing import Union
 
-from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
-
 from numalogic.config._config import ModelInfo, RegistryInfo
-from numalogic.models.autoencoder.variants import (
-    VanillaAE,
-    SparseVanillaAE,
-    Conv1dAE,
-    SparseConv1dAE,
-    LSTMAE,
-    SparseLSTMAE,
-    TransformerAE,
-    SparseTransformerAE,
-)
-from numalogic.models.threshold import StdDevThreshold, StaticThreshold, SigmoidThreshold
-from numalogic.postprocess import TanhNorm, ExpMovingAverage
-from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
-from numalogic.registry import MLflowRegistry, RedisRegistry
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 
@@ -52,6 +36,9 @@ class _ObjectFactory:
 
 
 class PreprocessFactory(_ObjectFactory):
+    from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
+    from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
+
     _CLS_MAP = {
         "StandardScaler": StandardScaler,
         "MinMaxScaler": MinMaxScaler,
@@ -64,10 +51,14 @@ class PreprocessFactory(_ObjectFactory):
 
 
 class PostprocessFactory(_ObjectFactory):
+    from numalogic.postprocess import TanhNorm, ExpMovingAverage
+
     _CLS_MAP = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage}
 
 
 class ThresholdFactory(_ObjectFactory):
+    from numalogic.models.threshold import StdDevThreshold, StaticThreshold, SigmoidThreshold
+
     _CLS_MAP = {
         "StdDevThreshold": StdDevThreshold,
         "StaticThreshold": StaticThreshold,
@@ -76,6 +67,17 @@ class ThresholdFactory(_ObjectFactory):
 
 
 class ModelFactory(_ObjectFactory):
+    from numalogic.models.autoencoder.variants import (
+        VanillaAE,
+        SparseVanillaAE,
+        Conv1dAE,
+        SparseConv1dAE,
+        LSTMAE,
+        SparseLSTMAE,
+        TransformerAE,
+        SparseTransformerAE,
+    )
+
     _CLS_MAP = {
         "VanillaAE": VanillaAE,
         "SparseVanillaAE": SparseVanillaAE,
@@ -89,7 +91,9 @@ class ModelFactory(_ObjectFactory):
 
 
 class RegistryFactory(_ObjectFactory):
+    import numalogic.registry as reg
+
     _CLS_MAP = {
-        "RedisRegistry": RedisRegistry,
-        "MLflowRegistry": MLflowRegistry,
+        "RedisRegistry": getattr(reg, "RedisRegistry"),
+        "MLflowRegistry": getattr(reg, "MLflowRegistry"),
     }
