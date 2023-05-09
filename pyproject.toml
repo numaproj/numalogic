@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.4.dev3"
+version = "0.4.dev4"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -26,7 +26,7 @@ homepage = "https://numalogic.numaproj.io/"
 python = ">=3.9, <3.11"
 numpy = "^1.23"
 pandas = "^2.0"
-scikit-learn = "^1.0"
+scikit-learn = "^1.2"
 mlflow-skinny = { version = ">2.0, <2.3", optional = true }
 protobuf = "~3.20" # needed to support pytorch-lightning
 omegaconf = "^2.3.0"
@@ -55,6 +55,7 @@ torchinfo = "^1.7.2"
 ruff = "^0.0.264"
 pre-commit = "^3.3.1"
 fakeredis = "^2.11.2"
+freezegun = "^1.2.2"
 
 [tool.poetry.group.jupyter]
 optional = true
