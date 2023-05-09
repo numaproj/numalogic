@@ -2,6 +2,7 @@ import unittest
 from contextlib import contextmanager
 from unittest.mock import patch, Mock
 
+from freezegun import freeze_time
 from mlflow import ActiveRun
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode, RESOURCE_LIMIT_EXCEEDED
@@ -289,6 +290,37 @@ class TestMLflow(unittest.TestCase):
         skeys = self.skeys
         dkeys = self.dkeys
         self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys))
+
+    @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
+    @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
+    @patch("mlflow.log_params", {"lr": 0.01})
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
+    def test_is_model_stale_true(self):
+        model = self.model
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=model, **{"lr": 0.01})
+        data = ml.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertTrue(ml.is_artifact_stale(data, 12))
+
+    @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
+    @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
+    @patch("mlflow.log_params", {"lr": 0.01})
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
+    def test_is_model_stale_false(self):
+        model = self.model
+        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=model, **{"lr": 0.01})
+        data = ml.load(skeys=self.skeys, dkeys=self.dkeys)
+        with freeze_time("2022-05-24 10:30:00"):
+            self.assertFalse(ml.is_artifact_stale(data, 12))
 
 
 if __name__ == "__main__":
