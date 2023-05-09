@@ -5,7 +5,7 @@ from typing import Optional
 
 from redis.exceptions import RedisError
 
-from numalogic.registry import ArtifactManager, ArtifactData
+from numalogic.registry import ArtifactManager, ArtifactData, ArtifactCache
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT
