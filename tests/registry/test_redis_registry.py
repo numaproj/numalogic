@@ -23,7 +23,7 @@ class TestRedisRegistry(unittest.TestCase):
         cls.redis_client = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
 
     def setUp(self):
-        self.cache = LocalLRUCache(cachesize=4, ttl=2)
+        self.cache = LocalLRUCache(cachesize=4, ttl=300)
         self.registry = RedisRegistry(
             client=self.redis_client,
             cache_registry=self.cache,
@@ -41,13 +41,15 @@ class TestRedisRegistry(unittest.TestCase):
         save_version = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
-        resave_version = self.registry.save(
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual(data.extras["version"], save_version)
+        resave_version1 = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
+        resave_data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertEqual(save_version, "0")
-        self.assertEqual(resave_version, "1")
-        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
-        self.assertEqual(data.extras["version"], resave_version)
+        self.assertEqual(resave_version1, "1")
+        self.assertEqual(resave_data.extras["version"], "0")
 
     def test_load_model_without_metadata(self):
         version = self.registry.save(
