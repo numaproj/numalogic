@@ -14,6 +14,8 @@ class TestArtifactCache(unittest.TestCase):
             cache_reg.load("m1")
         with self.assertRaises(NotImplementedError):
             cache_reg.delete("m1")
+        with self.assertRaises(NotImplementedError):
+            cache_reg.clear()
 
 
 class TestLocalLRUCache(unittest.TestCase):
