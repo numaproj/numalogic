@@ -133,14 +133,8 @@ class RedisRegistry(ArtifactManager):
                 f"Production key: {production_key}, Not Found !!!\n Exiting....."
             )
         model_key = self.client.get(production_key)
-        if not self.client.exists(model_key):
-            raise ModelKeyNotFound(
-                "Production key = {} is pointing to the key: {} that "
-                "is missing the redis registry".format(production_key, model_key)
-            )
-        return self.__get_artifact_data(
-            model_key=model_key.decode(),
-        )
+        _LOGGER.info("Production key, %s, is pointing to the key : %s", production_key, model_key)
+        return self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key)
 
     def __load_version_artifact(self, version: str, key: str) -> ArtifactData:
         model_key = self.__construct_version_key(key, version)
