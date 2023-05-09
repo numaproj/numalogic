@@ -76,6 +76,17 @@ class ArtifactManager(Generic[KEYS, A_D]):
         raise NotImplementedError("Please implement this method!")
 
     @staticmethod
+    def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
+        """
+        Returns whether the given artifact is stale or not, i.e. if
+        more time has elapsed since it was last retrained.
+        Args:
+            artifact_data: ArtifactData object to look into
+            freq_hr: Frequency of retraining in hours
+        """
+        raise NotImplementedError("Please implement this method!")
+
+    @staticmethod
     def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
         """
         Returns a single key comprising static and dynamic key fields.

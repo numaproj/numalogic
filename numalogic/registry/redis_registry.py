@@ -118,7 +118,7 @@ class RedisRegistry(ArtifactManager):
             artifact=deserialized_artifact,
             metadata=deserialized_metadata,
             extras={
-                "timestamp": int(artifact_timestamp.decode()),
+                "timestamp": float(artifact_timestamp.decode()),
                 "version": artifact_version.decode(),
             },
         )
@@ -168,7 +168,7 @@ class RedisRegistry(ArtifactManager):
             mapping={
                 "artifact": serialized_artifact,
                 "version": str(version),
-                "timestamp": int(time.time()),
+                "timestamp": float(time.time()),
                 "metadata": serialized_metadata,
             },
         )
