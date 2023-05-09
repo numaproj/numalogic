@@ -11,6 +11,7 @@
 
 
 import logging
+from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional, Any
 
@@ -24,7 +25,7 @@ from mlflow.tracking import MlflowClient
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry.artifact import ArtifactCache
 from numalogic.tools.exceptions import ModelVersionError
-from numalogic.tools.types import artifact_t, KEYS, META_T
+from numalogic.tools.types import artifact_t, KEYS, META_VT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -183,7 +184,7 @@ class MLflowRegistry(ArtifactManager):
         dkeys: KEYS,
         artifact: artifact_t,
         run_id: str = None,
-        **metadata: META_T,
+        **metadata: META_VT,
     ) -> Optional[ModelVersion]:
         """
         Saves the artifact into mlflow registry and updates version.
@@ -212,6 +213,20 @@ class MLflowRegistry(ArtifactManager):
             return model_version
         finally:
             mlflow.end_run()
+
+    @staticmethod
+    def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
+        """
+        Returns whether the given artifact is stale or not, i.e. if
+        more time has elasped since it was last retrained.
+        Args:
+            artifact_data: ArtifactData object to look into
+            freq_hr: Frequency of retraining in hours
+
+        """
+        date_updated = artifact_data.extras["last_updated_timestamp"] / 1000
+        stale_date = (datetime.now() - timedelta(hours=freq_hr)).timestamp()
+        return date_updated < stale_date
 
     def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
         """

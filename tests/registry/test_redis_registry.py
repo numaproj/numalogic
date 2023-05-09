@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 import fakeredis
+from freezegun import freeze_time
 from redis import ConnectionError, InvalidResponse, TimeoutError
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
@@ -68,6 +69,26 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertIsNotNone(data.artifact)
         self.assertIsNone(data.metadata)
         self.assertEqual(data.extras["version"], version)
+
+    def test_check_if_model_stale_true(self):
+        with freeze_time("2023-05-08 12:30:00"):
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertTrue(self.registry.is_artifact_stale(data, 12))
+
+    def test_check_if_model_stale_false(self):
+        with freeze_time("2023-05-08 12:30:00"):
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+        with freeze_time("2023-05-08 19:30:00"):
+            data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+            self.assertFalse(self.registry.is_artifact_stale(data, 8))
+
+    def test_check_if_model_stale_err(self):
+        self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        data.extras = None
+        with self.assertRaises(RedisRegistryError):
+            self.registry.is_artifact_stale(data, 8)
 
     def test_both_version_latest_model_with_version(self):
         with self.assertRaises(ValueError):
