@@ -265,7 +265,7 @@ class RedisRegistry(ArtifactManager):
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
         """
         Returns whether the given artifact is stale or not, i.e. if
-        more time has elasped since it was last retrained.
+        more time has elapsed since it was last retrained.
         Args:
             artifact_data: ArtifactData object to look into
             freq_hr: Frequency of retraining in hours
