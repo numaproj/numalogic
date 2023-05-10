@@ -79,11 +79,10 @@ class ArtifactManager(Generic[KEYS, A_D]):
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
         """
         Returns whether the given artifact is stale or not, i.e. if
-        more time has elasped since it was last retrained.
+        more time has elapsed since it was last retrained.
         Args:
             artifact_data: ArtifactData object to look into
             freq_hr: Frequency of retraining in hours
-
         """
         raise NotImplementedError("Please implement this method!")
 
@@ -144,6 +143,13 @@ class ArtifactCache(Generic[M_K, A_D]):
     def delete(self, key: str) -> None:
         r"""
         Deletes the ArtifactData object from the cache.
+        Implement this method for your custom cache.
+        """
+        raise NotImplementedError("Please implement this method!")
+
+    def clear(self) -> None:
+        r"""
+        Clears the cache.
         Implement this method for your custom cache.
         """
         raise NotImplementedError("Please implement this method!")

@@ -5,7 +5,7 @@ from typing import Optional
 
 from redis.exceptions import RedisError
 
-from numalogic.registry import ArtifactManager, ArtifactData
+from numalogic.registry import ArtifactManager, ArtifactData, ArtifactCache
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT
@@ -19,6 +19,7 @@ class RedisRegistry(ArtifactManager):
     Args:
         client: Take in the reids client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
+        cache_registry: Cache registry to use (default = None)
 
     Examples
     --------
@@ -34,16 +35,18 @@ class RedisRegistry(ArtifactManager):
     >>> loaded_artifact = registry.load(skeys, dkeys)
     """
 
-    __slots__ = ("client", "ttl")
+    __slots__ = ("client", "ttl", "cache_registry")
 
     def __init__(
         self,
         client: redis_client_t,
         ttl: int = 604800,
+        cache_registry: ArtifactCache = None,
     ):
         super().__init__("")
         self.client = client
         self.ttl = ttl
+        self.cache_registry = cache_registry
 
     @staticmethod
     def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
@@ -81,24 +84,65 @@ class RedisRegistry(ArtifactManager):
         """
         return key.split("::")[-1]
 
-    def __get_model_key(self, latest: bool, version: str, key: str) -> str:
-        if latest:
-            production_key = self.__construct_production_key(key)
-            if not self.client.exists(production_key):
-                raise ModelKeyNotFound(
-                    f"Production key: {production_key}, Not Found !!!\n Exiting....."
-                )
-            model_key = self.client.get(production_key)
-            if not self.client.exists(model_key):
-                raise ModelKeyNotFound(
-                    "Production key = {} is pointing to the key: {} that "
-                    "is missing the redis registry".format(production_key, model_key)
-                )
-        else:
-            model_key = self.__construct_version_key(key, version)
-            if not self.client.exists(model_key):
-                raise ModelKeyNotFound("Could not find model key with key: %s" % model_key)
-        return model_key
+    def _load_from_cache(self, key: str) -> Optional[ArtifactData]:
+        if not self.cache_registry:
+            return None
+        return self.cache_registry.load(key)
+
+    def _save_in_cache(self, key: str, artifact_data: ArtifactData) -> None:
+        if self.cache_registry:
+            self.cache_registry.save(key, artifact_data)
+
+    def _clear_cache(self, key: Optional[str] = None) -> Optional[ArtifactData]:
+        if self.cache_registry:
+            if key:
+                return self.cache_registry.delete(key)
+            return self.cache_registry.clear()
+        return None
+
+    def __get_artifact_data(
+        self,
+        model_key: str,
+    ) -> ArtifactData:
+        (
+            serialized_artifact,
+            artifact_version,
+            artifact_timestamp,
+            serialized_metadata,
+        ) = self.client.hmget(name=model_key, keys=["artifact", "version", "timestamp", "metadata"])
+        deserialized_artifact = loads(serialized_artifact)
+        deserialized_metadata = None
+        if serialized_metadata:
+            deserialized_metadata = loads(serialized_metadata)
+        return ArtifactData(
+            artifact=deserialized_artifact,
+            metadata=deserialized_metadata,
+            extras={
+                "timestamp": float(artifact_timestamp.decode()),
+                "version": artifact_version.decode(),
+            },
+        )
+
+    def __load_latest_artifact(self, key: str) -> ArtifactData:
+        cached_artifact = self._load_from_cache(key)
+        if cached_artifact:
+            return cached_artifact
+        production_key = self.__construct_production_key(key)
+        if not self.client.exists(production_key):
+            raise ModelKeyNotFound(
+                f"Production key: {production_key}, Not Found !!!\n Exiting....."
+            )
+        model_key = self.client.get(production_key)
+        _LOGGER.info("Production key, %s, is pointing to the key : %s", production_key, model_key)
+        return self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key)
+
+    def __load_version_artifact(self, version: str, key: str) -> ArtifactData:
+        model_key = self.__construct_version_key(key, version)
+        if not self.client.exists(model_key):
+            raise ModelKeyNotFound("Could not find model key with key: %s" % model_key)
+        return self.__get_artifact_data(
+            model_key=model_key,
+        )
 
     def __save_artifact(
         self, pipe, artifact: artifact_t, metadata: META_T, key: KEYS, version: str
@@ -118,7 +162,7 @@ class RedisRegistry(ArtifactManager):
             mapping={
                 "artifact": serialized_artifact,
                 "version": str(version),
-                "timestamp": int(time.time()),
+                "timestamp": time.time(),
                 "metadata": serialized_metadata,
             },
         )
@@ -147,30 +191,15 @@ class RedisRegistry(ArtifactManager):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")
         key = self.construct_key(skeys, dkeys)
         try:
-            model_key = self.__get_model_key(latest, version, key)
-            (
-                serialized_artifact,
-                artifact_version,
-                artifact_timestamp,
-                serialized_metadata,
-            ) = self.client.hmget(
-                name=model_key, keys=["artifact", "version", "timestamp", "metadata"]
-            )
-            deserialized_artifact = loads(serialized_artifact)
-            deserialized_metadata = None
-            if serialized_metadata:
-                deserialized_metadata = loads(serialized_metadata)
+            if latest:
+                artifact_data = self.__load_latest_artifact(key)
+                self._save_in_cache(key, artifact_data)
+            else:
+                artifact_data = self.__load_version_artifact(version, key)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
-            return ArtifactData(
-                artifact=deserialized_artifact,
-                metadata=deserialized_metadata,
-                extras={
-                    "timestamp": artifact_timestamp.decode(),
-                    "version": artifact_version.decode(),
-                },
-            )
+            return artifact_data
 
     def save(
         self,
@@ -229,12 +258,14 @@ class RedisRegistry(ArtifactManager):
                 )
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
+        else:
+            self._clear_cache(del_key)
 
     @staticmethod
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
         """
         Returns whether the given artifact is stale or not, i.e. if
-        more time has elasped since it was last retrained.
+        more time has elapsed since it was last retrained.
         Args:
             artifact_data: ArtifactData object to look into
             freq_hr: Frequency of retraining in hours
