@@ -30,7 +30,9 @@ jobs:
     - name: Install dependencies
       run: |
         poetry env use ${{ matrix.python-version }}
-        poetry install --all-extras --with dev,torch
+        poetry install --all-extras --with dev
+        poetry run pip install "torch<3.0" -i https://download.pytorch.org/whl/cpu
+        poetry run pip install "pytorch-lightning<3.0"
 
     - name: Run Coverage
       run: |
