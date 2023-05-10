@@ -26,8 +26,8 @@ from numalogic.config import (
     ThresholdFactory,
     NumalogicConf,
     ModelInfo,
+    RegistryFactory,
 )
-from numalogic.config.factory import RegistryFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import SparseVanillaAE, SparseConv1dAE, LSTMAE
 from numalogic.models.threshold import StdDevThreshold
