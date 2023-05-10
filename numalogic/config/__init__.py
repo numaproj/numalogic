@@ -16,6 +16,7 @@ from numalogic.config.factory import (
     PreprocessFactory,
     PostprocessFactory,
     ThresholdFactory,
+    RegistryFactory,
 )
 
 
@@ -28,4 +29,5 @@ __all__ = [
     "PreprocessFactory",
     "PostprocessFactory",
     "ThresholdFactory",
+    "RegistryFactory",
 ]

@@ -91,9 +91,33 @@ class ModelFactory(_ObjectFactory):
 
 
 class RegistryFactory(_ObjectFactory):
-    import numalogic.registry as reg
+    _CLS_SET = {"RedisRegistry", "MLflowRegistry"}
 
-    _CLS_MAP = {
-        "RedisRegistry": getattr(reg, "RedisRegistry"),
-        "MLflowRegistry": getattr(reg, "MLflowRegistry"),
-    }
+    def get_instance(self, object_info: Union[ModelInfo, RegistryInfo]):
+        import numalogic.registry as reg
+
+        try:
+            _cls = getattr(reg, object_info.name)
+        except AttributeError as err:
+            if object_info.name in self._CLS_SET:
+                raise ImportError(
+                    "Please install the required dependencies for the registry you want to use."
+                ) from err
+            raise UnknownConfigArgsError(
+                f"Invalid model info instance provided: {object_info}"
+            ) from err
+        return _cls(**object_info.conf)
+
+    def get_cls(self, object_info: Union[ModelInfo, RegistryInfo]):
+        import numalogic.registry as reg
+
+        try:
+            return getattr(reg, object_info.name)
+        except AttributeError as err:
+            if object_info.name in self._CLS_SET:
+                raise ImportError(
+                    "Please install the required dependencies for the registry you want to use."
+                ) from err
+            raise UnknownConfigArgsError(
+                f"Invalid model info instance provided: {object_info}"
+            ) from err
