@@ -21,6 +21,8 @@ from mlflow.entities.model_registry import ModelVersion
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
+from sklearn.base import BaseEstimator
+from torch import nn
 
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry.artifact import ArtifactCache
@@ -51,9 +53,6 @@ class MLflowRegistry(ArtifactManager):
 
     Args:
         tracking_uri: the tracking server uri to use for mlflow
-        artifact_type: the type of primary artifact to use
-                              supported values include:
-                              {"pytorch", "sklearn", "tensorflow", "pyfunc"}
         models_to_retain: number of models to retain in the DB (default = 5)
         model_stage: Staging environment from where to load the latest model from (mlflow )
                             supported values include:
@@ -67,18 +66,17 @@ class MLflowRegistry(ArtifactManager):
     >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler.fit(data)
-    >>> registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080", artifact_type="pytorch")
+    >>> registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080")
     >>> registry.save(skeys=["model"], dkeys=["AE"], artifact=VanillaAE(10))
-    >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"])
+    >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"], artifact_type="pytorch")
     """
 
-    __slots__ = ("client", "handler", "models_to_retain", "model_stage", "cache_registry")
+    __slots__ = ("client", "models_to_retain", "model_stage", "cache_registry")
     _TRACKING_URI = None
 
     def __new__(
         cls,
         tracking_uri: Optional[str],
-        artifact_type: str = "pytorch",
         models_to_retain: int = 5,
         model_stage: ModelStage = ModelStage.PRODUCTION,
         cache_registry: ArtifactCache = None,
@@ -93,7 +91,6 @@ class MLflowRegistry(ArtifactManager):
     def __init__(
         self,
         tracking_uri: str,
-        artifact_type: str = "pytorch",
         models_to_retain: int = 5,
         model_stage: str = ModelStage.PRODUCTION,
         cache_registry: ArtifactCache = None,
@@ -101,13 +98,20 @@ class MLflowRegistry(ArtifactManager):
         super().__init__(tracking_uri)
         mlflow.set_tracking_uri(tracking_uri)
         self.client = MlflowClient()
-        self.handler = self.mlflow_handler(artifact_type)
         self.models_to_retain = models_to_retain
         self.model_stage = model_stage
         self.cache_registry = cache_registry
 
     @staticmethod
-    def mlflow_handler(artifact_type: str):
+    def handler_from_obj(artifact: artifact_t):
+        if isinstance(artifact, nn.Module):
+            return mlflow.pytorch
+        if isinstance(artifact, BaseEstimator):
+            return mlflow.sklearn
+        return mlflow.pyfunc
+
+    @staticmethod
+    def handler_from_type(artifact_type: str):
         """
         Helper method to return the right handler given the artifact type.
         """
@@ -115,8 +119,6 @@ class MLflowRegistry(ArtifactManager):
             return mlflow.pytorch
         if artifact_type == "sklearn":
             return mlflow.sklearn
-        if artifact_type == "tensorflow":
-            return mlflow.tensorflow
         if artifact_type == "pyfunc":
             return mlflow.pyfunc
         raise NotImplementedError("Artifact Type not Implemented")
@@ -136,8 +138,25 @@ class MLflowRegistry(ArtifactManager):
         return None
 
     def load(
-        self, skeys: KEYS, dkeys: KEYS, latest: bool = True, version: str = None
+        self,
+        skeys: KEYS,
+        dkeys: KEYS,
+        latest: bool = True,
+        version: str = None,
+        artifact_type: str = "pytorch",
     ) -> Optional[ArtifactData]:
+        """
+        Load the artifact from the registry. The artifact is loaded from the cache if available.
+        Args:
+            skeys: Static keys
+            dkeys: Dynamic keys
+            latest: Load the latest version of the model (default = True)
+            version: Version of the model to load (default = None)
+            artifact_type: Type of the artifact to load (default = "pytorch")
+
+        Returns:
+            The loaded ArtifactData object if available otherwise None
+        """
         model_key = self.construct_key(skeys, dkeys)
 
         if (latest and version) or (not latest and not version):
@@ -154,29 +173,34 @@ class MLflowRegistry(ArtifactManager):
                 version_info = version_info[-1]
             else:
                 version_info = self.client.get_model_version(model_key, version)
-            model, metadata = self.__load_artifacts(skeys, dkeys, version_info)
+            model, metadata = self.__load_artifacts(skeys, dkeys, version_info, artifact_type)
         except RestException as mlflow_err:
-            if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
-                _LOGGER.info("Model not found with key: %s", model_key)
-            else:
-                _LOGGER.exception(
-                    "Mlflow error when loading a model with key: %s: %r", model_key, mlflow_err
-                )
-            return None
+            return self.__log_mlflow_err(mlflow_err, model_key)
         except ModelVersionError as model_missing_err:
             _LOGGER.error(
                 "No Model found found in %s ERROR: %r", self.model_stage, model_missing_err
             )
             return None
         except Exception as ex:
-            _LOGGER.exception("Unexpected error: %s", ex)
+            _LOGGER.exception("Unexpected error: %r", ex)
             return None
         else:
             artifact_data = ArtifactData(
                 artifact=model, metadata=metadata, extras=dict(version_info)
             )
-            self._save_in_cache(model_key, artifact_data)
+            # save in cache if loading the latest version
+            if latest:
+                self._save_in_cache(model_key, artifact_data)
             return artifact_data
+
+    @staticmethod
+    def __log_mlflow_err(mlflow_err: RestException, model_key: str) -> None:
+        if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
+            _LOGGER.info("Model not found with key: %s", model_key)
+        else:
+            _LOGGER.exception(
+                "Mlflow error when loading a model with key: %s: %r", model_key, mlflow_err
+            )
 
     def save(
         self,
@@ -199,9 +223,10 @@ class MLflowRegistry(ArtifactManager):
             mlflow ModelVersion instance
         """
         model_key = self.construct_key(skeys, dkeys)
+        handler = self.handler_from_obj(artifact)
         try:
             mlflow.start_run(run_id=run_id)
-            self.handler.log_model(artifact, "model", registered_model_name=model_key)
+            handler.log_model(artifact, "model", registered_model_name=model_key)
             if metadata:
                 mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
@@ -298,10 +323,11 @@ class MLflowRegistry(ArtifactManager):
                 _LOGGER.debug("Deleted stale model version : %s", stale_model.version)
 
     def __load_artifacts(
-        self, skeys: KEYS, dkeys: KEYS, version_info: ModelVersion
+        self, skeys: KEYS, dkeys: KEYS, version_info: ModelVersion, artifact_type: str
     ) -> tuple[artifact_t, dict[str, Any]]:
         model_key = self.construct_key(skeys, dkeys)
-        model = self.handler.load_model(model_uri=f"models:/{model_key}/{version_info.version}")
+        handler = self.handler_from_type(artifact_type)
+        model = handler.load_model(model_uri=f"models:/{model_key}/{version_info.version}")
         _LOGGER.info("Successfully loaded model %s from Mlflow", model_key)
 
         run_info = mlflow.get_run(version_info.run_id)
