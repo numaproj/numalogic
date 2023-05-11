@@ -66,9 +66,9 @@ class MLflowRegistry(ArtifactManager):
     >>>
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler.fit(data)
-    >>> registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080", artifact_type="pytorch")
+    >>> registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080")
     >>> registry.save(skeys=["model"], dkeys=["AE"], artifact=VanillaAE(10))
-    >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"])
+    >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"], artifact_type="pytorch")
     """
 
     __slots__ = ("client", "models_to_retain", "model_stage", "cache_registry")
@@ -175,27 +175,32 @@ class MLflowRegistry(ArtifactManager):
                 version_info = self.client.get_model_version(model_key, version)
             model, metadata = self.__load_artifacts(skeys, dkeys, version_info, artifact_type)
         except RestException as mlflow_err:
-            if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
-                _LOGGER.info("Model not found with key: %s", model_key)
-            else:
-                _LOGGER.exception(
-                    "Mlflow error when loading a model with key: %s: %r", model_key, mlflow_err
-                )
-            return None
+            return self.__log_mlflow_err(mlflow_err, model_key)
         except ModelVersionError as model_missing_err:
             _LOGGER.error(
                 "No Model found found in %s ERROR: %r", self.model_stage, model_missing_err
             )
             return None
         except Exception as ex:
-            _LOGGER.exception("Unexpected error: %s", ex)
+            _LOGGER.exception("Unexpected error: %r", ex)
             return None
         else:
             artifact_data = ArtifactData(
                 artifact=model, metadata=metadata, extras=dict(version_info)
             )
-            self._save_in_cache(model_key, artifact_data)
+            # save in cache if loading the latest version
+            if latest:
+                self._save_in_cache(model_key, artifact_data)
             return artifact_data
+
+    @staticmethod
+    def __log_mlflow_err(mlflow_err: RestException, model_key: str) -> None:
+        if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
+            _LOGGER.info("Model not found with key: %s", model_key)
+        else:
+            _LOGGER.exception(
+                "Mlflow error when loading a model with key: %s: %r", model_key, mlflow_err
+            )
 
     def save(
         self,

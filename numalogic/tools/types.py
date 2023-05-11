@@ -18,8 +18,8 @@ from sklearn.base import BaseEstimator
 from torch import nn
 
 artifact_t = TypeVar("artifact_t", bound=Union[nn.Module, BaseEstimator])
-META_T = TypeVar("META_T", bound=dict[str, Union[str, list, dict]])
-META_VT = TypeVar("META_VT", bound=Union[str, list, dict])
+META_T = TypeVar("META_T", bound=dict[str, Union[str, float, int, list, dict]])
+META_VT = TypeVar("META_VT", bound=Union[str, int, float, list, dict])
 EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
 redis_client_t = TypeVar("redis_client_t", bound=AbstractRedis, covariant=True)
 KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
