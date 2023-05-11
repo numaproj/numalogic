@@ -10,7 +10,7 @@ from mlflow.store.entities import PagedList
 from sklearn.ensemble import RandomForestRegressor
 
 from numalogic.models.autoencoder.variants import VanillaAE
-from numalogic.registry import MLflowRegistry
+from numalogic.registry import MLflowRegistry, ArtifactData
 from numalogic.registry.mlflow_registry import ModelStage
 from numalogic.tools.exceptions import ModelVersionError
 from tests.registry._mlflow_utils import (
@@ -327,6 +327,16 @@ class TestMLflow(unittest.TestCase):
         data = ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         with freeze_time("2022-05-24 10:30:00"):
             self.assertFalse(ml.is_artifact_stale(data, 12))
+
+    def test_no_cache(self):
+        registry = MLflowRegistry(TRACKING_URI)
+        self.assertIsNone(
+            registry._save_in_cache(
+                "key", ArtifactData(artifact=self.model, extras={}, metadata={})
+            )
+        )
+        self.assertIsNone(registry._load_from_cache("key"))
+        self.assertIsNone(registry._clear_cache("key"))
 
 
 if __name__ == "__main__":
