@@ -145,6 +145,18 @@ class MLflowRegistry(ArtifactManager):
         version: str = None,
         artifact_type: str = "pytorch",
     ) -> Optional[ArtifactData]:
+        """
+        Load the artifact from the registry. The artifact is loaded from the cache if available.
+        Args:
+            skeys: Static keys
+            dkeys: Dynamic keys
+            latest: Load the latest version of the model (default = True)
+            version: Version of the model to load (default = None)
+            artifact_type: Type of the artifact to load (default = "pytorch")
+
+        Returns:
+            The loaded ArtifactData object if available otherwise None
+        """
         model_key = self.construct_key(skeys, dkeys)
 
         if (latest and version) or (not latest and not version):
