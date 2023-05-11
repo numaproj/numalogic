@@ -76,7 +76,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     def test_save_model_sklearn(self):
         model = self.model_sklearn
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
+        ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
         status = ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
@@ -93,11 +93,11 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_load_model_when_pytorch_model_exist1(self):
         model = self.model
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
         ml.save(skeys=skeys, dkeys=dkeys, artifact=model, **{"lr": 0.01})
-        data = ml.load(skeys=skeys, dkeys=dkeys)
+        data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
         self.assertIsNotNone(data.metadata)
         self.assertIsInstance(data.artifact, VanillaAE)
 
@@ -110,11 +110,11 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
     def test_load_model_when_pytorch_model_exist2(self):
         model = self.model
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch", models_to_retain=2)
+        ml = MLflowRegistry(TRACKING_URI, models_to_retain=2)
         skeys = self.skeys
         dkeys = self.dkeys
         ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
-        data = ml.load(skeys=skeys, dkeys=dkeys)
+        data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
         self.assertEqual(data.metadata, {})
         self.assertIsInstance(data.artifact, VanillaAE)
 
@@ -128,11 +128,11 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
     def test_load_model_when_sklearn_model_exist(self):
         model = self.model_sklearn
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="sklearn")
+        ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
         ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
-        data = ml.load(skeys=skeys, dkeys=dkeys)
+        data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="sklearn")
         self.assertIsInstance(data.artifact, RandomForestRegressor)
         self.assertEqual(data.metadata, {})
 
@@ -188,21 +188,21 @@ class TestMLflow(unittest.TestCase):
     def test_load_model_when_no_model_01(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="pyfunc")
+        ml = MLflowRegistry(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
-            ml.load(skeys=fake_skeys, dkeys=fake_dkeys)
+            ml.load(skeys=fake_skeys, dkeys=fake_dkeys, artifact_type="pyfunc")
             self.assertTrue(log.output)
 
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version())
-    @patch("mlflow.tensorflow.load_model", Mock(side_effect=RuntimeError))
+    @patch("mlflow.pytorch.load_model", Mock(side_effect=RuntimeError))
     def test_load_model_when_no_model_02(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="tensorflow")
+        ml = MLflowRegistry(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
-            ml.load(skeys=fake_skeys, dkeys=fake_dkeys)
+            ml.load(skeys=fake_skeys, dkeys=fake_dkeys, artifact_type="pytorch")
             self.assertTrue(log.output)
 
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
@@ -213,14 +213,21 @@ class TestMLflow(unittest.TestCase):
     def test_transition_stage_fail(self):
         fake_skeys = ["Fakemodel_"]
         fake_dkeys = ["error"]
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="tensorflow")
+        ml = MLflowRegistry(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
             ml.transition_stage(fake_skeys, fake_dkeys)
             self.assertTrue(log.output)
 
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version())
     def test_no_implementation(self):
-        with self.assertRaises(NotImplementedError):
-            MLflowRegistry(TRACKING_URI, artifact_type="some_random")
+        fake_skeys = ["Fakemodel_"]
+        fake_dkeys = ["error"]
+        ml = MLflowRegistry(TRACKING_URI)
+        with self.assertLogs(level="ERROR") as log:
+            ml.load(skeys=fake_skeys, dkeys=fake_dkeys, artifact_type="somerandom")
+            self.assertTrue(log.output)
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
@@ -271,10 +278,10 @@ class TestMLflow(unittest.TestCase):
     )
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_load_no_model_found(self):
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        data = ml.load(skeys=skeys, dkeys=dkeys)
+        data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
         self.assertIsNone(data)
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
@@ -285,10 +292,10 @@ class TestMLflow(unittest.TestCase):
     )
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_load_other_mlflow_err(self):
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys))
+        self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch"))
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
@@ -300,9 +307,9 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_is_model_stale_true(self):
         model = self.model
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        ml = MLflowRegistry(TRACKING_URI)
         ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=model, **{"lr": 0.01})
-        data = ml.load(skeys=self.skeys, dkeys=self.dkeys)
+        data = ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         self.assertTrue(ml.is_artifact_stale(data, 12))
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
@@ -315,9 +322,9 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_is_model_stale_false(self):
         model = self.model
-        ml = MLflowRegistry(TRACKING_URI, artifact_type="pytorch")
+        ml = MLflowRegistry(TRACKING_URI)
         ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=model, **{"lr": 0.01})
-        data = ml.load(skeys=self.skeys, dkeys=self.dkeys)
+        data = ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         with freeze_time("2022-05-24 10:30:00"):
             self.assertFalse(ml.is_artifact_stale(data, 12))
 
