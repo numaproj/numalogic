@@ -1,0 +1,10 @@
+redis_conf:
+  host: "isbsvc-redis-isbs-redis-svc.numalogic-rollouts.svc"
+  port: 26379
+  expiry: 360
+  master_name: "mymaster"
+prometheus_conf:
+  server: "http://thanosquerys3.ipmsaasppdusw2.iks2.a.intuit.com/"
+  pushgateway: "http://prometheus-pushgateway.addon-metricset-ns.svc:9091"
+registry_conf:
+  tracking_uri: "http://mlflow-service.numalogic-rollouts.svc.cluster.local:5000"

@@ -1,0 +1,35 @@
+configs:
+  - name: "sandbox_numalogic_demo1"
+    composite_keys: [ "namespace", "name", "hash_id" ]
+    metric_configs:
+      - metric: "rollout_error_rate"
+        static_threshold: 3
+        static_threshold_wt: 0.6
+      - metric: "rollout_latency"
+        static_threshold: 3
+    unified_config:
+      unified_metric_name: "unified_anomaly"
+      unified_metrics: ["rollout_error_rate", "rollout_latency"]
+  - name: "sandbox_numalogic_demo2"
+    composite_keys: [ "namespace", "name", "hash_id" ]
+    metric_configs:
+      - metric: "rollout_error_rate"
+        static_threshold: 3
+        static_threshold_wt: 0.7
+      - metric: "rollout_latency"
+        static_threshold: 3
+    unified_config:
+      unified_metric_name: "unified_anomaly"
+      unified_metrics: [ "rollout_error_rate", "rollout_latency" ]
+      unified_weights: [0.7, 0.3]
+  - name: "sandbox_numalogic_demo3"
+    composite_keys: [ "namespace", "name", "app", "rollouts_pod_template_hash" ]
+    metric_configs:
+      - metric: "namespace_app_rollouts_http_request_error_rate"
+        static_threshold: 3
+      - metric: "namespace_app_rollouts_http_request_latency"
+        static_threshold: 3
+    unified_config:
+      unified_metric_name: "namespace_app_rollouts_unified_anomaly"
+      unified_metrics: [ "namespace_app_rollouts_http_request_error_rate",
+                               "namespace_app_rollouts_http_request_latency" ]

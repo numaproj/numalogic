@@ -1,0 +1,5 @@
+[run]
+branch = True
+parallel = True
+source = numalogic-prometheus
+omit = tests/*
