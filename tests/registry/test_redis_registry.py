@@ -1,4 +1,5 @@
 import unittest
+from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
 
 import fakeredis
@@ -128,15 +129,17 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertEqual(data.extras["version"], version)
 
     def test_check_if_model_stale_true(self):
-        with freeze_time("2023-05-08 12:30:00"):
+        delta = datetime.today() - timedelta(days=5)
+        with freeze_time(delta):
             self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
         data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertTrue(self.registry.is_artifact_stale(data, 12))
 
     def test_check_if_model_stale_false(self):
-        with freeze_time("2023-05-08 12:30:00"):
+        delta = datetime.today()
+        with freeze_time(delta):
             self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
-        with freeze_time("2023-05-08 19:30:00"):
+        with freeze_time(delta + timedelta(hours=7)):
             data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
             self.assertFalse(self.registry.is_artifact_stale(data, 8))
 
