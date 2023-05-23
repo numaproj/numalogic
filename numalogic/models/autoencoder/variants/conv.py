@@ -16,6 +16,7 @@ from collections.abc import Sequence
 
 import torch
 from torch import nn, Tensor
+from torch.distributions import kl_divergence, Bernoulli
 from torch.nn.init import calculate_gain
 
 from numalogic.models.autoencoder.base import BaseAE
@@ -227,12 +228,12 @@ class Conv1dAE(BaseAE):
         if isinstance(enc_kernel_sizes, int):
             enc_kernel_sizes = [enc_kernel_sizes for _ in range(len(enc_channels))]
 
-        elif isinstance(enc_kernel_sizes, (tuple, list)):
+        elif isinstance(enc_kernel_sizes, Sequence):
             assert len(enc_channels) == len(
                 enc_kernel_sizes
             ), "enc_channels and enc_kernel_sizes should be of the same length"
         else:
-            raise TypeError(f"Invalid enc_kernel_sizes type provided: {enc_kernel_sizes}")
+            raise TypeError(f"Invalid enc_kernel_sizes type provided: {type(enc_kernel_sizes)}")
 
         self.encoder = Encoder(
             num_channels=enc_channels,
@@ -301,8 +302,8 @@ class SparseConv1dAE(Conv1dAE):
         <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
 
     Args:
-        beta: regularization parameter (Defaults to 1e-3)
-        rho: sparsity parameter value (Defaults to 0.05)
+        beta: Penalty factor (Defaults to 1e-3)
+        rho: Sparsity parameter value (Defaults to 0.05)
         **kwargs: VanillaAE kwargs
     """
 
@@ -324,13 +325,20 @@ class SparseConv1dAE(Conv1dAE):
         """
         rho_hat = torch.mean(activations, dim=0)
         rho = torch.full(rho_hat.size(), self.rho, device=self.device)
-        kl_loss = nn.KLDivLoss(reduction="sum")
-        _dim = 0 if rho_hat.dim() == 1 else 1
-        return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
+        kl_loss = kl_divergence(
+            Bernoulli(logits=torch.log(rho)), Bernoulli(logits=torch.log(rho_hat))
+        )
+        return torch.sum(torch.clamp(kl_loss, max=1.0))
 
-    def _get_reconstruction_loss(self, batch):
+    def _get_reconstruction_loss(self, batch) -> Tensor:
         latent, recon = self.forward(batch)
         batch = batch.view(-1, self.in_channels, self.seq_len)
         loss = self.criterion(batch, recon)
         penalty = self.kl_divergence(latent)
-        return loss + penalty
+        return loss + (self.beta * penalty)
+
+    def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
+        recon = self.reconstruction(batch)
+        loss = self.criterion(batch, recon.view(-1, self.seq_len, self.in_channels))
+        self._total_val_loss += loss.detach().item()
+        return loss

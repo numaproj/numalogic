@@ -14,6 +14,7 @@ from collections.abc import Sequence
 
 import torch
 from torch import nn, Tensor
+from torch.distributions import kl_divergence, Bernoulli
 
 from numalogic.models.autoencoder.base import BaseAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
@@ -68,7 +69,7 @@ class _Encoder(nn.Module):
             [
                 nn.Linear(start_layersize, layersizes[-1]),
                 nn.BatchNorm1d(self.n_features),
-                nn.LeakyReLU(),
+                nn.ReLU(),
             ]
         )
         return layers
@@ -239,13 +240,21 @@ class SparseVanillaAE(VanillaAE):
         """
         rho_hat = torch.mean(activations, dim=0)
         rho = torch.full(rho_hat.size(), self.rho, device=self.device)
-        kl_loss = nn.KLDivLoss(reduction="sum")
-        _dim = 0 if rho_hat.dim() == 1 else 1
-        return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
+        kl_loss = kl_divergence(
+            Bernoulli(logits=torch.log(rho)), Bernoulli(logits=torch.log(rho_hat))
+        )
+        return torch.sum(torch.clamp(kl_loss, max=1.0))
 
-    def _get_reconstruction_loss(self, batch):
+    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         latent, recon = self.forward(batch)
         x = batch.view(-1, self.n_features, self.seq_len)
         loss = self.criterion(x, recon)
         penalty = self.kl_divergence(latent)
-        return loss + penalty
+        return loss + (self.beta * penalty)
+
+    def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
+        recon = self.reconstruction(batch)
+        recon = recon.view(-1, self.seq_len, self.n_features)
+        loss = self.criterion(batch, recon)
+        self._total_val_loss += loss.detach().item()
+        return loss
