@@ -217,8 +217,8 @@ class SparseVanillaAE(VanillaAE):
         <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
 
     Args:
-        beta: regularization parameter (Defaults to 1e-3)
-        rho: sparsity parameter value (Defaults to 0.05)
+        beta: Regularization factor (Defaults to 1e-3)
+        rho: Sparsity parameter value (Defaults to 0.05)
         **kwargs: VanillaAE kwargs
     """
 
