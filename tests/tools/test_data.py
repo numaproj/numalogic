@@ -8,7 +8,7 @@ from torch.testing import assert_close
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.tools.data import StreamingDataset, TimeseriesDataModule
+from numalogic.tools.data import StreamingDataset, TimeseriesDataModule, inverse_window
 from numalogic.tools.exceptions import InvalidDataShapeError
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
@@ -96,7 +96,20 @@ class TestTimeSeriesDataModule(unittest.TestCase):
         with self.assertRaises(ValueError):
             TimeseriesDataModule(SEQ_LEN, self.train_data, val_split_ratio=1.2)
 
-    def test_unbatch_sequences(self):
+
+class TestInverseWindow(unittest.TestCase):
+    train_data = None
+    test_data = None
+    m = None
+    n = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.n = 3
+        cls.train_data = RNG.random((100, cls.n))
+        cls.test_data = RNG.random((20, cls.n))
+
+    def test_inverse_window(self):
         ratio = 0.2
         datamodule = TimeseriesDataModule(
             SEQ_LEN, self.train_data, val_split_ratio=ratio, batch_size=256
@@ -106,18 +119,22 @@ class TestTimeSeriesDataModule(unittest.TestCase):
         val_size = int(ratio * len(self.train_data))
 
         for batch in datamodule.train_dataloader():
-            unbatched = datamodule.unbatch_sequences(batch)
+            unbatched = inverse_window(batch, method="keep_first")
             self.assertTupleEqual(self.train_data[:-val_size].shape, unbatched.shape)
             self.assertAlmostEqual(
                 torch.mean(unbatched).item(), np.mean(self.train_data[:-val_size]), places=5
             )
 
         for batch in datamodule.val_dataloader():
-            unbatched = datamodule.unbatch_sequences(batch)
+            unbatched = inverse_window(batch, method="keep_last")
             self.assertTupleEqual(self.train_data[-val_size:].shape, unbatched.shape)
             self.assertAlmostEqual(
                 torch.mean(unbatched).item(), np.mean(self.train_data[-val_size:]), places=5
             )
+
+    def test_inverse_window_err(self):
+        with self.assertRaises(ValueError):
+            inverse_window(torch.tensor([1, 2, 3]), method="invalid_method")
 
 
 if __name__ == "__main__":

@@ -12,12 +12,14 @@ The performance table is shown below, although note that the hyperparameters hav
 The hyperparams used are available inside the results directory under each algorithm.
 
 
-| KPI ID                               | KPI index | Algorithm     | ROC-AUC |
-|--------------------------------------|-----------|---------------|---------|
-| 431a8542-c468-3988-a508-3afd06a218da | 14        | VanillaAE     | 0.89    |
-| 431a8542-c468-3988-a508-3afd06a218da | 14        | Conv1dAE      | 0.88    |
-| 431a8542-c468-3988-a508-3afd06a218da | 14        | LSTMAE        | 0.86    |
-| 431a8542-c468-3988-a508-3afd06a218da | 14        | TransformerAE | 0.82    |
+| KPI ID                               | KPI index | Algorithm       | ROC-AUC (test set) |
+|--------------------------------------|-----------|-----------------|--------------------|
+| 431a8542-c468-3988-a508-3afd06a218da | 14        | VanillaAE       | 0.89               |
+| 431a8542-c468-3988-a508-3afd06a218da | 14        | Conv1dAE        | 0.88               |
+| 431a8542-c468-3988-a508-3afd06a218da | 14        | LSTMAE          | 0.86               |
+| 431a8542-c468-3988-a508-3afd06a218da | 14        | TransformerAE   | 0.82               |
+| 431a8542-c468-3988-a508-3afd06a218da | 14        | SparseVanillaAE | 0.93               |
+| 431a8542-c468-3988-a508-3afd06a218da | 14        | SparseConv1dAE  | 0.77               |
 
 
 Full credit to Zeyan Li et al. for constructing large-scale real world benchmark datasets for AIOps.
