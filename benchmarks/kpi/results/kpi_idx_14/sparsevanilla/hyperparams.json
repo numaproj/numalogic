@@ -1,0 +1,20 @@
+{
+  "BATCH_SIZE": 64,
+  "SPLIT_RATIOS": [
+    0.5,
+    0.2,
+    0.3
+  ],
+  "TRAINER": {
+    "accelerator": "cpu",
+    "max_epochs": 50
+  },
+  "MODEL": {
+    "name": "SparseVanillaAE",
+    "conf": {
+      "seq_len": 10,
+      "encoder_layersizes": [16, 32],
+      "decoder_layersizes": [32, 16]
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "BATCH_SIZE": 64,
+  "SPLIT_RATIOS": [0.5, 0.2, 0.3],
+  "TRAINER": {"accelerator": "cpu", "max_epochs": 50},
+  "MODEL": {
+    "name": "SparseConv1dAE",
+    "conf": {
+      "seq_len": 12,
+      "in_channels": 1,
+      "enc_channels": [8, 16, 32],
+      "enc_kernel_sizes": [3, 3, 3],
+      "weight_decay": 1e-6
+    }
+  }
+}
