@@ -10,7 +10,7 @@
 # limitations under the License.
 
 import logging
-from typing import Optional
+from typing import Optional, Union
 from collections.abc import Generator, Iterator
 
 import numpy as np
@@ -24,6 +24,59 @@ from torch.utils.data import IterableDataset, DataLoader
 from numalogic.tools.exceptions import InvalidDataShapeError
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def inverse_window(batched: Tensor, method="keep_last") -> Tensor:
+    r"""
+    Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
+    back into a shape of (new_batch, num_features).
+
+    Args:
+        batched: A 3D tensor of shape: (batch_size, seq_len, num_features)
+        method: The method to use for the inverse transformation. (default: "keep_last")
+                Valid methods are: "keep_last", "keep_first"
+    Returns:
+        A 2D tensor of shape: (new_batch, num_features)
+    """
+    if method == "keep_last":
+        return inverse_window_last_only(batched)
+    if method == "keep_first":
+        return inverse_window_first_only(batched)
+    raise ValueError(f"Invalid method: {method}")
+
+
+def inverse_window_first_only(batched: Tensor) -> Tensor:
+    r"""
+    Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
+    back into a shape of (new_batch, num_features).
+
+    Note: This is an approximate inverse transormation as only the
+    first element in seq_len is used for the first (new_batch - seq_len - 1) rows.
+
+    Args:
+        batched: A 3D tensor of shape: (batch_size, seq_len, num_features)
+    Returns:
+        A 2D tensor of shape: (new_batch, num_features)
+    """
+    output = batched[:, 0, :]
+    return torch.vstack((output, batched[-1, 1::]))
+
+
+def inverse_window_last_only(batched: Tensor) -> Tensor:
+    r"""
+    Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
+    back into a shape of (new_batch, num_features).
+
+    Note: This is an approximate inverse transormation as only the
+    last element in seq_len is used for the last (new_batch - seq_len - 1) rows.
+
+    Args:
+        batched: A 3D tensor of shape: (batch_size, seq_len, num_features)
+    Returns:
+        A 2D tensor of shape: (new_batch, num_features)
+    """
+    output = batched[:, -1, :]
+    return torch.vstack((batched[0, :-1, :], output))
 
 
 class StreamingDataset(IterableDataset):
@@ -93,10 +146,19 @@ class StreamingDataset(IterableDataset):
         """
         return len(self._data) - self._seq_len + 1
 
-    def __getitem__(self, idx: int) -> npt.NDArray[float]:
+    def __getitem__(self, idx: Union[int, slice]) -> npt.NDArray[float]:
         r"""
         Retrieves a sequence from the input data at the specified index.
         """
+        if isinstance(idx, slice):
+            if idx.step is not None:
+                raise ValueError("Slice with step is not supported in StreamingDataset")
+            output = []
+            start = idx.start or 0
+            stop = idx.stop or len(self)
+            for i in range(start, stop - self._seq_len + 1):
+                output.append(self._data[i : (i + self._seq_len)])
+            return np.stack(output)
         if idx >= len(self):
             raise IndexError(f"{idx} out of bound!")
         return self._data[idx : idx + self._seq_len]
@@ -161,7 +223,7 @@ class TimeseriesDataModule(pl.LightningDataModule):
     def unbatch_sequences(batched: Tensor) -> Tensor:
         r"""
         Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
-        back into a shape of (new_batch, num_feautres).
+        back into a shape of (new_batch, num_features).
 
         Note: This is an approximate inverse transormation as only the
         first element in seq_len is used for the first (new_batch - seq_len - 1) rows.

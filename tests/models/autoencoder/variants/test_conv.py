@@ -108,7 +108,7 @@ class TestConvAE(unittest.TestCase):
                 seq_len=SEQ_LEN,
                 in_channels=self.X_train.shape[1],
                 enc_channels=[8, 16, 4],
-                enc_kernel_sizes={3, 3, 3},
+                enc_kernel_sizes={5, 3, 1},
                 dec_activation="random",
             )
 
