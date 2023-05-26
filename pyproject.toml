@@ -102,7 +102,7 @@ show-source = true
 
 [tool.ruff.pylint]
 max-args = 15
-max-statements = 40
+max-statements = 30
 
 [tool.ruff.pydocstyle]
 convention = "numpy"
