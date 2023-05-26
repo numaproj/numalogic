@@ -10,8 +10,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def postprocess(key: str, datum: Datum) -> Messages:
-    r"""
-    The postprocess transforms the inferred data into anomaly score between [0,10]
+    r"""The postprocess transforms the inferred data into anomaly score between [0,10]
     and sends it to log sink.
 
     For more information about the arguments, refer:

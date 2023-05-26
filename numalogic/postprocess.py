@@ -28,25 +28,37 @@ def _allow_only_single_feature(data: npt.NDArray[float]) -> None:
 
 
 def tanh_norm(scores: npt.NDArray[float], scale_factor=10, smooth_factor=10) -> npt.NDArray[float]:
+    """
+    Applies column wise tanh normalization to the input data.
+
+    This is most commonly used to normalize the anomaly scores to a desired range.
+
+    Args:
+    ----
+        scores: feature array
+        scale_factor: scale the output by this factor (default: 10)
+        smooth_factor: factor to broaden out the linear range of the graph (default: 10)
+    """
     return scale_factor * np.tanh(scores / smooth_factor)
 
 
 def expmov_avg_aggregator(
     arr: npt.NDArray[float], beta: float, bias_correction: bool = True
 ) -> float:
-    """
-    Aggregate a window of data into an expoentially weighted moving average value.
+    """Aggregate a window of data into an expoentially weighted moving average value.
 
     V(n) = (1 - beta) * beta**n * sum(x(i)/beta**i)   [for i = 1 to i = n]
 
     "1.0 - beta" denotes the weight given to the latest element.
 
     Args:
+    ----
         arr: single feature numpy array
         beta: how much weight to give to the previous weighted average (n-1)th value
         bias_correction: flag to perform bias correction (default: true)
 
-    Raises:
+    Raises
+    ------
         ValueError: if beta is not between 0 and 1
         InvalidDataShapeError: if input array is not single featured
     """
@@ -74,6 +86,15 @@ def expmov_avg_aggregator(
 
 
 class TanhNorm(DataIndependentTransformers):
+    """
+    Apply tanh normalization to the input data.
+
+    Args:
+    ----
+        scale_factor: scale the output by this factor (default: 10)
+        smooth_factor: factor to broaden out the linear range of the graph (default: 10)
+    """
+
     __slots__ = ("scale_factor", "smooth_factor")
 
     def __init__(self, scale_factor=10, smooth_factor=10):
@@ -88,8 +109,8 @@ class TanhNorm(DataIndependentTransformers):
 
 
 class ExpMovingAverage(DataIndependentTransformers):
-    r"""
-    Calculate the exponential moving averages for a vector.
+    r"""Calculate the exponential moving averages for a vector.
+
     This transformation returns an array where each element "n"
     is given by the expression:
 
@@ -101,14 +122,17 @@ class ExpMovingAverage(DataIndependentTransformers):
     Bias correction helps inhibit this issue by dividing with (1 - beta**i)
 
     Args:
+    ----
         beta: how much weight to give to the previous weighted average
         bias_correction: flag to perform bias correction (default: true)
 
     Note: this only supports single feature input array.
 
-    Raises:
+    Raises
+    ------
         ValueError: if beta is not between 0 and 1
     """
+
     __slots__ = ("beta", "bias_correction")
 
     def __init__(self, beta: float, bias_correction: bool = True):
@@ -118,13 +142,14 @@ class ExpMovingAverage(DataIndependentTransformers):
         self.bias_correction = bias_correction
 
     def transform(self, input_: npt.NDArray[float], **__):
-        r"""
-        Returns transformed output.
+        r"""Returns transformed output.
 
         Args:
+        ----
             input_: input column vector
 
-        Raises:
+        Raises
+        ------
             InvalidDataShapeError: if input array is not single featured
         """
         _allow_only_single_feature(input_)
@@ -158,13 +183,16 @@ class ExpMovingAverage(DataIndependentTransformers):
         return np.divide(exp_avg, 1.0 - beta_powers)
 
     def fit_transform(self, input_: npt.NDArray[float], **__):
-        r"""
-        Returns transformed output.
+        r"""Returns transformed output.
+
+        This is most commonly used to normalize the anomaly scores to a desired range.
 
         Args:
+        ----
             input_: input column vector
 
-        Raises:
+        Raises
+        ------
             InvalidDataShapeError: if input array is not single featured
         """
         return self.transform(input_)

@@ -8,10 +8,9 @@ from numalogic.postprocess import tanh_norm
 
 
 class BaselineForecaster:
-    """
-    A baseline forecaster that uses a combination of:
+    """A baseline forecaster that uses a combination of:
     1. log transform
-    2. Z score normalization
+    2. Z score normalization.
     """
 
     def __init__(self):
@@ -67,9 +66,7 @@ class BaselineForecaster:
 
 
 class SeasonalNaiveForecaster:
-    """
-    A simple forecaster that predicts the previous day/week values.
-    """
+    """A simple forecaster that predicts the previous day/week values."""
 
     def __init__(self, season="daily"):
         self.pipeline = StandardScaler()

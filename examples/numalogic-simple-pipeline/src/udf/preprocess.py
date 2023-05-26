@@ -12,14 +12,12 @@ LOGGER = logging.getLogger(__name__)
 
 
 def preprocess(_: str, datum: Datum) -> Messages:
-    r"""
-    The preprocess function here transforms the input data for ML inference and sends
+    r"""The preprocess function here transforms the input data for ML inference and sends
     the payload to inference vertex.
 
     For more information about the arguments, refer:
     https://github.com/numaproj/numaflow-python/blob/main/pynumaflow/function/_dtypes.py
     """
-
     # Load json data
     json_data = datum.value
     ts_array = json.loads(json_data)["data"]

@@ -18,6 +18,8 @@ from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T
 
 @dataclass
 class ArtifactData:
+    """Dataclass to hold the artifact, its metadata and other extra info."""
+
     __slots__ = ("artifact", "metadata", "extras")
 
     artifact: artifact_t
@@ -30,8 +32,7 @@ M_K = TypeVar("M_K", bound=str)
 
 
 class ArtifactManager(Generic[KEYS, A_D]):
-    """
-    Abstract base class for artifact save, load and delete.
+    """Abstract base class for artifact save, load and delete.
 
     :param uri: server/connection uri
     """
@@ -44,58 +45,64 @@ class ArtifactManager(Generic[KEYS, A_D]):
     def load(
         self, skeys: KEYS, dkeys: KEYS, latest: bool = True, version: str = None
     ) -> ArtifactData:
-        """
-        Loads the desired artifact from mlflow registry and returns it.
+        """Loads the desired artifact from mlflow registry and returns it.
+
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             latest: boolean field to determine if latest version is desired or not
-            version: explicit artifact version
+            version: explicit artifact version.
         """
         raise NotImplementedError("Please implement this method!")
 
     def save(self, skeys: KEYS, dkeys: KEYS, artifact: artifact_t, **metadata: META_VT) -> Any:
-        r"""
-        Saves the artifact into mlflow registry and updates version.
+        r"""Saves the artifact into mlflow registry and updates version.
+
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             artifact: primary artifact to be saved
-            metadata: additional metadata surrounding the artifact that needs to be saved
+            metadata: additional metadata surrounding the artifact that needs to be saved.
         """
         raise NotImplementedError("Please implement this method!")
 
     def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
-        """
-        Deletes the artifact with a specified version from mlflow registry.
+        """Deletes the artifact with a specified version from mlflow registry.
+
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            version: explicit artifact version
+            version: explicit artifact version.
         """
         raise NotImplementedError("Please implement this method!")
 
     @staticmethod
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
-        """
-        Returns whether the given artifact is stale or not, i.e. if
+        """Returns whether the given artifact is stale or not, i.e. if
         more time has elapsed since it was last retrained.
+
         Args:
+        ----
             artifact_data: ArtifactData object to look into
-            freq_hr: Frequency of retraining in hours
+            freq_hr: Frequency of retraining in hours.
         """
         raise NotImplementedError("Please implement this method!")
 
     @staticmethod
     def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
-        """
-        Returns a single key comprising static and dynamic key fields.
+        """Returns a single key comprising static and dynamic key fields.
         Override this method if customization is needed.
-        Args:
-            skeys: static key fields as list/tuple of strings
-            dkeys: dynamic key fields as list/tuple of strings
 
-        Returns:
+        Args:
+        ----
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings.
+
+        Returns
+        -------
             key
         """
         _static_key = ":".join(skeys)
@@ -104,14 +111,15 @@ class ArtifactManager(Generic[KEYS, A_D]):
 
 
 class ArtifactCache(Generic[M_K, A_D]):
-    r"""
-    Base class for all artifact caches.
+    r"""Base class for all artifact caches.
     Caches support saving, loading and deletion, but not artifact versioning.
 
     Args:
+    ----
         cachesize: size of the cache
         ttl: time to live for each item in the cache
     """
+
     __slots__ = ("_cachesize", "_ttl")
 
     def __init__(self, cachesize: int, ttl: int):
@@ -127,29 +135,25 @@ class ArtifactCache(Generic[M_K, A_D]):
         return self._ttl
 
     def load(self, key: str) -> ArtifactData:
-        r"""
-        Returns the stored ArtifactData object from the cache.
+        r"""Returns the stored ArtifactData object from the cache.
         Implement this method for your custom cache.
         """
         raise NotImplementedError("Please implement this method!")
 
     def save(self, key: str, artifact: ArtifactData) -> None:
-        r"""
-        Saves the ArtifactData object into the cache.
+        r"""Saves the ArtifactData object into the cache.
         Implement this method for your custom cache.
         """
         raise NotImplementedError("Please implement this method!")
 
     def delete(self, key: str) -> None:
-        r"""
-        Deletes the ArtifactData object from the cache.
+        r"""Deletes the ArtifactData object from the cache.
         Implement this method for your custom cache.
         """
         raise NotImplementedError("Please implement this method!")
 
     def clear(self) -> None:
-        r"""
-        Clears the cache.
+        r"""Clears the cache.
         Implement this method for your custom cache.
         """
         raise NotImplementedError("Please implement this method!")

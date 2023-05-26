@@ -14,15 +14,13 @@ WIN_SIZE = int(os.getenv("WIN_SIZE"))
 
 
 def inference(_: str, datum: Datum) -> Messages:
-    r"""
-    Here inference is done on the data, given, the ML model is present
+    r"""Here inference is done on the data, given, the ML model is present
     in the registry. If a model does not exist, the payload is flagged for training.
     It then passes to the threshold vertex.
 
     For more information about the arguments, refer:
     https://github.com/numaproj/numaflow-python/blob/main/pynumaflow/function/_dtypes.py
     """
-
     # Load data and convert bytes to Payload
     payload = Payload.from_json(datum.value.decode("utf-8"))
     messages = Messages()

@@ -17,17 +17,16 @@ from torch import nn, Tensor
 
 
 def _scaled_dot_product(query: Tensor, key: Tensor, value: Tensor) -> Tensor:
-    r"""
-    Calculates scalar_dot_product between three tensors
+    r"""Calculates scalar_dot_product between three tensors.
 
     Args:
+    ----
          query: Tensor
          key: Tensor
          value: Tensor
     Returns:
         Tensor
     """
-
     temp = query.bmm(key.transpose(1, 2))
     scale = query.size(-1) ** 0.5
     softmax = torch.nn.functional.softmax(temp / scale, dim=-1)
@@ -37,11 +36,11 @@ def _scaled_dot_product(query: Tensor, key: Tensor, value: Tensor) -> Tensor:
 def _positional_encoding(
     feature: int, seq_len: int, device: torch.device = torch.device("cpu")
 ) -> Tensor:
-    r"""
-    Positional Encoding as described in
+    r"""Positional Encoding as described in
     `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
 
     Args:
+    ----
         feature: number of features
         seq_len: sequence length
     Returns:
@@ -55,14 +54,15 @@ def _positional_encoding(
 
 
 def _feed_forward(dim_input: int = 10, dim_feedforward: int = 2048) -> nn.Module:
-    r"""
-    Function for creating feedforward network.
+    r"""Function for creating feedforward network.
 
     Args:
+    ----
         dim_input: sequence length / window length (default=1)
         dim_feedforward: the dimension of the feedforward network model (default=2048)
 
-    Returns:
+    Returns
+    -------
         nn.Module type
     """
     return nn.Sequential(
@@ -71,10 +71,10 @@ def _feed_forward(dim_input: int = 10, dim_feedforward: int = 2048) -> nn.Module
 
 
 class _Residual(nn.Module):
-    r"""
-    Residual Class.
+    r"""Residual Class.
 
     Args:
+    ----
         sublayer: feedforward network
         dimension: sequence length / window length
         dropout: the dropout value (default=0.1).
@@ -94,6 +94,7 @@ class _AttentionHead(nn.Module):
     r"""AttentionHead utility class for MultiHeadAttention.
 
     Args:
+    ----
         dim_in: Total dimension of the model.
         dim_key: Total number of features for keys.
         dim_query: Total number of features for values.
@@ -115,6 +116,7 @@ class MultiHeadAttention(nn.Module):
     `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
 
     Args:
+    ----
         num_heads: Number of parallel attention heads. Note that ``embed_dim`` will be split
             across ``num_heads`` (i.e. each head will have dimension ``embed_dim // num_heads``).
         dim_in: Total dimension of the model.
@@ -136,9 +138,10 @@ class MultiHeadAttention(nn.Module):
 
 class _EncoderLayer(nn.Module):
     r"""EncoderLayer is made up of self-attn and feedforward network.
-    This standard encoder layer is based on the paper "Attention Is All You Need"
+    This standard encoder layer is based on the paper "Attention Is All You Need".
 
     Args:
+    ----
         dim_model: sequence length / window length (default=1)
         num_heads: the number of heads in the multiheadattention models (default=6)
         dim_feedforward: the dimension of the feedforward network model (default=2048)
@@ -169,9 +172,10 @@ class _EncoderLayer(nn.Module):
 
 
 class Encoder(nn.Module):
-    r"""Encoder is a stack of N encoder layers
+    r"""Encoder is a stack of N encoder layers.
 
     Args:
+    ----
         num_layers: the number of sub-encoder-layers in the encoder (default=6).
         dim_model: sequence length / window length (default=1)
         num_heads: the number of heads in the multiheadattention models (default=6)
@@ -205,9 +209,10 @@ class Encoder(nn.Module):
 
 class _DecoderLayer(nn.Module):
     r"""DecoderLayer is made up of self-attn and feedforward network.
-    This standard encoder layer is based on the paper "Attention Is All You Need"
+    This standard encoder layer is based on the paper "Attention Is All You Need".
 
     Args:
+    ----
         dim_model: sequence length / window length (default=1)
         num_heads: the number of heads in the multiheadattention models (default=6)
         dim_feedforward: the dimension of the feedforward network model (default=2048)
@@ -244,9 +249,10 @@ class _DecoderLayer(nn.Module):
 
 
 class Decoder(nn.Module):
-    r"""Decoder is a stack of N decoder layers
+    r"""Decoder is a stack of N decoder layers.
 
     Args:
+    ----
         num_layers: the number of sub-decoder-layers in the encoder (default=6).
         dim_model: sequence length / window length (default=1)
         num_heads: the number of heads in the multiheadattention models (default=6)
@@ -281,11 +287,11 @@ class Decoder(nn.Module):
 
 
 class TransformerAE(BaseAE):
-    r"""
-    Transformer model without masking. Inspiration:
+    r"""Transformer model without masking. Inspiration:
     `Attention Is All You Need <https://arxiv.org/abs/1706.03762>`_.
 
     Args:
+    ----
         seq_len: sequence length / window length (default=1)
         num_encoder_layers: number of encoder layers in the Encoder (default = 3)
         num_decoder_layers: number of encoder layers in the Decoder (default = 3)
@@ -332,9 +338,7 @@ class TransformerAE(BaseAE):
 
     @staticmethod
     def init_weights(m: nn.Module) -> None:
-        r"""
-        Initiate parameters in the transformer model.
-        """
+        r"""Initiate parameters in the transformer model."""
         if type(m) in (nn.Linear,):
             nn.init.xavier_uniform_(m.weight, gain=2**0.5)
 
@@ -350,24 +354,24 @@ class TransformerAE(BaseAE):
         return self.criterion(x, recon)
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
-        """Returns reconstruction for streaming input"""
+        """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.n_features)
         return self.criterion(batch, recon, reduction="none")
 
 
 class SparseTransformerAE(TransformerAE):
-    r"""
-    Sparse Autoencoder for a transformer network.
+    r"""Sparse Autoencoder for a transformer network.
     It inherits from VanillaAE class and serves as a wrapper around base network models.
     Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
     This helps in achieving information bottleneck even when the number of hidden units is huge.
     It penalizes the loss function such that only some neurons are activated at a time.
     This sparsity penalty helps in preventing overfitting.
     More details about Sparse Autoencoder can be found at
-        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>.
 
     Args:
+    ----
         beta: regularization parameter (Defaults to 1e-3)
         rho: sparsity parameter value (Defaults to 0.05)
         **kwargs: VanillaAE kwargs
@@ -379,14 +383,15 @@ class SparseTransformerAE(TransformerAE):
         self.rho = rho
 
     def kl_divergence(self, activations: Tensor) -> Tensor:
-        r"""
-        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
+        r"""Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
         KL Divergence measures the difference between two probability distributions.
 
         Args:
+        ----
             activations: encoded output from the model layer-wise
 
-        Returns:
+        Returns
+        -------
             Tensor
         """
         rho_hat = torch.mean(activations, dim=0)

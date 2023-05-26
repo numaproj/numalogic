@@ -18,6 +18,26 @@ from numpy.typing import NDArray
 
 
 class SyntheticTSGenerator:
+    """
+    Generates synthetic time series data.
+
+    Args:
+    ----
+        seq_len: int, length of the time series.
+        num_series: int, number of time series to generate.
+        freq: str, frequency of the time series.
+        primary_period: int, period of the primary trend.
+        secondary_period: int, period of the secondary trend.
+        seasonal_ts_prob: float, probability of generating a seasonal time series.
+        baseline_range: tuple[float, float], range of the baseline values.
+        slope_range: tuple[float, float], range of the slope values.
+        amplitude_range: tuple[float, float], range of the amplitude values.
+        cosine_ratio_range: tuple[float, float], range of the cosine ratio values.
+        noise_range: tuple[float, float], range of the noise values.
+        phase_shift_range: tuple[int, int], range of the phase shift values.
+        random_seed: int, random seed for reproducibility.
+    """
+
     def __init__(
         self,
         seq_len: int,

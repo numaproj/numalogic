@@ -26,9 +26,8 @@ KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
 
 
 class Singleton(type):
-    r"""
-    Helper metaclass to use as a Singleton class.
-    """
+    r"""Helper metaclass to use as a Singleton class."""
+
     _instances = {}
 
     def __call__(cls, *args, **kwargs):

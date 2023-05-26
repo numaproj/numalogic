@@ -9,13 +9,11 @@ LOGGER = logging.getLogger(__name__)
 
 
 def threshold(_: str, datum: Datum) -> Messages:
-    r"""
-    This UDF applies thresholding to the reconstruction error returned by the autoencoder.
+    r"""UDF that applies thresholding to the reconstruction error returned by the autoencoder.
 
     For more information about the arguments, refer:
     https://github.com/numaproj/numaflow-python/blob/main/pynumaflow/function/_dtypes.py
     """
-
     # Load data and convert bytes to Payload
     payload = Payload.from_json(datum.value.decode("utf-8"))
     messages = Messages()
