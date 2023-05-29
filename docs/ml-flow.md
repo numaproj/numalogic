@@ -19,39 +19,46 @@ Once the mlflow server has been started, you can navigate to http://127.0.0.1:50
 
 ### Model saving
 
-Numalogic provides `MLflowRegistrar`, to save and load models to/from MLflow.
+Numalogic provides `MLflowRegistry`, to save and load models to/from MLflow.
 
 Here, `tracking_uri` is the uri where mlflow server is running. The `static_keys` and `dynamic_keys` are used to form a unique key for the model.
 
-The `primary_artifact` would be the main model, and `secondary_artifacts` can be used to save any pre-processing models like scalers. 
-
+The `artifact` would be the model or transformer object that needs to be saved.
+A dictionary of metadata can also be saved along with the artifact.
 ```python
-from numalogic.registry import MLflowRegistrar
+from numalogic.registry import MLflowRegistry
+from numalogic.models.autoencoder.variants import VanillaAE
+
+model = VanillaAE(seq_len=10)
 
 # static and dynamic keys are used to look up a model
-static_keys = ["synthetic", "3ts"]
-dynamic_keys = ["minmaxscaler", "sparseconv1d"]
+static_keys = ["model", "autoencoder"]
+dynamic_keys = ["vanilla", "seq10"]
 
-registry = MLflowRegistrar(tracking_uri="http://0.0.0.0:5000", artifact_type="pytorch")
+registry = MLflowRegistry(tracking_uri="http://0.0.0.0:5000")
 registry.save(
-   skeys=static_keys, 
-   dkeys=dynamic_keys, 
-   primary_artifact=model, 
-   secondary_artifacts={"preproc": scaler}
+    skeys=static_keys, dkeys=dynamic_keys, artifact=model, seq_len=10, lr=0.001
 )
 ```
 
 ### Model loading
 
-Once, the models are save to MLflow, the `load` function of `MLflowRegistrar` can be used to load the model.
+Once, the models are save to MLflow, the `load` function of `MLflowRegistry` can be used to load the model.
 
 ```python
-registry = MLflowRegistrar(tracking_uri="http://0.0.0.0:8080")
-artifact_dict = registry.load(
-    skeys=static_keys, dkeys=dynamic_keys
+from numalogic.registry import MLflowRegistry
+
+static_keys = ["model", "autoencoder"]
+dynamic_keys = ["vanilla", "seq10"]
+
+registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080")
+artifact_data = registry.load(
+    skeys=static_keys, dkeys=dynamic_keys, artifact_type="pytorch"
 )
-scaler = artifact_dict["secondary_artifacts"]["preproc"]
-model = artifact_dict["primary_artifact"]
+
+# get the model and metadata
+model = artifact_data.artifact
+model_metadata = artifact_data.metadata
 ```
 
 For more details, please refer to [MLflow Model Registry](https://www.mlflow.org/docs/latest/model-registry.html#)

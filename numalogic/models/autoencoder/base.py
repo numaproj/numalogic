@@ -1,26 +1,109 @@
-from abc import ABCMeta, abstractmethod
-from typing import Tuple
+# Copyright 2022 The Numaproj Authors.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-from torch import nn, Tensor
-from torch.utils.data import Dataset
-from torchinfo import summary
+
+from abc import ABCMeta
+from typing import Any
+
+import pytorch_lightning as pl
+import torch.nn.functional as F
+from torch import Tensor, optim
 
 
-class TorchAE(nn.Module, metaclass=ABCMeta):
-    """
+class BaseAE(pl.LightningModule, metaclass=ABCMeta):
+    r"""
     Abstract Base class for all Pytorch based autoencoder models for time-series data.
+
+    Args:
+        loss_fn: loss function used to train the model
+                 supported values include: {huber, l1, mae}
+        optim_algo: optimizer algo to be used for training
+                    supported values include: {adam, adagrad, rmsprop}
+        lr: learning rate (default: 1e-3)
+        weight_decay: weight decay factor weight for regularization (default: 0.0)
     """
 
-    def __repr__(self) -> str:
-        return str(summary(self))
+    def __init__(
+        self,
+        loss_fn: str = "huber",
+        optim_algo: str = "adam",
+        lr: float = 1e-3,
+        weight_decay: float = 0.0,
+    ):
+        super().__init__()
+        self.lr = lr
+        self.optim_algo = optim_algo
+        self.criterion = self.init_criterion(loss_fn)
+        self.weight_decay = weight_decay
 
-    def summary(self, input_shape: Tuple[int, ...]) -> None:
-        print(summary(self, input_size=input_shape))
+        self._total_train_loss = 0.0
+        self._total_val_loss = 0.0
 
-    @abstractmethod
-    def construct_dataset(self, x: Tensor, seq_len: int = None) -> Dataset:
+    @property
+    def total_train_loss(self):
+        return self._total_train_loss
+
+    @property
+    def total_val_loss(self):
+        return self._total_val_loss
+
+    def reset_train_loss(self):
+        self._total_train_loss = 0.0
+
+    def reset_val_loss(self):
+        self._total_val_loss = 0.0
+
+    @staticmethod
+    def init_criterion(loss_fn: str):
+        if loss_fn == "huber":
+            return F.huber_loss
+        if loss_fn == "l1":
+            return F.l1_loss
+        if loss_fn == "mse":
+            return F.mse_loss
+        raise NotImplementedError(f"Unsupported loss function provided: {loss_fn}")
+
+    def init_optimizer(self, optim_algo: str):
+        if optim_algo == "adam":
+            return optim.Adam(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        if optim_algo == "adagrad":
+            return optim.Adagrad(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        if optim_algo == "rmsprop":
+            return optim.RMSprop(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+        raise NotImplementedError(f"Unsupported optimizer value provided: {optim_algo}")
+
+    def configure_shape(self, batch: Tensor) -> Tensor:
         """
-        Returns a dataset instance to be used for training.
-        Needs to be overridden.
+        Method to configure the batch shape for each type of model architecture.
         """
-        pass
+        return batch
+
+    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
+        _, recon = self.forward(batch)
+        return self.criterion(batch, recon)
+
+    def reconstruction(self, batch: Tensor) -> Tensor:
+        _, recon = self.forward(batch)
+        return recon
+
+    def configure_optimizers(self) -> dict[str, Any]:
+        optimizer = self.init_optimizer(self.optim_algo)
+        return {"optimizer": optimizer}
+
+    def training_step(self, batch: Tensor, batch_idx: int) -> Tensor:
+        loss = self._get_reconstruction_loss(batch)
+        self._total_train_loss += loss.detach().item()
+        return loss
+
+    def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
+        loss = self._get_reconstruction_loss(batch)
+        self._total_val_loss += loss.detach().item()
+        return loss

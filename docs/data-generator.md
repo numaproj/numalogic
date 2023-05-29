@@ -1,6 +1,6 @@
 # Data Generator
 
-Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.  
+Numalogic provides a data generator to create some synthetic time series data, that can be used as train or test data sets.
 
 Using the synthetic data, we can:
 
@@ -28,7 +28,7 @@ ts_generator = SyntheticTSGenerator(
 )
 
 # shape: (8000, 3) with column names [s1, s2, s3]
-ts_df = ts_generator.gen_tseries()  
+ts_df = ts_generator.gen_tseries()
 
 # Split into test and train
 train_df, test_df = ts_generator.train_test_split(ts_df, test_size=1000)
@@ -37,7 +37,7 @@ train_df, test_df = ts_generator.train_test_split(ts_df, test_size=1000)
 
 ### Inject anomalies
 
-Now, once we generate the synthetic data like above, we can inject anomalies into the test data set using `AnomalyGenerator`. 
+Now, once we generate the synthetic data like above, we can inject anomalies into the test data set using `AnomalyGenerator`.
 
 `AnomalyGenerator` supports the following types of anomalies:
 
@@ -52,7 +52,7 @@ You can also use `anomaly_ratio` to adjust the ratio of anomalous data points  w
 from numalogic.synthetic import AnomalyGenerator
 
 # columns to inject anomalies
-injected_cols = ["s1", "s2"]  
+injected_cols = ["s1", "s2"]
 anomaly_generator = AnomalyGenerator(
     train_df, anomaly_type="contextual", anomaly_ratio=0.3
 )

@@ -18,7 +18,7 @@ spec:
       min: 1
     udf:
       container:
-        image: docker.io/library/numalogic-simple-pipeline:v1
+        image: quay.io/numaio/numalogic/example-udf:v0.3.0
         env:
           - name: WIN_SIZE
             value: "12"
@@ -31,7 +31,7 @@ spec:
       min: 1
     udf:
       container:
-        image: docker.io/library/numalogic-simple-pipeline:v1
+        image: quay.io/numaio/numalogic/example-udf:v0.3.0
         env:
           - name: WIN_SIZE
             value: "12"
@@ -39,12 +39,25 @@ spec:
         - python
         - starter.py
         - inference
+  - name: threshold
+    scale:
+      min: 1
+    udf:
+      container:
+        image: quay.io/numaio/numalogic/example-udf:v0.3.0
+        env:
+          - name: WIN_SIZE
+            value: "12"
+        args:
+          - python
+          - starter.py
+          - threshold
   - name: postprocess
     scale:
       min: 1
     udf:
       container:
-        image: docker.io/library/numalogic-simple-pipeline:v1
+        image: quay.io/numaio/numalogic/example-udf:v0.3.0
         env:
           - name: WIN_SIZE
             value: "12"
@@ -65,7 +78,7 @@ spec:
         env:
           - name: WIN_SIZE
             value: "12"
-        image: docker.io/library/numalogic-simple-pipeline:v1
+        image: quay.io/numaio/numalogic/example-udf:v0.3.0
         args:
           - python
           - starter.py
@@ -73,14 +86,16 @@ spec:
   edges:
     - from: in
       to: preprocess
+    - from: preprocess
+      to: inference
     - from: inference
+      to: threshold
+    - from: threshold
       to: train
       conditions:
         keyIn:
           - train
-    - from: preprocess
-      to: inference
-    - from: inference
+    - from: threshold
       to: postprocess
       conditions:
         keyIn:
@@ -106,7 +121,7 @@ spec:
         app: mlflow
     spec:
       containers:
-        - image: docker.io/library/numalogic-simple-pipeline:v1
+        - image: quay.io/numaio/numalogic/example-mlflow
           name: mlflow
           args:
           - server

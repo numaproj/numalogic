@@ -1,9 +1,9 @@
 # Numalogic
 
 
-Numalogic is a collection of ML models and algorithms for real-time data analytics and AIOps including anomaly detection. 
+Numalogic is a collection of ML models and algorithms for real-time data analytics and AIOps including anomaly detection.
 
-Numalogic can be installed as a library and used to build end-to-end ML pipelines. For a streaming real time data processing, it can also be paired with our steaming data platform [Numaflow](https://numaflow.numaproj.io/). 
+Numalogic can be installed as a library and used to build end-to-end ML pipelines. For streaming real time data processing, it can also be paired with our steaming data platform [Numaflow](https://numaflow.numaproj.io/).
 
 ## Key Features
 

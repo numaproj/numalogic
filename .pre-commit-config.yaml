@@ -1,0 +1,29 @@
+default_language_version:
+    python: python3.9
+repos:
+- repo: https://github.com/psf/black
+  rev: 23.3.0
+  hooks:
+  -   id: black
+      language_version: python3.9
+      args: [--config=pyproject.toml, --diff, --color ]
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: 'v0.0.264'
+  hooks:
+    - id: ruff
+- repo: https://github.com/adamchainz/blacken-docs
+  rev: "1.13.0"
+  hooks:
+  -   id: blacken-docs
+      additional_dependencies:
+      - black==22.12.0
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  -   id: end-of-file-fixer
+  -   id: trailing-whitespace
+  -   id: check-toml
+  -   id: check-added-large-files
+  -   id: check-ast
+  -   id: check-case-conflict
+  -   id: check-docstring-first

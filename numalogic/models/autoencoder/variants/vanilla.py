@@ -1,9 +1,22 @@
-from typing import Tuple, Sequence
+# Copyright 2022 The Numaproj Authors.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
+
+from collections.abc import Sequence
+
+import torch
 from torch import nn, Tensor
+from torch.distributions import kl_divergence, Bernoulli
 
-from numalogic.models.autoencoder.base import TorchAE
-from numalogic.preprocess.datasets import SequenceDataset
+from numalogic.models.autoencoder.base import BaseAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
 
 
@@ -56,7 +69,7 @@ class _Encoder(nn.Module):
             [
                 nn.Linear(start_layersize, layersizes[-1]),
                 nn.BatchNorm1d(self.n_features),
-                nn.LeakyReLU(),
+                nn.ReLU(),
             ]
         )
         return layers
@@ -115,7 +128,7 @@ class _Decoder(nn.Module):
         return layers
 
 
-class VanillaAE(TorchAE):
+class VanillaAE(BaseAE):
     r"""
     Vanilla Autoencoder model comprising Fully connected layers only.
 
@@ -130,16 +143,19 @@ class VanillaAE(TorchAE):
 
     def __init__(
         self,
-        signal_len: int,
+        seq_len: int,
         n_features: int = 1,
         encoder_layersizes: Sequence[int] = (16, 8),
         decoder_layersizes: Sequence[int] = (8, 16),
         dropout_p: float = 0.25,
+        **kwargs,
     ):
-
-        super(VanillaAE, self).__init__()
-        self.seq_len = signal_len
+        super().__init__(**kwargs)
+        self.seq_len = seq_len
         self.dropout_prob = dropout_p
+        self.n_features = n_features
+
+        self.save_hyperparameters()
 
         if encoder_layersizes[-1] != decoder_layersizes[0]:
             raise LayerSizeMismatchError(
@@ -148,13 +164,13 @@ class VanillaAE(TorchAE):
             )
 
         self.encoder = _Encoder(
-            seq_len=signal_len,
+            seq_len=seq_len,
             n_features=n_features,
             layersizes=encoder_layersizes,
             dropout_p=dropout_p,
         )
         self.decoder = _Decoder(
-            seq_len=signal_len,
+            seq_len=seq_len,
             n_features=n_features,
             layersizes=decoder_layersizes,
             dropout_p=dropout_p,
@@ -171,22 +187,74 @@ class VanillaAE(TorchAE):
         if type(m) == nn.Linear:
             nn.init.xavier_normal_(m.weight)
 
-    def forward(self, x: Tensor) -> Tuple[Tensor, Tensor]:
-        encoded = self.encoder(x)
+    def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
+        batch = batch.view(-1, self.n_features, self.seq_len)
+        encoded = self.encoder(batch)
         decoded = self.decoder(encoded)
         return encoded, decoded
 
-    def construct_dataset(self, x: Tensor, seq_len: int = None) -> SequenceDataset:
-        r"""
-         Constructs dataset given tensor and seq_len
+    def _get_reconstruction_loss(self, batch):
+        _, recon = self.forward(batch)
+        x = batch.view(-1, self.n_features, self.seq_len)
+        return self.criterion(x, recon)
 
-         Args:
-            x: Tensor type
-            seq_len: sequence length / window length
+    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
+        """Returns reconstruction for streaming input"""
+        recon = self.reconstruction(batch)
+        recon = recon.view(-1, self.seq_len, self.n_features)
+        return self.criterion(batch, recon, reduction="none")
+
+
+class SparseVanillaAE(VanillaAE):
+    r"""
+    Sparse Autoencoder for a fully connected network.
+    It inherits from VanillaAE class and serves as a wrapper around base network models.
+    Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
+    This helps in achieving information bottleneck even when the number of hidden units is huge.
+    It penalizes the loss function such that only some neurons are activated at a time.
+    This sparsity penalty helps in preventing overfitting.
+    More details about Sparse Autoencoder can be found at
+        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+
+    Args:
+        beta: Regularization factor (Defaults to 1e-3)
+        rho: Sparsity parameter value (Defaults to 0.05)
+        **kwargs: VanillaAE kwargs
+    """
+
+    def __init__(self, beta=1e-3, rho=0.05, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.beta = beta
+        self.rho = rho
+
+    def kl_divergence(self, activations: Tensor) -> Tensor:
+        r"""
+        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
+        KL Divergence measures the difference between two probability distributions.
+
+        Args:
+            activations: encoded output from the model layer-wise
 
         Returns:
-             SequenceDataset type
+            Tensor
         """
-        __seq_len = seq_len or self.seq_len
-        dataset = SequenceDataset(x, __seq_len, permute=True)
-        return dataset
+        rho_hat = torch.mean(activations, dim=0)
+        rho = torch.full(rho_hat.size(), self.rho, device=self.device)
+        kl_loss = kl_divergence(
+            Bernoulli(logits=torch.log(rho)), Bernoulli(logits=torch.log(rho_hat))
+        )
+        return torch.sum(torch.clamp(kl_loss, max=1.0))
+
+    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
+        latent, recon = self.forward(batch)
+        x = batch.view(-1, self.n_features, self.seq_len)
+        loss = self.criterion(x, recon)
+        penalty = self.kl_divergence(latent)
+        return loss + (self.beta * penalty)
+
+    def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
+        recon = self.reconstruction(batch)
+        recon = recon.view(-1, self.seq_len, self.n_features)
+        loss = self.criterion(batch, recon)
+        self._total_val_loss += loss.detach().item()
+        return loss
