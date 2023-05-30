@@ -35,11 +35,10 @@ def _get_activation_function(activation_name: str):
 
 
 class ConvBlock(nn.Module):
-    """
-    Basic convolutional block consisting of:
+    """Basic convolutional block consisting of:
     - convolutional layer
     - batch norm
-    - relu activation
+    - relu activation.
     """
 
     def __init__(
@@ -62,11 +61,10 @@ class ConvBlock(nn.Module):
 
 
 class ConvTransposeBlock(nn.Module):
-    """
-    Basic transpose convolutional block consisting of:
+    """Basic transpose convolutional block consisting of:
     - transpose convolutional layer
     - batch norm
-    - relu activation
+    - relu activation.
     """
 
     def __init__(
@@ -95,9 +93,7 @@ class ConvTransposeBlock(nn.Module):
 
 
 class Encoder(nn.Module):
-    """
-    Enoder network for Conv1dAE.
-    """
+    """Enoder network for Conv1dAE."""
 
     def __init__(
         self, num_channels: Sequence[int], kernel_sizes: Sequence[int], pool_kernel_size: int
@@ -138,9 +134,7 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    """
-    Decoder network for Conv1dAE.
-    """
+    """Decoder network for Conv1dAE."""
 
     def __init__(
         self,
@@ -188,14 +182,14 @@ class Decoder(nn.Module):
 
 
 class Conv1dAE(BaseAE):
-    r"""
-    1D Convolutional Autoencoder.
+    r"""1D Convolutional Autoencoder.
     Encoder has convolutional layers and max pool layers.
 
     Decoder has trnanspose convolutional layers and
     upsampling layers.
 
     Args:
+    ----
         seq_len: length of input sequence
         in_channels: Number of channels in the input
         enc_channels: Number of channels (filters) in each layer of the encoder
@@ -257,8 +251,7 @@ class Conv1dAE(BaseAE):
         self._init_weights()
 
     def _init_weights(self) -> None:
-        r"""
-        Initiate parameters in the convolutional
+        r"""Initiate parameters in the convolutional
         and transpose convolutional layers.
         """
         for module in self.modules():
@@ -284,24 +277,24 @@ class Conv1dAE(BaseAE):
         return self.criterion(x, recon)
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0) -> Tensor:
-        """Returns reconstruction for streaming input"""
+        """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.in_channels)
         return self.criterion(batch, recon, reduction="none")
 
 
 class SparseConv1dAE(Conv1dAE):
-    r"""
-    Sparse Autoencoder for a Conv1d network.
+    r"""Sparse Autoencoder for a Conv1d network.
     It inherits from VanillaAE class and serves as a wrapper around base network models.
     Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
     This helps in achieving information bottleneck even when the number of hidden units is huge.
     It penalizes the loss function such that only some neurons are activated at a time.
     This sparsity penalty helps in preventing overfitting.
     More details about Sparse Autoencoder can be found at
-        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>.
 
     Args:
+    ----
         beta: Penalty factor (Defaults to 1e-3)
         rho: Sparsity parameter value (Defaults to 0.05)
         **kwargs: VanillaAE kwargs
@@ -313,14 +306,15 @@ class SparseConv1dAE(Conv1dAE):
         self.rho = rho
 
     def kl_divergence(self, activations: Tensor) -> Tensor:
-        r"""
-        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
+        r"""Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
         KL Divergence measures the difference between two probability distributions.
 
         Args:
+        ----
             activations: encoded output from the model layer-wise
 
-        Returns:
+        Returns
+        -------
             Tensor
         """
         rho_hat = torch.mean(activations, dim=0)

@@ -19,6 +19,8 @@ LOGGER = logging.getLogger(__name__)
 @dataclass_json
 @dataclass(slots=True)
 class Payload:
+    """Payload to be used for inter-vertex data transfer."""
+
     ts_data: ArrayLike = None
     anomaly_score: float = 0.0
     uuid: str = None
@@ -26,6 +28,7 @@ class Payload:
 
 
 def save_artifact(artifact, skeys: Sequence[str], dkeys: Sequence[str]) -> None:
+    """Saves the artifact into mlflow registry and updates version."""
     if isinstance(artifact, BaseAE):
         ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="pytorch")
     else:
@@ -34,6 +37,7 @@ def save_artifact(artifact, skeys: Sequence[str], dkeys: Sequence[str]) -> None:
 
 
 def load_artifact(skeys: Sequence[str], dkeys: Sequence[str], type_: str = None) -> ArtifactDict:
+    """Loads the desired artifact from mlflow registry and returns it."""
     try:
         if type_ == "pytorch":
             ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="pytorch")

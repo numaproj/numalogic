@@ -18,6 +18,29 @@ from sklearn.preprocessing import StandardScaler
 
 
 class AnomalyGenerator:
+    """
+    Class to inject synthetic anomaly to the input time series based on parameters.
+
+    Args:
+    ----
+        ref_df: Reference Multivariate time series DataFrame
+        anomaly_type: Type of anomaly to impute.
+            Possible values include:
+                - "global": Outliers in the global context
+                - "contextual": Outliers only in the seasonal context
+                - "causal": Outliers caused by a temporal causal effect
+                - "collective": Outliers present simultaneously in two or more time series
+        anomaly_ratio: Ratio of anomalous data points to inject wrt
+            to number of samples
+        anomaly_sign: Positive or Negative anomaly to be injected
+            Possible values include:
+                - "positive": higher outlier value injected compared to the current actual value
+                - "negative": lower outliers injected compared to the current actual value
+        mu: Distributions mean of the Gaussian Noise injected
+        sigma: Distributions std of the Gaussian Noise injected
+        random_seed: seed for random number generator.
+    """
+
     __MIN_COLUMNS = {"global": 1, "contextual": 1, "causal": 2, "collective": 2}
 
     def __init__(
@@ -30,27 +53,6 @@ class AnomalyGenerator:
         sigma: float = 0.01,
         random_seed: int = 42,
     ):
-        """
-        Class to inject synthetic anomaly to the input time series based on parameters.
-        Args:
-            ref_df: Reference Multivariate time series DataFrame
-            anomaly_type: Type of anomaly to impute.
-                Possible values include:
-                    - "global": Outliers in the global context
-                    - "contextual": Outliers only in the seasonal context
-                    - "causal": Outliers caused by a temporal causal effect
-                    - "collective": Outliers present simultaneously in two or more time series
-            anomaly_ratio: Ratio of anomalous data points to inject wrt
-                to number of samples
-            anomaly_sign: Positive or Negative anomaly to be injected
-                Possible values include:
-                    - "positive": higher outlier value injected compared to the current actual value
-                    - "negative": lower outliers injected compared to the current actual value
-            mu: Distributions mean of the Gaussian Noise injected
-            sigma: Distributions std of the Gaussian Noise injected
-            random_seed: seed for random number generator
-        """
-
         self.anomaly_type = anomaly_type
         self.anomaly_ratio = anomaly_ratio
         self.anomaly_sign = anomaly_sign
@@ -80,10 +82,9 @@ class AnomalyGenerator:
     def inject_anomalies(
         self, target_df: pd.DataFrame, cols: Sequence[str] = None, **kwargs
     ) -> pd.DataFrame:
-        """
-        @param target_df: Target DataFrame where anomalies will be injected
+        """@param target_df: Target DataFrame where anomalies will be injected
         @param cols: Columns to inject anomalies
-        @param kwargs: Optional kwargs for individual anomaly types
+        @param kwargs: Optional kwargs for individual anomaly types.
         """
         if self.anomaly_type == "global":
             return self._inject_global_anomalies(target_df, cols, **kwargs)

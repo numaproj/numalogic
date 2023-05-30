@@ -2,6 +2,8 @@ from src.udf import inference, postprocess, preprocess, train, threshold
 
 
 class HandlerFactory:
+    """Factory class to return the handler for the given step."""
+
     @classmethod
     def get_handler(cls, step: str):
         if step == "preprocess":
