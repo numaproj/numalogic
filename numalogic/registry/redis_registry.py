@@ -5,7 +5,7 @@ from typing import Optional
 
 from redis.exceptions import RedisError
 
-from numalogic.registry import ArtifactManager, ArtifactData, ArtifactCache
+from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT
@@ -154,7 +154,7 @@ class RedisRegistry(ArtifactManager):
         production_key = self.__construct_production_key(key)
         pipe.set(name=production_key, value=new_version_key)
         _LOGGER.info(
-            "Setting Production key : %d ,to this new key = %s", production_key, new_version_key
+            "Setting Production key : %s ,to this new key = %s", production_key, new_version_key
         )
         serialized_metadata = ""
         if metadata:

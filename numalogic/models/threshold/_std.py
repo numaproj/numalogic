@@ -12,11 +12,12 @@
 
 import numpy as np
 from numpy.typing import NDArray
-from sklearn.base import BaseEstimator
 from typing_extensions import Self
 
+from numalogic.base import BaseThresholdModel
 
-class StdDevThreshold(BaseEstimator):
+
+class StdDevThreshold(BaseThresholdModel):
     r"""Threshold estimator that calculates based on the mean and the std deviation.
 
     Threshold = Mean + (std_factor * Std)
@@ -50,7 +51,7 @@ class StdDevThreshold(BaseEstimator):
     def threshold(self):
         return self._threshold
 
-    def fit(self, x_train: NDArray[float], y=None) -> Self:
+    def fit(self, x_train: NDArray[float], _=None) -> Self:
         """Fit the estimator on the training set."""
         self._std = np.std(x_train, axis=0)
         self._mean = np.mean(x_train, axis=0)

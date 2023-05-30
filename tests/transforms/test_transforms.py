@@ -5,7 +5,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_less
 from sklearn.pipeline import make_pipeline
 
-from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
+from numalogic.transforms import LogTransformer, StaticPowerTransformer, TanhScaler
 
 
 RNG = np.random.default_rng(42)

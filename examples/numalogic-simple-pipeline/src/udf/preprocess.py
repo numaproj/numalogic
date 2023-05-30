@@ -3,7 +3,7 @@ import logging
 import uuid
 
 import numpy as np
-from numalogic.preprocess.transformer import LogTransformer
+from numalogic.transforms import LogTransformer
 from pynumaflow.function import Messages, Message, Datum
 
 from src.utils import Payload

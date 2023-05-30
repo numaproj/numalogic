@@ -10,11 +10,12 @@
 # limitations under the License.
 import numpy as np
 import numpy.typing as npt
-from sklearn.base import BaseEstimator
 from typing_extensions import Self
 
+from numalogic.base import BaseThresholdModel
 
-class StaticThreshold(BaseEstimator):
+
+class StaticThreshold(BaseThresholdModel):
     r"""Simple and stateless static thresholding as an estimator.
 
     Values more than upper_limit is considered an outlier,
@@ -65,7 +66,7 @@ class StaticThreshold(BaseEstimator):
         return x
 
 
-class SigmoidThreshold(BaseEstimator):
+class SigmoidThreshold(BaseThresholdModel):
     r"""Smooth and stateless static thesholding using sigmoid function as an estimator.
     The values produced.
 
