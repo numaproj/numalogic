@@ -36,6 +36,8 @@ class _ObjectFactory:
 
 
 class PreprocessFactory(_ObjectFactory):
+    """Factory class to create preprocess instances."""
+
     from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
     from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
 
@@ -51,12 +53,16 @@ class PreprocessFactory(_ObjectFactory):
 
 
 class PostprocessFactory(_ObjectFactory):
+    """Factory class to create postprocess instances."""
+
     from numalogic.postprocess import TanhNorm, ExpMovingAverage
 
     _CLS_MAP = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage}
 
 
 class ThresholdFactory(_ObjectFactory):
+    """Factory class to create threshold instances."""
+
     from numalogic.models.threshold import StdDevThreshold, StaticThreshold, SigmoidThreshold
 
     _CLS_MAP = {
@@ -67,6 +73,8 @@ class ThresholdFactory(_ObjectFactory):
 
 
 class ModelFactory(_ObjectFactory):
+    """Factory class to create model instances."""
+
     from numalogic.models.autoencoder.variants import (
         VanillaAE,
         SparseVanillaAE,
@@ -91,6 +99,8 @@ class ModelFactory(_ObjectFactory):
 
 
 class RegistryFactory(_ObjectFactory):
+    """Factory class to create registry instances."""
+
     _CLS_SET = {"RedisRegistry", "MLflowRegistry"}
 
     def get_instance(self, object_info: Union[ModelInfo, RegistryInfo]):

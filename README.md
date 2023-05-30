@@ -102,6 +102,10 @@ pip install numalogic[mlflow]
     ```
     make lint
     ```
+6. Setup [pre-commit](https://pre-commit.com/) hooks:
+   ```bash
+   pre-commit install
+   ```
 
 ## Contributing
 We would love contributions in the numalogic project in one of the following (but not limited to) areas:

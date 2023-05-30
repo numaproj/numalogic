@@ -91,11 +91,22 @@ exclude = '''
 [tool.ruff]
 line-length = 100
 src = ["numalogic", "tests"]
-select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q"]
-ignore = ["TRY003", "TRY301", "RUF100"]
+select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q" , "PLR", "D"]
+ignore = ["TRY003", "TRY301", "RUF100", "D100", "D104", "PLR2004", "D102", "D401", "D107", "D205"]
 target-version = "py39"
 show-fixes = true
 show-source = true
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["D101"]
+
+[tool.ruff.pylint]
+max-args = 15
+max-statements = 30
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

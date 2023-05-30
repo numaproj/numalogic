@@ -19,8 +19,7 @@ ttl_cache = cachetools.TTLCache(maxsize=128, ttl=120 * 60)
 
 
 def train(key: str, datum: Datum):
-    r"""
-    The train function here receives data from inference step.
+    r"""The train function here receives data from inference step.
     This step preprocesses, trains and saves a 1-D
     Convolution AE model into the registry.
 
