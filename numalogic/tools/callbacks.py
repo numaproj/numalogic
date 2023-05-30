@@ -19,10 +19,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ProgressDetails(ProgressBar):
-    r"""
-    A lightweight training progress detail producer.
+    r"""A lightweight training progress detail producer.
 
     Args:
+    ----
          log_freq: Interval of epochs to log
     """
 

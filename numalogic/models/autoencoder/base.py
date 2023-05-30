@@ -19,10 +19,10 @@ from torch import Tensor, optim
 
 
 class BaseAE(pl.LightningModule, metaclass=ABCMeta):
-    r"""
-    Abstract Base class for all Pytorch based autoencoder models for time-series data.
+    r"""Abstract Base class for all Pytorch based autoencoder models for time-series data.
 
     Args:
+    ----
         loss_fn: loss function used to train the model
                  supported values include: {huber, l1, mae}
         optim_algo: optimizer algo to be used for training
@@ -81,9 +81,7 @@ class BaseAE(pl.LightningModule, metaclass=ABCMeta):
         raise NotImplementedError(f"Unsupported optimizer value provided: {optim_algo}")
 
     def configure_shape(self, batch: Tensor) -> Tensor:
-        """
-        Method to configure the batch shape for each type of model architecture.
-        """
+        """Method to configure the batch shape for each type of model architecture."""
         return batch
 
     def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:

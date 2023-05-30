@@ -18,10 +18,10 @@ from omegaconf import MISSING
 
 @dataclass
 class ModelInfo:
-    """
-    Schema for defining the model/estimator.
+    """Schema for defining the model/estimator.
 
     Args:
+    ----
         name: name of the model; this should map to a supported list of models
               mentioned in the factory file
         conf: kwargs for instantiating the model class
@@ -35,10 +35,10 @@ class ModelInfo:
 
 @dataclass
 class RegistryInfo:
-    """
-    Registry config base class
+    """Registry config base class.
 
     Args:
+    ----
         name: name of the registry
         conf: kwargs for instantiating the model class
     """
@@ -49,8 +49,7 @@ class RegistryInfo:
 
 @dataclass
 class LightningTrainerConf:
-    """
-    Schema for defining the Pytorch Lightning trainer behavior.
+    """Schema for defining the Pytorch Lightning trainer behavior.
 
     More details on the arguments are provided here:
     https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#trainer-class-api
@@ -70,9 +69,7 @@ class LightningTrainerConf:
 
 @dataclass
 class NumalogicConf:
-    """
-    Top level config schema for numalogic.
-    """
+    """Top level config schema for numalogic."""
 
     model: ModelInfo = field(default_factory=ModelInfo)
     trainer: LightningTrainerConf = field(default_factory=LightningTrainerConf)

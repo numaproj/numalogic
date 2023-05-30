@@ -11,40 +11,54 @@
 
 
 class ModelInitializationError(Exception):
-    pass
+    """Raised when a model is not initialized properly."""
 
-
-class ModelNotFoundError(Exception):
     pass
 
 
 class InvalidRangeParameter(Exception):
+    """Raised when the range parameter is not valid."""
+
     pass
 
 
 class LayerSizeMismatchError(Exception):
+    """Raised when the layer size is not valid."""
+
     pass
 
 
 class DataModuleError(Exception):
+    """Base class for all exceptions raised by the DataModule class."""
+
     pass
 
 
 class InvalidDataShapeError(Exception):
+    """Raised when the data shape is not valid."""
+
     pass
 
 
 class UnknownConfigArgsError(Exception):
+    """Raised when an unknown config argument is passed to a model."""
+
     pass
 
 
 class ModelVersionError(Exception):
+    """Raised when a model version is not found in the registry."""
+
     pass
 
 
 class RedisRegistryError(Exception):
+    """Base class for all exceptions raised by the RedisRegistry class."""
+
     pass
 
 
 class ModelKeyNotFound(RedisRegistryError):
+    """Raised when a model key is not found in the registry."""
+
     pass

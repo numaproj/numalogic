@@ -27,11 +27,13 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def inverse_window(batched: Tensor, method="keep_last") -> Tensor:
-    r"""
+    r"""Convert a 3D windowed tensor back into a 2D tensor.
+
     Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
     back into a shape of (new_batch, num_features).
 
     Args:
+    ----
         batched: A 3D tensor of shape: (batch_size, seq_len, num_features)
         method: The method to use for the inverse transformation. (default: "keep_last")
                 Valid methods are: "keep_last", "keep_first"
@@ -46,7 +48,8 @@ def inverse_window(batched: Tensor, method="keep_last") -> Tensor:
 
 
 def inverse_window_first_only(batched: Tensor) -> Tensor:
-    r"""
+    r"""Convert a 3D windowed tensor back into a 2D tensor.
+
     Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
     back into a shape of (new_batch, num_features).
 
@@ -54,8 +57,11 @@ def inverse_window_first_only(batched: Tensor) -> Tensor:
     first element in seq_len is used for the first (new_batch - seq_len - 1) rows.
 
     Args:
+    ----
         batched: A 3D tensor of shape: (batch_size, seq_len, num_features)
-    Returns:
+
+    Returns
+    -------
         A 2D tensor of shape: (new_batch, num_features)
     """
     output = batched[:, 0, :]
@@ -63,16 +69,18 @@ def inverse_window_first_only(batched: Tensor) -> Tensor:
 
 
 def inverse_window_last_only(batched: Tensor) -> Tensor:
-    r"""
-    Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
+    r"""Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
     back into a shape of (new_batch, num_features).
 
     Note: This is an approximate inverse transormation as only the
     last element in seq_len is used for the last (new_batch - seq_len - 1) rows.
 
     Args:
+    ----
         batched: A 3D tensor of shape: (batch_size, seq_len, num_features)
-    Returns:
+
+    Returns
+    -------
         A 2D tensor of shape: (new_batch, num_features)
     """
     output = batched[:, -1, :]
@@ -80,14 +88,15 @@ def inverse_window_last_only(batched: Tensor) -> Tensor:
 
 
 class StreamingDataset(IterableDataset):
-    r"""
-    An iterable Dataset designed for streaming time series input.
+    r"""An iterable Dataset designed for streaming time series input.
 
     Args:
+    ----
         data: A numpy array containing the input data in the shape of (batch, num_features).
         seq_len: Length of the sliding window sequences to be generated from the input data
 
-    Raises:
+    Raises
+    ------
         ValueError: If the sequence length is greater than the data size
         InvalidDataShapeError: If the input data array does not
                                have a minimum dimension size of 2
@@ -109,18 +118,19 @@ class StreamingDataset(IterableDataset):
 
     @property
     def data(self) -> npt.NDArray[float]:
-        """
-        Returns the reference data in the input shape
-        """
+        """Returns the reference data in the input shape."""
         return self._data
 
     def create_seq(self, input_: npt.NDArray[float]) -> Generator[npt.NDArray[float], None, None]:
-        r"""
-        A generator function that yields sequences of specified length from the input data.
-        Yields a subarray from the input data of size (seq_len, num_features)
+        r"""Yields sequences of specified length from the input data.
 
         Args:
+        ----
             input_: A numpy array containing the input data.
+
+        Yields
+        ------
+            A subarray of size (seq_len, num_features) from the input data.
         """
         idx = 0
         while idx < len(self):
@@ -128,10 +138,10 @@ class StreamingDataset(IterableDataset):
             idx += 1
 
     def __iter__(self) -> Iterator[npt.NDArray[float]]:
-        r"""
-        Returns an iterator for the StreamingDataset object.
+        r"""Returns an iterator for the StreamingDataset object.
 
-        Raises:
+        Raises
+        ------
             NotImplementedError: If multiple worker input is provided
         """
         worker_info = torch.utils.data.get_worker_info()
@@ -141,15 +151,11 @@ class StreamingDataset(IterableDataset):
         raise NotImplementedError("Multiple workers are not supported yet for Streaming Dataset")
 
     def __len__(self) -> int:
-        r"""
-        Returns the number of sequences that can be generated from the input data.
-        """
+        r"""Returns the number of sequences that can be generated from the input data."""
         return len(self._data) - self._seq_len + 1
 
     def __getitem__(self, idx: Union[int, slice]) -> npt.NDArray[float]:
-        r"""
-        Retrieves a sequence from the input data at the specified index.
-        """
+        r"""Retrieves a sequence from the input data at the specified index."""
         if isinstance(idx, slice):
             if idx.step is not None:
                 raise ValueError("Slice with step is not supported in StreamingDataset")
@@ -165,11 +171,12 @@ class StreamingDataset(IterableDataset):
 
 
 class TimeseriesDataModule(pl.LightningDataModule):
-    r"""
-    A time series data module for use in PyTorch Lightning,
-    using a StreamingDataset for training and validation datasets.
+    r"""A timeseries data module for use in PyTorch Lightning.
+
+    Uses a StreamingDataset for training and validation datasets.
 
     Args:
+    ----
         seq_len: The length of the sequences to be generated from the input data.
         data: A numpy array containing the training data in the shape of (batch, num_features)
         val_split_ratio: ratio of data to be used for validation set
@@ -197,9 +204,7 @@ class TimeseriesDataModule(pl.LightningDataModule):
         self.val_dataset = None
 
     def setup(self, stage: str) -> None:
-        r"""
-        Sets up the data module by initializing the train and validation datasets.
-        """
+        r"""Sets up the data module by initializing the train and validation datasets."""
         if stage == "fit":
             val_size = np.floor(self.val_split_ratio * len(self.data)).astype(int)
             _LOGGER.info("Size of validation set: %s", val_size)
@@ -208,25 +213,9 @@ class TimeseriesDataModule(pl.LightningDataModule):
             self.val_dataset = StreamingDataset(self.data[-val_size:, :], self.seq_len)
 
     def train_dataloader(self) -> TRAIN_DATALOADERS:
-        r"""
-        Creates and returns a DataLoader for the training dataset.
-        """
+        r"""Returns a DataLoader for the training dataset."""
         return DataLoader(self.train_dataset, batch_size=self.batch_size)
 
     def val_dataloader(self) -> Optional[EVAL_DATALOADERS]:
-        r"""
-        Creates and returns a DataLoader for the validation dataset if validation data is provided.
-        """
+        r"""Returns a DataLoader for the validation dataset if validation data is provided."""
         return DataLoader(self.val_dataset, batch_size=self.batch_size)
-
-    @staticmethod
-    def unbatch_sequences(batched: Tensor) -> Tensor:
-        r"""
-        Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
-        back into a shape of (new_batch, num_features).
-
-        Note: This is an approximate inverse transormation as only the
-        first element in seq_len is used for the first (new_batch - seq_len - 1) rows.
-        """
-        output = batched[:, 0, :]
-        return torch.vstack((output, batched[-1, 1::]))

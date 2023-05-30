@@ -24,6 +24,14 @@ LOGGER = logging.getLogger(__name__)
 
 
 class LogTransformer(DataIndependentTransformers):
+    """
+    Applies column-wise log normalization.
+
+    Args:
+    ----
+        add_factor: float value to be added to the feature before taking log.
+    """
+
     def __init__(self, add_factor=2):
         self.add_factor = add_factor
 
@@ -38,6 +46,15 @@ class LogTransformer(DataIndependentTransformers):
 
 
 class StaticPowerTransformer(DataIndependentTransformers):
+    """
+    Applies column-wise power transformation.
+
+    Args:
+    ----
+        n: float value to be used as the power.
+        add_factor: float value to be added to the feature before taking power.
+    """
+
     def __init__(self, n: float, add_factor=0):
         self.add_factor = add_factor
         self.n = n
@@ -53,8 +70,7 @@ class StaticPowerTransformer(DataIndependentTransformers):
 
 
 class TanhScaler(OneToOneFeatureMixin, TransformerMixin):
-    r"""
-    Tanh Estimator applies column-wise tanh normalization to the Z-score,
+    r"""Tanh Estimator applies column-wise tanh normalization to the Z-score,
     and scales the values between 0 and 1.
 
     After scaling, the data has a mean of 0.5.
@@ -64,16 +80,19 @@ class TanhScaler(OneToOneFeatureMixin, TransformerMixin):
     but will reach the asymptote (flatten out) earlier.
 
     Args:
+    ----
         coeff: float value determining the spread of the scores
         eps: minimum value below which the feature will be treated as constant.
              In order to avoid division by zero or a very small number,
              standard deviation will be set as 1 for that feature.
 
-    References:
+    References
+    ----------
         Nandakumar, Jain, Ross. 2005. Score Normalization in
         Multimodal Biometric Systems, Pattern Recognition 38, 2270-2285.
         https://web.cse.msu.edu/~rossarun/pubs/RossScoreNormalization_PR05.pdf
     """
+
     __slots__ = ("_coeff", "_std", "_mean", "_eps")
 
     def __init__(self, coeff: float = 0.2, eps: float = 1e-10):
