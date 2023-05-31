@@ -5,6 +5,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_less
 from sklearn.pipeline import make_pipeline
 
+from numalogic.base import StatelessTransformer
 from numalogic.transforms import LogTransformer, StaticPowerTransformer, TanhScaler
 
 
@@ -66,6 +67,15 @@ class TestTransformers(unittest.TestCase):
             warnings.simplefilter("ignore")
             x_scaled = scaler.fit_transform(x)
         self.assertTrue(np.isnan(x_scaled[:, 1]).all())
+
+    def test_base_transform(self):
+        x = RNG.random((5, 3))
+        x[:, 1] = np.zeros(5)
+
+        trfr = StatelessTransformer()
+        self.assertRaises(NotImplementedError, trfr.transform, x)
+        self.assertRaises(NotImplementedError, trfr.fit_transform, x)
+        self.assertEqual(trfr.fit(x), trfr)
 
 
 if __name__ == "__main__":
