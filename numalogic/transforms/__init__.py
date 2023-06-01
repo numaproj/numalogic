@@ -9,6 +9,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from numalogic.preprocess.transformer import LogTransformer, StaticPowerTransformer, TanhScaler
+"""
+Module to provide timeseries transformations needed for preprocessing,
+feature engineering and postprocessing.
+"""
 
-__all__ = ["LogTransformer", "StaticPowerTransformer", "TanhScaler"]
+from numalogic.transforms._scaler import TanhScaler
+from numalogic.transforms._stateless import LogTransformer, StaticPowerTransformer
+from numalogic.transforms._movavg import ExpMovingAverage, expmov_avg_aggregator
+from numalogic.transforms._postprocess import TanhNorm, tanh_norm
+
+__all__ = [
+    "TanhScaler",
+    "LogTransformer",
+    "StaticPowerTransformer",
+    "ExpMovingAverage",
+    "expmov_avg_aggregator",
+    "TanhNorm",
+    "tanh_norm",
+]

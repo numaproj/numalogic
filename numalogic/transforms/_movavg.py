@@ -10,10 +10,10 @@
 # limitations under the License.
 
 import numpy as np
-import numpy.typing as npt
 
-from numalogic.tools import DataIndependentTransformers
+from numalogic.base import StatelessTransformer
 from numalogic.tools.exceptions import InvalidDataShapeError
+import numpy.typing as npt
 
 
 def _allow_only_single_feature(data: npt.NDArray[float]) -> None:
@@ -25,21 +25,6 @@ def _allow_only_single_feature(data: npt.NDArray[float]) -> None:
         raise InvalidDataShapeError(
             f"Input data can only have 1 feature column, input shape: {data.shape}"
         )
-
-
-def tanh_norm(scores: npt.NDArray[float], scale_factor=10, smooth_factor=10) -> npt.NDArray[float]:
-    """
-    Applies column wise tanh normalization to the input data.
-
-    This is most commonly used to normalize the anomaly scores to a desired range.
-
-    Args:
-    ----
-        scores: feature array
-        scale_factor: scale the output by this factor (default: 10)
-        smooth_factor: factor to broaden out the linear range of the graph (default: 10)
-    """
-    return scale_factor * np.tanh(scores / smooth_factor)
 
 
 def expmov_avg_aggregator(
@@ -85,30 +70,7 @@ def expmov_avg_aggregator(
     return corrected_exp_avg.item()
 
 
-class TanhNorm(DataIndependentTransformers):
-    """
-    Apply tanh normalization to the input data.
-
-    Args:
-    ----
-        scale_factor: scale the output by this factor (default: 10)
-        smooth_factor: factor to broaden out the linear range of the graph (default: 10)
-    """
-
-    __slots__ = ("scale_factor", "smooth_factor")
-
-    def __init__(self, scale_factor=10, smooth_factor=10):
-        self.scale_factor = scale_factor
-        self.smooth_factor = smooth_factor
-
-    def fit_transform(self, input_: npt.NDArray[float], _=None, **__) -> npt.NDArray[float]:
-        return self.transform(input_)
-
-    def transform(self, input_: npt.NDArray[float], _=None, **__) -> npt.NDArray[float]:
-        return tanh_norm(input_, scale_factor=self.scale_factor, smooth_factor=self.smooth_factor)
-
-
-class ExpMovingAverage(DataIndependentTransformers):
+class ExpMovingAverage(StatelessTransformer):
     r"""Calculate the exponential moving averages for a vector.
 
     This transformation returns an array where each element "n"
@@ -181,18 +143,3 @@ class ExpMovingAverage(DataIndependentTransformers):
 
         # Calculate array of 1 / (1 - beta**i) values
         return np.divide(exp_avg, 1.0 - beta_powers)
-
-    def fit_transform(self, input_: npt.NDArray[float], **__):
-        r"""Returns transformed output.
-
-        This is most commonly used to normalize the anomaly scores to a desired range.
-
-        Args:
-        ----
-            input_: input column vector
-
-        Raises
-        ------
-            InvalidDataShapeError: if input array is not single featured
-        """
-        return self.transform(input_)

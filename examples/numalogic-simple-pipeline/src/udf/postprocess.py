@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from numalogic.postprocess import TanhNorm
+from numalogic.transforms import TanhNorm
 from pynumaflow.function import Messages, Message, Datum
 
 from src.utils import Payload

@@ -14,62 +14,14 @@ import logging
 
 import numpy as np
 import numpy.typing as npt
-from numpy.typing import ArrayLike
-from sklearn.base import TransformerMixin, OneToOneFeatureMixin
 from typing_extensions import Self
 
-from numalogic.tools import DataIndependentTransformers
+from numalogic.base import BaseTransformer
 
 LOGGER = logging.getLogger(__name__)
 
 
-class LogTransformer(DataIndependentTransformers):
-    """
-    Applies column-wise log normalization.
-
-    Args:
-    ----
-        add_factor: float value to be added to the feature before taking log.
-    """
-
-    def __init__(self, add_factor=2):
-        self.add_factor = add_factor
-
-    def fit_transform(self, x: npt.NDArray[float], y=None, **fit_params) -> npt.NDArray[float]:
-        return self.transform(x)
-
-    def transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
-        return np.log(x + self.add_factor)
-
-    def inverse_transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
-        return np.exp(x) - self.add_factor
-
-
-class StaticPowerTransformer(DataIndependentTransformers):
-    """
-    Applies column-wise power transformation.
-
-    Args:
-    ----
-        n: float value to be used as the power.
-        add_factor: float value to be added to the feature before taking power.
-    """
-
-    def __init__(self, n: float, add_factor=0):
-        self.add_factor = add_factor
-        self.n = n
-
-    def fit_transform(self, X, y=None, **fit_params):
-        return self.transform(X)
-
-    def transform(self, X):
-        return np.power(X + self.add_factor, self.n)
-
-    def inverse_transform(self, X) -> ArrayLike:
-        return np.power(X, 1.0 / self.n) - self.add_factor
-
-
-class TanhScaler(OneToOneFeatureMixin, TransformerMixin):
+class TanhScaler(BaseTransformer):
     r"""Tanh Estimator applies column-wise tanh normalization to the Z-score,
     and scales the values between 0 and 1.
 

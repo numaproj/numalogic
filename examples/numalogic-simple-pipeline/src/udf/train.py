@@ -6,7 +6,7 @@ import pandas as pd
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.models.threshold import StdDevThreshold
-from numalogic.preprocess.transformer import LogTransformer
+from numalogic.transforms.transformer import LogTransformer
 from numalogic.tools.data import TimeseriesDataModule
 from pynumaflow.function import Datum, Messages, Message
 

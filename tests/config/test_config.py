@@ -31,8 +31,7 @@ from numalogic.config import (
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import SparseVanillaAE, SparseConv1dAE, LSTMAE
 from numalogic.models.threshold import StdDevThreshold
-from numalogic.postprocess import TanhNorm
-from numalogic.preprocess import LogTransformer
+from numalogic.transforms import LogTransformer, TanhNorm
 from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
