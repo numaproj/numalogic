@@ -1,6 +1,4 @@
-cachetools==5.2.0
-dataclasses-json==0.5.7
-numalogic[mlflow]==0.3.0
-pytorch-lightning==1.8.6
-protobuf==3.20 # need this to avoid errors with tensorboard
-pynumaflow==0.2.6
+cachetools>5.2,<6.0
+numalogic[mlflow] @ git+https://github.com/numaproj/numalogic.git
+pytorch-lightning>2.0,< 3.0
+pynumaflow>0.4,<0.5

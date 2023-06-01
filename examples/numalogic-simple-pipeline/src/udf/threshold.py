@@ -1,44 +1,57 @@
 import logging
 
-import numpy as np
+from numalogic.registry import MLflowRegistry
 from pynumaflow.function import Messages, Message, Datum
 
-from src.utils import Payload, load_artifact
+from src.utils import Payload, NumalogicUDF
 
 LOGGER = logging.getLogger(__name__)
+TRACKING_URI = "http://mlflow-service.default.svc.cluster.local:5000"
 
 
-def threshold(_: str, datum: Datum) -> Messages:
-    r"""UDF that applies thresholding to the reconstruction error returned by the autoencoder.
+class Threshold(NumalogicUDF):
+    """UDF to apply thresholding to the reconstruction error returned by the autoencoder."""
 
-    For more information about the arguments, refer:
-    https://github.com/numaproj/numaflow-python/blob/main/pynumaflow/function/_dtypes.py
-    """
-    # Load data and convert bytes to Payload
-    payload = Payload.from_json(datum.value.decode("utf-8"))
-    messages = Messages()
+    def __init__(self):
+        super().__init__()
+        self.registry = MLflowRegistry(tracking_uri=TRACKING_URI)
 
-    # Load the threshold model from registry
-    thresh_clf_artifact = load_artifact(skeys=["thresh_clf"], dkeys=["model"])
-    recon_err = np.asarray(payload.ts_data).reshape(-1, 1)
-
-    # Check if model exists for inference
-    if (not thresh_clf_artifact) or (not payload.is_artifact_valid):
-        # If model not found, send it to trainer for training
+    @staticmethod
+    def _handle_not_found(payload: Payload) -> Messages:
+        """
+        Handles the case when the model is not found.
+        If model not found, send it to trainer for training.
+        """
         LOGGER.warning("%s - Model not found. Training the model.", payload.uuid)
 
         # Convert Payload back to bytes and conditional forward to train vertex
         payload.is_artifact_valid = False
-        messages.append(Message.to_vtx(key="train", value=payload.to_json().encode("utf-8")))
-        return messages
+        return Messages(Message(keys=["train"], value=payload.to_json()))
 
-    LOGGER.debug("%s - Threshold Model found!", payload.uuid)
+    def exec(self, _: list[str], datum: Datum) -> Messages:
+        """
+        UDF that applies thresholding to the reconstruction error returned by the autoencoder.
 
-    thresh_clf = thresh_clf_artifact.artifact
-    payload.ts_data = thresh_clf.predict(recon_err).tolist()
+        For more information about the arguments, refer:
+        https://github.com/numaproj/numaflow-python/blob/main/pynumaflow/function/_dtypes.py
+        """
+        # Load data and convert bytes to Payload
+        payload = Payload.from_json(datum.value)
 
-    LOGGER.info("%s - Thresholding complete", payload.uuid)
+        # Load the threshold model from registry
+        thresh_clf_artifact = self.registry.load(
+            skeys=["thresh_clf"], dkeys=["model"], artifact_type="sklearn"
+        )
+        recon_err = payload.get_array().reshape(-1, 1)
 
-    # Convert Payload back to bytes and conditional forward to postprocess vertex
-    messages.append(Message.to_vtx(key="postprocess", value=payload.to_json().encode("utf-8")))
-    return messages
+        # Check if model exists for inference
+        if (not thresh_clf_artifact) or (not payload.is_artifact_valid):
+            return self._handle_not_found(payload)
+
+        thresh_clf = thresh_clf_artifact.artifact
+        payload.set_array(thresh_clf.predict(recon_err).tolist())
+
+        LOGGER.info("%s - Thresholding complete", payload.uuid)
+
+        # Convert Payload back to bytes and conditional forward to postprocess vertex
+        return Messages(Message(keys=["postprocess"], value=payload.to_json()))
