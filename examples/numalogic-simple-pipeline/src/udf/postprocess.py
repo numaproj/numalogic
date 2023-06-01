@@ -1,10 +1,11 @@
 import logging
 
 import numpy as np
+from numalogic.numaflow import NumalogicUDF
 from numalogic.transforms import TanhNorm
 from pynumaflow.function import Messages, Message, Datum
 
-from src.utils import Payload, NumalogicUDF
+from src.utils import Payload
 
 LOGGER = logging.getLogger(__name__)
 

@@ -1,9 +1,10 @@
 import logging
 
+from numalogic.numaflow import NumalogicUDF
 from numalogic.registry import MLflowRegistry
 from pynumaflow.function import Messages, Message, Datum
 
-from src.utils import Payload, NumalogicUDF
+from src.utils import Payload
 
 LOGGER = logging.getLogger(__name__)
 TRACKING_URI = "http://mlflow-service.default.svc.cluster.local:5000"

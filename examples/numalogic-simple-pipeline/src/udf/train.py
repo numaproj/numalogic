@@ -7,12 +7,13 @@ import pandas as pd
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.models.threshold import StdDevThreshold
+from numalogic.numaflow import NumalogicUDF
 from numalogic.registry import MLflowRegistry
 from numalogic.tools.data import TimeseriesDataModule
 from numalogic.transforms import LogTransformer
 from pynumaflow.function import Datum, Messages, Message
 
-from src.utils import Payload, TRAIN_DATA_PATH, NumalogicUDF
+from src.utils import Payload, TRAIN_DATA_PATH
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))
