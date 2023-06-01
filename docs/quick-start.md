@@ -31,7 +31,7 @@ from torch.utils.data import DataLoader
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.models.threshold import StdDevThreshold
-from numalogic.postprocess import TanhNorm
+from numalogic.transforms import TanhNorm
 from numalogic.tools.data import StreamingDataset
 
 # Create some synthetic data

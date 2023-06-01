@@ -27,7 +27,7 @@ setup:
 
 # test your application (tests in the tests/ directory)
 test:
-	poetry run pytest tests/
+	poetry run pytest -v tests/
 
 publish:
 	@rm -rf dist
