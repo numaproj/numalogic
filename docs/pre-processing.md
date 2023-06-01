@@ -20,7 +20,7 @@ Log transformation reduces the variance in some distributions, especially with l
 import numpy as np
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler
-from numalogic.preprocess.transformer import LogTransformer
+from numalogic.transforms import LogTransformer
 
 # Generate some random train and test data
 x_train = np.random.randn(100, 3)
@@ -43,7 +43,7 @@ When `add_factor` is provided, each data point x is converted to (x + add_factor
 
 ```python
 import numpy as np
-from numalogic.preprocess.transformer import StaticPowerTransformer
+from numalogic.transforms import StaticPowerTransformer
 
 # Generate some random train and test data
 x_train = np.random.randn(100, 3)
@@ -65,7 +65,7 @@ in the data.
 
 ```python
 import numpy as np
-from numalogic.preprocess import TanhScaler
+from numalogic.transforms import TanhScaler
 
 # Generate some random train and test data
 x_train = np.random.randn(100, 3)

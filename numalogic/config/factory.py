@@ -39,7 +39,7 @@ class PreprocessFactory(_ObjectFactory):
     """Factory class to create preprocess instances."""
 
     from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
-    from numalogic.preprocess import LogTransformer, StaticPowerTransformer, TanhScaler
+    from numalogic.transforms import LogTransformer, StaticPowerTransformer, TanhScaler
 
     _CLS_MAP = {
         "StandardScaler": StandardScaler,
@@ -55,7 +55,7 @@ class PreprocessFactory(_ObjectFactory):
 class PostprocessFactory(_ObjectFactory):
     """Factory class to create postprocess instances."""
 
-    from numalogic.postprocess import TanhNorm, ExpMovingAverage
+    from numalogic.transforms import TanhNorm, ExpMovingAverage
 
     _CLS_MAP = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage}
 

@@ -10,15 +10,15 @@
 # limitations under the License.
 
 
-from abc import ABCMeta
 from typing import Any
 
-import pytorch_lightning as pl
 import torch.nn.functional as F
 from torch import Tensor, optim
 
+from numalogic.base import TorchModel
 
-class BaseAE(pl.LightningModule, metaclass=ABCMeta):
+
+class BaseAE(TorchModel):
     r"""Abstract Base class for all Pytorch based autoencoder models for time-series data.
 
     Args:
