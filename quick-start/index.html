@@ -949,7 +949,7 @@ Or you can install your platform specific torch version from their website.</p>
 <span class="kn">from</span> <span class="nn">numalogic.models.autoencoder</span> <span class="kn">import</span> <span class="n">AutoencoderTrainer</span>
 <span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">VanillaAE</span>
 <span class="kn">from</span> <span class="nn">numalogic.models.threshold</span> <span class="kn">import</span> <span class="n">StdDevThreshold</span>
-<span class="kn">from</span> <span class="nn">numalogic.postprocess</span> <span class="kn">import</span> <span class="n">TanhNorm</span>
+<span class="kn">from</span> <span class="nn">numalogic.transforms</span> <span class="kn">import</span> <span class="n">TanhNorm</span>
 <span class="kn">from</span> <span class="nn">numalogic.tools.data</span> <span class="kn">import</span> <span class="n">StreamingDataset</span>
 
 <span class="c1"># Create some synthetic data</span>
