@@ -10,7 +10,7 @@ from mlflow.store.entities import PagedList
 from sklearn.ensemble import RandomForestRegressor
 
 from numalogic.models.autoencoder.variants import VanillaAE
-from numalogic.registry import MLflowRegistry, ArtifactData
+from numalogic.registry import MLflowRegistry, ArtifactData, LocalLRUCache
 from numalogic.registry.mlflow_registry import ModelStage
 from numalogic.tools.exceptions import ModelVersionError
 from tests.registry._mlflow_utils import (
@@ -337,6 +337,13 @@ class TestMLflow(unittest.TestCase):
         )
         self.assertIsNone(registry._load_from_cache("key"))
         self.assertIsNone(registry._clear_cache("key"))
+
+    def test_cache(self):
+        cache_registry = LocalLRUCache()
+        registry = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
+        registry._save_in_cache("key", ArtifactData(artifact=self.model, extras={}, metadata={}))
+        self.assertIsNotNone(registry._load_from_cache("key"))
+        self.assertIsNotNone(registry._clear_cache("key"))
 
 
 if __name__ == "__main__":
