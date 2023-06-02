@@ -18,7 +18,7 @@ spec:
       min: 1
     udf:
       container:
-        image: quay.io/numaio/numalogic/example-udf:v0.3.0
+        image: quay.io/numaio/numalogic/example-udf:v0.4
         env:
           - name: WIN_SIZE
             value: "12"
@@ -31,7 +31,7 @@ spec:
       min: 1
     udf:
       container:
-        image: quay.io/numaio/numalogic/example-udf:v0.3.0
+        image: quay.io/numaio/numalogic/example-udf:v0.4
         env:
           - name: WIN_SIZE
             value: "12"
@@ -44,7 +44,7 @@ spec:
       min: 1
     udf:
       container:
-        image: quay.io/numaio/numalogic/example-udf:v0.3.0
+        image: quay.io/numaio/numalogic/example-udf:v0.4
         env:
           - name: WIN_SIZE
             value: "12"
@@ -57,7 +57,7 @@ spec:
       min: 1
     udf:
       container:
-        image: quay.io/numaio/numalogic/example-udf:v0.3.0
+        image: quay.io/numaio/numalogic/example-udf:v0.4
         env:
           - name: WIN_SIZE
             value: "12"
@@ -78,7 +78,7 @@ spec:
         env:
           - name: WIN_SIZE
             value: "12"
-        image: quay.io/numaio/numalogic/example-udf:v0.3.0
+        image: quay.io/numaio/numalogic/example-udf:v0.4
         args:
           - python
           - starter.py
