@@ -1,8 +1,8 @@
-from src.udf.inference import inference
-from src.udf.postprocess import postprocess
-from src.udf.preprocess import preprocess
-from src.udf.train import train
-from src.udf.threshold import threshold
+from src.udf.inference import Inference
+from src.udf.postprocess import Postprocess
+from src.udf.preprocess import Preprocess
+from src.udf.train import Trainer
+from src.udf.threshold import Threshold
 
 
-__all__ = ["preprocess", "inference", "postprocess", "train", "threshold"]
+__all__ = ["Preprocess", "Inference", "Postprocess", "Trainer", "Threshold"]
