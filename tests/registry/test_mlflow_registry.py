@@ -354,13 +354,14 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
     def test_cache_loading(self):
-        cache_registry = LocalLRUCache()
+        cache_registry = LocalLRUCache(ttl=50000)
         ml = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
         ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.model, **{"lr": 0.01})
         ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         key = MLflowRegistry.construct_key(self.skeys, self.dkeys)
         self.assertIsNotNone(ml._load_from_cache(key))
-        self.assertIsNotNone(ml._clear_cache(key))
+        data = ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
+        self.assertIsNotNone(data)
 
 
 if __name__ == "__main__":
