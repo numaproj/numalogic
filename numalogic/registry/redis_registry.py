@@ -129,6 +129,7 @@ class RedisRegistry(ArtifactManager):
     def __load_latest_artifact(self, key: str) -> ArtifactData:
         cached_artifact = self._load_from_cache(key)
         if cached_artifact:
+            _LOGGER.info("Found cached artifact for key: %s", key)
             return cached_artifact
         production_key = self.__construct_production_key(key)
         if not self.client.exists(production_key):
