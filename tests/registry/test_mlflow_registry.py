@@ -357,7 +357,7 @@ class TestMLflow(unittest.TestCase):
         cache_registry = LocalLRUCache()
         ml = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
         ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.model, **{"lr": 0.01})
-        data = ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
+        ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         key = MLflowRegistry.construct_key(self.skeys, self.dkeys)
         self.assertIsNotNone(ml._load_from_cache(key))
         self.assertIsNotNone(ml._clear_cache(key))
