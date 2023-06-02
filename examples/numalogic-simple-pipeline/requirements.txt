@@ -1,4 +1,5 @@
 cachetools>5.2,<6.0
-numalogic[mlflow] @ git+https://github.com/numaproj/numalogic.git
+numalogic[mlflow,numaflow] @ git+https://github.com/numaproj/numalogic.git@main
+# ../../../numalogic[mlflow,numaflow]  # for local testing
 pytorch-lightning>2.0,< 3.0
 pynumaflow>0.4,<0.5

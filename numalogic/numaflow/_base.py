@@ -8,6 +8,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Union
+from collections.abc import Coroutine
 
 from pynumaflow.function import Datum, Messages
 
@@ -25,7 +27,9 @@ class NumalogicUDF:
     def __init__(self, is_async=False):
         self.is_async = is_async
 
-    def __call__(self, keys: list[str], datum: Datum) -> Messages:
+    def __call__(
+        self, keys: list[str], datum: Datum
+    ) -> Union[Coroutine[None, None, Messages], Messages]:
         if self.is_async:
             return self.aexec(keys, datum)
         return self.exec(keys, datum)
