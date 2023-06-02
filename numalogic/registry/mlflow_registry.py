@@ -164,7 +164,7 @@ class MLflowRegistry(ArtifactManager):
             if latest:
                 cached_artifact = self._load_from_cache(model_key)
                 if cached_artifact:
-                    _LOGGER.info("Found cached artifact for key: %s", model_key)
+                    _LOGGER.debug("Found cached artifact for key: %s", model_key)
                     return cached_artifact
                 version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
                 if not version_info:
