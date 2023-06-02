@@ -345,6 +345,23 @@ class TestMLflow(unittest.TestCase):
         self.assertIsNotNone(registry._load_from_cache("key"))
         self.assertIsNotNone(registry._clear_cache("key"))
 
+    @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
+    @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
+    @patch("mlflow.log_params", {"lr": 0.01})
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.pytorch.load_model", Mock(return_value=VanillaAE(10)))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pytorch_rundata_dict()))
+    def test_cache_loading(self):
+        cache_registry = LocalLRUCache()
+        ml = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
+        ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.model, **{"lr": 0.01})
+        data = ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
+        key = MLflowRegistry.construct_key(self.skeys, self.dkeys)
+        self.assertIsNotNone(ml._load_from_cache(key))
+        self.assertIsNotNone(ml._clear_cache(key))
+
 
 if __name__ == "__main__":
     unittest.main()
