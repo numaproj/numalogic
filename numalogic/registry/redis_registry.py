@@ -238,7 +238,7 @@ class RedisRegistry(ArtifactManager):
             with self.client.pipeline() as pipe:
                 new_version_key = self.__save_artifact(pipe, artifact, metadata, key, str(version))
                 pipe.expire(name=new_version_key, time=self.ttl)
-                _LOGGER.info("Model is successfully with the key = %s", new_version_key)
+                _LOGGER.info("Model with the key = %s, loaded successfully.", new_version_key)
                 pipe.execute()
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
