@@ -11,9 +11,9 @@
 
 
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar, Union
 
-from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T
+from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T, state_dict_t
 
 
 @dataclass
@@ -56,7 +56,13 @@ class ArtifactManager(Generic[KEYS, A_D]):
         """
         raise NotImplementedError("Please implement this method!")
 
-    def save(self, skeys: KEYS, dkeys: KEYS, artifact: artifact_t, **metadata: META_VT) -> Any:
+    def save(
+        self,
+        skeys: KEYS,
+        dkeys: KEYS,
+        artifact: Union[artifact_t, state_dict_t],
+        **metadata: META_VT
+    ) -> Any:
         r"""Saves the artifact into mlflow registry and updates version.
 
         Args:

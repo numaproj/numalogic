@@ -10,11 +10,12 @@
 # limitations under the License.
 
 
-from typing import Union, TypeVar
 from collections.abc import Sequence
-from sklearn.base import BaseEstimator
-from torch import nn
+from typing import Union, TypeVar
 
+from torch import Tensor
+
+from numalogic.base import TorchModel, BaseThresholdModel, BaseTransformer
 
 try:
     from redis.client import AbstractRedis
@@ -23,7 +24,15 @@ except ImportError:
 else:
     redis_client_t = TypeVar("redis_client_t", bound=AbstractRedis, covariant=True)
 
-artifact_t = TypeVar("artifact_t", bound=Union[nn.Module, BaseEstimator], covariant=True)
+artifact_t = TypeVar(
+    "artifact_t",
+    bound=Union[TorchModel, BaseThresholdModel, BaseTransformer],
+    covariant=True,
+)
+nn_model_t = TypeVar("nn_model_t", bound=TorchModel, covariant=True)
+state_dict_t = TypeVar("state_dict_t", bound=dict[str, Tensor], covariant=True)
+transform_t = TypeVar("transform_t", bound=BaseTransformer, covariant=True)
+thresh_t = TypeVar("thresh_t", bound=BaseThresholdModel, covariant=True)
 META_T = TypeVar("META_T", bound=dict[str, Union[str, float, int, list, dict]])
 META_VT = TypeVar("META_VT", str, int, float, list, dict)
 EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
