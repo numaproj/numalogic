@@ -10,7 +10,6 @@
 # limitations under the License.
 
 from collections.abc import Sequence
-from typing import Any
 from collections.abc import Iterator
 
 import numpy.typing as npt
@@ -56,23 +55,42 @@ class BlockPipeline(Sequence[Block]):
         return iter(self._blocks)
 
     def named_blocks(self) -> Iterator[tuple[str, Block]]:
+        """Get an iterator over the blocks in the pipeline along with their names."""
         names = [block.name for block in self._blocks]
         return zip(names, self._blocks)
 
-    def _check_fit_params(self, **fit_params: dict[str, Any]) -> dict[str, dict[str, Any]]:
-        fit_params_steps = {name: {} for name, block in self.named_blocks() if block is not None}
+    def _get_block_params(self, **fit_params) -> dict[str, dict]:
+        """
+        Get the parameters for each block from the fit_params.
+
+        Inspired by sklearn Pipeline
+        (https://scikit-learn.org/stable/modules/generated/sklearn.pipeline.make_pipeline.html).
+
+        Args:
+        ----
+            fit_params : keyword dict of string -> object
+
+        Returns
+        -------
+            A nested dict of blockname -> parameter -> value
+
+        Raises
+        ------
+            ValueError: If the keyword arguments are not of the form
+            blockname__parameter, e.g. `block_pipeline.fit(data, nn__max_epochs=50)`
+        """
+        block_params = {name: {} for name, block in self.named_blocks()}
+        err_msg = (
+            "Invalid kwarg: {pname} found. Keyword args of "
+            "BlockPipeline must be of the form blockname__parameter, "
+            "e.g. `block_pipeline.fit(data, nn__max_epochs=50)`"
+        )
         for pname, pval in fit_params.items():
             if "__" not in pname:
-                raise ValueError(
-                    "Pipeline.fit does not accept the {} parameter. "
-                    "You can pass parameters to specific steps of your "
-                    "pipeline using the stepname__parameter format, e.g. "
-                    "`Pipeline.fit(X, y, logisticregression__sample_weight"
-                    "=sample_weight)`.".format(pname)
-                )
-            step, param = pname.split("__", 1)
-            fit_params_steps[step][param] = pval
-        return fit_params_steps
+                raise ValueError(err_msg.format(pname=pname))
+            blockname, param = pname.split("__", 1)
+            block_params[blockname][param] = pval
+        return block_params
 
     def fit(self, input_: npt.NDArray[float], **fit_params) -> npt.NDArray[float]:
         """
@@ -90,7 +108,7 @@ class BlockPipeline(Sequence[Block]):
         -------
             Final fit block output.
         """
-        fit_params = self._check_fit_params(**fit_params)
+        fit_params = self._get_block_params(**fit_params)
         for block in self._blocks:
             input_ = block.fit(input_, **fit_params.get(block.name, {}))
         return input_
