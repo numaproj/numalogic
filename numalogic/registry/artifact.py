@@ -18,11 +18,20 @@ from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T, st
 
 @dataclass
 class ArtifactData:
-    """Dataclass to hold the artifact, its metadata and other extra info."""
+    """
+    Dataclass to hold the artifact, its metadata and other extra info.
+
+    Args:
+    ----
+        artifact: artifact to be saved; can be a model instance, a state_dict.
+        metadata: additional metadata surrounding the artifact that needs to be saved.
+        extras: any other extra information that needs to be saved.
+
+    """
 
     __slots__ = ("artifact", "metadata", "extras")
 
-    artifact: artifact_t
+    artifact: Union[artifact_t, state_dict_t]
     metadata: META_T
     extras: EXTRA_T
 
@@ -34,7 +43,9 @@ M_K = TypeVar("M_K", bound=str)
 class ArtifactManager(Generic[KEYS, A_D]):
     """Abstract base class for artifact save, load and delete.
 
-    :param uri: server/connection uri
+    Args:
+    ----
+        uri: server/connection uri
     """
 
     __slots__ = ("uri",)

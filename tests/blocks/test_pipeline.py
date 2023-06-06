@@ -4,6 +4,7 @@ import unittest
 import pandas as pd
 import torch
 from fakeredis import FakeRedis, FakeServer
+from pympler import asizeof
 from sklearn.preprocessing import StandardScaler
 
 from numalogic._constants import TESTS_DIR
@@ -176,6 +177,29 @@ class TestBlockPipeline(unittest.TestCase):
             PostprocessBlock(TanhNorm()),
         )
         self.assertRaises(ValueError, block_pl.fit, self.x_train, max_epochs=1)
+
+    @unittest.skip("Just for testing memory usage")
+    def test_rand(self):
+        model = SparseConv1dAE(seq_len=SEQ_LEN, in_channels=2)
+        block_nn = NNBlock(model, SEQ_LEN)
+        block_pre = PreprocessBlock(TanhScaler())
+        block_post = PostprocessBlock(TanhNorm())
+        block_th = ThresholdBlock(StdDevThreshold())
+
+        pl = BlockPipeline(
+            block_pre,
+            block_nn,
+            block_th,
+            block_post,
+            registry=self.reg,
+        )
+
+        print(asizeof.asizeof(model) / 1024)
+        print(asizeof.asizeof(block_nn) / 1024)
+        print(asizeof.asizeof(block_pre) / 1024)
+        print(asizeof.asizeof(block_post) / 1024)
+        print(asizeof.asizeof(block_th) / 1024)
+        print(asizeof.asizeof(pl) / 1024)
 
 
 if __name__ == "__main__":

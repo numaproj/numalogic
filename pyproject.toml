@@ -59,6 +59,7 @@ ruff = "^0.0.264"
 pre-commit = "^3.3.1"
 fakeredis = "^2.11.2"
 freezegun = "^1.2.2"
+pympler = "^1.0.1"
 
 [tool.poetry.group.jupyter]
 optional = true
