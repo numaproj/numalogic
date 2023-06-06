@@ -13,6 +13,7 @@
 from collections.abc import Sequence
 from typing import Union, TypeVar
 
+from sklearn.base import BaseEstimator
 from torch import Tensor
 
 from numalogic.base import TorchModel, BaseThresholdModel, BaseTransformer
@@ -31,7 +32,7 @@ artifact_t = TypeVar(
 )
 nn_model_t = TypeVar("nn_model_t", bound=TorchModel, covariant=True)
 state_dict_t = TypeVar("state_dict_t", bound=dict[str, Tensor], covariant=True)
-transform_t = TypeVar("transform_t", bound=BaseTransformer, covariant=True)
+transform_t = TypeVar("transform_t", bound=Union[BaseTransformer, BaseEstimator], covariant=True)
 thresh_t = TypeVar("thresh_t", bound=BaseThresholdModel, covariant=True)
 META_T = TypeVar("META_T", bound=dict[str, Union[str, float, int, list, dict]])
 META_VT = TypeVar("META_VT", str, int, float, list, dict)

@@ -29,6 +29,7 @@ class NNBlock(Block):
     ----
         model: The neural network model.
         seq_len: The sequence length of the input data.
+        name: The name of the block. Defaults to "nn".
     """
 
     __slots__ = ("seq_len",)
@@ -84,7 +85,9 @@ class NNBlock(Block):
             The error of the model on the input data.
         """
         input_ = torch.from_numpy(input_).float()
+        # Add a batch dimension
+        input_ = torch.unsqueeze(input_, dim=0).contiguous()
         self._artifact.eval()
         with torch.no_grad():
-            reconerr = self._artifact.predict_step(torch.unsqueeze(input_, 0), 0)
-        return reconerr.numpy()
+            reconerr = self._artifact.predict_step(input_, batch_idx=0)
+        return torch.squeeze(reconerr, dim=0).numpy()

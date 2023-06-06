@@ -25,10 +25,11 @@ class PreprocessBlock(Block):
     ----
         preprocessor: The preprocessor object.
         name: The name of the block. Defaults to "preprocess".
+        stateful: Whether the block is stateful or not. Defaults to True.
     """
 
-    def __init__(self, preprocessor: transform_t, name: str = "preprocess"):
-        super().__init__(artifact=preprocessor, name=name)
+    def __init__(self, preprocessor: transform_t, name: str = "preprocess", stateful: bool = True):
+        super().__init__(artifact=preprocessor, name=name, stateful=stateful)
 
     def fit(self, input_: npt.NDArray[float], **__) -> npt.NDArray[float]:
         """
