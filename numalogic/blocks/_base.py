@@ -8,7 +8,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+from abc import ABCMeta, abstractmethod
 from typing import Generic, Union
 
 import numpy.typing as npt
@@ -16,7 +16,7 @@ import numpy.typing as npt
 from numalogic.tools.types import artifact_t, state_dict_t
 
 
-class Block(Generic[artifact_t]):
+class Block(Generic[artifact_t], metaclass=ABCMeta):
     """
     Base class for all blocks.
 
@@ -82,6 +82,7 @@ class Block(Generic[artifact_t]):
         """Alias for the run method."""
         return self.run(*args, **kwargs)
 
+    @abstractmethod
     def fit(self, data: npt.NDArray[float], *args, **kwargs):
         """
         Train the block on the input data.
@@ -94,8 +95,9 @@ class Block(Generic[artifact_t]):
             *args: Additional arguments for the block.
             **kwargs: Additional keyword arguments for fitting the block.
         """
-        raise NotImplementedError("fit method not implemented")
+        pass
 
+    @abstractmethod
     def run(self, stream: npt.NDArray[float], *args, **kwargs) -> npt.NDArray[float]:
         """
         Run inference on the block on the streaming input data.
@@ -109,10 +111,10 @@ class Block(Generic[artifact_t]):
             *args: Additional arguments for the block.
             **kwargs: Additional keyword arguments for the block.
         """
-        raise NotImplementedError("run method not implemented")
+        pass
 
 
-class StatelessBlock(Block):
+class StatelessBlock(Block, metaclass=ABCMeta):
     """
     Base class for all stateless blocks.
 
