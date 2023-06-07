@@ -16,6 +16,7 @@ class TestBlock(unittest.TestCase):
         self.assertEqual(block.name, "isolation_forest")
         self.assertRaises(NotImplementedError, block.fit, np.arange(100).reshape(-1, 2))
         self.assertRaises(NotImplementedError, block.run, np.arange(10).reshape(-1, 2))
+        self.assertRaises(NotImplementedError, block, np.arange(10).reshape(-1, 2))
         self.assertIsInstance(block.artifact, IsolationForest)
         self.assertIsInstance(block.artifact_state, IsolationForest)
         self.assertTrue(block.stateful)

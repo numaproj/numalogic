@@ -8,8 +8,13 @@ from pympler import asizeof
 from sklearn.preprocessing import StandardScaler
 
 from numalogic._constants import TESTS_DIR
-from numalogic.blocks import BlockPipeline, PreprocessBlock, NNBlock, PostprocessBlock
-from numalogic.blocks._transform import ThresholdBlock
+from numalogic.blocks import (
+    BlockPipeline,
+    PreprocessBlock,
+    NNBlock,
+    PostprocessBlock,
+    ThresholdBlock,
+)
 from numalogic.models.autoencoder.variants import (
     VanillaAE,
     LSTMAE,
@@ -169,6 +174,7 @@ class TestBlockPipeline(unittest.TestCase):
         )
         block_pl.fit(self.x_train, nn__max_epochs=1)
         self.assertRaises(ValueError, block_pl.save, ["ml"], ["pl"])
+        self.assertRaises(ValueError, block_pl.load, ["ml"], ["pl"])
 
     def test_pipeline_fit_err(self):
         block_pl = BlockPipeline(
@@ -179,7 +185,7 @@ class TestBlockPipeline(unittest.TestCase):
         self.assertRaises(ValueError, block_pl.fit, self.x_train, max_epochs=1)
 
     @unittest.skip("Just for testing memory usage")
-    def test_rand(self):
+    def test_memory_usage(self):
         model = SparseConv1dAE(seq_len=SEQ_LEN, in_channels=2)
         block_nn = NNBlock(model, SEQ_LEN)
         block_pre = PreprocessBlock(TanhScaler())

@@ -16,7 +16,14 @@ chained together to form a pipeline if needed. A block can be stateful or statel
 
 from numalogic.blocks._base import Block
 from numalogic.blocks._nn import NNBlock
-from numalogic.blocks._transform import PreprocessBlock, PostprocessBlock
+from numalogic.blocks._transform import PreprocessBlock, PostprocessBlock, ThresholdBlock
 from numalogic.blocks.pipeline import BlockPipeline
 
-__all__ = ["Block", "NNBlock", "PreprocessBlock", "PostprocessBlock", "BlockPipeline"]
+__all__ = [
+    "Block",
+    "NNBlock",
+    "PreprocessBlock",
+    "PostprocessBlock",
+    "ThresholdBlock",
+    "BlockPipeline",
+]
