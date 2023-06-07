@@ -16,10 +16,10 @@ from abc import ABCMeta
 
 import numpy.typing as npt
 import pytorch_lightning as pl
-from sklearn.base import TransformerMixin, BaseEstimator, OutlierMixin
+from sklearn.base import TransformerMixin, OutlierMixin
 
 
-class BaseTransformer(TransformerMixin, BaseEstimator):
+class BaseTransformer(TransformerMixin):
     """Base class for all transformer classes."""
 
     pass
@@ -47,7 +47,7 @@ class TorchModel(pl.LightningModule, metaclass=ABCMeta):
     pass
 
 
-class BaseThresholdModel(OutlierMixin, BaseEstimator):
+class BaseThresholdModel(OutlierMixin):
     """Base class for all threshold models."""
 
     pass
