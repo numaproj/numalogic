@@ -14,16 +14,14 @@ import random
 
 
 class SparsityGenerator:
-    """
-    Introduces sparsity to data by reassigning certain rows and columns
+    """Introduces sparsity to data by reassigning certain rows and columns
     in the dataframe to value of 0 (based on sparsity ratio).
     """
 
     def __init__(self, data, sparse_ratio=0.2):
-        """
-        @param data: Reference Multivariate time series DataFrame
+        """@param data: Reference Multivariate time series DataFrame
         @param sparse_ratio: Ratio of sparsity to introduce wrt
-            to number of samples
+            to number of samples.
         """
         self.sparse_ratio = sparse_ratio
         self._data = data

@@ -12,23 +12,27 @@
 
 from typing import Union, TypeVar
 from collections.abc import Sequence
-
-from redis.client import AbstractRedis
 from sklearn.base import BaseEstimator
 from torch import nn
+
+
+try:
+    from redis.client import AbstractRedis
+except ImportError:
+    pass
+else:
+    redis_client_t = TypeVar("redis_client_t", bound=AbstractRedis, covariant=True)
 
 artifact_t = TypeVar("artifact_t", bound=Union[nn.Module, BaseEstimator], covariant=True)
 META_T = TypeVar("META_T", bound=dict[str, Union[str, float, int, list, dict]])
 META_VT = TypeVar("META_VT", str, int, float, list, dict)
 EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
-redis_client_t = TypeVar("redis_client_t", bound=AbstractRedis, covariant=True)
 KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
 
 
 class Singleton(type):
-    r"""
-    Helper metaclass to use as a Singleton class.
-    """
+    r"""Helper metaclass to use as a Singleton class."""
+
     _instances = {}
 
     def __call__(cls, *args, **kwargs):

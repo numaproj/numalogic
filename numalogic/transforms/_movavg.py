@@ -10,10 +10,10 @@
 # limitations under the License.
 
 import numpy as np
-import numpy.typing as npt
 
-from numalogic.tools import DataIndependentTransformers
+from numalogic.base import StatelessTransformer
 from numalogic.tools.exceptions import InvalidDataShapeError
+import numpy.typing as npt
 
 
 def _allow_only_single_feature(data: npt.NDArray[float]) -> None:
@@ -27,26 +27,23 @@ def _allow_only_single_feature(data: npt.NDArray[float]) -> None:
         )
 
 
-def tanh_norm(scores: npt.NDArray[float], scale_factor=10, smooth_factor=10) -> npt.NDArray[float]:
-    return scale_factor * np.tanh(scores / smooth_factor)
-
-
 def expmov_avg_aggregator(
     arr: npt.NDArray[float], beta: float, bias_correction: bool = True
 ) -> float:
-    """
-    Aggregate a window of data into an expoentially weighted moving average value.
+    """Aggregate a window of data into an expoentially weighted moving average value.
 
     V(n) = (1 - beta) * beta**n * sum(x(i)/beta**i)   [for i = 1 to i = n]
 
     "1.0 - beta" denotes the weight given to the latest element.
 
     Args:
+    ----
         arr: single feature numpy array
         beta: how much weight to give to the previous weighted average (n-1)th value
         bias_correction: flag to perform bias correction (default: true)
 
-    Raises:
+    Raises
+    ------
         ValueError: if beta is not between 0 and 1
         InvalidDataShapeError: if input array is not single featured
     """
@@ -73,23 +70,9 @@ def expmov_avg_aggregator(
     return corrected_exp_avg.item()
 
 
-class TanhNorm(DataIndependentTransformers):
-    __slots__ = ("scale_factor", "smooth_factor")
+class ExpMovingAverage(StatelessTransformer):
+    r"""Calculate the exponential moving averages for a vector.
 
-    def __init__(self, scale_factor=10, smooth_factor=10):
-        self.scale_factor = scale_factor
-        self.smooth_factor = smooth_factor
-
-    def fit_transform(self, input_: npt.NDArray[float], _=None, **__) -> npt.NDArray[float]:
-        return self.transform(input_)
-
-    def transform(self, input_: npt.NDArray[float], _=None, **__) -> npt.NDArray[float]:
-        return tanh_norm(input_, scale_factor=self.scale_factor, smooth_factor=self.smooth_factor)
-
-
-class ExpMovingAverage(DataIndependentTransformers):
-    r"""
-    Calculate the exponential moving averages for a vector.
     This transformation returns an array where each element "n"
     is given by the expression:
 
@@ -101,14 +84,17 @@ class ExpMovingAverage(DataIndependentTransformers):
     Bias correction helps inhibit this issue by dividing with (1 - beta**i)
 
     Args:
+    ----
         beta: how much weight to give to the previous weighted average
         bias_correction: flag to perform bias correction (default: true)
 
     Note: this only supports single feature input array.
 
-    Raises:
+    Raises
+    ------
         ValueError: if beta is not between 0 and 1
     """
+
     __slots__ = ("beta", "bias_correction")
 
     def __init__(self, beta: float, bias_correction: bool = True):
@@ -118,13 +104,14 @@ class ExpMovingAverage(DataIndependentTransformers):
         self.bias_correction = bias_correction
 
     def transform(self, input_: npt.NDArray[float], **__):
-        r"""
-        Returns transformed output.
+        r"""Returns transformed output.
 
         Args:
+        ----
             input_: input column vector
 
-        Raises:
+        Raises
+        ------
             InvalidDataShapeError: if input array is not single featured
         """
         _allow_only_single_feature(input_)
@@ -156,15 +143,3 @@ class ExpMovingAverage(DataIndependentTransformers):
 
         # Calculate array of 1 / (1 - beta**i) values
         return np.divide(exp_avg, 1.0 - beta_powers)
-
-    def fit_transform(self, input_: npt.NDArray[float], **__):
-        r"""
-        Returns transformed output.
-
-        Args:
-            input_: input column vector
-
-        Raises:
-            InvalidDataShapeError: if input array is not single featured
-        """
-        return self.transform(input_)

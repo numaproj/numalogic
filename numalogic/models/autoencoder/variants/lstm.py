@@ -13,7 +13,7 @@
 import logging
 
 import torch
-import torch.nn as nn
+from torch import nn
 from torch import Tensor
 from torch.nn.init import calculate_gain
 
@@ -23,10 +23,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class _Encoder(nn.Module):
-    r"""
-    Encoder network for the autoencoder network.
+    r"""Encoder network for the autoencoder network.
 
     Args:
+    ----
         seq_len: sequence length / window length,
         no_features: number of features
         embedding_size: embedding layer size
@@ -52,10 +52,10 @@ class _Encoder(nn.Module):
 
 
 class _Decoder(nn.Module):
-    r"""
-    Decoder network for the autoencoder network.
+    r"""Decoder network for the autoencoder network.
 
     Args:
+    ----
         seq_len: sequence length / window length,
         no_features: number of features
         hidden_size: hidden layer size(default = 32)
@@ -88,10 +88,10 @@ class _Decoder(nn.Module):
 
 
 class LSTMAE(BaseAE):
-    r"""
-    Long Short-Term Memory (LSTM) based autoencoder.
+    r"""Long Short-Term Memory (LSTM) based autoencoder.
 
     Args:
+    ----
         seq_len: sequence length / window length,
         no_features: number of features
         embedding_dim: embedding dimension for the network
@@ -134,9 +134,7 @@ class LSTMAE(BaseAE):
 
     @staticmethod
     def init_weights(m: nn.Module) -> None:
-        r"""
-        Initiate parameters in the transformer model.
-        """
+        r"""Initiate parameters in the transformer model."""
         for node, param in m.named_parameters():
             if "bias" in node:
                 nn.init.zeros_(param)
@@ -149,23 +147,23 @@ class LSTMAE(BaseAE):
         return encoded, decoded
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
-        """Returns reconstruction for streaming input"""
+        """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
         return self.criterion(batch, recon, reduction="none")
 
 
 class SparseLSTMAE(LSTMAE):
-    r"""
-    Sparse Autoencoder for an LSTM network.
+    r"""Sparse Autoencoder for an LSTM network.
     It inherits from VanillaAE class and serves as a wrapper around base network models.
     Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
     This helps in achieving information bottleneck even when the number of hidden units is huge.
     It penalizes the loss function such that only some neurons are activated at a time.
     This sparsity penalty helps in preventing overfitting.
     More details about Sparse Autoencoder can be found at
-        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>.
 
     Args:
+    ----
         beta: regularization parameter (Defaults to 1e-3)
         rho: sparsity parameter value (Defaults to 0.05)
         **kwargs: VanillaAE kwargs
@@ -177,14 +175,15 @@ class SparseLSTMAE(LSTMAE):
         self.rho = rho
 
     def kl_divergence(self, activations: Tensor) -> Tensor:
-        r"""
-        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
+        r"""Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
         KL Divergence measures the difference between two probability distributions.
 
         Args:
+        ----
             activations: encoded output from the model layer-wise
 
-        Returns:
+        Returns
+        -------
             Tensor
         """
         rho_hat = torch.mean(activations, dim=0)

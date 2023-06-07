@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.4.a0"
+version = "0.4.0.post1"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -28,15 +28,18 @@ python = ">=3.9, <3.12"
 numpy = "^1.23"
 pandas = "^2.0"
 scikit-learn = "^1.2"
-mlflow-skinny = { version = ">2.0, <2.3", optional = true }
-protobuf = "~3.20" # needed to support pytorch-lightning
 omegaconf = "^2.3.0"
 cachetools = "^5.3.0"
+
+# extras
+mlflow-skinny = { version = ">2.0, <3.0", optional = true }
 redis = {extras = ["hiredis"], version = "^4.5.4", optional = true}
+pynumaflow = { version = "~0.4", optional = true }
 
 [tool.poetry.extras]
 mlflow = ["mlflow-skinny"]
 redis = ["redis"]
+numaflow = ["pynumaflow"]
 
 [tool.poetry.group.torch]
 optional = true
@@ -92,11 +95,22 @@ exclude = '''
 [tool.ruff]
 line-length = 100
 src = ["numalogic", "tests"]
-select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q"]
-ignore = ["TRY003", "TRY301", "RUF100"]
+select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q" , "PLR", "D"]
+ignore = ["TRY003", "TRY301", "RUF100", "D100", "D104", "PLR2004", "D102", "D401", "D107", "D205"]
 target-version = "py39"
 show-fixes = true
 show-source = true
+
+[tool.ruff.per-file-ignores]
+"tests/*" = ["D101"]
+
+[tool.ruff.pylint]
+max-args = 15
+max-statements = 30
+
+[tool.ruff.pydocstyle]
+convention = "numpy"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

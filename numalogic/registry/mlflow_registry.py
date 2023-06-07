@@ -33,9 +33,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ModelStage(str, Enum):
-    """
-    Defines different stages the model state can be in mlflow
-    """
+    """Defines different stages the model state can be in mlflow."""
 
     STAGE = "Staging"
     ARCHIVE = "Archived"
@@ -43,8 +41,7 @@ class ModelStage(str, Enum):
 
 
 class MLflowRegistry(ArtifactManager):
-    """
-    Model saving and loading using MLFlow Registry. The parameter model_stage
+    """Model saving and loading using MLFlow Registry. The parameter model_stage
     determines what environment we are using. The old models are moved to
     'Archived' state and the latest model comes to 'Staging' or 'Production'
     depending on model_stage parameter.
@@ -52,6 +49,7 @@ class MLflowRegistry(ArtifactManager):
     More details here: https://mlflow.org/docs/latest/model-registry.html
 
     Args:
+    ----
         tracking_uri: the tracking server uri to use for mlflow
         models_to_retain: number of models to retain in the DB (default = 5)
         model_stage: Staging environment from where to load the latest model from (mlflow )
@@ -112,9 +110,7 @@ class MLflowRegistry(ArtifactManager):
 
     @staticmethod
     def handler_from_type(artifact_type: str):
-        """
-        Helper method to return the right handler given the artifact type.
-        """
+        """Helper method to return the right handler given the artifact type."""
         if artifact_type == "pytorch":
             return mlflow.pytorch
         if artifact_type == "sklearn":
@@ -145,16 +141,18 @@ class MLflowRegistry(ArtifactManager):
         version: str = None,
         artifact_type: str = "pytorch",
     ) -> Optional[ArtifactData]:
-        """
-        Load the artifact from the registry. The artifact is loaded from the cache if available.
+        """Load the artifact from the registry. The artifact is loaded from the cache if available.
+
         Args:
+        ----
             skeys: Static keys
             dkeys: Dynamic keys
             latest: Load the latest version of the model (default = True)
             version: Version of the model to load (default = None)
-            artifact_type: Type of the artifact to load (default = "pytorch")
+            artifact_type: Type of the artifact to load (default = "pytorch").
 
-        Returns:
+        Returns
+        -------
             The loaded ArtifactData object if available otherwise None
         """
         model_key = self.construct_key(skeys, dkeys)
@@ -166,6 +164,7 @@ class MLflowRegistry(ArtifactManager):
             if latest:
                 cached_artifact = self._load_from_cache(model_key)
                 if cached_artifact:
+                    _LOGGER.debug("Found cached artifact for key: %s", model_key)
                     return cached_artifact
                 version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
                 if not version_info:
@@ -210,16 +209,18 @@ class MLflowRegistry(ArtifactManager):
         run_id: str = None,
         **metadata: META_VT,
     ) -> Optional[ModelVersion]:
-        """
-        Saves the artifact into mlflow registry and updates version.
+        """Saves the artifact into mlflow registry and updates version.
+
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             artifact: primary artifact to be saved
             run_id: mlflow run id
-            metadata: additional metadata surrounding the artifact that needs to be saved
+            metadata: additional metadata surrounding the artifact that needs to be saved.
 
-        Returns:
+        Returns
+        -------
             mlflow ModelVersion instance
         """
         model_key = self.construct_key(skeys, dkeys)
@@ -241,12 +242,13 @@ class MLflowRegistry(ArtifactManager):
 
     @staticmethod
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
-        """
-        Returns whether the given artifact is stale or not, i.e. if
+        """Returns whether the given artifact is stale or not, i.e. if
         more time has elasped since it was last retrained.
+
         Args:
+        ----
             artifact_data: ArtifactData object to look into
-            freq_hr: Frequency of retraining in hours
+            freq_hr: Frequency of retraining in hours.
 
         """
         date_updated = artifact_data.extras["last_updated_timestamp"] / 1000
@@ -254,14 +256,16 @@ class MLflowRegistry(ArtifactManager):
         return date_updated < stale_date
 
     def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
-        """
-        Deletes the artifact with a specified version from mlflow registry.
+        """Deletes the artifact with a specified version from mlflow registry.
+
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            version: explicit artifact version
+            version: explicit artifact version.
 
-        Returns:
+        Returns
+        -------
              None
         """
         model_key = self.construct_key(skeys, dkeys)
@@ -274,11 +278,11 @@ class MLflowRegistry(ArtifactManager):
             self._clear_cache(model_key)
 
     def transition_stage(self, skeys: KEYS, dkeys: KEYS) -> Optional[ModelVersion]:
-        """
-        Changes stage information for the given model. Sets new model to "Production". The old
+        """Changes stage information for the given model. Sets new model to "Production". The old
         production model is set to "Staging" and the rest model versions are set to "Archived".
 
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
         Returns:

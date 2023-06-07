@@ -5,21 +5,22 @@ from typing import Optional
 
 from redis.exceptions import RedisError
 
-from numalogic.registry import ArtifactManager, ArtifactData, ArtifactCache
+from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT
 
-_LOGGER = logging.getLogger()
+_LOGGER = logging.getLogger(__name__)
 
 
 class RedisRegistry(ArtifactManager):
-    """
-    Model saving and loading using Redis Registry.
+    """Model saving and loading using Redis Registry.
+
     Args:
+    ----
         client: Take in the reids client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
-        cache_registry: Cache registry to use (default = None)
+        cache_registry: Cache registry to use (default = None).
 
     Examples
     --------
@@ -50,14 +51,16 @@ class RedisRegistry(ArtifactManager):
 
     @staticmethod
     def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
-        """
-        Returns a single key comprising static and dynamic key fields.
+        """Returns a single key comprising static and dynamic key fields.
         Override this method if customization is needed.
-        Args:
-            skeys: static key fields as list/tuple of strings
-            dkeys: dynamic key fields as list/tuple of strings
 
-        Returns:
+        Args:
+        ----
+            skeys: static key fields as list/tuple of strings
+            dkeys: dynamic key fields as list/tuple of strings.
+
+        Returns
+        -------
             key
         """
         _static_key = ":".join(skeys)
@@ -74,12 +77,12 @@ class RedisRegistry(ArtifactManager):
 
     @staticmethod
     def get_version(key: str) -> str:
-        """
-        get version number from the string
+        """Get version number from the string
         Args:
-            key: full model key
+            key: full model key.
 
-        Returns:
+        Returns
+        -------
             version
         """
         return key.split("::")[-1]
@@ -126,6 +129,7 @@ class RedisRegistry(ArtifactManager):
     def __load_latest_artifact(self, key: str) -> ArtifactData:
         cached_artifact = self._load_from_cache(key)
         if cached_artifact:
+            _LOGGER.debug("Found cached artifact for key: %s", key)
             return cached_artifact
         production_key = self.__construct_production_key(key)
         if not self.client.exists(production_key):
@@ -151,7 +155,7 @@ class RedisRegistry(ArtifactManager):
         production_key = self.__construct_production_key(key)
         pipe.set(name=production_key, value=new_version_key)
         _LOGGER.info(
-            "Setting Production key : %d ,to this new key = %s", production_key, new_version_key
+            "Setting Production key : %s ,to this new key = %s", production_key, new_version_key
         )
         serialized_metadata = ""
         if metadata:
@@ -175,16 +179,18 @@ class RedisRegistry(ArtifactManager):
         latest: bool = True,
         version: str = None,
     ) -> Optional[ArtifactData]:
-        """
-        Loads the artifact from redis registry. Either latest or version (one of the arguments)
+        """Loads the artifact from redis registry. Either latest or version (one of the arguments)
          is needed to load the respective artifact.
+
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             latest: load the model in production stage
-            version: version to load
+            version: version to load.
 
-        Returns:
+        Returns
+        -------
             ArtifactData instance
         """
         if (latest and version) or (not latest and not version):
@@ -208,15 +214,17 @@ class RedisRegistry(ArtifactManager):
         artifact: artifact_t,
         **metadata: META_VT,
     ) -> Optional[str]:
-        """
-        Saves the artifact into redis registry and updates version.
+        """Saves the artifact into redis registry and updates version.
+
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             artifact: primary artifact to be saved
-            metadata: additional metadata surrounding the artifact that needs to be saved
+            metadata: additional metadata surrounding the artifact that needs to be saved.
 
-        Returns:
+        Returns
+        -------
             model version
         """
         key = self.construct_key(skeys, dkeys)
@@ -230,7 +238,7 @@ class RedisRegistry(ArtifactManager):
             with self.client.pipeline() as pipe:
                 new_version_key = self.__save_artifact(pipe, artifact, metadata, key, str(version))
                 pipe.expire(name=new_version_key, time=self.ttl)
-                _LOGGER.info("Model is successfully with the key = %s", new_version_key)
+                _LOGGER.info("Model with the key = %s, loaded successfully.", new_version_key)
                 pipe.execute()
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
@@ -238,12 +246,13 @@ class RedisRegistry(ArtifactManager):
             return str(version)
 
     def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
-        """
-        Deletes the model version from registry.
+        """Deletes the model version from registry.
+
         Args:
+        ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            version: model version to delete
+            version: model version to delete.
         """
         key = self.construct_key(skeys, dkeys)
         del_key = self.__construct_version_key(key, version)
@@ -263,12 +272,13 @@ class RedisRegistry(ArtifactManager):
 
     @staticmethod
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
-        """
-        Returns whether the given artifact is stale or not, i.e. if
+        """Returns whether the given artifact is stale or not, i.e. if
         more time has elapsed since it was last retrained.
+
         Args:
+        ----
             artifact_data: ArtifactData object to look into
-            freq_hr: Frequency of retraining in hours
+            freq_hr: Frequency of retraining in hours.
 
         """
         try:

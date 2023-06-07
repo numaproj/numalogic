@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 from sklearn.pipeline import make_pipeline
 
-from numalogic.postprocess import tanh_norm, TanhNorm, ExpMovingAverage, expmov_avg_aggregator
+from numalogic.transforms import tanh_norm, TanhNorm, ExpMovingAverage, expmov_avg_aggregator
 from numalogic.tools.exceptions import InvalidDataShapeError
 
 
@@ -11,7 +11,6 @@ class TestPostprocess(unittest.TestCase):
     def test_tanh_norm_func(self):
         arr = np.arange(10)
         scores = tanh_norm(arr)
-        print(scores)
 
         self.assertAlmostEqual(sum(scores), 39.52, places=2)
 

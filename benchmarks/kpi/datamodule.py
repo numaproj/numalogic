@@ -12,8 +12,7 @@ from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 
 
 class KPIDataModule(TimeseriesDataModule):
-    r"""
-    Data Module to help set up train, test and validation datasets for
+    r"""Data Module to help set up train, test and validation datasets for
     KPI Anomaly detection. This data module splits a single dataset
     into train, validation and test sets using a specified split ratio.
 
@@ -27,6 +26,7 @@ class KPIDataModule(TimeseriesDataModule):
     |1476460800| 0.01260 |    0   |da10a69 |
 
     Args:
+    ----
         data_dir: data directory where csv data files are stored
         kpi_idx: index of the KPI to use
         preproc_transforms: list of sklearn compatible preprocessing transformations
@@ -143,8 +143,8 @@ class KPIDataModule(TimeseriesDataModule):
         return grouped.loc[kpi_id]
 
     def val_dataloader(self) -> EVAL_DATALOADERS:
-        r"""
-        Creates and returns a DataLoader for the validation dataset if validation data is provided.
+        r"""Creates and returns a DataLoader for the validation
+        dataset if validation data is provided.
         """
         return DataLoader(self.val_dataset, batch_size=self.batch_size)
 

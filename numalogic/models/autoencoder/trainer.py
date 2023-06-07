@@ -26,10 +26,10 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class AutoencoderTrainer(Trainer):
-    r"""
-    A PyTorch Lightning Trainer for Autoencoder models.
+    r"""A PyTorch Lightning Trainer for Autoencoder models.
 
     Args:
+    ----
         max_epochs: The maximum number of epochs to train for. (default: 100)
         logger: The logger to use. (default: False)
         check_val_every_n_epoch: The number of epochs between validation checks. (default: 5)
@@ -69,10 +69,10 @@ class AutoencoderTrainer(Trainer):
         )
 
     def predict(self, model: pl.LightningModule = None, unbatch=True, **kwargs) -> Tensor:
-        r"""
-        Predicts the output of the model.
+        r"""Predicts the output of the model.
 
         Args:
+        ----
             model: The model to predict with. (default: None)
             unbatch: Whether to inverse window the output. (default: True)
             **kwargs: Additional keyword arguments to pass to the Lightning

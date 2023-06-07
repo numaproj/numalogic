@@ -21,10 +21,10 @@ from numalogic.tools.exceptions import LayerSizeMismatchError
 
 
 class _Encoder(nn.Module):
-    r"""
-    Encoder module for the autoencoder module.
+    r"""Encoder module for the autoencoder module.
 
     Args:
+    ----
         seq_len: sequence length / window length
         n_features: num of features
         layersizes: encoder layer size
@@ -42,13 +42,14 @@ class _Encoder(nn.Module):
         self.encoder = nn.Sequential(*layers)
 
     def _construct_layers(self, layersizes: Sequence[int]) -> nn.ModuleList:
-        r"""
-        Utility function to generate a simple feedforward network layer
+        r"""Utility function to generate a simple feedforward network layer.
 
         Args:
+        ----
             layersizes: layer size
 
-        Returns:
+        Returns
+        -------
             A simple feedforward network layer of type nn.ModuleList
         """
         layers = nn.ModuleList()
@@ -79,10 +80,10 @@ class _Encoder(nn.Module):
 
 
 class _Decoder(nn.Module):
-    r"""
-    Decoder module for the autoencoder module.
+    r"""Decoder module for the autoencoder module.
 
     Args:
+    ----
         seq_len: sequence length / window length
         n_features: num of features
         layersizes: decoder layer size
@@ -103,13 +104,14 @@ class _Decoder(nn.Module):
         return self.decoder(x)
 
     def _construct_layers(self, layersizes: Sequence[int]) -> nn.ModuleList:
-        r"""
-        Utility function to generate a simple feedforward network layer
+        r"""Utility function to generate a simple feedforward network layer.
 
         Args:
+        ----
             layersizes: layer size
 
-        Returns:
+        Returns
+        -------
             A simple feedforward network layer
         """
         layers = nn.ModuleList()
@@ -129,11 +131,10 @@ class _Decoder(nn.Module):
 
 
 class VanillaAE(BaseAE):
-    r"""
-    Vanilla Autoencoder model comprising Fully connected layers only.
+    r"""Vanilla Autoencoder model comprising Fully connected layers only.
 
     Args:
-
+    ----
         signal_len: sequence length / window length
         n_features: num of features
         encoder_layersizes: encoder layer size (default = Sequence[int] = (16, 8))
@@ -181,9 +182,7 @@ class VanillaAE(BaseAE):
 
     @staticmethod
     def init_weights(m: nn.Module) -> None:
-        r"""
-        Initiate parameters in the transformer model.
-        """
+        r"""Initiate parameters in the transformer model."""
         if type(m) == nn.Linear:
             nn.init.xavier_normal_(m.weight)
 
@@ -199,24 +198,24 @@ class VanillaAE(BaseAE):
         return self.criterion(x, recon)
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
-        """Returns reconstruction for streaming input"""
+        """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
         recon = recon.view(-1, self.seq_len, self.n_features)
         return self.criterion(batch, recon, reduction="none")
 
 
 class SparseVanillaAE(VanillaAE):
-    r"""
-    Sparse Autoencoder for a fully connected network.
+    r"""Sparse Autoencoder for a fully connected network.
     It inherits from VanillaAE class and serves as a wrapper around base network models.
     Sparse Autoencoder is a type of autoencoder that applies sparsity constraint.
     This helps in achieving information bottleneck even when the number of hidden units is huge.
     It penalizes the loss function such that only some neurons are activated at a time.
     This sparsity penalty helps in preventing overfitting.
     More details about Sparse Autoencoder can be found at
-        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>
+        <https://web.stanford.edu/class/cs294a/sparseAutoencoder.pdf>.
 
     Args:
+    ----
         beta: Regularization factor (Defaults to 1e-3)
         rho: Sparsity parameter value (Defaults to 0.05)
         **kwargs: VanillaAE kwargs
@@ -228,14 +227,15 @@ class SparseVanillaAE(VanillaAE):
         self.rho = rho
 
     def kl_divergence(self, activations: Tensor) -> Tensor:
-        r"""
-        Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
+        r"""Loss function for computing sparse penalty based on KL (Kullback-Leibler) Divergence.
         KL Divergence measures the difference between two probability distributions.
 
         Args:
+        ----
             activations: encoded output from the model layer-wise
 
-        Returns:
+        Returns
+        -------
             Tensor
         """
         rho_hat = torch.mean(activations, dim=0)

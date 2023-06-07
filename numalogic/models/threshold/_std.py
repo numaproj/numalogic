@@ -12,13 +12,13 @@
 
 import numpy as np
 from numpy.typing import NDArray
-from sklearn.base import BaseEstimator
 from typing_extensions import Self
 
+from numalogic.base import BaseThresholdModel
 
-class StdDevThreshold(BaseEstimator):
-    r"""
-    Threshold estimator that calculates based on the mean and the std deviation.
+
+class StdDevThreshold(BaseThresholdModel):
+    r"""Threshold estimator that calculates based on the mean and the std deviation.
 
     Threshold = Mean + (std_factor * Std)
 
@@ -26,6 +26,7 @@ class StdDevThreshold(BaseEstimator):
     between the input data and threshold generated.
 
     Args:
+    ----
         std_factor: scaler factor for std to be added to mean
         min_threshold: clip the threshold value to be above this value
     """
@@ -50,10 +51,8 @@ class StdDevThreshold(BaseEstimator):
     def threshold(self):
         return self._threshold
 
-    def fit(self, x_train: NDArray[float], y=None) -> Self:
-        """
-        Fit the estimator on the training set.
-        """
+    def fit(self, x_train: NDArray[float], _=None) -> Self:
+        """Fit the estimator on the training set."""
         self._std = np.std(x_train, axis=0)
         self._mean = np.mean(x_train, axis=0)
         self._threshold = self._mean + (self.std_factor * self._std)
@@ -62,9 +61,8 @@ class StdDevThreshold(BaseEstimator):
         return self
 
     def predict(self, x_test: NDArray[float]) -> NDArray[int]:
-        """
-        Returns an integer array of same shape as input.
-        1 denotes outlier, 0 denotes inlier
+        """Returns an integer array of same shape as input.
+        1 denotes outlier, 0 denotes inlier.
         """
         y_pred = x_test.copy()
         y_pred[x_test < self._threshold] = 0
@@ -72,7 +70,5 @@ class StdDevThreshold(BaseEstimator):
         return y_pred
 
     def score_samples(self, x_test: NDArray[float]) -> NDArray[float]:
-        """
-        Returns an anomaly score array with the same shape as input.
-        """
+        """Returns an anomaly score array with the same shape as input."""
         return x_test / self.threshold

@@ -7,16 +7,17 @@ Tanh normalization step is an optional step, where we normalize the anomalies be
 
 ```python
 import numpy as np
-from numalogic.postprocess import tanh_norm
+from numalogic.transforms import tanh_norm
 
 raw_anomaly_score = np.random.randn(10, 2)
 test_anomaly_score_norm = tanh_norm(raw_anomaly_score)
 ```
 
 A scikit-learn compatible API is also available.
+
 ```python
 import numpy as np
-from numalogic.postprocess import TanhNorm
+from numalogic.transforms import TanhNorm
 
 raw_score = np.random.randn(10, 2)
 
@@ -35,7 +36,7 @@ facilitating timely detection and response to potential anomalies.
 
 ```python
 import numpy as np
-from numalogic.postprocess import ExpMovingAverage
+from numalogic.transforms import ExpMovingAverage
 
 raw_score = np.array([1.0, 1.5, 1.2, 3.5, 2.7, 5.6, 7.1, 6.9, 4.2, 1.1]).reshape(-1, 1)
 

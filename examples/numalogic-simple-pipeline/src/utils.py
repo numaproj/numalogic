@@ -1,13 +1,11 @@
+import json
 import logging
 import os
-from dataclasses import dataclass
-from collections.abc import Sequence
+from dataclasses import dataclass, asdict
 
-from dataclasses_json import dataclass_json
-from numalogic.models.autoencoder.base import BaseAE
-from numalogic.registry import MLflowRegistry
-from numalogic.tools.types import ArtifactDict
-from numpy.typing import ArrayLike
+import numpy as np
+import numpy.typing as npt
+from typing_extensions import Self
 
 DIR = os.path.dirname(__file__)
 ROOT_DIR = os.path.split(DIR)[0]
@@ -16,32 +14,26 @@ TRACKING_URI = "http://mlflow-service.default.svc.cluster.local:5000"
 LOGGER = logging.getLogger(__name__)
 
 
-@dataclass_json
 @dataclass(slots=True)
 class Payload:
-    ts_data: ArrayLike = None
-    anomaly_score: float = 0.0
-    uuid: str = None
+    """Payload to be used for inter-vertex data transfer."""
+
+    uuid: str
+    arr: list[float]
+    anomaly_score: float = None
     is_artifact_valid: bool = True
 
+    def get_array(self) -> npt.NDArray[float]:
+        return np.asarray(self.arr)
 
-def save_artifact(artifact, skeys: Sequence[str], dkeys: Sequence[str]) -> None:
-    if isinstance(artifact, BaseAE):
-        ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="pytorch")
-    else:
-        ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="sklearn")
-    ml_registry.save(skeys=skeys, dkeys=dkeys, artifact=artifact)
+    def set_array(self, arr: list[float]) -> None:
+        self.arr = arr
 
+    def to_json(self) -> bytes:
+        """Converts the payload to json."""
+        return json.dumps(asdict(self)).encode("utf-8")
 
-def load_artifact(skeys: Sequence[str], dkeys: Sequence[str], type_: str = None) -> ArtifactDict:
-    try:
-        if type_ == "pytorch":
-            ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="pytorch")
-        else:
-            ml_registry = MLflowRegistry(tracking_uri=TRACKING_URI, artifact_type="sklearn")
-        artifact_dict = ml_registry.load(skeys=skeys, dkeys=dkeys)
-    except Exception as ex:
-        LOGGER.exception("Error while loading artifact from MLFlow database: %s", ex)
-        return None
-    else:
-        return artifact_dict
+    @classmethod
+    def from_json(cls, json_payload: bytes) -> Self:
+        """Converts the json payload to Payload object."""
+        return cls(**json.loads(json_payload.decode("utf-8")))
