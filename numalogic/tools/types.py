@@ -30,7 +30,7 @@ artifact_t = TypeVar(
     bound=Union[TorchModel, BaseThresholdModel, BaseTransformer],
     covariant=True,
 )
-nn_model_t = TypeVar("nn_model_t", bound=TorchModel, covariant=True)
+nn_model_t = TypeVar("nn_model_t", bound=TorchModel)
 state_dict_t = TypeVar("state_dict_t", bound=dict[str, Tensor], covariant=True)
 transform_t = TypeVar("transform_t", bound=Union[BaseTransformer, BaseEstimator], covariant=True)
 thresh_t = TypeVar("thresh_t", bound=BaseThresholdModel, covariant=True)
