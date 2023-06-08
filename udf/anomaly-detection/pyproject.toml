@@ -19,29 +19,27 @@ repository = "https://github.com/numaproj/numalogic"
 
 [tool.poetry.dependencies]
 python = "~3.10"
-redis = "^4.3.1"
-pynumaflow = "~0.4.0"
-aiorun = "^2022.11.1"
-numalogic = {version = "~0.3.7", extras = ["mlflow"]}
-boto3 = "^1.25.2"
+redis = {extras = ["hiredis"], version = "^4.5" }
+pynumaflow = "~0.4.1"
+numalogic = {version = "0.4.0", extras = ["redis"], allow-prereleases = true}
 orjson = "^3.8.4"
 omegaconf = "^2.3.0"
 watchdog = "^3.0.0"
+backoff = "^2.2.1"
 
 [tool.poetry.group.mlflowserver]
 optional = true
 
 [tool.poetry.group.mlflowserver.dependencies]
-mlflow = "^1.30.0"
+mlflow = "^2.2"
 
 [tool.poetry.group.dev]
 optional = true
 
 [tool.poetry.group.dev.dependencies]
-pytorch-lightning = "^1.8.6"
 coverage = "^6.3"
-black = "^22.1"
-fakeredis = "^1.8"
+black = "^23.1"
+fakeredis = "^2.11"
 flake8 = "^5.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"

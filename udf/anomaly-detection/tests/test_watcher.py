@@ -2,8 +2,8 @@ import time
 import unittest
 from unittest.mock import patch, Mock
 
-from anomalydetection.watcher import ConfigManager
-from tests.tools import mock_configs
+from src.watcher import ConfigManager
+from tests import mock_configs
 
 
 @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
@@ -18,8 +18,10 @@ class TestConfigManager(unittest.TestCase):
 
     def test_load_configs(self):
         app_configs, default_configs, default_numalogic, pipeline_config = self.cm.load_configs()
-        print(type(app_configs))
-        print(type(default_configs))
+        self.assertTrue(app_configs)
+        self.assertTrue(default_configs)
+        self.assertTrue(default_numalogic)
+        self.assertTrue(pipeline_config)
 
     def test_get_datastream_config(self):
         # from given config

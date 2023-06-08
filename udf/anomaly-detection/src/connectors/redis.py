@@ -6,8 +6,8 @@ from redis.backoff import ExponentialBackoff
 from redis.exceptions import RedisClusterException, RedisError
 from redis.retry import Retry
 
-from anomalydetection import get_logger
-from anomalydetection.tools import is_host_reachable
+from src import get_logger
+from src.tools import is_host_reachable
 
 _LOGGER = get_logger(__name__)
 redis_client: Optional[RedisCluster] = None

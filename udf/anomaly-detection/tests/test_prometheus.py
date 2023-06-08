@@ -3,7 +3,7 @@ import datetime
 import unittest
 from unittest.mock import patch, Mock, MagicMock
 
-from anomalydetection.clients.prometheus import Prometheus
+from src.connectors.prometheus import Prometheus
 
 
 def mock_query_range(*_, **__):

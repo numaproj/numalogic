@@ -1,14 +1,12 @@
 import unittest
 
-from anomalydetection.factory import HandlerFactory
-
-from anomalydetection.udf import window
+from src.factory import HandlerFactory
 
 
 class TestFactory(unittest.TestCase):
     def test_preprocess(self):
-        func = HandlerFactory.get_handler("window")
-        self.assertEqual(func, window)
+        func = HandlerFactory.get_handler("preprocess")
+        self.assertTrue(func)
 
     def test_invalid(self):
         with self.assertRaises(NotImplementedError):

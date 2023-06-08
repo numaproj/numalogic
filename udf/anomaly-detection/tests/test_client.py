@@ -4,7 +4,7 @@ from unittest.mock import patch
 from redis.sentinel import Sentinel
 import fakeredis
 
-from anomalydetection.clients.sentinel import get_redis_client
+from src.connectors.sentinel import get_redis_client
 
 
 server = fakeredis.FakeServer()

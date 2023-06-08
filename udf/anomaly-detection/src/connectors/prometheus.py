@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Optional
 
-from anomalydetection import get_logger
+from src import get_logger
 
 _LOGGER = get_logger(__name__)
 

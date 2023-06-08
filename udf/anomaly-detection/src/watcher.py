@@ -7,10 +7,10 @@ from watchdog.observers import Observer
 from numalogic.config import NumalogicConf
 from watchdog.events import FileSystemEventHandler
 
-from anomalydetection import PipelineConf, Configs
-from anomalydetection.clients import RedisConf, PrometheusConf, RegistryConf
-from anomalydetection._constants import CONFIG_DIR
-from anomalydetection import DataStreamConf, get_logger, MetricConf, UnifiedConf
+from src import PipelineConf, Configs
+from src.connectors import RedisConf, PrometheusConf, RegistryConf
+from src._constants import CONFIG_DIR
+from src import DataStreamConf, get_logger, MetricConf, UnifiedConf
 
 _LOGGER = get_logger(__name__)
 
@@ -28,11 +28,11 @@ class ConfigManager:
         conf = OmegaConf.load(os.path.join(CONFIG_DIR, "default-configs", "config.yaml"))
         default_configs = OmegaConf.merge(schema, conf).configs
 
-        conf = OmegaConf.load(os.path.join(CONFIG_DIR, "default-configs" "numalogic_config.yaml"))
+        conf = OmegaConf.load(os.path.join(CONFIG_DIR, "default-configs", "numalogic_config.yaml"))
         schema: NumalogicConf = OmegaConf.structured(NumalogicConf)
         default_numalogic = OmegaConf.merge(schema, conf)
 
-        conf = OmegaConf.load(os.path.join(CONFIG_DIR, "default-configs" "pipeline_config.yaml"))
+        conf = OmegaConf.load(os.path.join(CONFIG_DIR, "default-configs", "pipeline_config.yaml"))
         schema: PipelineConf = OmegaConf.structured(PipelineConf)
         pipeline_config = OmegaConf.merge(schema, conf)
 
@@ -113,6 +113,35 @@ class ConfigManager:
         if "prometheus_conf" in cls.get_pipeline_config():
             return cls.get_pipeline_config().prometheus_conf
         return None
+
+    @classmethod
+    def get_numalogic_config(cls, config_name: str, metric_name: str):
+        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf
+
+    @classmethod
+    def get_preprocess_config(cls, config_name: str, metric_name: str):
+        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf.preprocess
+
+    @classmethod
+    def get_retrain_config(cls, config_name: str, metric_name: str):
+        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).retrain_conf
+
+    @classmethod
+    def get_static_threshold_config(cls, config_name: str, metric_name: str):
+        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).static_threshold
+
+    @classmethod
+    def get_threshold_config(cls, config_name: str, metric_name: str):
+        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf.threshold
+
+    @classmethod
+    def get_postprocess_config(cls, config_name: str, metric_name: str):
+        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf.postprocess
+
+    @classmethod
+    def get_trainer_config(cls, config_name: str, metric_name: str):
+        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf.trainer
+
 
 
 class ConfigHandler(FileSystemEventHandler):

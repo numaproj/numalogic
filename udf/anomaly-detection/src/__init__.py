@@ -1,7 +1,7 @@
 import logging
 import os
 
-from anomalydetection._config import UnifiedConf, MetricConf, DataStreamConf, PipelineConf, Configs
+from src._config import UnifiedConf, MetricConf, DataStreamConf, PipelineConf, Configs
 
 
 def get_logger(name):

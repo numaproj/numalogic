@@ -13,3 +13,4 @@ LICENSE
 .coveragerc
 .flake8
 .hack/
+.venv/

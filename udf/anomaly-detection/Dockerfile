@@ -34,26 +34,6 @@ RUN apt-get update \
     && curl -sSL https://install.python-poetry.org | python3 -
 
 ####################################################################################################
-# mlflow: used for running the mlflow server
-####################################################################################################
-FROM builder AS mlflow
-
-WORKDIR $PYSETUP_PATH
-COPY ./pyproject.toml ./poetry.lock ./
-RUN poetry install --only mlflowserver --no-cache --no-root && \
-    rm -rf ~/.cache/pypoetry/
-
-ADD . /app
-WORKDIR /app
-
-RUN chmod +x entry.sh
-
-ENTRYPOINT ["/dumb-init", "--"]
-CMD ["/app/entry.sh"]
-
-EXPOSE 5000
-
-####################################################################################################
 # udf: used for running the udf vertices
 ####################################################################################################
 FROM builder AS udf

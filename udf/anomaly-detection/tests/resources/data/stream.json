@@ -1,68 +1,41 @@
-[
-    {
-        "timestamp": "1684193070196",
-        "unique_key": "service-mesh-s2s:6055107291188110321:1218463880781465009",
-        "error_rate": "56.97"
-    },
-    {
-        "timestamp": "1684193130196",
-        "unique_key": "service-mesh-s2s:6055107291188110321:1218463880781465009",
-        "error_rate": "70.46"
-    },
-    {
-        "timestamp": "1684193190196",
-        "unique_key": "service-mesh-s2s:6055107291188110321:1218463880781465009",
-        "error_rate": "65.02"
-    },
-    {
-        "timestamp": "1684193250196",
-        "unique_key": "service-mesh-s2s:6055107291188110321:1218463880781465009",
-        "error_rate": "16.75"
-    },
-    {
-        "timestamp": "1684193310196",
-        "unique_key": "service-mesh-s2s:6055107291188110321:1218463880781465009",
-        "error_rate": "86.91"
-    },
-    {
-        "timestamp": "1684193370196",
-        "unique_key": "service-mesh-s2s:6055107291188110321:1218463880781465009",
-        "error_rate": "13.49"
-    },
-    {
-        "timestamp": "1684193133192",
-        "unique_key": "service-mesh:6055107291188110321",
-        "error_rate": "33.97",
-        "latency": "0.8"
-    },
-    {
-        "timestamp": "1684193193192",
-        "unique_key": "service-mesh:6055107291188110321",
-        "error_rate": "30.51",
-        "latency": "0.2"
-    },
-    {
-        "timestamp": "1684193253192",
-        "unique_key": "service-mesh:6055107291188110321",
-        "error_rate": "60.92",
-        "latency": "0.6"
-    },
-    {
-        "timestamp": "1684193313192",
-        "unique_key": "service-mesh:6055107291188110321",
-        "error_rate": "26.28",
-        "latency": "0.1"
-    },
-    {
-        "timestamp": "1684193373192",
-        "unique_key": "service-mesh:6055107291188110321",
-        "error_rate": "85.37",
-        "latency": "0.5"
-    },
-    {
-        "timestamp": "1684193433192",
-        "unique_key": "service-mesh:6055107291188110321",
-        "error_rate": "62.74",
-        "latency": "0.3"
-    }
-]
+{
+    "data": [
+        {
+            "timestamp": "1684472580000",
+            "error_rate": "56.97",
+            "error_count": "10"
+        },
+        {
+            "timestamp": "1684472700000",
+            "error_rate": "70.46",
+            "error_count": "15"
+        },
+        {
+            "timestamp": "1684472820000",
+            "error_rate": "65.02",
+            "error_count": "12"
+        },
+        {
+            "timestamp": "1684472940000",
+            "error_rate": "16.75",
+            "error_count": "3"
+        },
+        {
+            "timestamp": "1684473060000",
+            "error_rate": "86.91",
+            "error_count": "18"
+        },
+        {
+            "timestamp": "1684473180000",
+            "error_rate": "13.49",
+            "error_count": "1"
+        },
+        {
+            "timestamp": "1684473240000",
+            "error_rate": "62.74",
+            "error_count": "11"
+        }
+    ],
+    "start_time": "1684472580000",
+    "end_time": "1684473300000"
+}

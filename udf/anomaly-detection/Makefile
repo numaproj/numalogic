@@ -16,7 +16,7 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	poetry run black anomalydetection/ tests/
+	poetry run black numaprom/ tests/
 	poetry run black starter.py
 
 lint: format
