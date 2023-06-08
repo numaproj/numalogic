@@ -37,7 +37,6 @@ REQUEST_EXPIRY = int(os.getenv("REQUEST_EXPIRY", 300))
 
 
 class Train:
-
     @classmethod
     def fetch_data(cls, payload: TrainerPayload) -> pd.DataFrame:
         stream_config = ConfigManager.get_datastream_config(payload.composite_keys[0])
