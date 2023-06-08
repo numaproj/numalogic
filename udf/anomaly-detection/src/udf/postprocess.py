@@ -104,6 +104,7 @@ class Postprocess:
             timestamp=payload.timestamps[-1],
             unified_anomaly=unified_anomaly,
             data=metric_data,
+            metadata=payload.metadata,
         )
 
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %s }", payload.uuid, keys, out_payload)

@@ -58,7 +58,7 @@ class Preprocess:
                 dkeys=[_conf.name for _conf in preprocess_cfgs],
             )
         except RedisRegistryError as err:
-            _LOGGER.exception(
+            _LOGGER.error(
                 "%s - Error while fetching preproc artifact, Keys: %s, Metric: %s, Error: %r",
                 payload.uuid,
                 keys,
@@ -118,7 +118,7 @@ class Preprocess:
             raw_data=np.asarray(raw_df.values.tolist()),
             metrics=raw_df.columns.tolist(),
             timestamps=timestamps,
-            metadata=dict(),
+            metadata=data_payload["metadata"],
         )
 
         if not np.isfinite(raw_df.values).any():

@@ -37,5 +37,9 @@
         }
     ],
     "start_time": "1684472580000",
-    "end_time": "1684473300000"
+    "end_time": "1684473300000",
+    "metadata": {
+        "source":  "kafka",
+        "label": "value"
+    }
 }

@@ -121,6 +121,7 @@ class OutputPayload:
     timestamp: int
     data: dict[str, Any]
     unified_anomaly: float
+    metadata: dict[str, Any]
 
     def to_json(self):
         return orjson.dumps(self, option=orjson.OPT_SERIALIZE_NUMPY)

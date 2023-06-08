@@ -194,7 +194,7 @@ class Train:
                 version,
             )
 
-    def run(self, keys: List[str], datums: Iterator[Datum]) -> Responses:
+    def run(self, datums: Iterator[Datum]) -> Responses:
         responses = Responses()
         redis_client = get_redis_client_from_conf()
 
