@@ -1,0 +1,3 @@
+# torch related requirements file
+torch >= 2.0, <3.0; -i https://download.pytorch.org/whl/cpu
+pytorch-lightning >=2.0, < 3.0

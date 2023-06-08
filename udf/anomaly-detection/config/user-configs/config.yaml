@@ -1,0 +1,37 @@
+configs:
+  - name: "dev-devx-o11yfuzzygqlfederation-usw2-qal"
+    composite_keys: ["namespace", "name", "hash_id"]
+    metrics: ["namespace_rollout_api_error_rate", "namespace_rollout_api_latency"]
+    metric_configs:
+      - metric: "namespace_rollout_api_error_rate"
+      - metric: "namespace_rollout_api_latency"
+    unified_config:
+      unified_metric_name: "namespace_rollout_api_unified_anomaly"
+      unified_metrics: ["namespace_rollout_api_error_rate", "namespace_rollout_api_latency"]
+  - name: "dev-devx-o11yfuzzygqlfederation-usw2-pprd"
+    composite_keys: [ "namespace", "name", "hash_id" ]
+    metrics: ["namespace_rollout_api_error_rate", "namespace_rollout_api_latency"]
+    metric_configs:
+      - metric: "namespace_rollout_api_error_rate"
+      - metric: "namespace_rollout_api_latency"
+    unified_config:
+      unified_metric_name: "namespace_rollout_api_unified_anomaly"
+      unified_metrics: ["namespace_rollout_api_error_rate", "namespace_rollout_api_latency"]
+  - name: "dev-devx-o11yfuzzygqlfederation-usw2-stg"
+    composite_keys: [ "namespace", "name", "hash_id" ]
+    metrics: ["namespace_rollout_api_error_rate", "namespace_rollout_api_latency"]
+    metric_configs:
+      - metric: "namespace_rollout_api_error_rate"
+      - metric: "namespace_rollout_api_latency"
+    unified_config:
+      unified_metric_name: "namespace_rollout_api_unified_anomaly"
+      unified_metrics: ["namespace_rollout_api_error_rate", "namespace_rollout_api_latency"]
+  - name: "dev-devx-o11yfuzzygqlfederation-usw2-prd"
+    composite_keys: [ "namespace", "name", "hash_id" ]
+    metrics: ["namespace_rollout_api_error_rate", "namespace_rollout_api_latency"]
+    metric_configs:
+      - metric: "namespace_rollout_api_error_rate"
+      - metric: "namespace_rollout_api_latency"
+    unified_config:
+      unified_metric_name: "namespace_rollout_api_unified_anomaly"
+      unified_metrics: ["namespace_rollout_api_error_rate", "namespace_rollout_api_latency"]

@@ -1,0 +1,53 @@
+configs:
+  - name: "service-mesh"
+    composite_keys: [ "destination_asset_id", "env" ]
+    metrics: [ "error_rate" , "error_count" ]
+    metric_configs:
+      - metric: "error_rate"
+      - metric: "error_count"
+    unified_config:
+      unified_metric_name: "service_mesh_unified_anomaly"
+      unified_metrics: [ "error_rate", "error_count" ]
+  - name: "service-mesh-s2s"
+    composite_keys: ["source_asset_id, destination_asset_id", "env"]
+    metrics: [ "error_rate", "error_count" ]
+    metric_configs:
+      - metric: "error_rate"
+      - metric: "error_count"
+    unified_config:
+      unified_metric_name: "service_mesh_s2s_unified_anomaly"
+      unified_metrics: [ "error_rate" ]
+  - name: "default-argorollouts"
+    composite_keys: [ "namespace", "name", "app", "rollouts_pod_template_hash" ]
+    metrics: [ "namespace_app_rollouts_http_request_error_rate"]
+    metric_configs:
+      - metric: "namespace_app_rollouts_http_request_error_rate"
+        static_threshold:
+          weight: 0.7
+    unified_config:
+      unified_metric_name: "namespace_app_rollouts_unified_anomaly"
+      unified_metrics: [ "namespace_app_rollouts_http_request_error_rate" ]
+  - name: "default-argocd"
+    composite_keys: [ "namespace", "name" ]
+    metrics: [ "namespace_app_http_server_requests_errors",
+               "namespace_app_http_server_requests_error_rate",
+               "namespace_app_http_server_requests_latency",
+               "namespace_app_cpu_utilization",
+               "namespace_app_memory_utilization" ]
+    metric_configs:
+      - metric: "namespace_app_http_server_requests_errors"
+      - metric: "namespace_app_http_server_requests_error_rate"
+      - metric: "namespace_app_http_server_requests_latency"
+      - metric: "namespace_app_cpu_utilization"
+        static_threshold:
+          upper_limit: 80
+      - metric: "namespace_app_memory_utilization"
+        static_threshold:
+          upper_limit: 80
+    unified_config:
+      unified_metric_name: "namespace_app_unified_anomaly"
+      unified_metrics: [ "namespace_app_http_server_requests_errors",
+                           "namespace_app_http_server_requests_error_rate",
+                           "namespace_app_http_server_requests_latency",
+                           "namespace_app_cpu_utilization",
+                           "namespace_app_memory_utilization" ]

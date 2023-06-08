@@ -1,0 +1,16 @@
+tests/
+manifests/
+docs/
+.github
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+README.md
+LICENSE
+.gitignore
+.idea/
+.codecov.yml
+.coveragerc
+.flake8
+.hack/
+.venv/
