@@ -13,4 +13,4 @@ INFERENCE_VTX_KEY = "inference"
 THRESHOLD_VTX_KEY = "threshold"
 POSTPROC_VTX_KEY = "postproc"
 
-CONFIG_PATHS = ["./anomalydetection/config/configs", "./anomalydetection/config/default-configs"]
+CONFIG_PATHS = ["./config/user-configs", "./config/default-configs"]

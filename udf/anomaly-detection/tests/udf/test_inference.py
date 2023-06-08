@@ -38,37 +38,34 @@ class TestInference(unittest.TestCase):
     @freeze_time("2022-02-20 12:00:00")
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
     def test_inference(self):
-        _out = Inference().run(self.keys, self.inference_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Inference().run(self.keys, self.inference_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
         for metric in payload.metrics:
-                self.assertEqual(payload.status[metric], Status.INFERRED)
-                self.assertEqual(payload.header[metric], Header.MODEL_INFERENCE)
-                self.assertGreater(payload.metadata[metric]["model_version"], 0)
+            self.assertEqual(payload.status[metric], Status.INFERRED)
+            self.assertEqual(payload.header[metric], Header.MODEL_INFERENCE)
+            self.assertGreater(payload.metadata[metric]["model_version"], 0)
 
     @freeze_time("2022-02-20 12:00:00")
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
     @patch.object(AutoencoderTrainer, "predict", Mock(side_effect=RuntimeError))
     def test_inference_err(self):
-        _out = Inference().run(self.keys, self.inference_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Inference().run(self.keys, self.inference_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
         for metric in payload.metrics:
-                self.assertEqual(payload.status[metric], Status.RUNTIME_ERROR)
-                self.assertEqual(payload.header[metric], Header.STATIC_INFERENCE)
-                self.assertEqual(payload.metadata[metric]["model_version"], -1)
+            self.assertEqual(payload.status[metric], Status.RUNTIME_ERROR)
+            self.assertEqual(payload.header[metric], Header.STATIC_INFERENCE)
+            self.assertEqual(payload.metadata[metric]["model_version"], -1)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=None))
     def test_no_model(self):
-        _out = Inference().run(self.keys, self.inference_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Inference().run(self.keys, self.inference_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
@@ -81,9 +78,8 @@ class TestInference(unittest.TestCase):
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
     def test_no_prev_model(self):
         inference_input = get_inference_input(self.keys, STREAM_DATA_PATH, prev_clf_exists=False)
-        _out = Inference().run(self.keys, inference_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Inference().run(self.keys, inference_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
@@ -94,9 +90,8 @@ class TestInference(unittest.TestCase):
 
     @patch.object(RedisRegistry, "load", Mock(return_value=return_stale_model()))
     def test_stale_model(self):
-        _out = Inference().run(self.keys, self.inference_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Inference().run(self.keys, self.inference_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)

@@ -26,6 +26,7 @@ orjson = "^3.8.4"
 omegaconf = "^2.3.0"
 watchdog = "^3.0.0"
 backoff = "^2.2.1"
+pydruid = "^0.6.5"
 
 [tool.poetry.group.mlflowserver]
 optional = true

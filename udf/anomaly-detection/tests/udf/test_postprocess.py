@@ -23,8 +23,7 @@ class TestPostProcess(unittest.TestCase):
     @freeze_time("2022-02-20 12:00:00")
     def test_postprocess(self):
         postproc_input = get_postproc_input(self.keys, STREAM_DATA_PATH)
-        _out = Postprocess().run(self.keys, postproc_input)
-        msg = _out.items()[0]
+        msg = Postprocess().run(self.keys, postproc_input)[0]
         payload = OutputPayload(**orjson.loads(msg.value.decode("utf-8")))
         self.assertIsInstance(payload, OutputPayload)
         self.assertTrue(payload.unified_anomaly)
@@ -34,8 +33,7 @@ class TestPostProcess(unittest.TestCase):
 
     def test_preprocess_prev_stale_model(self):
         postproc_input = get_postproc_input(self.keys, STREAM_DATA_PATH, prev_model_stale=True)
-        _out = Postprocess().run(self.keys, postproc_input)
-        msg = _out.items()[0]
+        msg = Postprocess().run(self.keys, postproc_input)[0]
         payload = OutputPayload(**orjson.loads(msg.value.decode("utf-8")))
         self.assertIsInstance(payload, OutputPayload)
         self.assertTrue(payload.unified_anomaly)
@@ -45,8 +43,7 @@ class TestPostProcess(unittest.TestCase):
 
     def test_preprocess_no_prev_clf(self):
         postproc_input = get_postproc_input(self.keys, STREAM_DATA_PATH, prev_clf_exists=False)
-        _out = Postprocess().run(self.keys, postproc_input)
-        msg = _out.items()[0]
+        msg = Postprocess().run(self.keys, postproc_input)[0]
         payload = OutputPayload(**orjson.loads(msg.value.decode("utf-8")))
         self.assertIsInstance(payload, OutputPayload)
         self.assertTrue(payload.unified_anomaly)

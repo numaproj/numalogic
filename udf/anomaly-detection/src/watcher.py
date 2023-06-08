@@ -116,11 +116,15 @@ class ConfigManager:
 
     @classmethod
     def get_numalogic_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf
+        return cls.get_metric_config(
+            config_name=config_name, metric_name=metric_name
+        ).numalogic_conf
 
     @classmethod
     def get_preprocess_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf.preprocess
+        return cls.get_metric_config(
+            config_name=config_name, metric_name=metric_name
+        ).numalogic_conf.preprocess
 
     @classmethod
     def get_retrain_config(cls, config_name: str, metric_name: str):
@@ -128,20 +132,27 @@ class ConfigManager:
 
     @classmethod
     def get_static_threshold_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).static_threshold
+        return cls.get_metric_config(
+            config_name=config_name, metric_name=metric_name
+        ).static_threshold
 
     @classmethod
     def get_threshold_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf.threshold
+        return cls.get_metric_config(
+            config_name=config_name, metric_name=metric_name
+        ).numalogic_conf.threshold
 
     @classmethod
     def get_postprocess_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf.postprocess
+        return cls.get_metric_config(
+            config_name=config_name, metric_name=metric_name
+        ).numalogic_conf.postprocess
 
     @classmethod
     def get_trainer_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).numalogic_conf.trainer
-
+        return cls.get_metric_config(
+            config_name=config_name, metric_name=metric_name
+        ).numalogic_conf.trainer
 
 
 class ConfigHandler(FileSystemEventHandler):

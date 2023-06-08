@@ -5,7 +5,6 @@ from src.udsink import Train
 class HandlerFactory:
     @classmethod
     def get_handler(cls, step: str):
-
         if step == "preprocess":
             return Preprocess().run
 

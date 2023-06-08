@@ -33,9 +33,8 @@ class TestPreprocess(unittest.TestCase):
 
     @patch.object(RedisRegistry, "load", Mock(return_value=return_preproc_clf()))
     def test_preprocess(self):
-        _out = Preprocess().run(self.keys, self.preproc_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Preprocess().run(self.keys, self.preproc_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
@@ -45,9 +44,8 @@ class TestPreprocess(unittest.TestCase):
 
     @patch.object(RedisRegistry, "load", Mock(return_value=None))
     def test_preprocess_no_clf(self):
-        _out = Preprocess().run(self.keys, self.preproc_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Preprocess().run(self.keys, self.preproc_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
         self.assertIsInstance(payload, StreamPayload)
         for metric in payload.metrics:
             self.assertEqual(payload.status[metric], Status.ARTIFACT_NOT_FOUND)
@@ -56,9 +54,8 @@ class TestPreprocess(unittest.TestCase):
     @patch.object(RedisRegistry, "load", Mock(return_value=return_preproc_clf()))
     def test_preprocess_with_nan(self):
         preproc_input = get_prepoc_input(self.keys, STREAM_NAN_DATA_PATH)
-        _out = Preprocess().run(self.keys, preproc_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Preprocess().run(self.keys, preproc_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
 
         df = payload.get_df()
         self.assertTrue(np.isfinite(df.values).all())

@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List
 from omegaconf import MISSING
 from dataclasses import dataclass, field
@@ -37,9 +38,15 @@ class MetricConf:
     numalogic_conf: NumalogicConf = MISSING
 
 
+class DataSource(str, Enum):
+    PROMETHEUS = "prometheus"
+    KAFKA = "kafka"
+
+
 @dataclass
 class DataStreamConf:
     name: str = "default"
+    source: DataSource = DataSource.PROMETHEUS
     composite_keys: List[str] = field(default_factory=list)
     metrics: List[str] = field(default_factory=list)
     window_size: int = 12

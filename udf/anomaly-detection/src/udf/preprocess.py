@@ -19,13 +19,11 @@ _LOGGER = get_logger(__name__)
 
 
 class Preprocess:
-
-    def __init__(self):
-        self.model_registry = RedisRegistry(client=get_redis_client_from_conf())
-
     @classmethod
     def get_df(cls, data_payload: dict, features: List[str]) -> (pd.DataFrame, List[int]):
-        timestamps = range(int(data_payload["start_time"]), int(data_payload["end_time"]) - 1, 60 * 1000)
+        timestamps = range(
+            int(data_payload["start_time"]), int(data_payload["end_time"]) - 1, 60 * 1000
+        )
         given_timestamps = [int(data["timestamp"]) for data in data_payload["data"]]
 
         rows = []
@@ -39,24 +37,29 @@ class Preprocess:
 
         df = pd.concat(rows, axis=1).T
         df.columns = features + ["timestamp"]
-        df.sort_values('timestamp', inplace=True)
+        df.sort_values("timestamp", inplace=True)
         df.reset_index(drop=True, inplace=True)
         df = df.fillna(0)
-        df = df.drop('timestamp', axis=1)
+        df = df.drop("timestamp", axis=1)
         return df, [*timestamps]
 
-    def preprocess(self, keys: List[str], metric: str, payload: StreamPayload) -> (np.ndarray, Status):
-        preprocess_cfgs = ConfigManager.get_preprocess_config(config_name=keys[0], metric_name=metric)
+    def preprocess(
+        self, keys: List[str], metric: str, payload: StreamPayload
+    ) -> (np.ndarray, Status):
+        preprocess_cfgs = ConfigManager.get_preprocess_config(
+            config_name=keys[0], metric_name=metric
+        )
 
+        model_registry = RedisRegistry(client=get_redis_client_from_conf())
         # Load preproc artifact
         try:
-            preproc_artifact = self.model_registry.load(
+            preproc_artifact = model_registry.load(
                 skeys=keys + [metric],
                 dkeys=[_conf.name for _conf in preprocess_cfgs],
             )
         except RedisRegistryError as err:
             _LOGGER.exception(
-                "%s - Error while fetching preproc artifact, keys: %s, metric: %s, err: %r",
+                "%s - Error while fetching preproc artifact, Keys: %s, Metric: %s, Error: %r",
                 payload.uuid,
                 keys,
                 metric,
@@ -67,31 +70,39 @@ class Preprocess:
         # Check if artifact is found
         if not preproc_artifact:
             _LOGGER.info(
-                "%s - Preprocess artifact not found, forwarding for static thresholding. Keys: %s, metric: %s",
+                "%s - Preprocess artifact not found, forwarding for static thresholding. Keys: %s, Metric: %s",
                 payload.uuid,
                 keys,
-                metric
+                metric,
             )
             return None, Status.ARTIFACT_NOT_FOUND
 
         # Perform preprocessing
         x_raw = payload.get_metric_arr(metric).reshape(-1, 1)
         preproc_clf = preproc_artifact.artifact
-        x_scaled = preproc_clf.transform(x_raw)
-        return x_scaled.flatten(), Status.PRE_PROCESSED
+        x_scaled = preproc_clf.transform(x_raw).flatten()
+        _LOGGER.info(
+            "%s - Successfully preprocessed, Keys: %s, Metric: %s, x_scaled: %s",
+            payload.uuid,
+            keys,
+            metric,
+            list(x_scaled),
+        )
+        return x_scaled, Status.PRE_PROCESSED
 
     def run(self, keys: List[str], datum: Datum) -> Messages:
         _start_time = time.perf_counter()
         _ = datum.event_time
         _ = datum.watermark
         _uuid = uuid.uuid4().hex
-        _LOGGER.info("%s- Received Msg: { Keys: %s, Value: %s }", _uuid, keys, datum.value)
+        _LOGGER.info("%s - Received Msg: { Keys: %s, Value: %s }", _uuid, keys, datum.value)
 
         messages = Messages()
         try:
             data_payload = json.loads(datum.value)
+            _LOGGER.info("%s - Data payload: %s", _uuid, data_payload)
         except Exception as e:
-            _LOGGER.error("Error while reading input json %r", e)
+            _LOGGER.error("%s - Error while reading input json %r", e)
             messages.append(Message.to_drop())
             return messages
 
@@ -112,7 +123,10 @@ class Preprocess:
 
         if not np.isfinite(raw_df.values).any():
             _LOGGER.warning(
-                "%s - Non finite values encountered: %s for keys: %s", payload.uuid, list(raw_df.values), keys
+                "%s - Non finite values encountered: %s for keys: %s",
+                payload.uuid,
+                list(raw_df.values),
+                keys,
             )
 
         # Perform preprocessing for each metric
@@ -128,5 +142,5 @@ class Preprocess:
                 payload.set_metric_data(metric=metric, arr=x_scaled)
 
         messages.append(Message(keys=keys, value=payload.to_json()))
-        _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %s }", payload.uuid, keys, payload)
+        _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
         return messages

@@ -14,11 +14,14 @@ _LOGGER = get_logger(__name__)
 
 
 class Postprocess:
-
     @classmethod
     def postprocess(cls, keys: list[str], metric: str, payload: StreamPayload) -> float:
-        static_thresh = ConfigManager.get_static_threshold_config(config_name=keys[0], metric_name=metric)
-        postprocess_conf = ConfigManager.get_postprocess_config(config_name=keys[0], metric_name=metric)
+        static_thresh = ConfigManager.get_static_threshold_config(
+            config_name=keys[0], metric_name=metric
+        )
+        postprocess_conf = ConfigManager.get_postprocess_config(
+            config_name=keys[0], metric_name=metric
+        )
 
         # Compute score using static thresholding
         metric_arr = payload.get_metric_arr(metric=metric)
@@ -30,7 +33,7 @@ class Postprocess:
                 payload.uuid,
                 final_score,
                 keys,
-                metric
+                metric,
             )
 
         # Compute ensemble score otherwise
@@ -42,12 +45,14 @@ class Postprocess:
                 final_score,
                 static_thresh.weight,
                 keys,
-                metric
+                metric,
             )
         return final_score
 
     @classmethod
-    def get_unified_anomaly(cls, keys: List[str], scores: list[float], payload: StreamPayload) -> float:
+    def get_unified_anomaly(
+        cls, keys: List[str], scores: list[float], payload: StreamPayload
+    ) -> float:
         unified_config = ConfigManager.get_unified_config(config_name=keys[0])
         unified_weights = unified_config.unified_weights
         if unified_weights:
@@ -77,7 +82,7 @@ class Postprocess:
         _in_msg = datum.value.decode("utf-8")
         payload = StreamPayload(**orjson.loads(_in_msg))
 
-        _LOGGER.info("%s - Received Msg: { Keys: %s, Payload: %s }", payload.uuid, keys, payload)
+        _LOGGER.info("%s - Received Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
 
         messages = Messages()
 
@@ -103,7 +108,9 @@ class Postprocess:
 
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %s }", payload.uuid, keys, out_payload)
         _LOGGER.debug(
-            "%s - Time taken in postprocess: %.4f sec", payload.uuid, time.perf_counter() - _start_time
+            "%s - Time taken in postprocess: %.4f sec",
+            payload.uuid,
+            time.perf_counter() - _start_time,
         )
         messages.append(Message(keys=keys, value=out_payload.to_json()))
         return messages

@@ -31,9 +31,8 @@ class TestThreshold(unittest.TestCase):
     @patch.object(RedisRegistry, "load", Mock(return_value=return_threshold_clf()))
     def test_threshold(self):
         threshold_input = get_threshold_input(self.keys, STREAM_DATA_PATH)
-        _out = Threshold().run(self.keys, threshold_input)
-        msg = _out.items()[0]
-        payload = StreamPayload(**orjson.loads(msg.value))
+        _out = Threshold().run(self.keys, threshold_input)[0]
+        payload = StreamPayload(**orjson.loads(_out.value))
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
@@ -46,7 +45,7 @@ class TestThreshold(unittest.TestCase):
     def test_threshold_prev_stale_model(self):
         threshold_input = get_threshold_input(self.keys, STREAM_DATA_PATH, prev_model_stale=True)
         _out = Threshold().run(self.keys, threshold_input)
-        for msg in _out.items():
+        for msg in _out:
             if TRAIN_VTX_KEY in msg.tags:
                 train_payload = TrainerPayload(**orjson.loads(msg.value.decode("utf-8")))
                 self.assertIsInstance(train_payload, TrainerPayload)
@@ -62,7 +61,7 @@ class TestThreshold(unittest.TestCase):
     def test_threshold_no_prev_clf(self):
         threshold_input = get_threshold_input(self.keys, STREAM_DATA_PATH, prev_clf_exists=False)
         _out = Threshold().run(self.keys, threshold_input)
-        for msg in _out.items():
+        for msg in _out:
             if TRAIN_VTX_KEY in msg.tags:
                 train_payload = TrainerPayload(**orjson.loads(msg.value.decode("utf-8")))
                 self.assertIsInstance(train_payload, TrainerPayload)
@@ -79,7 +78,7 @@ class TestThreshold(unittest.TestCase):
     def test_threshold_no_clf(self):
         threshold_input = get_threshold_input(self.keys, STREAM_DATA_PATH)
         _out = Threshold().run(self.keys, threshold_input)
-        for msg in _out.items():
+        for msg in _out:
             if TRAIN_VTX_KEY in msg.tags:
                 train_payload = TrainerPayload(**orjson.loads(msg.value.decode("utf-8")))
                 self.assertIsInstance(train_payload, TrainerPayload)

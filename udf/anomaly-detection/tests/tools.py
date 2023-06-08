@@ -64,8 +64,7 @@ def get_inference_input(keys: list[str], data_path: str, prev_clf_exists=True) -
     preproc_input = get_prepoc_input(keys, data_path)
     _mock_return = return_preproc_clf() if prev_clf_exists else None
     with patch.object(RedisRegistry, "load", Mock(return_value=_mock_return)):
-        _out = Preprocess().run(keys, preproc_input)
-        msg = _out.items()[0]
+        msg = Preprocess().run(keys, preproc_input)[0]
 
         if len(msg.tags) > 0 and msg.tags[0] == DROP:
             if not msg.tags[0] == DROP:
@@ -73,7 +72,9 @@ def get_inference_input(keys: list[str], data_path: str, prev_clf_exists=True) -
     return get_datum(keys, msg.value)
 
 
-def get_threshold_input(keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False) -> Optional[Datum]:
+def get_threshold_input(
+    keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
+) -> Optional[Datum]:
     inference_input = get_inference_input(keys, data_path)
     if prev_model_stale:
         _mock_return = return_stale_model()
@@ -82,8 +83,7 @@ def get_threshold_input(keys: list[str], data_path: str, prev_clf_exists=True, p
     else:
         _mock_return = None
     with patch.object(RedisRegistry, "load", Mock(return_value=_mock_return)):
-        _out = Inference().run(keys, inference_input)
-        msg = _out.items()[0]
+        msg = Inference().run(keys, inference_input)[0]
 
         if len(msg.tags) > 0 and msg.tags[0] == DROP:
             if not msg.tags[0] == DROP:
@@ -91,12 +91,14 @@ def get_threshold_input(keys: list[str], data_path: str, prev_clf_exists=True, p
     return get_datum(keys, msg.value)
 
 
-def get_postproc_input(keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False) -> Optional[Datum]:
+def get_postproc_input(
+    keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
+) -> Optional[Datum]:
     thresh_input = get_threshold_input(keys, data_path, prev_model_stale=prev_model_stale)
     _mock_return = return_threshold_clf() if prev_clf_exists else None
     with patch.object(RedisRegistry, "load", Mock(return_value=_mock_return)):
         _out = Threshold().run(keys, thresh_input)
-        for msg in _out.items():
+        for msg in _out:
             if POSTPROC_VTX_KEY in msg.tags:
                 return get_datum(keys, msg.value)
     return None

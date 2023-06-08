@@ -1872,6 +1872,26 @@ files = [
 ]
 
 [[package]]
+name = "pydruid"
+version = "0.6.5"
+description = "A Python connector for Druid."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "pydruid-0.6.5.tar.gz", hash = "sha256:30b6efa722234183239296bf8e6d41aba7eea0eec3d68233ce6c413986864fea"},
+]
+
+[package.dependencies]
+requests = "*"
+
+[package.extras]
+async = ["tornado"]
+cli = ["prompt_toolkit (>=2.0.0)", "pygments", "tabulate"]
+pandas = ["pandas"]
+sqlalchemy = ["sqlalchemy"]
+
+[[package]]
 name = "pyflakes"
 version = "2.5.0"
 description = "passive checker of Python programs"
@@ -2571,4 +2591,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.10"
-content-hash = "fb87449c6006fefb89f2240beaad94e952dcd19f23c6dbb1f3a8a793f7bdd06a"
+content-hash = "afe11ccb430f67dd74dee3bb0c2325060b0d09f9e2f77a82e51cc312f69a4535"

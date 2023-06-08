@@ -97,16 +97,12 @@ class StreamPayload(_BasePayload):
         return copy(self.metadata[key])
 
     def __repr__(self) -> str:
-        return (
-                "header: %s, status: %s, composite_keys: %s, data: %s, raw_data: %s, metadata: %s}"
-                % (
-                    self.header,
-                    self.status,
-                    self.composite_keys,
-                    list(self.data),
-                    list(self.raw_data),
-                    self.metadata,
-                )
+        return "header: %s, status: %s, composite_keys: %s, data: %s, metadata: %s}" % (
+            self.header,
+            self.status,
+            self.composite_keys,
+            list(self.data),
+            self.metadata,
         )
 
     def to_json(self):

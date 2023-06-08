@@ -45,20 +45,22 @@ class TestConfigManager(unittest.TestCase):
 
     def test_get_metric_config(self):
         # from given config
-        metric_config = self.cm.get_metric_config(config_name="sandbox_numalogic_demo1",
-                                                  metric_name="rollout_latency")
+        metric_config = self.cm.get_metric_config(
+            config_name="sandbox_numalogic_demo1", metric_name="rollout_latency"
+        )
         self.assertTrue(metric_config)
         self.assertEqual(metric_config.metric, "rollout_latency")
 
         # from given default config
-        metric_config = self.cm.get_metric_config(config_name="default-argorollouts",
-                                                  metric_name="namespace_app_rollouts_http_request_error_rate")
+        metric_config = self.cm.get_metric_config(
+            config_name="default-argorollouts",
+            metric_name="namespace_app_rollouts_http_request_error_rate",
+        )
         self.assertTrue(metric_config)
         self.assertEqual(metric_config.metric, "namespace_app_rollouts_http_request_error_rate")
 
         # default config
-        metric_config = self.cm.get_metric_config(config_name="random",
-                                                  metric_name="random_metric")
+        metric_config = self.cm.get_metric_config(config_name="random", metric_name="random_metric")
         self.assertTrue(metric_config)
         self.assertEqual(metric_config.metric, "default")
 
@@ -92,12 +94,14 @@ class TestConfigManager(unittest.TestCase):
 
     def test_get_metric_config_time(self):
         _start_time = time.perf_counter()
-        ConfigManager().get_metric_config(config_name="sandbox_numalogic_demo1",
-                                          metric_name="rollout_latency")
+        ConfigManager().get_metric_config(
+            config_name="sandbox_numalogic_demo1", metric_name="rollout_latency"
+        )
         time1 = time.perf_counter() - _start_time
         _start_time = time.perf_counter()
-        ConfigManager().get_metric_config(config_name="sandbox_numalogic_demo1",
-                                          metric_name="rollout_latency")
+        ConfigManager().get_metric_config(
+            config_name="sandbox_numalogic_demo1", metric_name="rollout_latency"
+        )
         time2 = time.perf_counter() - _start_time
         self.assertTrue(time2 < time1)
 

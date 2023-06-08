@@ -75,11 +75,11 @@ def is_host_reachable(hostname: str, port=None, max_retries=5, sleep_sec=5) -> b
 
 
 def fetch_data(
-        payload: TrainerPayload,
-        metric_config: MetricConf,
-        labels: dict,
-        return_labels=None,
-        hours: int = 36,
+    payload: TrainerPayload,
+    metric_config: MetricConf,
+    labels: dict,
+    return_labels=None,
+    hours: int = 36,
 ) -> pd.DataFrame:
     _start_time = time.time()
     prometheus_conf = ConfigManager.get_prometheus_config()
@@ -150,7 +150,9 @@ class WindowScorer:
             return norm_score
 
         norm_static_score = self.get_static_score(x_arr)
-        ensemble_score = (self.static_thresh.weight * norm_static_score) + (self.model_wt * norm_score)
+        ensemble_score = (self.static_thresh.weight * norm_static_score) + (
+            self.model_wt * norm_score
+        )
         return ensemble_score
 
     def get_static_score(self, x_arr) -> float:

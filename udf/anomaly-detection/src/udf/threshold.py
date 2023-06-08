@@ -19,15 +19,18 @@ _LOGGER = get_logger(__name__)
 
 
 class Threshold:
-
     def __init__(self):
         self.model_registry = RedisRegistry(client=get_redis_client_from_conf())
 
-    def threshold(self, keys: List[str], metric: str, payload: StreamPayload) -> (np.ndarray, Status, Header, int):
+    def threshold(
+        self, keys: List[str], metric: str, payload: StreamPayload
+    ) -> (np.ndarray, Status, Header, int):
         metric_arr = payload.get_metric_arr(metric=metric)
 
         # Load config
-        static_thresh = ConfigManager.get_static_threshold_config(config_name=keys[0], metric_name=metric)
+        static_thresh = ConfigManager.get_static_threshold_config(
+            config_name=keys[0], metric_name=metric
+        )
         thresh_cfg = ConfigManager.get_threshold_config(config_name=keys[0], metric_name=metric)
 
         # Check if metric needs static inference
@@ -36,7 +39,7 @@ class Threshold:
                 "%s - Sending to trainer and performing static thresholding. Keys: %s, Metric: %s",
                 payload.uuid,
                 payload.composite_keys,
-                metric
+                metric,
             )
             static_scores = calculate_static_thresh(metric_arr, static_thresh)
             return static_scores, Status.ARTIFACT_NOT_FOUND, Header.STATIC_INFERENCE, -1
@@ -49,7 +52,7 @@ class Threshold:
             )
         except RedisRegistryError as err:
             _LOGGER.exception(
-                "%s - Error while fetching threshold artifact, keys: %s, metric: %s, err: %r",
+                "%s - Error while fetching threshold artifact, Keys: %s, Metric: %s, Error: %r",
                 payload.uuid,
                 payload.composite_keys,
                 metric,
@@ -73,7 +76,12 @@ class Threshold:
         thresh_clf = thresh_artifact.artifact
         y_score = thresh_clf.score_samples(recon_err)
 
-        return y_score, Status.THRESHOLD, payload.header[metric], payload.get_metadata(key=metric)["model_version"]
+        return (
+            y_score,
+            Status.THRESHOLD,
+            payload.header[metric],
+            payload.get_metadata(key=metric)["model_version"],
+        )
 
     def run(self, keys: List[str], datum: Datum) -> Messages:
         _start_time = time.perf_counter()
@@ -84,7 +92,7 @@ class Threshold:
         _in_msg = datum.value.decode("utf-8")
         payload = StreamPayload(**orjson.loads(_in_msg))
 
-        _LOGGER.info("%s - Received Msg: { Keys: %s, Payload: %s }", payload.uuid, keys, payload)
+        _LOGGER.info("%s - Received Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
 
         messages = Messages()
 
@@ -102,8 +110,23 @@ class Threshold:
                 train_payload = TrainerPayload(
                     uuid=payload.uuid, composite_keys=keys, metric=metric
                 )
-                messages.append(Message(keys=keys, value=train_payload.to_json(), tags=[TRAIN_VTX_KEY]))
+                _LOGGER.info(
+                    "%s - Sending Msg: { Keys: %s, Tags:%s, Payload: %s }",
+                    payload.uuid,
+                    keys,
+                    [TRAIN_VTX_KEY],
+                    train_payload,
+                )
+                messages.append(
+                    Message(keys=keys, value=train_payload.to_json(), tags=[TRAIN_VTX_KEY])
+                )
 
         messages.append(Message(keys=keys, value=payload.to_json(), tags=[POSTPROC_VTX_KEY]))
-        _LOGGER.info("%s - Sending Msgs: %s", payload.uuid, messages)
+        _LOGGER.info(
+            "%s - Sending Msg: { Keys: %s, Tags:%s, Payload: %r }",
+            payload.uuid,
+            keys,
+            [POSTPROC_VTX_KEY],
+            payload,
+        )
         return messages
