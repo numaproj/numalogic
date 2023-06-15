@@ -1,0 +1,96 @@
+apiVersion: numaflow.numaproj.io/v1alpha1
+kind: InterStepBufferService
+metadata:
+  name: redis-isbs # change it
+spec:
+  redis:
+    native:
+      version: 7.0.11
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app.kubernetes.io/component: isbsvc
+                    numaflow.numaproj.io/isbsvc-name: redis-isbs  # Change it
+                topologyKey: topology.kubernetes.io/zone
+              weight: 100
+      persistence:
+        accessMode: ReadWriteOnce
+        volumeSize: 1Gi
+      settings:
+        redis: |
+          maxmemory 4096mb
+
+
+---
+apiVersion: numaflow.numaproj.io/v1alpha1
+kind: Pipeline
+metadata:
+  name: blocks
+spec:
+  watermark:
+    disabled: false
+  limits:
+    readBatchSize: 10
+    bufferMaxLength: 500
+    bufferUsageLimit: 100
+  vertices:
+  - name: in
+    source:
+      http: {}
+  - name: inference
+    scale:
+      min: 1
+    udf:
+      container:
+        image: blockpl:v0.0.8
+        env:
+          - name: REDIS_AUTH
+            valueFrom:
+              secretKeyRef:
+                name: isbsvc-redis-isbs-redis-auth
+                key: redis-password
+        args:
+        - python
+        - server.py
+        - inference
+  - name: train
+    scale:
+      min: 1
+    udf:
+      container:
+        image: blockpl:v0.0.8
+        env:
+          - name: REDIS_AUTH
+            valueFrom:
+              secretKeyRef:
+                name: isbsvc-redis-isbs-redis-auth
+                key: redis-password
+        args:
+        - python
+        - server.py
+        - train
+  - name: out
+    scale:
+      min: 1
+    sink:
+      log: {}
+  edges:
+    - from: in
+      to: inference
+    - conditions:
+        tags:
+          operator: or
+          values:
+            - train
+      from: inference
+      to: train
+    - from: inference
+      to: out
+      conditions:
+        tags:
+          operator: or
+          values:
+            - out

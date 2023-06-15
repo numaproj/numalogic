@@ -1,0 +1,4 @@
+cachetools>5.2,<6.0
+numalogic[redis,numaflow] @ git+https://github.com/numaproj/numalogic.git@main
+# ../../../numalogic[redis,numaflow]  # for local testing
+pytorch-lightning>2.0,< 3.0
