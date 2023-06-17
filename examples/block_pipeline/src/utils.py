@@ -36,7 +36,7 @@ class RedisClient(metaclass=Singleton):
             sentinel_kwargs=dict(password=AUTH),
             password=AUTH,
         )
-        self._client = sentinel.master_for("mymaster")
+        self._client = sentinel.master_for(MASTERNAME)
 
     def get_client(self) -> redis_client_t:
         return self._client
