@@ -32,9 +32,9 @@ class RedisClient(metaclass=Singleton):
         }
         _LOGGER.info("Connecting to redis sentinel: %s, %s, %s", sentinel_args, MASTERNAME, AUTH)
         sentinel = Sentinel(
-            sentinels=[("isbsvc-redis-isbs-redis-svc.default.svc", 26379)],
-            sentinel_kwargs=dict(password="zCvQCUcvRFPylBnF"),
-            password="zCvQCUcvRFPylBnF",
+            **sentinel_args,
+            sentinel_kwargs=dict(password=AUTH),
+            password=AUTH,
         )
         self._client = sentinel.master_for("mymaster")
 
