@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.4.0.post1"
+version = "0.4.1"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -16,14 +16,15 @@ classifiers = [
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10"
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11"
 ]
 repository = "https://github.com/numaproj/numalogic"
 documentation = "https://numalogic.numaproj.io/"
 homepage = "https://numalogic.numaproj.io/"
 
 [tool.poetry.dependencies]
-python = ">=3.9, <3.11"
+python = ">=3.9, <3.12"
 numpy = "^1.23"
 pandas = "^2.0"
 scikit-learn = "^1.2"
@@ -59,6 +60,7 @@ ruff = "^0.0.264"
 pre-commit = "^3.3.1"
 fakeredis = "^2.11.2"
 freezegun = "^1.2.2"
+pympler = "^1.0.1"
 
 [tool.poetry.group.jupyter]
 optional = true
