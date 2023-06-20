@@ -1,5 +1,21 @@
 # Changelog
 
+## v0.4.0.post1 (2023-06-06)
+
+ * [b134fa2](https://github.com/numaproj/numalogic/commit/b134fa27a05667c4a51fc5585d0b26618f0c0139) fix: redis logging (#209)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.4.0 (2023-06-06)
+
+ * [bd050c9](https://github.com/numaproj/numalogic/commit/bd050c9b422cc8cc17d004d03c43b21096a21d47) fix: removing logger level setting (#205)
+
+### Contributors
+
+ * Kushal Batra
+
 ## v0.4a1 (2023-06-02)
 
  * [1f5f458](https://github.com/numaproj/numalogic/commit/1f5f458dab3baf34cb43de7b95e10dc00cc88d71) fix: add caching logs (#203)
