@@ -89,7 +89,7 @@ class DynamoDBRegistry(ArtifactManager):
         table: str,
         connector: AWSConnector,
         models_to_retain=2,
-        cache_registry: ArtifactCache = None,
+        cache_registry: Optional[ArtifactCache] = None,
     ):
         super().__init__(table)
         self.table_name = table
@@ -203,7 +203,7 @@ class DynamoDBRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         latest: bool = True,
-        version: str = None,
+        version: Optional[str] = None,
     ) -> Optional[ArtifactData]:
         """
         Loads the desired artifact and metadata from dynamodb.
@@ -249,7 +249,9 @@ class DynamoDBRegistry(ArtifactManager):
         return None
 
     @staticmethod
-    def __save_item(table, part_key: str, sort_key: str, data: dict[str, Any], version: int = None):
+    def __save_item(
+        table, part_key: str, sort_key: str, data: dict[str, Any], version: Optional[int] = None
+    ):
         try:
             response = table.put_item(
                 Item={"skey": part_key, "dkey": sort_key, "data": data, "version": version}
