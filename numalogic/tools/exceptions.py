@@ -58,6 +58,12 @@ class RedisRegistryError(Exception):
     pass
 
 
+class DynamoDBRegistryError(Exception):
+    """Base class for all exceptions raised by the DynamoDBRegistry class."""
+
+    pass
+
+
 class ModelKeyNotFound(RedisRegistryError):
     """Raised when a model key is not found in the registry."""
 
