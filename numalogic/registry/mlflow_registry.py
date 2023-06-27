@@ -77,7 +77,7 @@ class MLflowRegistry(ArtifactManager):
         tracking_uri: Optional[str],
         models_to_retain: int = 5,
         model_stage: ModelStage = ModelStage.PRODUCTION,
-        cache_registry: ArtifactCache = None,
+        cache_registry: Optional[ArtifactCache] = None,
         *args,
         **kwargs,
     ):
@@ -91,7 +91,7 @@ class MLflowRegistry(ArtifactManager):
         tracking_uri: str,
         models_to_retain: int = 5,
         model_stage: str = ModelStage.PRODUCTION,
-        cache_registry: ArtifactCache = None,
+        cache_registry: Optional[ArtifactCache] = None,
     ):
         super().__init__(tracking_uri)
         mlflow.set_tracking_uri(tracking_uri)
@@ -138,7 +138,7 @@ class MLflowRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         latest: bool = True,
-        version: str = None,
+        version: Optional[str] = None,
         artifact_type: str = "pytorch",
     ) -> Optional[ArtifactData]:
         """Load the artifact from the registry. The artifact is loaded from the cache if available.
@@ -206,7 +206,7 @@ class MLflowRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         artifact: artifact_t,
-        run_id: str = None,
+        run_id: Optional[str] = None,
         **metadata: META_VT,
     ) -> Optional[ModelVersion]:
         """Saves the artifact into mlflow registry and updates version.

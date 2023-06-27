@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 from sklearn.metrics import RocCurveDisplay
 import numpy.typing as npt
+from typing import Optional
 
 
 def plot_reconerr_comparision(reconerr, input_, labels, start=0, end=None, title=None):
@@ -20,7 +21,10 @@ def plot_reconerr_comparision(reconerr, input_, labels, start=0, end=None, title
 
 
 def plot_roc_curve(
-    y_true: npt.NDArray[float], y_pred: npt.NDArray[float], model_name: str, title: str = None
+    y_true: npt.NDArray[float],
+    y_pred: npt.NDArray[float],
+    model_name: str,
+    title: Optional[str] = None,
 ):
     """
     Plots the ROC curve for the given true and predicted labels.

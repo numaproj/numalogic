@@ -42,7 +42,7 @@ class RedisRegistry(ArtifactManager):
         self,
         client: redis_client_t,
         ttl: int = 604800,
-        cache_registry: ArtifactCache = None,
+        cache_registry: Optional[ArtifactCache] = None,
     ):
         super().__init__("")
         self.client = client
@@ -173,7 +173,7 @@ class RedisRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         latest: bool = True,
-        version: str = None,
+        version: Optional[str] = None,
     ) -> Optional[ArtifactData]:
         """Loads the artifact from redis registry. Either latest or version (one of the arguments)
          is needed to load the respective artifact.
