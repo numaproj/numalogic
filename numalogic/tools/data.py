@@ -168,11 +168,11 @@ class StreamingDataset(IterableDataset):
             start = idx.start or 0
             stop = min(idx.stop, raw_data_size) if idx.stop else raw_data_size
             for i in range(start, stop - self._seq_len + 1):
-                output.append(self._data[i: (i + self._seq_len)])
+                output.append(self._data[i : (i + self._seq_len)])
             return np.stack(output)
         if idx >= len(self):
             raise IndexError(f"{idx} out of bound!")
-        return self._data[idx: idx + self._seq_len]
+        return self._data[idx : idx + self._seq_len]
 
 
 class TimeseriesDataModule(pl.LightningDataModule):
