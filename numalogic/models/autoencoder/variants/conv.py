@@ -11,7 +11,7 @@
 
 
 import logging
-from typing import Union
+from typing import Union, Optional
 from collections.abc import Sequence
 
 import torch
@@ -212,7 +212,7 @@ class Conv1dAE(BaseAE):
         enc_channels: Sequence[int] = (16, 8),
         enc_kernel_sizes: Union[int, Sequence[int]] = 3,
         pool_kernel_size: int = 2,
-        dec_activation: str = None,
+        dec_activation: Optional[str] = None,
         **kwargs,
     ):
         super().__init__(**kwargs)

@@ -11,7 +11,7 @@
 
 
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar, Union
+from typing import Any, Generic, TypeVar, Union, Optional
 
 from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T, state_dict_t
 
@@ -54,7 +54,7 @@ class ArtifactManager(Generic[KEYS, A_D]):
         self.uri = uri
 
     def load(
-        self, skeys: KEYS, dkeys: KEYS, latest: bool = True, version: str = None
+        self, skeys: KEYS, dkeys: KEYS, latest: bool = True, version: Optional[str] = None
     ) -> ArtifactData:
         """Loads the desired artifact from mlflow registry and returns it.
 

@@ -42,7 +42,7 @@ class RedisRegistry(ArtifactManager):
         self,
         client: redis_client_t,
         ttl: int = 604800,
-        cache_registry: ArtifactCache = None,
+        cache_registry: Optional[ArtifactCache] = None,
     ):
         super().__init__("")
         self.client = client
@@ -68,8 +68,8 @@ class RedisRegistry(ArtifactManager):
         return "::".join([_static_key, _dynamic_key])
 
     @staticmethod
-    def __construct_production_key(key: str):
-        return RedisRegistry.construct_key(skeys=[key], dkeys=["PROD"])
+    def __construct_latest_key(key: str):
+        return RedisRegistry.construct_key(skeys=[key], dkeys=["LATEST"])
 
     @staticmethod
     def __construct_version_key(key: str, version: str):
@@ -131,13 +131,11 @@ class RedisRegistry(ArtifactManager):
         if cached_artifact:
             _LOGGER.debug("Found cached artifact for key: %s", key)
             return cached_artifact
-        production_key = self.__construct_production_key(key)
-        if not self.client.exists(production_key):
-            raise ModelKeyNotFound(
-                f"Production key: {production_key}, Not Found !!!\n Exiting....."
-            )
-        model_key = self.client.get(production_key)
-        _LOGGER.info("Production key, %s, is pointing to the key : %s", production_key, model_key)
+        latest_key = self.__construct_latest_key(key)
+        if not self.client.exists(latest_key):
+            raise ModelKeyNotFound(f"latest key: {latest_key}, Not Found !!!")
+        model_key = self.client.get(latest_key)
+        _LOGGER.info("latest key, %s, is pointing to the key : %s", latest_key, model_key)
         return self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key)
 
     def __load_version_artifact(self, version: str, key: str) -> ArtifactData:
@@ -152,11 +150,9 @@ class RedisRegistry(ArtifactManager):
         self, pipe, artifact: artifact_t, metadata: META_T, key: KEYS, version: str
     ) -> str:
         new_version_key = self.__construct_version_key(key, version)
-        production_key = self.__construct_production_key(key)
-        pipe.set(name=production_key, value=new_version_key)
-        _LOGGER.info(
-            "Setting Production key : %s ,to this new key = %s", production_key, new_version_key
-        )
+        latest_key = self.__construct_latest_key(key)
+        pipe.set(name=latest_key, value=new_version_key)
+        _LOGGER.info("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
         serialized_metadata = ""
         if metadata:
             serialized_metadata = dumps(deserialized_object=metadata)
@@ -177,7 +173,7 @@ class RedisRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         latest: bool = True,
-        version: str = None,
+        version: Optional[str] = None,
     ) -> Optional[ArtifactData]:
         """Loads the artifact from redis registry. Either latest or version (one of the arguments)
          is needed to load the respective artifact.
@@ -186,7 +182,7 @@ class RedisRegistry(ArtifactManager):
         ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            latest: load the model in production stage
+            latest: load the model in latest stage
             version: version to load.
 
         Returns
@@ -228,12 +224,12 @@ class RedisRegistry(ArtifactManager):
             model version
         """
         key = self.construct_key(skeys, dkeys)
-        production_key = self.__construct_production_key(key)
+        latest_key = self.__construct_latest_key(key)
         version = 0
         try:
-            if self.client.exists(production_key):
-                _LOGGER.debug("Production key exists for the model")
-                version_key = self.client.get(name=production_key)
+            if self.client.exists(latest_key):
+                _LOGGER.debug("latest key exists for the model")
+                version_key = self.client.get(name=latest_key)
                 version = int(self.get_version(version_key.decode())) + 1
             with self.client.pipeline() as pipe:
                 new_version_key = self.__save_artifact(pipe, artifact, metadata, key, str(version))

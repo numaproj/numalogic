@@ -8,14 +8,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Union
+from typing import Union, ClassVar
 
 from numalogic.config._config import ModelInfo, RegistryInfo
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 
 class _ObjectFactory:
-    _CLS_MAP = {}
+    _CLS_MAP: ClassVar[dict] = {}
 
     def get_instance(self, object_info: Union[ModelInfo, RegistryInfo]):
         try:
@@ -41,7 +41,7 @@ class PreprocessFactory(_ObjectFactory):
     from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
     from numalogic.transforms import LogTransformer, StaticPowerTransformer, TanhScaler
 
-    _CLS_MAP = {
+    _CLS_MAP: ClassVar[dict] = {
         "StandardScaler": StandardScaler,
         "MinMaxScaler": MinMaxScaler,
         "MaxAbsScaler": MaxAbsScaler,
@@ -57,7 +57,7 @@ class PostprocessFactory(_ObjectFactory):
 
     from numalogic.transforms import TanhNorm, ExpMovingAverage
 
-    _CLS_MAP = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage}
+    _CLS_MAP: ClassVar[dict] = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage}
 
 
 class ThresholdFactory(_ObjectFactory):
@@ -65,7 +65,7 @@ class ThresholdFactory(_ObjectFactory):
 
     from numalogic.models.threshold import StdDevThreshold, StaticThreshold, SigmoidThreshold
 
-    _CLS_MAP = {
+    _CLS_MAP: ClassVar[dict] = {
         "StdDevThreshold": StdDevThreshold,
         "StaticThreshold": StaticThreshold,
         "SigmoidThreshold": SigmoidThreshold,
@@ -86,7 +86,7 @@ class ModelFactory(_ObjectFactory):
         SparseTransformerAE,
     )
 
-    _CLS_MAP = {
+    _CLS_MAP: ClassVar[dict] = {
         "VanillaAE": VanillaAE,
         "SparseVanillaAE": SparseVanillaAE,
         "Conv1dAE": Conv1dAE,
@@ -101,7 +101,7 @@ class ModelFactory(_ObjectFactory):
 class RegistryFactory(_ObjectFactory):
     """Factory class to create registry instances."""
 
-    _CLS_SET = {"RedisRegistry", "MLflowRegistry"}
+    _CLS_SET: ClassVar[frozenset] = {"RedisRegistry", "MLflowRegistry"}
 
     def get_instance(self, object_info: Union[ModelInfo, RegistryInfo]):
         import numalogic.registry as reg

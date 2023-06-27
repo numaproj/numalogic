@@ -14,6 +14,7 @@ from numalogic.transforms import LogTransformer
 from pynumaflow.function import Datum, Messages, Message
 
 from src.utils import Payload, TRAIN_DATA_PATH
+from typing import Optional
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))
@@ -33,7 +34,7 @@ class Trainer(NumalogicUDF):
         self.model_key = "ae::model"
 
     def _save_artifact(
-        self, model, skeys: list[str], dkeys: list[str], _: AutoencoderTrainer = None
+        self, model, skeys: list[str], dkeys: list[str], _: Optional[AutoencoderTrainer] = None
     ) -> None:
         """Saves the model in the registry."""
         self.registry.save(skeys=skeys, dkeys=dkeys, artifact=model)
