@@ -101,7 +101,7 @@ class ModelFactory(_ObjectFactory):
 class RegistryFactory(_ObjectFactory):
     """Factory class to create registry instances."""
 
-    _CLS_SET: ClassVar[set] = {"RedisRegistry", "MLflowRegistry"}
+    _CLS_SET: ClassVar[frozenset] = {"RedisRegistry", "MLflowRegistry"}
 
     def get_instance(self, object_info: Union[ModelInfo, RegistryInfo]):
         import numalogic.registry as reg

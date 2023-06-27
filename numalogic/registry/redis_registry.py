@@ -133,7 +133,7 @@ class RedisRegistry(ArtifactManager):
             return cached_artifact
         latest_key = self.__construct_latest_key(key)
         if not self.client.exists(latest_key):
-            raise ModelKeyNotFound(f"latest key: {latest_key}, Not Found !!!\n Exiting.....")
+            raise ModelKeyNotFound(f"latest key: {latest_key}, Not Found !!!")
         model_key = self.client.get(latest_key)
         _LOGGER.info("latest key, %s, is pointing to the key : %s", latest_key, model_key)
         return self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key)
