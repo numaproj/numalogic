@@ -36,6 +36,17 @@ class TestStreamingDataset(unittest.TestCase):
         assert_allclose(np.ravel(dataset[0]), np.ravel(self.data[:12, :]))
         assert_allclose(self.data, dataset.data)
 
+    def test_dataset_getitem(self):
+        ds = StreamingDataset(self.data, seq_len=SEQ_LEN)
+        self.assertEqual(len(self.data) - SEQ_LEN + 1, len(ds))
+        self.assertTupleEqual((15 - SEQ_LEN + 1, SEQ_LEN, self.n), ds[:15].shape)
+        self.assertTupleEqual((1, SEQ_LEN, self.n), ds[3:15].shape)
+        self.assertTupleEqual((self.m - SEQ_LEN + 1, SEQ_LEN, self.n), ds[:50].shape)
+
+    def test_as_array(self):
+        ds = StreamingDataset(self.data, seq_len=SEQ_LEN)
+        self.assertTupleEqual((self.m - SEQ_LEN + 1, SEQ_LEN, self.n), ds.as_array().shape)
+
     def test_w_dataloader(self):
         batch_size = 4
         dl = DataLoader(
