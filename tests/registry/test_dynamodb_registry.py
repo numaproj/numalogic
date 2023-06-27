@@ -1,8 +1,6 @@
-import os
 import time
 import unittest
 from moto import mock_dynamodb, mock_sts
-from sklearn.ensemble import RandomForestRegressor
 
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import LocalLRUCache, ArtifactData

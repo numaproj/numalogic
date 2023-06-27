@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Any, Optional
 from datetime import datetime, timedelta
 
 import boto3
@@ -66,7 +66,8 @@ class DynamoDBRegistry(ArtifactManager):
         table: table name to use
         connector: AWSConnector instance
         models_to_retain: number of models to retain in the DB (default = 2)
-        cache_registry: ArtifactCache instance, must have an expiration set for the model to be refreshed
+        cache_registry: ArtifactCache instance, must have an expiration set for the
+         model to be refreshed
     Examples
     --------
     >>> import redis
@@ -78,7 +79,7 @@ class DynamoDBRegistry(ArtifactManager):
     >>> skeys, dkeys = ("mymetric", "ae"), ("vanilla", "seq10")
     >>> model = VanillaAE(seq_len=10)
     >>> registry.save(skeys, dkeys, artifact=model, **{'lr': 0.01})
-    >>> loaded_artifact = registry.load(skeys, dkeys)
+    >>> loaded_artifact = registry.load(skeys, dkeys).
     """
 
     __slots__ = ("table_name", "connector", "models_to_retain", "cache_registry")
@@ -96,13 +97,15 @@ class DynamoDBRegistry(ArtifactManager):
         self.models_to_retain = models_to_retain
         self.cache_registry = cache_registry
 
-    def create_table(self) -> Dict[str, Any]:
+    def create_table(self) -> dict[str, Any]:
         """
         Creates a new table with a specific schema.
-        Returns:
-            Table instance
+
+        Returns
+        -------
+            Table instance.
         """
-        table = self.connector.get_client().create_table(
+        return self.connector.get_client().create_table(
             TableName=self.table_name,
             KeySchema=[
                 {"AttributeName": "skey", "KeyType": "HASH"},  # partition key
@@ -127,7 +130,6 @@ class DynamoDBRegistry(ArtifactManager):
             ],
             ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
         )
-        return table
 
     def _load_from_cache(self, key: str) -> Optional[ArtifactData]:
         if not self.cache_registry:
@@ -147,7 +149,7 @@ class DynamoDBRegistry(ArtifactManager):
 
     @staticmethod
     def _unpack_artifact_data(
-        item: Dict[str, Any],
+        item: dict[str, Any],
     ) -> ArtifactData:
         serialized_artifact = item.get("artifact")
         artifact_version = item.get("version")
@@ -183,7 +185,7 @@ class DynamoDBRegistry(ArtifactManager):
         artifact: artifact_t,
         version: str,
         **metadata: META_VT,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         serialized_artifact = dumps(artifact)
         serialized_metadata = ""
         if metadata:
@@ -211,7 +213,7 @@ class DynamoDBRegistry(ArtifactManager):
             latest: ignored for now
             version: ignored for now
         Returns:
-            ArtifactData instance
+            ArtifactData instance.
         """
         if (latest and version) or (not latest and not version):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")
@@ -247,7 +249,7 @@ class DynamoDBRegistry(ArtifactManager):
         return None
 
     @staticmethod
-    def __save_item(table, part_key: str, sort_key: str, data: Dict[str, Any], version: int = None):
+    def __save_item(table, part_key: str, sort_key: str, data: dict[str, Any], version: int = None):
         try:
             response = table.put_item(
                 Item={"skey": part_key, "dkey": sort_key, "data": data, "version": version}
@@ -272,7 +274,7 @@ class DynamoDBRegistry(ArtifactManager):
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             artifact: model to be saved
-            metadata: additional metadata surrounding the artifact that needs to be saved
+            metadata: additional metadata surrounding the artifact that needs to be saved.
         """
         table = self.connector.get_resource().Table(self.table_name)
         part_key = self.construct_key(skeys)
@@ -316,13 +318,13 @@ class DynamoDBRegistry(ArtifactManager):
             raise DynamoDBRegistryError(f"{err.__class__.__name__} raised") from err
         return response
 
-    def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> Optional[Dict[str, Any]]:
+    def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> Optional[dict[str, Any]]:
         """
         Deletes the artifact from dynamodb.
         Args:
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            version: the version of the artifact to be deleted
+            version: the version of the artifact to be deleted.
         """
         if version == "0":
             raise ValueError("Cannot delete the main (zeroth) record directly!")
@@ -367,9 +369,11 @@ class DynamoDBRegistry(ArtifactManager):
         """
         Returns a single composite key from a list of static or dynamic key elements.
         Args:
-            keys: key fields as list/tuple of strings (static or dynamic)
-        Returns:
-            Joined key
+            keys: key fields as list/tuple of strings (static or dynamic).
+
+        Returns
+        -------
+            Joined key.
         """
         return ":".join(keys)
 
