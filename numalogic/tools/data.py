@@ -119,7 +119,11 @@ class StreamingDataset(IterableDataset):
     @property
     def data(self) -> npt.NDArray[float]:
         """Returns the reference data in the input shape."""
-        return self._data
+        return self._data.copy()
+
+    def as_array(self) -> npt.NDArray[float]:
+        """Returns the full data in a sequence of shape (batch, seq_len, num_features)."""
+        return self[:]
 
     def create_seq(self, input_: npt.NDArray[float]) -> Generator[npt.NDArray[float], None, None]:
         r"""Yields sequences of specified length from the input data.
@@ -160,8 +164,9 @@ class StreamingDataset(IterableDataset):
             if idx.step is not None:
                 raise ValueError("Slice with step is not supported in StreamingDataset")
             output = []
+            raw_data_size = len(self._data)
             start = idx.start or 0
-            stop = idx.stop or len(self)
+            stop = min(idx.stop, raw_data_size) if idx.stop else raw_data_size
             for i in range(start, stop - self._seq_len + 1):
                 output.append(self._data[i : (i + self._seq_len)])
             return np.stack(output)
