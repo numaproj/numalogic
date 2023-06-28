@@ -27,7 +27,7 @@ class AWSConnector:
 
     __STS_RESET_SECS = 30 * 60
 
-    def __init__(self, role=None, region="us-west-2"):
+    def __init__(self, role: str, region="us-west-2"):
         self.role = role
         self.region = region
         self.session = None
@@ -88,7 +88,7 @@ class DynamoDBRegistry(ArtifactManager):
         self,
         table: str,
         role: str,
-        models_to_retain=2,
+        models_to_retain: int = 2,
         cache_registry: Optional[ArtifactCache] = None,
     ):
         super().__init__(table)
@@ -131,6 +131,10 @@ class DynamoDBRegistry(ArtifactManager):
             ],
             ProvisionedThroughput={"ReadCapacityUnits": 5, "WriteCapacityUnits": 5},
         )
+
+    @staticmethod
+    def _get_cache_key(part_key: str, v_sort_key: str) -> str:
+        return f"{part_key}::{v_sort_key}"
 
     def _load_from_cache(self, key: str) -> Optional[ArtifactData]:
         if not self.cache_registry:
@@ -229,10 +233,11 @@ class DynamoDBRegistry(ArtifactManager):
             # Version is provided
             v_sort_key = self._construct_version_key(sort_key, version=version)
 
-        cached_artifact = self._load_from_cache(f"{part_key}::{v_sort_key}")
+        cache_key = self._get_cache_key(part_key, v_sort_key)
+        cached_artifact = self._load_from_cache(cache_key)
 
         if cached_artifact:
-            _LOGGER.debug("Found cached artifact for key: %s", f"{part_key}::{v_sort_key}")
+            _LOGGER.debug(f"Found cached artifact for key: {cache_key}")
             return cached_artifact
 
         try:
@@ -243,7 +248,7 @@ class DynamoDBRegistry(ArtifactManager):
 
         if item and "data" in item:
             artifact_data = self._unpack_artifact_data(item.get("data"))
-            self._save_in_cache(f"{part_key}::{v_sort_key}", artifact_data)
+            self._save_in_cache(cache_key, artifact_data)
             return artifact_data
 
         _LOGGER.info("Record not found for skey: %s, dkey: %s", part_key, sort_key)
