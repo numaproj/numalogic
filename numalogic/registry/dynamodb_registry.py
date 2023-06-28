@@ -66,7 +66,7 @@ class DynamoDBRegistry(ArtifactManager):
     Model saving and loading to and from Dynamodb.
     Args:
         table: table name to use
-        role: AWS role with access to DynamoDB
+        role: AWS role with access to DynamoDB table
         models_to_retain: number of models to retain in the DB (default = 2)
         cache_registry: ArtifactCache instance, must have an expiration set for the
          model to be refreshed
