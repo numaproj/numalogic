@@ -4,7 +4,7 @@ from moto import mock_dynamodb, mock_sts
 
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import LocalLRUCache, ArtifactData
-from numalogic.registry.dynamodb_registry import AWSConnector, DynamoDBRegistry
+from numalogic.registry import DynamoDBRegistry
 
 ROLE = "qwertyuiopasdfghjklzxcvbnm"
 ENV = "dev"
@@ -18,12 +18,10 @@ class TestDynamoDBRegistry(unittest.TestCase):
         cls.pytorch_model = VanillaAE(10)
 
     def setUp(self) -> None:
-        self.connector = AWSConnector(role=ROLE)
-
         self.cache = LocalLRUCache(cachesize=4, ttl=300)
-        self.registry = DynamoDBRegistry("test_table", self.connector)
+        self.registry = DynamoDBRegistry("test_table", role=ROLE)
         self.registry_with_cache = DynamoDBRegistry(
-            "test_table", self.connector, cache_registry=self.cache
+            "test_table", role=ROLE, cache_registry=self.cache
         )
         self.registry.create_table()
 
@@ -271,3 +269,24 @@ class TestDynamoDBRegistry(unittest.TestCase):
         self.assertIsNone(artifact_data)
         artifact_data = self.registry.load(skeys, dkeys, latest=True)
         self.assertIsNone(artifact_data)
+
+    def test_load_latest_version(self):
+        skeys = ["model_type", "model_name"]
+        dkeys = ["100", "abs"]
+
+        try:
+            self.registry.load(skeys, dkeys, latest=True, version="1")
+            self.fail("Should have raised ValueError, you cannot have both latest=True and version")
+        except ValueError:
+            pass
+
+        try:
+            self.registry.load(skeys, dkeys, latest=False)
+            self.fail(
+                "Should have raised ValueError, you cannot have both latest=False and no version"
+            )
+        except ValueError:
+            pass
+
+        self.assertIsNone(self.registry.load(skeys, dkeys, latest=True))
+        self.assertIsNone(self.registry.load(skeys, dkeys, latest=False, version="1"))

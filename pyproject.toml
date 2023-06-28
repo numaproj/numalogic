@@ -41,7 +41,7 @@ boto3 = { version = "^1.24.64", optional = true }
 mlflow = ["mlflow-skinny"]
 redis = ["redis"]
 numaflow = ["pynumaflow"]
-boto3 = ["boto3"]
+dynamodb = ["boto3"]
 
 [tool.poetry.group.torch]
 optional = true

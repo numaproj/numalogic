@@ -23,13 +23,15 @@ class AWSConnector:
         region: AWS region (default: us-west-2)
     """
 
-    sess_start_time = None
-    session = None
+    __slots__ = ("role", "region", "session", "sess_start_time")
+
     __STS_RESET_SECS = 30 * 60
 
     def __init__(self, role=None, region="us-west-2"):
         self.role = role
         self.region = region
+        self.session = None
+        self.sess_start_time = None
 
     def get_session(self, new_session=False) -> boto3.Session:
         if new_session:
@@ -64,36 +66,35 @@ class DynamoDBRegistry(ArtifactManager):
     Model saving and loading to and from Dynamodb.
     Args:
         table: table name to use
-        connector: AWSConnector instance
+        role: AWS role with access to DynamoDB
         models_to_retain: number of models to retain in the DB (default = 2)
         cache_registry: ArtifactCache instance, must have an expiration set for the
          model to be refreshed
     Examples
     --------
-    >>> import redis
     >>> from numalogic.models.autoencoder.variants import VanillaAE
-    >>> from numalogic.registry.dynamodb_registry import DynamoDBRegistry, AWSConnector
+    >>> from numalogic.registry import DynamoDBRegistry
     >>> ...
-    >>> connector = AWSConnector(role="arn:aws:iam::1234567890:role/role-name")
-    >>> registry = DynamoDBRegistry(table="mytable", connector=connector)
+    >>> registry = DynamoDBRegistry(table="mytable", role="arn:aws:iam::1234567890:role/role-name")
     >>> skeys, dkeys = ("mymetric", "ae"), ("vanilla", "seq10")
     >>> model = VanillaAE(seq_len=10)
     >>> registry.save(skeys, dkeys, artifact=model, **{'lr': 0.01})
     >>> loaded_artifact = registry.load(skeys, dkeys).
     """
 
-    __slots__ = ("table_name", "connector", "models_to_retain", "cache_registry")
+    __slots__ = ("table_name", "role", "connector", "models_to_retain", "cache_registry")
 
     def __init__(
         self,
         table: str,
-        connector: AWSConnector,
+        role: str,
         models_to_retain=2,
         cache_registry: Optional[ArtifactCache] = None,
     ):
         super().__init__(table)
         self.table_name = table
-        self.connector = connector
+        self.role = role
+        self.connector = AWSConnector(role=role)
         self.models_to_retain = models_to_retain
         self.cache_registry = cache_registry
 
