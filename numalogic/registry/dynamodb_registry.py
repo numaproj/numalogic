@@ -237,14 +237,15 @@ class DynamoDBRegistry(ArtifactManager):
         cached_artifact = self._load_from_cache(cache_key)
 
         if cached_artifact:
-            _LOGGER.debug(f"Found cached artifact for key: {cache_key}")
+            _LOGGER.debug("Found cached artifact for key: %s", cache_key)
             return cached_artifact
 
         try:
             response = table.get_item(Key={"skey": part_key, "dkey": v_sort_key})
-            item = response.get("Item") or {}
         except ClientError as err:
             raise DynamoDBRegistryError(f"{err.__class__.__name__} raised") from err
+
+        item = response.get("Item") or {}
 
         if item and "data" in item:
             artifact_data = self._unpack_artifact_data(item.get("data"))
@@ -363,10 +364,15 @@ class DynamoDBRegistry(ArtifactManager):
                     )
                 else:
                     # Delete the zeroth record pointer if no previous version exists
-                    self.__delete_item(table, part_key, self._construct_version_key(sort_key))
+                    v_sort_key = self._construct_version_key(sort_key)
+                    self.__delete_item(table, part_key, v_sort_key)
+                    self._clear_cache(self._get_cache_key(part_key, v_sort_key))
 
         # Delete the main version record
-        return self.__delete_item(table, part_key, self._construct_version_key(sort_key, version))
+        v_sort_key = self._construct_version_key(sort_key, version)
+        response = self.__delete_item(table, part_key, v_sort_key)
+        self._clear_cache(self._get_cache_key(part_key, v_sort_key))
+        return response
 
     @staticmethod
     def _construct_version_key(sort_key: str, version: int = 0) -> str:
