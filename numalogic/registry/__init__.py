@@ -30,3 +30,10 @@ except ImportError:
     pass
 else:
     __all__.append("RedisRegistry")
+
+try:
+    from numalogic.registry.dynamodb_registry import DynamoDBRegistry  # noqa: F401
+except ImportError:
+    pass
+else:
+    __all__.append("DynamoDBRegistry")
