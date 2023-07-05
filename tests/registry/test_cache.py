@@ -41,7 +41,7 @@ class TestLocalLRUCache(unittest.TestCase):
         )
 
         loaded_artifact = cache_registry.load("m1")
-        self.assertDictEqual({"version": "2"}, loaded_artifact.extras)
+        self.assertDictEqual({"version": "2", "source": "cache"}, loaded_artifact.extras)
 
     def test_cache_ttl(self):
         cache_registry = LocalLRUCache(cachesize=2, ttl=1)

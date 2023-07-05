@@ -123,20 +123,38 @@ class RedisRegistry(ArtifactManager):
             extras={
                 "timestamp": float(artifact_timestamp.decode()),
                 "version": artifact_version.decode(),
+                "source": self._STORETYPE,
             },
         )
 
-    def __load_latest_artifact(self, key: str) -> ArtifactData:
+    def __load_latest_artifact(self, key: str) -> tuple[ArtifactData, bool]:
+        """
+        Load the latest artifact from the registry.
+
+        Args:
+            key: full model key.
+
+        Returns
+        -------
+            ArtifactData and a boolean flag indicating if the artifact was loaded from cache.
+
+        Raises
+        ------
+            ModelKeyNotFound: If the model key is not found in the registry.
+        """
         cached_artifact = self._load_from_cache(key)
         if cached_artifact:
             _LOGGER.debug("Found cached artifact for key: %s", key)
-            return cached_artifact
+            return cached_artifact, True
         latest_key = self.__construct_latest_key(key)
         if not self.client.exists(latest_key):
             raise ModelKeyNotFound(f"latest key: {latest_key}, Not Found !!!")
         model_key = self.client.get(latest_key)
         _LOGGER.info("latest key, %s, is pointing to the key : %s", latest_key, model_key)
-        return self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key)
+        return (
+            self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key),
+            False,
+        )
 
     def __load_version_artifact(self, version: str, key: str) -> ArtifactData:
         model_key = self.__construct_version_key(key, version)
@@ -192,15 +210,17 @@ class RedisRegistry(ArtifactManager):
         if (latest and version) or (not latest and not version):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")
         key = self.construct_key(skeys, dkeys)
+        is_cached = False
         try:
             if latest:
-                artifact_data = self.__load_latest_artifact(key)
-                self._save_in_cache(key, artifact_data)
+                artifact_data, is_cached = self.__load_latest_artifact(key)
             else:
                 artifact_data = self.__load_version_artifact(version, key)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
+            if latest and not is_cached:
+                self._save_in_cache(key, artifact_data)
             return artifact_data
 
     def save(
@@ -228,17 +248,17 @@ class RedisRegistry(ArtifactManager):
         version = 0
         try:
             if self.client.exists(latest_key):
-                _LOGGER.debug("latest key exists for the model")
+                _LOGGER.debug("Latest key exists for the model")
                 version_key = self.client.get(name=latest_key)
                 version = int(self.get_version(version_key.decode())) + 1
             with self.client.pipeline() as pipe:
                 new_version_key = self.__save_artifact(pipe, artifact, metadata, key, str(version))
                 pipe.expire(name=new_version_key, time=self.ttl)
-                _LOGGER.info("Model with the key = %s, loaded successfully.", new_version_key)
                 pipe.execute()
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
+            _LOGGER.info("Model with the key = %s, saved successfully.", new_version_key)
             return str(version)
 
     def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
@@ -255,15 +275,14 @@ class RedisRegistry(ArtifactManager):
         try:
             if self.client.exists(del_key):
                 self.client.delete(del_key)
-                _LOGGER.info("Model with the key = %s, deleted successfully", del_key)
             else:
-                _LOGGER.debug("Key to delete: %s, Not Found !!!\n Exiting.....", del_key)
                 raise ModelKeyNotFound(
-                    "Key to delete: %s, Not Found !!!\n Exiting....." % del_key,
+                    "Key to delete: %s, Not Found!" % del_key,
                 )
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
+            _LOGGER.info("Model with the key = %s, deleted successfully", del_key)
             self._clear_cache(del_key)
 
     @staticmethod

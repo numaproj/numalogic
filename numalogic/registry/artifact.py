@@ -48,6 +48,8 @@ class ArtifactManager(Generic[KEYS, A_D]):
         uri: server/connection uri
     """
 
+    _STORETYPE = "registry"
+
     __slots__ = ("uri",)
 
     def __init__(self, uri: str):
@@ -136,6 +138,8 @@ class ArtifactCache(Generic[M_K, A_D]):
         cachesize: size of the cache
         ttl: time to live for each item in the cache
     """
+
+    _STORETYPE = "cache"
 
     __slots__ = ("_cachesize", "_ttl")
 
