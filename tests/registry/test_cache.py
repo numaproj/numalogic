@@ -1,5 +1,7 @@
 import time
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from threading import Thread
 
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import LocalLRUCache, ArtifactData, ArtifactCache
@@ -72,6 +74,38 @@ class TestLocalLRUCache(unittest.TestCase):
         cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         cache_registry.clear()
         self.assertIsNone(cache_registry.load("m1"))
+
+    def test_multithread(self):
+        def load_cache(idx):
+            artifact_data = cache_reg.load(f"key_{idx}")
+            return idx, artifact_data
+
+        cache_reg = LocalLRUCache(ttl=10)
+        model = VanillaAE(seq_len=10)
+        n_threads = 512
+
+        threads = [
+            Thread(
+                target=cache_reg.save, args=(f"key_{i}", ArtifactData(model, dict(key_idx=i), {}))
+            )
+            for i in range(n_threads)
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        # with ThreadPoolExecutor() as executor:
+        #     futures = [executor.submit(cache_reg.load, f"key_{i}") for i in range(n_threads)]
+
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(load_cache, i) for i in range(n_threads)]
+
+        results = [future.result() for future in futures]
+        self.assertEqual(n_threads, len(cache_reg.keys()))
+        self.assertEqual(n_threads, len(results))
+        for k, afct_data in results:
+            self.assertEqual(k, afct_data.metadata["key_idx"])
 
 
 if __name__ == "__main__":

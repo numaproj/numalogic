@@ -10,10 +10,13 @@
 # limitations under the License.
 
 from copy import deepcopy
+from threading import Lock, Thread
+from time import perf_counter
 from typing import Optional
 
 from cachetools import TTLCache
 
+from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry.artifact import ArtifactCache, ArtifactData
 from numalogic.tools.types import Singleton
 
@@ -34,6 +37,7 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         super().__init__(cachesize, ttl)
         if not self.__cache:
             self.__cache = TTLCache(maxsize=cachesize, ttl=ttl)
+        self.__lock = Lock()
 
     def __contains__(self, artifact_key: str) -> bool:
         """Check if an artifact is in the cache."""
@@ -51,7 +55,8 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         -------
             The artifact data instance if found, None otherwise.
         """
-        return self.__cache.get(artifact_key)
+        with self.__lock:
+            return self.__cache.get(artifact_key)
 
     def save(self, key: str, artifact: ArtifactData) -> None:
         """
@@ -64,7 +69,8 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         """
         artifact = deepcopy(artifact)
         artifact.extras["source"] = self._STORETYPE
-        self.__cache[key] = artifact
+        with self.__lock:
+            self.__cache[key] = artifact
 
     def delete(self, key: str) -> Optional[ArtifactData]:
         """
@@ -78,12 +84,32 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         -------
             The deleted artifact data instance if found, None otherwise.
         """
-        return self.__cache.pop(key, default=None)
+        with self.__lock:
+            return self.__cache.pop(key, default=None)
 
     def clear(self) -> None:
         """Clears the whole cache."""
-        self.__cache.clear()
+        with self.__lock:
+            self.__cache.clear()
 
     def keys(self) -> list[str]:
         """Returns the current keys of the cache."""
         return list(_key for _key in self.__cache)
+
+
+if __name__ == "__main__":
+    cache_reg = LocalLRUCache(ttl=10)
+    model = VanillaAE(seq_len=10)
+    threads = [
+        Thread(target=cache_reg.save, args=(f"key_{i}", ArtifactData(model, {}, {})))
+        for i in range(1000)
+    ]
+
+    start = perf_counter()
+    for thread in threads:
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+    print(f"Time taken: {perf_counter() - start}")
+    print(len(cache_reg.keys()))
