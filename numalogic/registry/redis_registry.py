@@ -197,6 +197,8 @@ class RedisRegistry(ArtifactManager):
         """Loads the artifact from redis registry. Either latest or version (one of the arguments)
          is needed to load the respective artifact.
 
+         If cache registry is provided, it will first check the cache registry for the artifact.
+
         Args:
         ----
             skeys: static key fields as list/tuple of strings
@@ -207,6 +209,11 @@ class RedisRegistry(ArtifactManager):
         Returns
         -------
             ArtifactData instance
+
+        Raises
+        ------
+            ValueError: If both latest and version are provided or none of them are provided.
+            RedisRegistryError: If any redis error occurs.
         """
         if (latest and version) or (not latest and not version):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")
@@ -220,7 +227,7 @@ class RedisRegistry(ArtifactManager):
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
-            if latest and not is_cached:
+            if (not is_cached) and latest:
                 self._save_in_cache(key, artifact_data)
             return artifact_data
 
@@ -242,7 +249,11 @@ class RedisRegistry(ArtifactManager):
 
         Returns
         -------
-            model version
+            Model version (str)
+
+        Raises
+        ------
+            RedisRegistryError: If there is any RedisError while saving the artifact.
         """
         key = self.construct_key(skeys, dkeys)
         latest_key = self.__construct_latest_key(key)
@@ -270,6 +281,11 @@ class RedisRegistry(ArtifactManager):
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             version: model version to delete.
+
+        Raises
+        ------
+            ModelKeyNotFound: If the model version is not found in registry.
+            RedisRegistryError: If there is any RedisError while deleting the artifact.
         """
         key = self.construct_key(skeys, dkeys)
         del_key = self.__construct_version_key(key, version)
@@ -296,6 +312,13 @@ class RedisRegistry(ArtifactManager):
             artifact_data: ArtifactData object to look into
             freq_hr: Frequency of retraining in hours.
 
+        Returns
+        -------
+            True if artifact is stale, False otherwise.
+
+        Raises
+        ------
+            RedisRegistryError: If there is any error while fetching timestamp information.
         """
         try:
             artifact_ts = float(artifact_data.extras["timestamp"])

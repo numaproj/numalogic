@@ -166,7 +166,7 @@ class TestRedisRegistry(unittest.TestCase):
         with self.assertRaises(ModelKeyNotFound):
             self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
 
-    def test_load_model_twice(self):
+    def test_load_latest_model_twice(self):
         with freeze_time(datetime.today() - timedelta(days=5)):
             self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
 
@@ -176,11 +176,26 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertEqual("registry", artifact_data_1.extras["source"])
         self.assertEqual("cache", artifact_data_2.extras["source"])
 
-    def test_cache_ttl(self):
+    def test_load_latest_cache_ttl_expire(self):
         self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
         artifact_data_1 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         time.sleep(1)
         artifact_data_2 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual("registry", artifact_data_1.extras["source"])
+        self.assertEqual("registry", artifact_data_2.extras["source"])
+
+    def test_load_non_latest_model_twice(self):
+        old_version = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+
+        artifact_data_1 = self.registry.load(
+            skeys=self.skeys, dkeys=self.dkeys, latest=False, version=old_version
+        )
+        artifact_data_2 = self.registry.load(
+            skeys=self.skeys, dkeys=self.dkeys, latest=False, version=old_version
+        )
         self.assertEqual("registry", artifact_data_1.extras["source"])
         self.assertEqual("registry", artifact_data_2.extras["source"])
 
