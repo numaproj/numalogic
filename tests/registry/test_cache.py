@@ -80,7 +80,8 @@ class TestLocalLRUCache(unittest.TestCase):
             artifact_data = cache_reg.load(f"key_{idx}")
             return idx, artifact_data
 
-        cache_reg = LocalLRUCache(ttl=10)
+        LocalLRUCache.clear_instances()
+        cache_reg = LocalLRUCache()
         model = VanillaAE(seq_len=10)
         n_threads = 512
 
