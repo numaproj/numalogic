@@ -27,9 +27,11 @@ class TestLocalLRUCache(unittest.TestCase):
 
         self.assertIsNone(cache_registry.load("m1"))
         self.assertIsInstance(cache_registry.load("m2"), ArtifactData)
-        self.assertIsInstance(cache_registry.load("m3"), ArtifactData)
         self.assertEqual(2, cache_registry.cachesize)
         self.assertEqual(1, cache_registry.ttl)
+        self.assertTrue("m2" in cache_registry)
+        self.assertTrue("m3" in cache_registry)
+        self.assertListEqual(["m2", "m3"], cache_registry.keys())
 
     def test_cache_overwrite(self):
         cache_registry = LocalLRUCache(cachesize=2, ttl=1)

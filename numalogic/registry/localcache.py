@@ -9,7 +9,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from collections.abc import KeysView
 from copy import deepcopy
 from typing import Optional
 
@@ -85,6 +84,6 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         """Clears the whole cache."""
         self.__cache.clear()
 
-    def keys(self) -> KeysView[str]:
+    def keys(self) -> list[str]:
         """Returns the current keys of the cache."""
-        return self.__cache.keys()
+        return list(_key for _key in self.__cache)
