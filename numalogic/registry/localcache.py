@@ -10,6 +10,7 @@
 # limitations under the License.
 
 from collections.abc import KeysView
+from copy import deepcopy
 from typing import Optional
 
 from cachetools import TTLCache
@@ -62,6 +63,7 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
             key: The key of the artifact to save.
             artifact: The artifact data instance to save.
         """
+        artifact = deepcopy(artifact)
         artifact.extras["source"] = self._STORETYPE
         self.__cache[key] = artifact
 

@@ -94,6 +94,7 @@ class RedisRegistry(ArtifactManager):
 
     def _save_in_cache(self, key: str, artifact_data: ArtifactData) -> None:
         if self.cache_registry:
+            _LOGGER.debug("Saving artifact in cache with key: %s", key)
             self.cache_registry.save(key, artifact_data)
 
     def _clear_cache(self, key: Optional[str] = None) -> Optional[ArtifactData]:
@@ -150,7 +151,7 @@ class RedisRegistry(ArtifactManager):
         if not self.client.exists(latest_key):
             raise ModelKeyNotFound(f"latest key: {latest_key}, Not Found !!!")
         model_key = self.client.get(latest_key)
-        _LOGGER.info("latest key, %s, is pointing to the key : %s", latest_key, model_key)
+        _LOGGER.debug("latest key, %s, is pointing to the key : %s", latest_key, model_key)
         return (
             self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key),
             False,
@@ -170,7 +171,7 @@ class RedisRegistry(ArtifactManager):
         new_version_key = self.__construct_version_key(key, version)
         latest_key = self.__construct_latest_key(key)
         pipe.set(name=latest_key, value=new_version_key)
-        _LOGGER.info("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
+        _LOGGER.debug("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
         serialized_metadata = ""
         if metadata:
             serialized_metadata = dumps(deserialized_object=metadata)
