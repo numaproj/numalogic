@@ -18,7 +18,7 @@ class RedisRegistry(ArtifactManager):
 
     Args:
     ----
-        client: Take in the reids client already established/created
+        client: Take in the redis client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
         cache_registry: Cache registry to use (default = None).
 
@@ -260,7 +260,7 @@ class RedisRegistry(ArtifactManager):
         version = 0
         try:
             if self.client.exists(latest_key):
-                _LOGGER.debug("Latest key exists for the model")
+                _LOGGER.debug("Latest key: %s exists for the model", latest_key)
                 version_key = self.client.get(name=latest_key)
                 version = int(self.get_version(version_key.decode())) + 1
             with self.client.pipeline() as pipe:
