@@ -40,6 +40,7 @@ class TestRedisRegistry(unittest.TestCase):
         self.registry.client.flushall()
         self.registry_no_cache.client.flushall()
         self.cache.clear()
+        LocalLRUCache.clear_instances()
 
     def test_no_cache(self):
         self.assertIsNone(
