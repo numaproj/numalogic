@@ -1,3 +1,5 @@
+import logging
+import time
 import unittest
 from datetime import datetime, timedelta
 from unittest.mock import Mock, patch
@@ -12,6 +14,8 @@ from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 
+logging.basicConfig(level=logging.DEBUG)
+
 
 class TestRedisRegistry(unittest.TestCase):
     @classmethod
@@ -25,7 +29,7 @@ class TestRedisRegistry(unittest.TestCase):
         cls.redis_client = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
 
     def setUp(self):
-        self.cache = LocalLRUCache(cachesize=4, ttl=300)
+        self.cache = LocalLRUCache(cachesize=4, ttl=1)
         self.registry = RedisRegistry(
             client=self.redis_client,
             cache_registry=self.cache,
@@ -162,19 +166,44 @@ class TestRedisRegistry(unittest.TestCase):
         with self.assertRaises(ModelKeyNotFound):
             self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
 
-    def test_load_model_when_model_stale(self):
-        with self.assertRaises(ModelKeyNotFound):
-            version = self.registry.save(
-                skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-            )
-            self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version=str(version))
-            self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+    def test_load_latest_model_twice(self):
+        with freeze_time(datetime.today() - timedelta(days=5)):
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+
+        artifact_data_1 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        artifact_data_2 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertTrue(self.registry.is_artifact_stale(artifact_data_1, 4))
+        self.assertEqual("registry", artifact_data_1.extras["source"])
+        self.assertEqual("cache", artifact_data_2.extras["source"])
+
+    def test_load_latest_cache_ttl_expire(self):
+        self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+        artifact_data_1 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        time.sleep(1)
+        artifact_data_2 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        self.assertEqual("registry", artifact_data_1.extras["source"])
+        self.assertEqual("registry", artifact_data_2.extras["source"])
+
+    def test_load_non_latest_model_twice(self):
+        old_version = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
+        self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+
+        artifact_data_1 = self.registry.load(
+            skeys=self.skeys, dkeys=self.dkeys, latest=False, version=old_version
+        )
+        artifact_data_2 = self.registry.load(
+            skeys=self.skeys, dkeys=self.dkeys, latest=False, version=old_version
+        )
+        self.assertEqual("registry", artifact_data_1.extras["source"])
+        self.assertEqual("registry", artifact_data_2.extras["source"])
 
     def test_delete_version(self):
+        version = self.registry.save(
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+        )
         with self.assertRaises(ModelKeyNotFound):
-            version = self.registry.save(
-                skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-            )
             self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version=str(version))
             self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
 
