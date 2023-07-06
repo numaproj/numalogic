@@ -10,19 +10,17 @@
 # limitations under the License.
 
 from copy import deepcopy
-from threading import Lock, Thread
-from time import perf_counter
+from threading import Lock
 from typing import Optional
 
 from cachetools import TTLCache
 
-from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry.artifact import ArtifactCache, ArtifactData
 from numalogic.tools.types import Singleton
 
 
 class LocalLRUCache(ArtifactCache, metaclass=Singleton):
-    r"""A local in-memory LRU cache with per item Time-to-live support.
+    r"""A local in-memory LRU cache registry with per artifact Time-to-live support.
 
     Args:
     ----
@@ -95,21 +93,3 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
     def keys(self) -> list[str]:
         """Returns the current keys of the cache."""
         return list(_key for _key in self.__cache)
-
-
-if __name__ == "__main__":
-    cache_reg = LocalLRUCache(ttl=10)
-    model = VanillaAE(seq_len=10)
-    threads = [
-        Thread(target=cache_reg.save, args=(f"key_{i}", ArtifactData(model, {}, {})))
-        for i in range(1000)
-    ]
-
-    start = perf_counter()
-    for thread in threads:
-        thread.start()
-
-    for thread in threads:
-        thread.join()
-    print(f"Time taken: {perf_counter() - start}")
-    print(len(cache_reg.keys()))

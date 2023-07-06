@@ -95,9 +95,6 @@ class TestLocalLRUCache(unittest.TestCase):
         for thread in threads:
             thread.join()
 
-        # with ThreadPoolExecutor() as executor:
-        #     futures = [executor.submit(cache_reg.load, f"key_{i}") for i in range(n_threads)]
-
         with ThreadPoolExecutor() as executor:
             futures = [executor.submit(load_cache, i) for i in range(n_threads)]
 
