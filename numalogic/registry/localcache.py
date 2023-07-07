@@ -10,6 +10,7 @@
 # limitations under the License.
 
 from copy import deepcopy
+from threading import Lock
 from typing import Optional
 
 from cachetools import TTLCache
@@ -19,7 +20,7 @@ from numalogic.tools.types import Singleton
 
 
 class LocalLRUCache(ArtifactCache, metaclass=Singleton):
-    r"""A local in-memory LRU cache with per item Time-to-live support.
+    r"""A local in-memory LRU cache registry with per artifact Time-to-live support.
 
     Args:
     ----
@@ -34,6 +35,7 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         super().__init__(cachesize, ttl)
         if not self.__cache:
             self.__cache = TTLCache(maxsize=cachesize, ttl=ttl)
+        self.__lock = Lock()
 
     def __contains__(self, artifact_key: str) -> bool:
         """Check if an artifact is in the cache."""
@@ -51,7 +53,8 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         -------
             The artifact data instance if found, None otherwise.
         """
-        return self.__cache.get(artifact_key)
+        with self.__lock:
+            return self.__cache.get(artifact_key)
 
     def save(self, key: str, artifact: ArtifactData) -> None:
         """
@@ -64,7 +67,8 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         """
         artifact = deepcopy(artifact)
         artifact.extras["source"] = self._STORETYPE
-        self.__cache[key] = artifact
+        with self.__lock:
+            self.__cache[key] = artifact
 
     def delete(self, key: str) -> Optional[ArtifactData]:
         """
@@ -78,11 +82,13 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         -------
             The deleted artifact data instance if found, None otherwise.
         """
-        return self.__cache.pop(key, default=None)
+        with self.__lock:
+            return self.__cache.pop(key, default=None)
 
     def clear(self) -> None:
         """Clears the whole cache."""
-        self.__cache.clear()
+        with self.__lock:
+            self.__cache.clear()
 
     def keys(self) -> list[str]:
         """Returns the current keys of the cache."""
