@@ -1,5 +1,55 @@
 # Changelog
 
+## v0.5.0.post1 (2023-07-10)
+
+ * [adebf98](https://github.com/numaproj/numalogic/commit/adebf98e9143ec569901c64f72a106575898b6ef) feat: add thread safety to local cache (#224)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.5.0 (2023-07-06)
+
+ * [b21e246](https://github.com/numaproj/numalogic/commit/b21e2463fd929bdbb7aec4e50918d0b081e000b3) fix (RedisRegistry): avoid overwriting cache with the same key during load  (#223)
+ * [0b0daed](https://github.com/numaproj/numalogic/commit/0b0daed7892cce7f08594a2a615acfdf66c04dd0) feat!: add dynamodb registry (#220)
+ * [dacae49](https://github.com/numaproj/numalogic/commit/dacae49207ecda788e2615429ae5ecca3811ab99) fix: dataset slicing (#222)
+ * [7778ae8](https://github.com/numaproj/numalogic/commit/7778ae856d37a8a6b260532ee7923651df180456) fix: update production key to latest key (#221)
+ * [4831180](https://github.com/numaproj/numalogic/commit/483118095fb6e218c861a9b50e4d59b7d5ce11c0) examples: pipeline using block  (#216)
+ * [203c100](https://github.com/numaproj/numalogic/commit/203c10040439c9e85a15dce8929293e51179bb23) Upgraded python support for 3.11 (#211)
+ * [9ebc32f](https://github.com/numaproj/numalogic/commit/9ebc32f0d22975a897f16ddade40568610c9d266) feat!: introduce numalogic blocks (#206)
+ * [4058811](https://github.com/numaproj/numalogic/commit/4058811b3ddc405f7abf45126b21459c6e04d748) fix: redis logging (#209)
+ * [b93bce5](https://github.com/numaproj/numalogic/commit/b93bce59d54af1ef57c7fc00f0c1425dcf4ec910) fix: removing logger level setting (#205)
+ * [6727296](https://github.com/numaproj/numalogic/commit/67272967ef406114b27fa393c5551c74ebcdd0da) fix: add caching logs (#203)
+ * [4411aa7](https://github.com/numaproj/numalogic/commit/4411aa7f0f762a450a925c9546eb66be7de02a55) examples: update with new numalogic and pynumaflow (#202)
+ * [2298be4](https://github.com/numaproj/numalogic/commit/2298be4bbac8f120eed654a45ee2656de402edb1) chore!: refactor preproc and postproc into transforms module (#201)
+ * [9e838ef](https://github.com/numaproj/numalogic/commit/9e838ef3472544dca3f0bc2e2758c25a76bd520f) fix: Sparse AE for vanilla and conv (#199)
+ * [3193159](https://github.com/numaproj/numalogic/commit/3193159eb1f81da6cc3445fe440cb4ef8962e457) fix: registry test_case (#197)
+ * [efa1df7](https://github.com/numaproj/numalogic/commit/efa1df75fcf99874ad34ab22c31b6d2a1c876f59) chore!: Auto detect instance type while mlflow model save (#190)
+ * [4a1effd](https://github.com/numaproj/numalogic/commit/4a1effd9178f6d5103bef2ea5e5c9f7c432d8d8c) feat: add redis caching (#179)
+ * [0f7e6e0](https://github.com/numaproj/numalogic/commit/0f7e6e067a02a0c39954b649085adb027b5b16de) fix: allow import from Registryconfig with optional dependencies (#180)
+ * [6c21e95](https://github.com/numaproj/numalogic/commit/6c21e952d37a8fcf7102f095b85fc193255c04d3) fix: stale check; conf lazy imports (#178)
+ * [f1909a8](https://github.com/numaproj/numalogic/commit/f1909a8fb2e74d2b6ed563b6e12b7d42cadcb5a5) feat: redis registry (#170)
+ * [794ddc6](https://github.com/numaproj/numalogic/commit/794ddc622589a2cf4ef1edb098e51009e23240ea) feat: local memory artifact cache (#165)
+ * [03514d6](https://github.com/numaproj/numalogic/commit/03514d6a33a8b34c8a45f19de170167e31e22678) chore!: drop support for python 3.8 (#164)
+ * [73bbad2](https://github.com/numaproj/numalogic/commit/73bbad2244fab04f208ff139407c22b766904ecd) feat: first benchmarking using KPI anomaly data (#163)
+ * [ed40681](https://github.com/numaproj/numalogic/commit/ed406810cd4de07dc105c3f59313471cefb2058f) feat: support weight decay in optimizers (#161)
+ * [cae88b3](https://github.com/numaproj/numalogic/commit/cae88b32af93fc5ed526e8058a4f73684f1dcfbf) chore!: use torch and lightning 2.0 (#159)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+ * Miroslav Boussarov
+ * Tarun Chawla
+
+## v0.4.1 (2023-06-20)
+
+ * [79987db](https://github.com/numaproj/numalogic/commit/79987db16ce50bc0d110445b67c059f848f99da7) release: v0.4.1 (#218)
+
+### Contributors
+
+ * Avik Basu
+
 ## v0.4.0.post1 (2023-06-06)
 
  * [b134fa2](https://github.com/numaproj/numalogic/commit/b134fa27a05667c4a51fc5585d0b26618f0c0139) fix: redis logging (#209)
