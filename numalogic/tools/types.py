@@ -11,7 +11,7 @@
 
 
 from collections.abc import Sequence
-from typing import Union, TypeVar
+from typing import Union, TypeVar, ClassVar
 
 from sklearn.base import BaseEstimator
 from torch import Tensor
@@ -43,9 +43,13 @@ KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
 class Singleton(type):
     r"""Helper metaclass to use as a Singleton class."""
 
-    _instances = {}
+    _instances: ClassVar[dict] = {}
 
     def __call__(cls, *args, **kwargs):
         if cls not in cls._instances:
             cls._instances[cls] = super().__call__(*args, **kwargs)
         return cls._instances[cls]
+
+    @classmethod
+    def clear_instances(cls):
+        cls._instances = {}

@@ -17,6 +17,7 @@ import numpy.typing as npt
 from numalogic.blocks._transform import Block
 from numalogic.registry import ArtifactManager
 from numalogic.tools.types import artifact_t
+from typing import Optional
 
 
 class BlockPipeline(Sequence[Block]):
@@ -35,7 +36,7 @@ class BlockPipeline(Sequence[Block]):
 
     __slots__ = ("_blocks", "_registry")
 
-    def __init__(self, *blocks: Block, registry: ArtifactManager = None):
+    def __init__(self, *blocks: Block, registry: Optional[ArtifactManager] = None):
         self._blocks = blocks
         self._registry = registry
 

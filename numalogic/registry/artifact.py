@@ -11,7 +11,7 @@
 
 
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar, Union
+from typing import Any, Generic, TypeVar, Union, Optional
 
 from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T, state_dict_t
 
@@ -48,13 +48,15 @@ class ArtifactManager(Generic[KEYS, A_D]):
         uri: server/connection uri
     """
 
+    _STORETYPE = "registry"
+
     __slots__ = ("uri",)
 
     def __init__(self, uri: str):
         self.uri = uri
 
     def load(
-        self, skeys: KEYS, dkeys: KEYS, latest: bool = True, version: str = None
+        self, skeys: KEYS, dkeys: KEYS, latest: bool = True, version: Optional[str] = None
     ) -> ArtifactData:
         """Loads the desired artifact from mlflow registry and returns it.
 
@@ -136,6 +138,8 @@ class ArtifactCache(Generic[M_K, A_D]):
         cachesize: size of the cache
         ttl: time to live for each item in the cache
     """
+
+    _STORETYPE = "cache"
 
     __slots__ = ("_cachesize", "_ttl")
 

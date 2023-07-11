@@ -1,3 +1,14 @@
+# Copyright 2022 The Numaproj Authors.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 import time
 from datetime import datetime, timedelta
@@ -18,7 +29,7 @@ class RedisRegistry(ArtifactManager):
 
     Args:
     ----
-        client: Take in the reids client already established/created
+        client: Take in the redis client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
         cache_registry: Cache registry to use (default = None).
 
@@ -42,7 +53,7 @@ class RedisRegistry(ArtifactManager):
         self,
         client: redis_client_t,
         ttl: int = 604800,
-        cache_registry: ArtifactCache = None,
+        cache_registry: Optional[ArtifactCache] = None,
     ):
         super().__init__("")
         self.client = client
@@ -68,8 +79,8 @@ class RedisRegistry(ArtifactManager):
         return "::".join([_static_key, _dynamic_key])
 
     @staticmethod
-    def __construct_production_key(key: str):
-        return RedisRegistry.construct_key(skeys=[key], dkeys=["PROD"])
+    def __construct_latest_key(key: str):
+        return RedisRegistry.construct_key(skeys=[key], dkeys=["LATEST"])
 
     @staticmethod
     def __construct_version_key(key: str, version: str):
@@ -94,6 +105,7 @@ class RedisRegistry(ArtifactManager):
 
     def _save_in_cache(self, key: str, artifact_data: ArtifactData) -> None:
         if self.cache_registry:
+            _LOGGER.debug("Saving artifact in cache with key: %s", key)
             self.cache_registry.save(key, artifact_data)
 
     def _clear_cache(self, key: Optional[str] = None) -> Optional[ArtifactData]:
@@ -123,22 +135,38 @@ class RedisRegistry(ArtifactManager):
             extras={
                 "timestamp": float(artifact_timestamp.decode()),
                 "version": artifact_version.decode(),
+                "source": self._STORETYPE,
             },
         )
 
-    def __load_latest_artifact(self, key: str) -> ArtifactData:
+    def __load_latest_artifact(self, key: str) -> tuple[ArtifactData, bool]:
+        """
+        Load the latest artifact from the registry.
+
+        Args:
+            key: full model key.
+
+        Returns
+        -------
+            ArtifactData and a boolean flag indicating if the artifact was loaded from cache.
+
+        Raises
+        ------
+            ModelKeyNotFound: If the model key is not found in the registry.
+        """
         cached_artifact = self._load_from_cache(key)
         if cached_artifact:
             _LOGGER.debug("Found cached artifact for key: %s", key)
-            return cached_artifact
-        production_key = self.__construct_production_key(key)
-        if not self.client.exists(production_key):
-            raise ModelKeyNotFound(
-                f"Production key: {production_key}, Not Found !!!\n Exiting....."
-            )
-        model_key = self.client.get(production_key)
-        _LOGGER.info("Production key, %s, is pointing to the key : %s", production_key, model_key)
-        return self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key)
+            return cached_artifact, True
+        latest_key = self.__construct_latest_key(key)
+        if not self.client.exists(latest_key):
+            raise ModelKeyNotFound(f"latest key: {latest_key}, Not Found !!!")
+        model_key = self.client.get(latest_key)
+        _LOGGER.debug("latest key, %s, is pointing to the key : %s", latest_key, model_key)
+        return (
+            self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key),
+            False,
+        )
 
     def __load_version_artifact(self, version: str, key: str) -> ArtifactData:
         model_key = self.__construct_version_key(key, version)
@@ -152,11 +180,9 @@ class RedisRegistry(ArtifactManager):
         self, pipe, artifact: artifact_t, metadata: META_T, key: KEYS, version: str
     ) -> str:
         new_version_key = self.__construct_version_key(key, version)
-        production_key = self.__construct_production_key(key)
-        pipe.set(name=production_key, value=new_version_key)
-        _LOGGER.info(
-            "Setting Production key : %s ,to this new key = %s", production_key, new_version_key
-        )
+        latest_key = self.__construct_latest_key(key)
+        pipe.set(name=latest_key, value=new_version_key)
+        _LOGGER.debug("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
         serialized_metadata = ""
         if metadata:
             serialized_metadata = dumps(deserialized_object=metadata)
@@ -177,34 +203,43 @@ class RedisRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         latest: bool = True,
-        version: str = None,
+        version: Optional[str] = None,
     ) -> Optional[ArtifactData]:
         """Loads the artifact from redis registry. Either latest or version (one of the arguments)
          is needed to load the respective artifact.
+
+         If cache registry is provided, it will first check the cache registry for the artifact.
 
         Args:
         ----
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
-            latest: load the model in production stage
+            latest: load the model in latest stage
             version: version to load.
 
         Returns
         -------
             ArtifactData instance
+
+        Raises
+        ------
+            ValueError: If both latest and version are provided or none of them are provided.
+            RedisRegistryError: If any redis error occurs.
         """
         if (latest and version) or (not latest and not version):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")
         key = self.construct_key(skeys, dkeys)
+        is_cached = False
         try:
             if latest:
-                artifact_data = self.__load_latest_artifact(key)
-                self._save_in_cache(key, artifact_data)
+                artifact_data, is_cached = self.__load_latest_artifact(key)
             else:
                 artifact_data = self.__load_version_artifact(version, key)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
+            if (not is_cached) and latest:
+                self._save_in_cache(key, artifact_data)
             return artifact_data
 
     def save(
@@ -225,24 +260,28 @@ class RedisRegistry(ArtifactManager):
 
         Returns
         -------
-            model version
+            Model version (str)
+
+        Raises
+        ------
+            RedisRegistryError: If there is any RedisError while saving the artifact.
         """
         key = self.construct_key(skeys, dkeys)
-        production_key = self.__construct_production_key(key)
+        latest_key = self.__construct_latest_key(key)
         version = 0
         try:
-            if self.client.exists(production_key):
-                _LOGGER.debug("Production key exists for the model")
-                version_key = self.client.get(name=production_key)
+            if self.client.exists(latest_key):
+                _LOGGER.debug("Latest key: %s exists for the model", latest_key)
+                version_key = self.client.get(name=latest_key)
                 version = int(self.get_version(version_key.decode())) + 1
             with self.client.pipeline() as pipe:
                 new_version_key = self.__save_artifact(pipe, artifact, metadata, key, str(version))
                 pipe.expire(name=new_version_key, time=self.ttl)
-                _LOGGER.info("Model with the key = %s, loaded successfully.", new_version_key)
                 pipe.execute()
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
+            _LOGGER.info("Model with the key = %s, saved successfully.", new_version_key)
             return str(version)
 
     def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
@@ -253,21 +292,25 @@ class RedisRegistry(ArtifactManager):
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             version: model version to delete.
+
+        Raises
+        ------
+            ModelKeyNotFound: If the model version is not found in registry.
+            RedisRegistryError: If there is any RedisError while deleting the artifact.
         """
         key = self.construct_key(skeys, dkeys)
         del_key = self.__construct_version_key(key, version)
         try:
             if self.client.exists(del_key):
                 self.client.delete(del_key)
-                _LOGGER.info("Model with the key = %s, deleted successfully", del_key)
             else:
-                _LOGGER.debug("Key to delete: %s, Not Found !!!\n Exiting.....", del_key)
                 raise ModelKeyNotFound(
-                    "Key to delete: %s, Not Found !!!\n Exiting....." % del_key,
+                    "Key to delete: %s, Not Found!" % del_key,
                 )
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
+            _LOGGER.info("Model with the key = %s, deleted successfully", del_key)
             self._clear_cache(del_key)
 
     @staticmethod
@@ -280,6 +323,13 @@ class RedisRegistry(ArtifactManager):
             artifact_data: ArtifactData object to look into
             freq_hr: Frequency of retraining in hours.
 
+        Returns
+        -------
+            True if artifact is stale, False otherwise.
+
+        Raises
+        ------
+            RedisRegistryError: If there is any error while fetching timestamp information.
         """
         try:
             artifact_ts = float(artifact_data.extras["timestamp"])

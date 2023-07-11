@@ -21,6 +21,7 @@ from torch import Tensor
 
 from numalogic.tools.callbacks import ProgressDetails
 from numalogic.tools.data import inverse_window
+from typing import Optional
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ class AutoencoderTrainer(Trainer):
             **trainer_kw
         )
 
-    def predict(self, model: pl.LightningModule = None, unbatch=True, **kwargs) -> Tensor:
+    def predict(self, model: Optional[pl.LightningModule] = None, unbatch=True, **kwargs) -> Tensor:
         r"""Predicts the output of the model.
 
         Args:

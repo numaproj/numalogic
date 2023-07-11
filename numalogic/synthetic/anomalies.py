@@ -15,6 +15,7 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from typing import Optional, ClassVar
 
 
 class AnomalyGenerator:
@@ -41,7 +42,12 @@ class AnomalyGenerator:
         random_seed: seed for random number generator.
     """
 
-    __MIN_COLUMNS = {"global": 1, "contextual": 1, "causal": 2, "collective": 2}
+    __MIN_COLUMNS: ClassVar[dict[str, int]] = {
+        "global": 1,
+        "contextual": 1,
+        "causal": 2,
+        "collective": 2,
+    }
 
     def __init__(
         self,
@@ -80,7 +86,7 @@ class AnomalyGenerator:
         raise ValueError(f"Invalid anomaly sign provided: {self.anomaly_sign}")
 
     def inject_anomalies(
-        self, target_df: pd.DataFrame, cols: Sequence[str] = None, **kwargs
+        self, target_df: pd.DataFrame, cols: Optional[Sequence[str]] = None, **kwargs
     ) -> pd.DataFrame:
         """@param target_df: Target DataFrame where anomalies will be injected
         @param cols: Columns to inject anomalies
@@ -97,7 +103,7 @@ class AnomalyGenerator:
         raise AttributeError(f"Invalid anomaly type provided: {self.anomaly_type}")
 
     def _inject_global_anomalies(
-        self, target_df: pd.DataFrame, cols: Sequence[str] = None, impact=3
+        self, target_df: pd.DataFrame, cols: Optional[Sequence[str]] = None, impact=3
     ) -> pd.DataFrame:
         target_df = self._init_target_df(target_df, cols)
         anomaly_df = pd.DataFrame(index=target_df.index)

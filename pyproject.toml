@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.4.0.post1"
+version = "0.5.0.post1"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -35,11 +35,13 @@ cachetools = "^5.3.0"
 mlflow-skinny = { version = ">2.0, <3.0", optional = true }
 redis = {extras = ["hiredis"], version = "^4.5.4", optional = true}
 pynumaflow = { version = "~0.4", optional = true }
+boto3 = { version = "^1.24.64", optional = true }
 
 [tool.poetry.extras]
 mlflow = ["mlflow-skinny"]
 redis = ["redis"]
 numaflow = ["pynumaflow"]
+dynamodb = ["boto3"]
 
 [tool.poetry.group.torch]
 optional = true
@@ -56,11 +58,12 @@ black = "^23.0"
 pytest = "^7.1"
 pytest-cov = "^4.0"
 torchinfo = "^1.7.2"
-ruff = "^0.0.264"
+ruff = "~0.0.275"
 pre-commit = "^3.3.1"
 fakeredis = "^2.11.2"
 freezegun = "^1.2.2"
 pympler = "^1.0.1"
+moto = "^4.0.1"
 
 [tool.poetry.group.jupyter]
 optional = true

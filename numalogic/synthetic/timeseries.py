@@ -15,6 +15,7 @@ import pandas as pd
 from datetime import date
 
 from numpy.typing import NDArray
+from typing import Optional
 
 
 class SyntheticTSGenerator:
@@ -51,7 +52,7 @@ class SyntheticTSGenerator:
         amplitude_range=(10, 40),
         cosine_ratio_range=(0.5, 0.9),
         noise_range=(5, 15),
-        phase_shift_range: tuple[int, int] = None,
+        phase_shift_range: Optional[tuple[int, int]] = None,
         random_seed: int = 42,
     ):
         self.seq_len = seq_len
