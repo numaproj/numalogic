@@ -1,12 +1,8 @@
 import os
 import time
-
-import numpy as np
 import orjson
-
-from typing import List, Iterator
-
 import pandas as pd
+from typing import List, Iterator
 from numalogic.config import (
     NumalogicConf,
     ThresholdFactory,
@@ -19,13 +15,14 @@ from numalogic.registry import RedisRegistry
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import redis_client_t
-from numpy import DataSource
 from pynumaflow.function import Datum
 from pynumaflow.sink import Responses, Response
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
 from src import get_logger
+from src._config import DataSource
+from src.connectors.druid import DruidFetcher
 from src.connectors.prometheus import PrometheusDataFetcher
 from src.connectors.sentinel import get_redis_client_from_conf
 from src.entities import TrainerPayload
@@ -37,19 +34,43 @@ REQUEST_EXPIRY = int(os.getenv("REQUEST_EXPIRY", 300))
 
 
 class Train:
+
+    @classmethod
+    def fetch_prometheus_data(cls, payload: TrainerPayload) -> pd.DataFrame:
+        prometheus_conf = ConfigManager.get_prom_config()
+        if prometheus_conf is None:
+            _LOGGER.error("Prometheus config is not available")
+            return pd.DataFrame()
+        data_fetcher = PrometheusDataFetcher(prometheus_conf.server)
+        return data_fetcher.fetch_data(
+            metric=payload.metric,
+            labels={"namespace": payload.composite_keys[1]},
+            return_labels=["rollouts_pod_template_hash"],
+        )
+
+    @classmethod
+    def fetch_druid_data(cls, payload: TrainerPayload) -> pd.DataFrame:
+        stream_config = ConfigManager.get_ds_config(payload.composite_keys[0])
+        druid_conf = ConfigManager.get_druid_config()
+        fetcher_conf = stream_config.druid_fetcher
+        if druid_conf is None:
+            _LOGGER.error("Druid config is not available")
+            return pd.DataFrame()
+        data_fetcher = DruidFetcher(url=druid_conf.url, endpoint=druid_conf.endpoint)
+        return data_fetcher.fetch_data(
+            filter_keys=stream_config.composite_keys,
+            filter_values=payload.composite_keys,
+            **fetcher_conf.__dict__
+        )
+
+
     @classmethod
     def fetch_data(cls, payload: TrainerPayload) -> pd.DataFrame:
-        stream_config = ConfigManager.get_datastream_config(payload.composite_keys[0])
+        stream_config = ConfigManager.get_ds_config(payload.composite_keys[0])
         if stream_config.source == DataSource.PROMETHEUS:
-            prometheus_conf = ConfigManager.get_prometheus_config()
-            data_fetcher = PrometheusDataFetcher(prometheus_conf.server)
-            return data_fetcher.fetch_data(
-                metric=payload.metric,
-                labels={"namespace": payload.composite_keys[1]},
-                return_labels=["rollouts_pod_template_hash"],
-            )
-        elif stream_config.source == DataSource.KAFKA:
-            return pd.DataFrame()
+            return cls.fetch_prometheus_data(payload)
+        elif stream_config.source == DataSource.DRUID:
+            return cls.fetch_druid_data(payload)
 
         _LOGGER.error(
             "Data source is not supported, source: %s, keys: %s",
@@ -108,11 +129,11 @@ class Train:
         return thresh_clf
 
     def _train_and_save(
-        self,
-        numalogic_conf: NumalogicConf,
-        payload: TrainerPayload,
-        redis_client: redis_client_t,
-        train_df: pd.DataFrame,
+            self,
+            numalogic_conf: NumalogicConf,
+            payload: TrainerPayload,
+            redis_client: redis_client_t,
+            train_df: pd.DataFrame,
     ) -> None:
         model_cfg = numalogic_conf.model
         preproc_cfgs = numalogic_conf.preprocess

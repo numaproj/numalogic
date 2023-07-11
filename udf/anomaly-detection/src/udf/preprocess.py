@@ -107,7 +107,7 @@ class Preprocess:
             return messages
 
         # Load config
-        stream_conf = ConfigManager.get_datastream_config(config_name=keys[0])
+        stream_conf = ConfigManager.get_ds_config(config_name=keys[0])
         raw_df, timestamps = self.get_df(data_payload, stream_conf.metrics)
 
         # Prepare payload for forwarding

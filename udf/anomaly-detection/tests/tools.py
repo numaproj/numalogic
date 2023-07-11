@@ -200,16 +200,7 @@ def return_threshold_clf(n_feat=1):
     )
 
 
-def mock_argocd_query_metric(*_, **__):
-    return pd.read_csv(
-        os.path.join(TESTS_DIR, "resources", "data", "argocd.csv"),
-        index_col="timestamp",
-        parse_dates=["timestamp"],
-        infer_datetime_format=True,
-    )
-
-
-def mock_rollout_query_metric(*_, **__):
+def mock_prom_query_metric(*_, **__):
     return pd.read_csv(
         os.path.join(TESTS_DIR, "resources", "data", "argorollouts.csv"),
         index_col="timestamp",
@@ -218,7 +209,7 @@ def mock_rollout_query_metric(*_, **__):
     )
 
 
-def mock_rollout_query_metric2(*_, **__):
+def mock_prom_query_metric2(*_, **__):
     df = pd.read_csv(
         os.path.join(TESTS_DIR, "resources", "data", "argorollouts.csv"),
         index_col="timestamp",

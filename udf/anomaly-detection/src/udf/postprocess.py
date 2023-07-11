@@ -53,8 +53,8 @@ class Postprocess:
     def get_unified_anomaly(
         cls, keys: List[str], scores: list[float], payload: StreamPayload
     ) -> float:
-        unified_config = ConfigManager.get_unified_config(config_name=keys[0])
-        unified_weights = unified_config.unified_weights
+        unified_config = ConfigManager.get_ds_config(config_name=keys[0]).unified_config
+        unified_weights = unified_config.weights
         if unified_weights:
             weighted_anomalies = np.multiply(scores, unified_weights)
             unified_anomaly = float(np.sum(weighted_anomalies) / np.sum(unified_weights))

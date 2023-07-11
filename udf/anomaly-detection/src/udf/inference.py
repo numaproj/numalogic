@@ -34,7 +34,7 @@ class Inference:
         artifact_data: ArtifactData,
     ) -> np.ndarray:
         model = artifact_data.artifact
-        win_size = ConfigManager.get_datastream_config(config_name=keys[0]).window_size
+        win_size = ConfigManager.get_ds_config(config_name=keys[0]).window_size
         metric_arr = payload.get_metric_arr(metric=metric).reshape(-1, 1)
         stream_loader = DataLoader(StreamingDataset(metric_arr, win_size))
 

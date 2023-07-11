@@ -80,7 +80,7 @@ def get_redis_client_from_conf(redis_conf: RedisConf = None, **kwargs) -> redis_
         Redis client instance
     """
     if not redis_conf:
-        redis_conf = ConfigManager.get_redis_config()
+        redis_conf = ConfigManager.get_pipeline_config().redis_conf
 
     return get_redis_client(
         redis_conf.host,

@@ -5,7 +5,6 @@ import pytz
 import requests
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional
 
 from src import get_logger
 
@@ -21,8 +20,8 @@ class Prometheus:
         metric_name: str,
         start: float,
         end: float,
-        labels_map: Dict = None,
-        return_labels: List[str] = None,
+        labels_map: dict = None,
+        return_labels: list[str] = None,
         step: int = 30,
     ) -> pd.DataFrame:
         query = metric_name
@@ -35,68 +34,73 @@ class Prometheus:
         if end < start:
             raise ValueError("end_time must not be before start_time")
 
-        result = self.query_range(query, start, end, step)
+        results = self.query_range(query, start, end, step)
 
-        arr = np.array(result["values"])
-        df = pd.DataFrame(arr, columns=["timestamp", metric_name])
-        df = df.astype(float)
+        frames = []
+        for result in results:
+            _LOGGER.debug(
+                "Prometheus query has returned %s values for %s.",
+                len(result["values"]),
+                result["metric"],
+            )
+            arr = np.array(result["values"], dtype=float)
+            _df = pd.DataFrame(arr, columns=["timestamp", metric_name])
 
-        data = result["metric"]
-        if return_labels:
-            for label in return_labels:
-                if label in data:
-                    df[label] = data[label]
+            data = result["metric"]
+            if return_labels:
+                for label in return_labels:
+                    if label in data:
+                        _df[label] = data[label]
+            frames.append(_df)
 
-        if not df.empty:
-            df.set_index("timestamp", inplace=True)
-            df.index = pd.to_datetime(df.index.astype(int), unit="s")
+        df = pd.DataFrame()
+        if frames:
+            df = pd.concat(frames, ignore_index=True)
+            df.sort_values(by=["timestamp"], inplace=True)
+            df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+
         return df
 
-    def query_range(self, query: str, start: float, end: float, step: int = 30) -> Optional[Dict]:
-        results = {}
+    def query_range(self, query: str, start: float, end: float, step: int = 30) -> list | None:
+        results = []
         data_points = (end - start) / step
         temp_start = start
         while data_points > 11000:
             temp_end = temp_start + 11000 * step
             response = self.query_range_limit(query, temp_start, temp_end, step)
-            if results:
-                results["values"] = results["values"] + response["values"]
-            else:
-                results = response
+            for res in response:
+                results.append(res)
             temp_start = temp_end
             data_points = (end - temp_start) / step
 
         if data_points > 0:
             response = self.query_range_limit(query, temp_start, end)
-            if results:
-                results["values"] = results["values"] + response["values"]
-            else:
-                _LOGGER.debug("Prometheus query has returned empty results.")
-                results = response
-
+            for res in response:
+                results.append(res)
         return results
 
-    def query_range_limit(
-        self, query: str, start: float, end: float, step: int = 30
-    ) -> Optional[Dict]:
+    def query_range_limit(self, query: str, start: float, end: float, step: int = 30) -> list:
+        results = []
         data_points = (end - start) / step
 
         if data_points > 11000:
             _LOGGER.info("Limit query only supports 11,000 data points")
-            return None
-
-        results = None
+            return results
         try:
             response = requests.get(
                 self.PROMETHEUS_SERVER + "/api/v1/query_range",
                 params={"query": query, "start": start, "end": end, "step": f"{step}s"},
             )
-            results = response.json()["data"]["result"][0]
+            results = response.json()["data"]["result"]
+            _LOGGER.debug(
+                "Prometheus query has returned results for %s metric series.",
+                len(results),
+            )
         except Exception as ex:
             _LOGGER.exception("Prometheus error: %r", ex)
         return results
 
-    def query(self, query: str) -> Optional[Dict]:
+    def query(self, query: str) -> dict | None:
         results = []
         try:
             response = requests.get(

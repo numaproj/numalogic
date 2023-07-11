@@ -6,14 +6,13 @@ from dataclasses import dataclass, field
 from numalogic.config import NumalogicConf
 
 from src.connectors import RedisConf, RegistryConf, PrometheusConf
+from src.connectors._config import DruidConf, DruidFetcherConf
 
 
 @dataclass
 class UnifiedConf:
-    unified_metric_name: str = "default"
-    unified_strategy: str = "max"
-    unified_metrics: List[str] = field(default_factory=list)
-    unified_weights: List[float] = field(default_factory=list)
+    strategy: str = "max"
+    weights: List[float] = field(default_factory=list)
 
 
 @dataclass
@@ -32,7 +31,7 @@ class StaticThreshold:
 
 @dataclass
 class MetricConf:
-    metric: str = "default"
+    metric: str
     retrain_conf: ReTrainConf = field(default_factory=lambda: ReTrainConf())
     static_threshold: StaticThreshold = field(default_factory=lambda: StaticThreshold())
     numalogic_conf: NumalogicConf = MISSING
@@ -40,18 +39,19 @@ class MetricConf:
 
 class DataSource(str, Enum):
     PROMETHEUS = "prometheus"
-    KAFKA = "kafka"
+    DRUID = "druid"
 
 
 @dataclass
 class DataStreamConf:
     name: str = "default"
     source: DataSource = DataSource.PROMETHEUS
+    window_size: int = 12
     composite_keys: List[str] = field(default_factory=list)
     metrics: List[str] = field(default_factory=list)
-    window_size: int = 12
-    metric_configs: List[MetricConf] = field(default_factory=lambda: [MetricConf()])
-    unified_config: UnifiedConf = field(default_factory=lambda: UnifiedConf())
+    metric_configs: List[MetricConf] = field(default_factory=list)
+    unified_config: UnifiedConf = field(default_factory=lambda : UnifiedConf())
+    druid_fetcher: DruidFetcherConf = MISSING
 
 
 @dataclass
@@ -64,3 +64,4 @@ class PipelineConf:
     redis_conf: RedisConf
     registry_conf: RegistryConf
     prometheus_conf: PrometheusConf = MISSING
+    druid_conf: DruidConf = MISSING

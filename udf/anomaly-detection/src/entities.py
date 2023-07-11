@@ -114,13 +114,17 @@ class InputPayload:
     start_time: int
     end_time: int
     data: list[dict[str, Any]]
+    metadata: dict[str, Any]
+
+    def to_json(self):
+        return orjson.dumps(self, option=orjson.OPT_SERIALIZE_NUMPY)
 
 
 @dataclass
 class OutputPayload:
     timestamp: int
-    data: dict[str, Any]
     unified_anomaly: float
+    data: dict[str, Any]
     metadata: dict[str, Any]
 
     def to_json(self):

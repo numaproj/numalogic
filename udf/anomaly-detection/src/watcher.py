@@ -11,6 +11,7 @@ from src import PipelineConf, Configs
 from src.connectors import RedisConf, PrometheusConf, RegistryConf
 from src._constants import CONFIG_DIR
 from src import DataStreamConf, get_logger, MetricConf, UnifiedConf
+from src.connectors._config import DruidConf
 
 _LOGGER = get_logger(__name__)
 
@@ -54,7 +55,7 @@ class ConfigManager:
         return cls.config
 
     @classmethod
-    def get_datastream_config(cls, config_name: str) -> DataStreamConf:
+    def get_ds_config(cls, config_name: str) -> DataStreamConf:
         if not cls.config:
             cls.update_configs()
 
@@ -68,7 +69,7 @@ class ConfigManager:
         if not ds_config and config_name in cls.config["default_configs"]:
             ds_config = cls.config["default_configs"][config_name]
 
-        # if not in default configs, initialize Namespace conf with default values
+        # if not in default configs, initialize conf with default values
         if not ds_config:
             ds_config = OmegaConf.structured(DataStreamConf)
 
@@ -81,17 +82,23 @@ class ConfigManager:
 
     @classmethod
     def get_metric_config(cls, config_name: str, metric_name: str) -> MetricConf:
-        ds_config = cls.get_datastream_config(config_name)
+        ds_config = cls.get_ds_config(config_name)
         metric_config = list(
             filter(lambda conf: (conf.metric == metric_name), ds_config.metric_configs)
         )
+
+        # if no config found for metric, initialize with default values
         if not metric_config:
-            return ds_config.metric_configs[0]
+            metric_config = OmegaConf.structured(MetricConf(metric=metric_name))
+            if OmegaConf.is_missing(metric_config, "numalogic_conf"):
+                metric_config.numalogic_conf = cls.config["default_numalogic"]
+
+            return metric_config
         return metric_config[0]
 
     @classmethod
     def get_unified_config(cls, config_name: str) -> UnifiedConf:
-        ds_config = cls.get_datastream_config(config_name)
+        ds_config = cls.get_ds_config(config_name)
         return ds_config.unified_config
 
     @classmethod
@@ -101,17 +108,15 @@ class ConfigManager:
         return cls.config["pipeline_config"]
 
     @classmethod
-    def get_redis_config(cls) -> RedisConf:
-        return cls.get_pipeline_config().redis_conf
-
-    @classmethod
-    def get_registry_config(cls) -> RegistryConf:
-        return cls.get_pipeline_config().registry_conf
-
-    @classmethod
-    def get_prometheus_config(cls) -> Optional[PrometheusConf]:
+    def get_prom_config(cls) -> Optional[PrometheusConf]:
         if "prometheus_conf" in cls.get_pipeline_config():
             return cls.get_pipeline_config().prometheus_conf
+        return None
+
+    @classmethod
+    def get_druid_config(cls) -> Optional[DruidConf]:
+        if "druid_conf" in cls.get_pipeline_config():
+            return cls.get_pipeline_config().druid_conf
         return None
 
     @classmethod
@@ -122,9 +127,9 @@ class ConfigManager:
 
     @classmethod
     def get_preprocess_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(
+        return cls.get_numalogic_config(
             config_name=config_name, metric_name=metric_name
-        ).numalogic_conf.preprocess
+        ).preprocess
 
     @classmethod
     def get_retrain_config(cls, config_name: str, metric_name: str):
@@ -144,20 +149,18 @@ class ConfigManager:
 
     @classmethod
     def get_postprocess_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(
+        return cls.get_numalogic_config(
             config_name=config_name, metric_name=metric_name
-        ).numalogic_conf.postprocess
+        ).postprocess
 
     @classmethod
     def get_trainer_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(
+        return cls.get_numalogic_config(
             config_name=config_name, metric_name=metric_name
-        ).numalogic_conf.trainer
+        ).trainer
 
 
 class ConfigHandler(FileSystemEventHandler):
-    def ___init__(self):
-        self.config_manger = ConfigManager
 
     def on_any_event(self, event):
         if event.event_type == "created" or event.event_type == "modified":
@@ -165,7 +168,7 @@ class ConfigHandler(FileSystemEventHandler):
             _dir = os.path.basename(os.path.dirname(event.src_path))
 
             _LOGGER.info("Watchdog received %s event - %s/%s", event.event_type, _dir, _file)
-            self.config_manger.update_configs()
+            ConfigManager.update_configs()
 
 
 class Watcher:

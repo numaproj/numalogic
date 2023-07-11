@@ -82,7 +82,7 @@ def fetch_data(
     hours: int = 36,
 ) -> pd.DataFrame:
     _start_time = time.time()
-    prometheus_conf = ConfigManager.get_prometheus_config()
+    prometheus_conf = ConfigManager.get_prom_config()
     datafetcher = Prometheus(prometheus_conf.server)
 
     end_dt = datetime.now(pytz.utc)
