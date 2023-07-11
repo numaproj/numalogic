@@ -12,15 +12,15 @@ from src.connectors.druid import DruidFetcher
 def mock_group_by(*_, **__):
     result = [
         {
-            'version': 'v1',
-            'timestamp': '2023-07-11T01:36:00.000Z',
-            'event': {'count': 5.0, 'ciStatus': 'success'}
+            "version": "v1",
+            "timestamp": "2023-07-11T01:36:00.000Z",
+            "event": {"count": 5.0, "ciStatus": "success"},
         },
         {
-            'version': 'v1',
-            'timestamp': '2023-07-11T01:37:00.000Z',
-            'event': {'count': 1.0, 'ciStatus': 'success'}
-        }
+            "version": "v1",
+            "timestamp": "2023-07-11T01:37:00.000Z",
+            "event": {"count": 1.0, "ciStatus": "success"},
+        },
     ]
     query = pydruid.query.Query(query_dict={}, query_type="groupBy")
     query.parse(json.dumps(result))
@@ -50,11 +50,7 @@ class TestDruid(unittest.TestCase):
             aggregations={"count": doublesum("count")},
             group_by=["timestamp", "ciStatus"],
             hours=0.1,
-            pivot={
-                "index": "timestamp",
-                "columns": ["ciStatus"],
-                "values": "count"
-            }
+            pivot={"index": "timestamp", "columns": ["ciStatus"], "values": "count"},
         )
         self.assertEqual(_out.shape, (2, 1))
 

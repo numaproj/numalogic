@@ -50,7 +50,7 @@ class DataStreamConf:
     composite_keys: List[str] = field(default_factory=list)
     metrics: List[str] = field(default_factory=list)
     metric_configs: List[MetricConf] = field(default_factory=list)
-    unified_config: UnifiedConf = field(default_factory=lambda : UnifiedConf())
+    unified_config: UnifiedConf = field(default_factory=lambda: UnifiedConf())
     druid_fetcher: DruidFetcherConf = MISSING
 
 

@@ -28,6 +28,7 @@ def as_datum(data: str | bytes | dict, msg_id="1") -> Datum:
         sink_msg_id=msg_id, value=data, event_time=datetime.now(), watermark=datetime.now(), keys=[]
     )
 
+
 class TestTrainer(unittest.TestCase):
     train_payload = {
         "uuid": "123124543",
@@ -41,10 +42,7 @@ class TestTrainer(unittest.TestCase):
 
     train_payload2 = {
         "uuid": "123124543",
-        "composite_keys": [
-            'fciAsset',
-            '5984175597303660107'
-        ],
+        "composite_keys": ["fciAsset", "5984175597303660107"],
         "metric": "metric_1",
     }
 
@@ -59,7 +57,7 @@ class TestTrainer(unittest.TestCase):
 
     @patch.object(Prometheus, "query_metric", Mock(return_value=mock_prom_query_metric2()))
     def test_prometheus_03(self):
-        _out = Train().run(datums =iter([as_datum(self.train_payload2)]))
+        _out = Train().run(datums=iter([as_datum(self.train_payload2)]))
         self.assertTrue(_out[0].success)
         self.assertEqual("123124543", _out[0].id)
 

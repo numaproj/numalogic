@@ -17,16 +17,16 @@ class DruidFetcher:
         self.query_builder = QueryBuilder()
 
     def fetch_data(
-            self,
-            datasource: str,
-            filter_keys: list[str],
-            filter_values: list[str],
-            dimensions: list[str],
-            granularity: str = "minute",
-            aggregations: dict = None,
-            group_by: list[str] = None,
-            pivot: dict = None,
-            hours: float = 24,
+        self,
+        datasource: str,
+        filter_keys: list[str],
+        filter_values: list[str],
+        dimensions: list[str],
+        granularity: str = "minute",
+        aggregations: dict = None,
+        group_by: list[str] = None,
+        pivot: dict = None,
+        hours: float = 24,
     ) -> pd.DataFrame:
         filter_pairs = {}
         for k, v in zip(filter_keys, filter_values):
@@ -34,10 +34,7 @@ class DruidFetcher:
 
         _filter = Filter(
             type="and",
-            fields=[
-                Filter(type="selector", dimension=k, value=v)
-                for k, v in filter_pairs.items()
-            ],
+            fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
         )
 
         end_dt = datetime.now(pytz.utc)
@@ -59,7 +56,7 @@ class DruidFetcher:
             logging.warning("No data found for keys %s", filter_pairs)
             return pd.DataFrame()
 
-        df['timestamp'] = pd.to_datetime(df['timestamp']).astype("int64") // 10 ** 6
+        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
 
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()

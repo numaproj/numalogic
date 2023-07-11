@@ -34,7 +34,6 @@ REQUEST_EXPIRY = int(os.getenv("REQUEST_EXPIRY", 300))
 
 
 class Train:
-
     @classmethod
     def fetch_prometheus_data(cls, payload: TrainerPayload) -> pd.DataFrame:
         prometheus_conf = ConfigManager.get_prom_config()
@@ -60,9 +59,8 @@ class Train:
         return data_fetcher.fetch_data(
             filter_keys=stream_config.composite_keys,
             filter_values=payload.composite_keys,
-            **fetcher_conf.__dict__
+            **fetcher_conf.__dict__,
         )
-
 
     @classmethod
     def fetch_data(cls, payload: TrainerPayload) -> pd.DataFrame:
@@ -129,11 +127,11 @@ class Train:
         return thresh_clf
 
     def _train_and_save(
-            self,
-            numalogic_conf: NumalogicConf,
-            payload: TrainerPayload,
-            redis_client: redis_client_t,
-            train_df: pd.DataFrame,
+        self,
+        numalogic_conf: NumalogicConf,
+        payload: TrainerPayload,
+        redis_client: redis_client_t,
+        train_df: pd.DataFrame,
     ) -> None:
         model_cfg = numalogic_conf.model
         preproc_cfgs = numalogic_conf.preprocess

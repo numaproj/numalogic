@@ -127,9 +127,7 @@ class ConfigManager:
 
     @classmethod
     def get_preprocess_config(cls, config_name: str, metric_name: str):
-        return cls.get_numalogic_config(
-            config_name=config_name, metric_name=metric_name
-        ).preprocess
+        return cls.get_numalogic_config(config_name=config_name, metric_name=metric_name).preprocess
 
     @classmethod
     def get_retrain_config(cls, config_name: str, metric_name: str):
@@ -155,13 +153,10 @@ class ConfigManager:
 
     @classmethod
     def get_trainer_config(cls, config_name: str, metric_name: str):
-        return cls.get_numalogic_config(
-            config_name=config_name, metric_name=metric_name
-        ).trainer
+        return cls.get_numalogic_config(config_name=config_name, metric_name=metric_name).trainer
 
 
 class ConfigHandler(FileSystemEventHandler):
-
     def on_any_event(self, event):
         if event.event_type == "created" or event.event_type == "modified":
             _file = os.path.basename(event.src_path)
