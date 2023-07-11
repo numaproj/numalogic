@@ -1,0 +1,38 @@
+configs:
+  - name: "fciAsset"
+    composite_keys: [ "assetId" ]
+    metrics: [ "ciStatus_failed" , "ciStatus_degraded" ]
+    druid_fetcher:
+      dimensions: [ "ciStatus" ]
+      datasource: "tech-ip-customer-interaction-metrics"
+      group_by: [ "timestamp", "ciStatus" ]
+      pivot:
+        columns:
+          - "ciStatus"
+  - name: "service-mesh"
+    composite_keys: [ "destination_asset_id" ]
+    metrics: [ "error_rate" , "error_count" ]
+  - name: "service-mesh-s2s"
+    composite_keys: ["source_asset_id, destination_asset_id"]
+    metrics: [ "error_rate", "error_count" ]
+  - name: "argo-rollouts"
+    composite_keys: [ "namespace", "name", "app", "rollouts_pod_template_hash" ]
+    metrics: [ "namespace_app_rollouts_http_request_error_rate"]
+    metric_configs:
+      - metric: "namespace_app_rollouts_http_request_error_rate"
+        static_threshold:
+          weight: 0.7
+  - name: "argo-cd"
+    composite_keys: [ "namespace", "name" ]
+    metrics: [ "namespace_app_http_server_requests_errors",
+               "namespace_app_http_server_requests_error_rate",
+               "namespace_app_http_server_requests_latency",
+               "namespace_app_cpu_utilization",
+               "namespace_app_memory_utilization" ]
+    metric_configs:
+      - metric: "namespace_app_cpu_utilization"
+        static_threshold:
+          upper_limit: 80
+      - metric: "namespace_app_memory_utilization"
+        static_threshold:
+          upper_limit: 80

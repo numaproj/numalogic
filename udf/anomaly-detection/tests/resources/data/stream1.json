@@ -1,0 +1,74 @@
+[
+    {
+        "timestamp": "1684193070196",
+        "source_asset_id": "6055107291188110321",
+        "destination_asset_id": "1218463880781465009",
+        "error_rate": "56.97"
+    },
+    {
+        "timestamp": "1684193130196",
+        "source_asset_id": "6055107291188110321",
+        "destination_asset_id": "1218463880781465009",
+        "error_rate": "70.46"
+    },
+    {
+        "timestamp": "1684193190196",
+        "source_asset_id": "6055107291188110321",
+        "destination_asset_id": "1218463880781465009",
+        "error_rate": "65.02"
+    },
+    {
+        "timestamp": "1684193250196",
+        "source_asset_id": "6055107291188110321",
+        "destination_asset_id": "1218463880781465009",
+        "error_rate": "16.75"
+    },
+    {
+        "timestamp": "1684193310196",
+        "source_asset_id": "6055107291188110321",
+        "destination_asset_id": "1218463880781465009",
+        "error_rate": "86.91"
+    },
+    {
+        "timestamp": "1684193370196",
+        "source_asset_id": "6055107291188110321",
+        "destination_asset_id": "1218463880781465009",
+        "error_rate": "13.49"
+    },
+    {
+        "timestamp": "1684193133192",
+        "unique_key": "service-mesh:6055107291188110321",
+        "error_rate": "33.97",
+        "latency": "0.8"
+    },
+    {
+        "timestamp": "1684193193192",
+        "unique_key": "service-mesh:6055107291188110321",
+        "error_rate": "30.51",
+        "latency": "0.2"
+    },
+    {
+        "timestamp": "1684193253192",
+        "unique_key": "service-mesh:6055107291188110321",
+        "error_rate": "60.92",
+        "latency": "0.6"
+    },
+    {
+        "timestamp": "1684193313192",
+        "unique_key": "service-mesh:6055107291188110321",
+        "error_rate": "26.28",
+        "latency": "0.1"
+    },
+    {
+        "timestamp": "1684193373192",
+        "unique_key": "service-mesh:6055107291188110321",
+        "error_rate": "85.37",
+        "latency": "0.5"
+    },
+    {
+        "timestamp": "1684193433192",
+        "unique_key": "service-mesh:6055107291188110321",
+        "error_rate": "62.74",
+        "latency": "0.3"
+    }
+]
