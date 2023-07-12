@@ -3,6 +3,3 @@ redis_conf:
   port: 26379
   expiry: 360
   master_name: "mymaster"
-druid_conf:
-  url: "https://getafix.odldruid-prd.a.intuit.com"
-  endpoint: "druid/v2"
