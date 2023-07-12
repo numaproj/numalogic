@@ -19,8 +19,7 @@ from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import redis_client_t
 from omegaconf import OmegaConf
-from pynumaflow.function import Datum, DatumMetadata
-from pynumaflow.sink import Responses, Response
+from pynumaflow.sink import Datum, Responses, Response
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
@@ -245,7 +244,7 @@ class Train:
                 #     payload.composite_keys,
                 #     payload.metric,
                 # )
-                responses.append(Response.as_success(payload.uuid))
+                responses.append(Response.as_success(_datum.id))
                 continue
 
             metric_config = ConfigManager.get_metric_config(
@@ -264,7 +263,7 @@ class Train:
                     payload.metric,
                     err,
                 )
-                responses.append(Response.as_success(payload.uuid))
+                responses.append(Response.as_success(_datum.id))
                 continue
 
             if len(train_df) < retrain_config.min_train_size:
@@ -274,12 +273,12 @@ class Train:
                     retrain_config.min_train_size,
                     train_df.shape,
                 )
-                responses.append(Response.as_success(payload.uuid))
+                responses.append(Response.as_success(_datum.id))
                 continue
 
             self._train_and_save(numalogic_config, payload, redis_client, train_df)
 
-            responses.append(Response.as_success(payload.uuid))
+            responses.append(Response.as_success(_datum.id))
 
         return responses
 
