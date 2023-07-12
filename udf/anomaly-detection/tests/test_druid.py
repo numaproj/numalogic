@@ -6,6 +6,7 @@ import pydruid.query
 from pydruid.client import PyDruid
 from pydruid.utils.aggregators import doublesum
 
+from src.connectors._config import Pivot
 from src.connectors.druid import DruidFetcher
 
 
@@ -44,14 +45,19 @@ class TestDruid(unittest.TestCase):
     def test_fetch_data(self):
         _out = self.druid.fetch_data(
             filter_keys=["assetId"],
-            filter_values=["1084259202722926969"],
+            filter_values=["5984175597303660107"],
             dimensions=["ciStatus"],
             datasource="tech-ip-customer-interaction-metrics",
             aggregations={"count": doublesum("count")},
             group_by=["timestamp", "ciStatus"],
-            hours=0.1,
-            pivot={"index": "timestamp", "columns": ["ciStatus"], "values": "count"},
+            hours=36,
+            pivot=Pivot(
+                index="timestamp",
+                columns=["ciStatus"],
+                value=["count"],
+            )
         )
+        _out.to_csv("test.csv")
         self.assertEqual(_out.shape, (2, 1))
 
 

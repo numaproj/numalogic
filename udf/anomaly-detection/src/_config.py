@@ -45,7 +45,7 @@ class DataSource(str, Enum):
 @dataclass
 class DataStreamConf:
     name: str = "default"
-    source: DataSource = DataSource.PROMETHEUS
+    source: str = DataSource.PROMETHEUS.value
     window_size: int = 12
     composite_keys: List[str] = field(default_factory=list)
     metrics: List[str] = field(default_factory=list)

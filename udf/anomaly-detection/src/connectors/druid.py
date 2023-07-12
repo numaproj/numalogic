@@ -1,12 +1,17 @@
+import time
+
 import pytz
 import logging
 import pandas as pd
 from datetime import datetime, timedelta
+
+from omegaconf import OmegaConf
 from pydruid.client import PyDruid
-from pydruid.query import QueryBuilder
 from pydruid.utils.filters import Filter
 import urllib.request
 import urllib.error
+
+from src.connectors._config import Pivot
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,7 +19,6 @@ _LOGGER = logging.getLogger(__name__)
 class DruidFetcher:
     def __init__(self, url: str, endpoint: str):
         self.client = PyDruid(url, endpoint)
-        self.query_builder = QueryBuilder()
 
     def fetch_data(
         self,
@@ -25,9 +29,10 @@ class DruidFetcher:
         granularity: str = "minute",
         aggregations: dict = None,
         group_by: list[str] = None,
-        pivot: dict = None,
+        pivot: Pivot = None,
         hours: float = 24,
     ) -> pd.DataFrame:
+        _start_time = time.time()
         filter_pairs = {}
         for k, v in zip(filter_keys, filter_values):
             filter_pairs[k] = v
@@ -49,6 +54,12 @@ class DruidFetcher:
             "filter": _filter,
             "dimensions": dimensions,
         }
+
+        _LOGGER.info(
+            "Fetching data with params: %s",
+            params,
+        )
+
         response = self.client.groupby(**params)
         df = response.export_pandas()
 
@@ -63,31 +74,15 @@ class DruidFetcher:
 
         if pivot:
             df = df.pivot(
-                index=pivot["index"],
-                columns=pivot["columns"],
-                values=pivot["values"],
+                index=pivot.index,
+                columns=pivot.columns,
+                values=pivot.value,
             )
 
+        _LOGGER.info(
+            "Time taken to fetch data: %s, for keys: %s, for df shape: %s",
+            time.time() - _start_time,
+            filter_pairs,
+            df.shape,
+        )
         return df
-
-
-# url = "https://getafix.odldruid-prd.a.intuit.com"
-# endpoint = "druid/v2/"
-#
-# druid_fetcher = DruidFetcher(url, endpoint)
-# df = druid_fetcher.fetch_data(
-#     filter_keys=["assetId"],
-#     filter_values=["1084259202722926969"],
-#     dimensions=["ciStatus"],
-#     datasource="tech-ip-customer-interaction-metrics",
-#     aggregations={"count": doublesum("count")},
-#     group_by=["timestamp", "ciStatus"],
-#     hours=0.5,
-#     pivot={
-#         "index": "timestamp",
-#         "columns": ["ciStatus"],
-#         "values": "count"
-#     }
-# )
-#
-# print(df)
