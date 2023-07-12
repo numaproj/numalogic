@@ -29,11 +29,18 @@ class DruidConf:
 
 
 @dataclass
+class Pivot:
+    index: str = "timestamp"
+    columns: list[str] = field(default_factory=list)
+    value: list[str] = field(default_factory=lambda: ["count"])
+
+
+@dataclass
 class DruidFetcherConf:
     datasource: str
     dimensions: list[str] = field(default_factory=list)
     aggregations: dict = field(default_factory=lambda: {"count": doublesum("count")})
     group_by: list[str] = field(default_factory=list)
-    pivot: dict = field(default_factory=dict)
+    pivot: Pivot = field(default_factory=lambda: Pivot())
     granularity: str = "minute"
-    hours: float = 24
+    hours: float = 36

@@ -1,18 +1,29 @@
 configs:
+  - name: "fciAsset"
+    source: "druid"
+    composite_keys: [ "assetId" ]
+    metrics: [ "failed" , "degraded" ]
+    druid_fetcher:
+      dimensions: [ "ciStatus" ]
+      datasource: "tech-ip-customer-interaction-metrics"
+      group_by: [ "timestamp", "ciStatus" ]
+      pivot:
+        columns:
+          - "ciStatus"
   - name: "service-mesh"
     composite_keys: [ "destination_asset_id", "env" ]
     metrics: [ "error_rate" , "error_count" ]
   - name: "service-mesh-s2s"
     composite_keys: ["source_asset_id, destination_asset_id", "env"]
     metrics: [ "error_rate", "error_count" ]
-  - name: "default-argorollouts"
+  - name: "argo-rollouts"
     composite_keys: [ "namespace", "name", "app", "rollouts_pod_template_hash" ]
     metrics: [ "namespace_app_rollouts_http_request_error_rate"]
     metric_configs:
       - metric: "namespace_app_rollouts_http_request_error_rate"
         static_threshold:
           weight: 0.7
-  - name: "default-argocd"
+  - name: "argo-cd"
     composite_keys: [ "namespace", "name" ]
     metrics: [ "namespace_app_http_server_requests_errors",
                "namespace_app_http_server_requests_error_rate",

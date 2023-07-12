@@ -106,7 +106,7 @@ class Threshold:
             if y_score is not None:
                 payload.set_metric_data(metric=metric, arr=y_score)
 
-            if y_score is None or header == Header.MODEL_STALE:
+            if y_score is None or header == Header.MODEL_STALE or status == Status.ARTIFACT_NOT_FOUND:
                 train_payload = TrainerPayload(
                     uuid=payload.uuid, composite_keys=keys, metric=metric
                 )

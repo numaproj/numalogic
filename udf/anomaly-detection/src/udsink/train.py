@@ -1,5 +1,8 @@
+import json
 import os
 import time
+from datetime import datetime
+
 import orjson
 import pandas as pd
 from typing import List, Iterator
@@ -15,7 +18,8 @@ from numalogic.registry import RedisRegistry
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import redis_client_t
-from pynumaflow.function import Datum
+from omegaconf import OmegaConf
+from pynumaflow.function import Datum, DatumMetadata
 from pynumaflow.sink import Responses, Response
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
@@ -56,10 +60,17 @@ class Train:
             _LOGGER.error("Druid config is not available")
             return pd.DataFrame()
         data_fetcher = DruidFetcher(url=druid_conf.url, endpoint=druid_conf.endpoint)
+
         return data_fetcher.fetch_data(
-            filter_keys=stream_config.composite_keys,
-            filter_values=payload.composite_keys,
-            **fetcher_conf.__dict__,
+            datasource=fetcher_conf.datasource,
+            filter_keys=stream_config.composite_keys + fetcher_conf.dimensions,
+            filter_values=payload.composite_keys[1:] + [payload.metric],  # skip config name and add metric name
+            dimensions=OmegaConf.to_container(fetcher_conf.dimensions),
+            granularity=fetcher_conf.granularity,
+            aggregations=OmegaConf.to_container(fetcher_conf.aggregations),
+            group_by=OmegaConf.to_container(fetcher_conf.group_by),
+            pivot=fetcher_conf.pivot,
+            hours=fetcher_conf.hours,
         )
 
     @classmethod
@@ -127,12 +138,19 @@ class Train:
         return thresh_clf
 
     def _train_and_save(
-        self,
-        numalogic_conf: NumalogicConf,
-        payload: TrainerPayload,
-        redis_client: redis_client_t,
-        train_df: pd.DataFrame,
+            self,
+            numalogic_conf: NumalogicConf,
+            payload: TrainerPayload,
+            redis_client: redis_client_t,
+            train_df: pd.DataFrame,
     ) -> None:
+        _LOGGER.debug(
+            "%s - Starting Training for keys: %s, metric: %s",
+            payload.uuid,
+            payload.composite_keys,
+            payload.metric,
+        )
+
         model_cfg = numalogic_conf.model
         preproc_cfgs = numalogic_conf.preprocess
 
@@ -218,23 +236,15 @@ class Train:
 
         for _datum in datums:
             payload = TrainerPayload(**orjson.loads(_datum.value))
-
-            _LOGGER.debug(
-                "%s - Starting Training for keys: %s, metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metric,
-            )
-
             is_new = self._is_new_request(redis_client, payload)
 
             if not is_new:
-                _LOGGER.debug(
-                    "%s - Skipping train request with keys: %s, metric: %s",
-                    payload.uuid,
-                    payload.composite_keys,
-                    payload.metric,
-                )
+                # _LOGGER.debug(
+                #     "%s - Skipping train request with keys: %s, metric: %s",
+                #     payload.uuid,
+                #     payload.composite_keys,
+                #     payload.metric,
+                # )
                 responses.append(Response.as_success(payload.uuid))
                 continue
 
@@ -272,3 +282,4 @@ class Train:
             responses.append(Response.as_success(payload.uuid))
 
         return responses
+
