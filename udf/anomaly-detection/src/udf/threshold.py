@@ -20,7 +20,7 @@ _LOGGER = get_logger(__name__)
 
 class Threshold:
     def __init__(self):
-        self.model_registry = RedisRegistry(client=get_redis_client_from_conf())
+        self.model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False))
 
     def threshold(
         self, keys: List[str], metric: str, payload: StreamPayload

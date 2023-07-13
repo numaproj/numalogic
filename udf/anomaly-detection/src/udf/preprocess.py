@@ -50,7 +50,7 @@ class Preprocess:
             config_name=keys[0], metric_name=metric
         )
 
-        model_registry = RedisRegistry(client=get_redis_client_from_conf())
+        model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False))
         # Load preproc artifact
         try:
             preproc_artifact = model_registry.load(

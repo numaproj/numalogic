@@ -10,6 +10,15 @@ configs:
       pivot:
         columns:
           - "ciStatus"
+    metric_configs:
+      - metric: "failed"
+        retrain_conf:
+          train_hours: 240
+          retrain_freq_hr: 48
+      - metric: "degraded"
+        retrain_conf:
+          train_hours: 240
+          retrain_freq_hr: 48
   - name: "service-mesh"
     composite_keys: [ "destination_asset_id", "env" ]
     metrics: [ "error_rate" , "error_count" ]

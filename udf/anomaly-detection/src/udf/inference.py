@@ -23,7 +23,7 @@ _LOGGER = get_logger(__name__)
 
 class Inference:
     def __init__(self):
-        self.model_registry = RedisRegistry(client=get_redis_client_from_conf())
+        self.model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False))
 
     @classmethod
     def _run_inference(
@@ -99,7 +99,14 @@ class Inference:
 
         # Check if artifact is stale
         header = Header.MODEL_INFERENCE
-        if RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr)):
+
+        _LOGGER.info(
+            "%s - Loaded artifact data from %s",
+            uuid=payload.uuid,
+            source=artifact_data.extras.get("source"),
+        )
+        if RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr))\
+                and artifact_data.extras.get("source") == "registry":
             _LOGGER.info(
                 "%s - Inference artifact found is stale, Keys: %s, Metric: %s",
                 payload.uuid,
