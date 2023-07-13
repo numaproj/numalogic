@@ -53,7 +53,7 @@ class TrainerPayload(_BasePayload):
     around in the system when a training request is made.
     """
 
-    metric: str
+    metrics: list[str]
     header: Header = Header.TRAIN_REQUEST
 
     def to_json(self):
