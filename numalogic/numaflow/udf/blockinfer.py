@@ -86,7 +86,7 @@ class InferenceBlockUDF(NumalogicUDF):
         """Construct the output payload."""
         unified_score = np.max(anomaly_scores)
         metric_data = {
-            "metric": {
+            metric: {
                 "anomaly_score": anomaly_scores[idx],
             }
             for idx, metric in enumerate(self.stream_conf.metrics)
@@ -105,9 +105,7 @@ class InferenceBlockUDF(NumalogicUDF):
         train_payload = TrainerPayload(
             uuid=uuid, composite_keys=keys, metrics=self.stream_conf.metrics
         )
-        return Messages(
-            Message(keys=keys, value=train_payload.to_json(), tags=[TRAIN_VTX_KEY])
-        )
+        return Messages(Message(keys=keys, value=train_payload.to_json(), tags=[TRAIN_VTX_KEY]))
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """Runs the UDF."""
