@@ -18,7 +18,7 @@ classifiers = [
 repository = "https://github.com/numaproj/numalogic"
 
 [tool.poetry.dependencies]
-python = "~3.10"
+python = ">=3.9, <3.12"
 redis = {extras = ["hiredis"], version = "^4.5" }
 pynumaflow = "~0.4.1"
 numalogic = {version = "~0.5", extras = ["redis"], allow-prereleases = true}
