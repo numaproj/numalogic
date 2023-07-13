@@ -4,7 +4,7 @@ import numpy as np
 from typing import List
 from orjson import orjson
 
-from numalogic.registry import RedisRegistry
+from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import RedisRegistryError
 from pynumaflow.function import Datum, Messages, Message
 
@@ -16,14 +16,17 @@ from src.tools import calculate_static_thresh
 from src.watcher import ConfigManager
 
 _LOGGER = get_logger(__name__)
+LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 
 
 class Threshold:
     def __init__(self):
-        self.model_registry = RedisRegistry(client=get_redis_client_from_conf())
+        local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
+        self.model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False),
+                                            cache_registry=local_cache)
 
     def threshold(
-        self, keys: List[str], metric: str, payload: StreamPayload
+            self, keys: List[str], metric: str, payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
         metric_arr = payload.get_metric_arr(metric=metric)
 

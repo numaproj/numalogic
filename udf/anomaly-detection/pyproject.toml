@@ -21,7 +21,7 @@ repository = "https://github.com/numaproj/numalogic"
 python = "~3.10"
 redis = {extras = ["hiredis"], version = "^4.5" }
 pynumaflow = "~0.4.1"
-numalogic = {version = "0.4.0", extras = ["redis"], allow-prereleases = true}
+numalogic = {version = "~0.5", extras = ["redis"], allow-prereleases = true}
 orjson = "^3.8.4"
 omegaconf = "^2.3.0"
 watchdog = "^3.0.0"

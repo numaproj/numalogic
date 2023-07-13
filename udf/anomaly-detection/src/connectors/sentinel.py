@@ -12,16 +12,16 @@ from src._config import RedisConf
 from src.watcher import ConfigManager
 
 _LOGGER = get_logger(__name__)
-SENTINEL_MASTER_CLIENT: Optional[redis_client_t] = None
+SENTINEL_CLIENT: Optional[redis_client_t] = None
 
 
 def get_redis_client(
-    host: str,
-    port: int,
-    password: str,
-    mastername: str,
-    decode_responses: bool = False,
-    recreate: bool = False,
+        host: str,
+        port: int,
+        password: str,
+        mastername: str,
+        recreate: bool = False,
+        master_node: bool = True,
 ) -> redis_client_t:
     """
     Return a master redis client for sentinel connections, with retry.
@@ -31,19 +31,19 @@ def get_redis_client(
         port: Redis port
         password: Redis password
         mastername: Redis sentinel master name
-        decode_responses: Whether to decode responses
         recreate: Whether to flush and recreate the client
+        master_node: Whether to use the master node or the slave nodes
 
     Returns:
         Redis client instance
     """
-    global SENTINEL_MASTER_CLIENT
+    global SENTINEL_CLIENT
 
-    if not recreate and SENTINEL_MASTER_CLIENT:
-        return SENTINEL_MASTER_CLIENT
+    if not recreate and SENTINEL_CLIENT:
+        return SENTINEL_CLIENT
 
     retry = Retry(
-        ExponentialBackoff(cap=2, base=1),
+        ExponentialBackoff(),
         3,
         supported_errors=(
             ConnectionError,
@@ -53,19 +53,28 @@ def get_redis_client(
             MasterNotFoundError,
         ),
     )
-    sentinel_args = {
-        "sentinels": [(host, port)],
-        "socket_timeout": 0.1,
-        "decode_responses": decode_responses,
+
+    conn_kwargs = {
+        "socket_timeout": 1,
+        "socket_connect_timeout": 1,
+        "socket_keepalive": True,
+        "health_check_interval": 10,
     }
 
-    _LOGGER.info("Sentinel redis params: %s", sentinel_args)
-
     sentinel = Sentinel(
-        **sentinel_args, sentinel_kwargs=dict(password=password), password=password, retry=retry
+        [(host, port)],
+        sentinel_kwargs=dict(password=password, **conn_kwargs),
+        retry=retry,
+        password=password,
+        **conn_kwargs
     )
-    SENTINEL_MASTER_CLIENT = sentinel.master_for(mastername)
-    return SENTINEL_MASTER_CLIENT
+    if master_node:
+        SENTINEL_CLIENT = sentinel.master_for(mastername)
+    else:
+        SENTINEL_CLIENT = sentinel.slave_for(mastername)
+    _LOGGER.info(
+        "Sentinel redis params: %S, master_node: %s",conn_kwargs,master_node)
+    return SENTINEL_CLIENT
 
 
 def get_redis_client_from_conf(redis_conf: RedisConf = None, **kwargs) -> redis_client_t:
@@ -80,7 +89,7 @@ def get_redis_client_from_conf(redis_conf: RedisConf = None, **kwargs) -> redis_
         Redis client instance
     """
     if not redis_conf:
-        redis_conf = ConfigManager.get_pipeline_config().redis_conf
+        redis_conf = ConfigManager.get_redis_config()
 
     return get_redis_client(
         redis_conf.host,

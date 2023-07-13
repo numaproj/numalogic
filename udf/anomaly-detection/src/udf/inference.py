@@ -1,3 +1,4 @@
+import os
 import time
 
 import numpy as np
@@ -7,7 +8,7 @@ import orjson
 from torch.utils.data import DataLoader
 
 from numalogic.models.autoencoder import AutoencoderTrainer
-from numalogic.registry import RedisRegistry, ArtifactData
+from numalogic.registry import RedisRegistry, ArtifactData, LocalLRUCache
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import RedisRegistryError
 from pynumaflow.function import Datum, Messages, Message
@@ -19,19 +20,22 @@ from src.entities import Status, Header
 from src.watcher import ConfigManager
 
 _LOGGER = get_logger(__name__)
+LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 
 
 class Inference:
     def __init__(self):
-        self.model_registry = RedisRegistry(client=get_redis_client_from_conf())
+        local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
+        self.model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False),
+                                            cache_registry=local_cache)
 
     @classmethod
     def _run_inference(
-        cls,
-        keys: list[str],
-        metric: str,
-        payload: StreamPayload,
-        artifact_data: ArtifactData,
+            cls,
+            keys: list[str],
+            metric: str,
+            payload: StreamPayload,
+            artifact_data: ArtifactData,
     ) -> np.ndarray:
         model = artifact_data.artifact
         win_size = ConfigManager.get_ds_config(config_name=keys[0]).window_size
@@ -54,7 +58,7 @@ class Inference:
         return recon_err.numpy().flatten()
 
     def inference(
-        self, keys: List[str], metric: str, payload: StreamPayload
+            self, keys: List[str], metric: str, payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
         static_response = (None, Status.ARTIFACT_NOT_FOUND, Header.STATIC_INFERENCE, -1)
         # Check if metric needs static inference
@@ -99,7 +103,14 @@ class Inference:
 
         # Check if artifact is stale
         header = Header.MODEL_INFERENCE
-        if RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr)):
+
+        _LOGGER.info(
+            "%s - Loaded artifact data from %s",
+            uuid=payload.uuid,
+            source=artifact_data.extras.get("source"),
+        )
+        if RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr)) \
+                and artifact_data.extras.get("source") == "registry":
             _LOGGER.info(
                 "%s - Inference artifact found is stale, Keys: %s, Metric: %s",
                 payload.uuid,

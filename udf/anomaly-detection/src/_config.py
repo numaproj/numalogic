@@ -17,9 +17,9 @@ class UnifiedConf:
 
 @dataclass
 class ReTrainConf:
-    train_hours: int = 36
+    train_hours: int = 24 * 8  # 8 days worth of data
     min_train_size: int = 2000
-    retrain_freq_hr: int = 8
+    retrain_freq_hr: int = 24
     resume_training: bool = False
 
 
