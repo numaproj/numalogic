@@ -1,4 +1,5 @@
 import json
+import os
 import time
 import uuid
 
@@ -6,7 +7,7 @@ import numpy as np
 import pandas as pd
 from typing import List
 
-from numalogic.registry import RedisRegistry
+from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import RedisRegistryError
 from pynumaflow.function import Datum, Messages, Message
 
@@ -16,7 +17,7 @@ from src.entities import Status, StreamPayload, Header
 from src.watcher import ConfigManager
 
 _LOGGER = get_logger(__name__)
-
+LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 
 class Preprocess:
     @classmethod
@@ -49,8 +50,8 @@ class Preprocess:
         preprocess_cfgs = ConfigManager.get_preprocess_config(
             config_name=keys[0], metric_name=metric
         )
-
-        model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False))
+        local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
+        model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache)
         # Load preproc artifact
         try:
             preproc_artifact = model_registry.load(

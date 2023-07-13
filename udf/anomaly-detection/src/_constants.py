@@ -12,5 +12,6 @@ TRAIN_VTX_KEY = "train"
 INFERENCE_VTX_KEY = "inference"
 THRESHOLD_VTX_KEY = "threshold"
 POSTPROC_VTX_KEY = "postproc"
+LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 
 CONFIG_PATHS = ["./config/user-configs", "./config/default-configs"]
