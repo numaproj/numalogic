@@ -1,8 +1,5 @@
-import json
 import os
 import time
-from datetime import datetime
-
 import orjson
 import pandas as pd
 from typing import List, Iterator
@@ -45,14 +42,14 @@ class Train:
             return pd.DataFrame()
         data_fetcher = PrometheusDataFetcher(prometheus_conf.server)
         return data_fetcher.fetch_data(
-            metric=payload.metric,
+            metric=payload.metrics[0],
             labels={"namespace": payload.composite_keys[1]},
             return_labels=["rollouts_pod_template_hash"],
         )
 
     @classmethod
     def fetch_druid_data(cls, payload: TrainerPayload) -> pd.DataFrame:
-        stream_config = ConfigManager.get_ds_config(payload.composite_keys[0])
+        stream_config = ConfigManager.get_stream_config(payload.composite_keys[0])
         druid_conf = ConfigManager.get_druid_config()
         fetcher_conf = stream_config.druid_fetcher
         if druid_conf is None:
@@ -62,8 +59,8 @@ class Train:
 
         return data_fetcher.fetch_data(
             datasource=fetcher_conf.datasource,
-            filter_keys=stream_config.composite_keys + fetcher_conf.dimensions,
-            filter_values=payload.composite_keys[1:] + [payload.metric],  # skip config name and add metric name
+            filter_keys=stream_config.composite_keys,
+            filter_values=payload.composite_keys[1:],  # skip config name and add metric name
             dimensions=OmegaConf.to_container(fetcher_conf.dimensions),
             granularity=fetcher_conf.granularity,
             aggregations=OmegaConf.to_container(fetcher_conf.aggregations),
@@ -74,7 +71,7 @@ class Train:
 
     @classmethod
     def fetch_data(cls, payload: TrainerPayload) -> pd.DataFrame:
-        stream_config = ConfigManager.get_ds_config(payload.composite_keys[0])
+        stream_config = ConfigManager.get_stream_config(payload.composite_keys[0])
         if stream_config.source == DataSource.PROMETHEUS:
             return cls.fetch_prometheus_data(payload)
         elif stream_config.source == DataSource.DRUID:
@@ -89,7 +86,7 @@ class Train:
 
     @classmethod
     def _is_new_request(cls, redis_client: redis_client_t, payload: TrainerPayload) -> bool:
-        _ckeys = ":".join(payload.composite_keys + [payload.metric])
+        _ckeys = ":".join(payload.composite_keys)
         r_key = f"train::{_ckeys}"
         value = redis_client.get(r_key)
         if value:
@@ -147,11 +144,13 @@ class Train:
             "%s - Starting Training for keys: %s, metric: %s",
             payload.uuid,
             payload.composite_keys,
-            payload.metric,
+            payload.metrics,
         )
 
         model_cfg = numalogic_conf.model
         preproc_cfgs = numalogic_conf.preprocess
+
+        # TODO: filter the metrics here
 
         x_train, preproc_clf = self._preprocess(train_df.to_numpy(), preproc_cfgs)
 
@@ -163,7 +162,7 @@ class Train:
         thresh_cfg = numalogic_conf.threshold
         thresh_clf = self._find_threshold(x_reconerr, thresh_cfg)
 
-        skeys = payload.composite_keys + [payload.metric]
+        skeys = payload.composite_keys
 
         # TODO if one of the models fail to save, delete the previously saved models and transition stage
         # Save main model
@@ -247,20 +246,17 @@ class Train:
                 responses.append(Response.as_success(_datum.id))
                 continue
 
-            metric_config = ConfigManager.get_metric_config(
-                payload.composite_keys[0], payload.metric
-            )
-            retrain_config = metric_config.retrain_conf
-            numalogic_config = metric_config.numalogic_conf
+            retrain_config = ConfigManager.get_retrain_config(payload.composite_keys[0])
+            numalogic_config = ConfigManager.get_numalogic_config(payload.composite_keys[0])
 
             try:
                 train_df = self.fetch_data(payload)
             except Exception as err:
                 _LOGGER.error(
-                    "%s - Error while fetching data for keys: %s, metric: %s, err: %r",
+                    "%s - Error while fetching data for keys: %s, metrics: %s, err: %r",
                     payload.uuid,
                     payload.composite_keys,
-                    payload.metric,
+                    payload.metrics,
                     err,
                 )
                 responses.append(Response.as_success(_datum.id))

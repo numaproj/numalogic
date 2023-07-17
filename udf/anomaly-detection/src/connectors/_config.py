@@ -7,6 +7,7 @@ from pydruid.utils.aggregators import doublesum
 class PrometheusConf:
     server: str
     pushgateway: str
+    scrape_interval: int = 30
 
 
 @dataclass

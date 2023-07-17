@@ -19,21 +19,5 @@ configs:
   - name: "argo-rollouts"
     composite_keys: [ "namespace", "name", "app", "rollouts_pod_template_hash" ]
     metrics: [ "namespace_app_rollouts_http_request_error_rate"]
-    metric_configs:
-      - metric: "namespace_app_rollouts_http_request_error_rate"
-        static_threshold:
-          weight: 0.7
-  - name: "argo-cd"
-    composite_keys: [ "namespace", "name" ]
-    metrics: [ "namespace_app_http_server_requests_errors",
-               "namespace_app_http_server_requests_error_rate",
-               "namespace_app_http_server_requests_latency",
-               "namespace_app_cpu_utilization",
-               "namespace_app_memory_utilization" ]
-    metric_configs:
-      - metric: "namespace_app_cpu_utilization"
-        static_threshold:
-          upper_limit: 80
-      - metric: "namespace_app_memory_utilization"
-        static_threshold:
-          upper_limit: 80
+    static_threshold:
+      weight: 0.7

@@ -15,45 +15,53 @@ _LOGGER = get_logger(__name__)
 
 class Postprocess:
     @classmethod
-    def postprocess(cls, keys: list[str], metric: str, payload: StreamPayload) -> float:
-        static_thresh = ConfigManager.get_static_threshold_config(
-            config_name=keys[0], metric_name=metric
-        )
-        postprocess_conf = ConfigManager.get_postprocess_config(
-            config_name=keys[0], metric_name=metric
-        )
+    def postprocess(cls, keys: list[str], payload: StreamPayload) -> (float, dict):
+        static_thresh = ConfigManager.get_static_threshold_config(config_name=keys[0])
+        postprocess_conf = ConfigManager.get_postprocess_config(config_name=keys[0])
+        unified_config = ConfigManager.get_stream_config(config_name=keys[0]).unified_config
+
+        # TODO: Implement weighted average or max strategy for unified anomaly
+        # if weights:
+        #     weighted_anomalies = np.multiply(scores, unified_weights)
+        #     unified_anomaly = float(np.sum(weighted_anomalies) / np.sum(unified_weights))
 
         # Compute score using static thresholding
-        metric_arr = payload.get_metric_arr(metric=metric)
+        metric_arr = payload.get_data()
         win_scorer = WindowScorer(static_thresh, postprocess_conf)
-        if payload.header[metric] == Header.STATIC_INFERENCE:
+        if payload.header == Header.STATIC_INFERENCE:
             final_score = win_scorer.get_norm_score(metric_arr)
             _LOGGER.info(
-                "%s - Final static threshold score: %s, keys: %s, metric: %s",
+                "%s - Final static threshold score: %s, keys: %s, metrics: %s",
                 payload.uuid,
                 final_score,
                 keys,
-                metric,
+                payload.metrics,
             )
 
         # Compute ensemble score otherwise
         else:
             final_score = win_scorer.get_ensemble_score(metric_arr)
             _LOGGER.info(
-                "%s - Final ensemble score: %s, static thresh wt: %s, keys: %s, metric: %s",
+                "%s - Final ensemble score: %s, static thresh wt: %s, keys: %s, metrics: %s",
                 payload.uuid,
                 final_score,
                 static_thresh.weight,
                 keys,
-                metric,
+                payload.metrics,
             )
-        return final_score
+
+        # TODO: construct map
+        metric_scores = {}
+        for metric in payload.metrics:
+            metric_scores[metric] = 0
+
+        return final_score, metric_scores
 
     @classmethod
     def get_unified_anomaly(
-        cls, keys: List[str], scores: list[float], payload: StreamPayload
+            cls, keys: List[str], scores: list[float], payload: StreamPayload
     ) -> float:
-        unified_config = ConfigManager.get_ds_config(config_name=keys[0]).unified_config
+        unified_config = ConfigManager.get_stream_config(config_name=keys[0]).unified_config
         unified_weights = unified_config.weights
         if unified_weights:
             weighted_anomalies = np.multiply(scores, unified_weights)
@@ -86,24 +94,13 @@ class Postprocess:
 
         messages = Messages()
 
-        scores = []
-        metric_data = {}
-
-        # Perform postprocess for each metric
-        for metric in payload.metrics:
-            final_score = self.postprocess(keys, metric, payload)
-            scores.append(final_score)
-            metric_data[metric] = {
-                "anomaly_score": final_score,
-                "model_version": payload.get_metadata(key=metric)["model_version"],
-            }
-
-        unified_anomaly = self.get_unified_anomaly(keys, scores, payload)
+        # Perform postprocess
+        final_score, metric_scores = self.postprocess(keys, payload)
 
         out_payload = OutputPayload(
             timestamp=payload.timestamps[-1],
-            unified_anomaly=unified_anomaly,
-            data=metric_data,
+            unified_anomaly=final_score,
+            data=metric_scores,
             metadata=payload.metadata,
         )
 

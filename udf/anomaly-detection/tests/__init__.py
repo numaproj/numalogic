@@ -6,7 +6,7 @@ from numalogic.config import NumalogicConf
 from omegaconf import OmegaConf
 
 from src._config import PipelineConf, Configs
-from src._constants import TESTS_RESOURCES, CONFIG_DIR
+from src._constants import TESTS_RESOURCES
 from src.watcher import ConfigManager
 
 server = fakeredis.FakeServer()
@@ -16,17 +16,17 @@ redis_client = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
 def mock_configs():
     schema: Configs = OmegaConf.structured(Configs)
 
-    conf = OmegaConf.load(os.path.join(TESTS_RESOURCES, "configs", "users-config.yaml"))
+    conf = OmegaConf.load(os.path.join(TESTS_RESOURCES, "configs", "users_config.yaml"))
     user_configs = OmegaConf.merge(schema, conf).configs
 
-    conf = OmegaConf.load(os.path.join(TESTS_RESOURCES, "configs", "default-config.yaml"))
+    conf = OmegaConf.load(os.path.join(TESTS_RESOURCES, "configs", "default_config.yaml"))
     default_configs = OmegaConf.merge(schema, conf).configs
 
     conf = OmegaConf.load(os.path.join(TESTS_RESOURCES, "configs", "numalogic_config.yaml"))
     schema: NumalogicConf = OmegaConf.structured(NumalogicConf)
     default_numalogic = OmegaConf.merge(schema, conf)
 
-    conf = OmegaConf.load(os.path.join(CONFIG_DIR, "default-configs", "pipeline_config.yaml"))
+    conf = OmegaConf.load(os.path.join(TESTS_RESOURCES, "configs", "pipeline_config.yaml"))
     schema: PipelineConf = OmegaConf.structured(PipelineConf)
     pipeline_config = OmegaConf.merge(schema, conf)
 

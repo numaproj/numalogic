@@ -29,34 +29,28 @@ class StaticThreshold:
     weight: float = 0.0
 
 
-@dataclass
-class MetricConf:
-    metric: str
-    retrain_conf: ReTrainConf = field(default_factory=lambda: ReTrainConf())
-    static_threshold: StaticThreshold = field(default_factory=lambda: StaticThreshold())
-    numalogic_conf: NumalogicConf = MISSING
-
-
 class DataSource(str, Enum):
     PROMETHEUS = "prometheus"
     DRUID = "druid"
 
 
 @dataclass
-class DataStreamConf:
+class StreamConf:
     name: str = "default"
     source: str = DataSource.PROMETHEUS.value
     window_size: int = 12
     composite_keys: List[str] = field(default_factory=list)
     metrics: List[str] = field(default_factory=list)
-    metric_configs: List[MetricConf] = field(default_factory=list)
+    retrain_conf: ReTrainConf = field(default_factory=lambda: ReTrainConf())
+    static_threshold: StaticThreshold = field(default_factory=lambda: StaticThreshold())
+    numalogic_conf: NumalogicConf = MISSING
     unified_config: UnifiedConf = field(default_factory=lambda: UnifiedConf())
     druid_fetcher: DruidFetcherConf = MISSING
 
 
 @dataclass
 class Configs:
-    configs: List[DataStreamConf]
+    configs: List[StreamConf]
 
 
 @dataclass

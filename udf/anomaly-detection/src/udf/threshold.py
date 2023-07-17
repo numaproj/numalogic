@@ -29,21 +29,19 @@ class Threshold:
     def threshold(
             self, keys: List[str], metric: str, payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
-        metric_arr = payload.get_metric_arr(metric=metric)
+        metric_arr = payload.get_data()
 
         # Load config
-        static_thresh = ConfigManager.get_static_threshold_config(
-            config_name=keys[0], metric_name=metric
-        )
-        thresh_cfg = ConfigManager.get_threshold_config(config_name=keys[0], metric_name=metric)
+        static_thresh = ConfigManager.get_static_threshold_config(config_name=keys[0])
+        thresh_cfg = ConfigManager.get_threshold_config(config_name=keys[0])
 
         # Check if metric needs static inference
-        if payload.header[metric] == Header.STATIC_INFERENCE:
+        if payload.header == Header.STATIC_INFERENCE:
             _LOGGER.info(
                 "%s - Sending to trainer and performing static thresholding. Keys: %s, Metric: %s",
                 payload.uuid,
                 payload.composite_keys,
-                metric,
+                payload.metrics,
             )
             static_scores = calculate_static_thresh(metric_arr, static_thresh)
             return static_scores, Status.ARTIFACT_NOT_FOUND, Header.STATIC_INFERENCE, -1
@@ -51,7 +49,7 @@ class Threshold:
         # Load threshold artifact
         try:
             thresh_artifact = self.model_registry.load(
-                skeys=keys + [metric],
+                skeys=keys,
                 dkeys=[thresh_cfg.name],
             )
         except RedisRegistryError as err:
@@ -59,7 +57,7 @@ class Threshold:
                 "%s - Error while fetching threshold artifact, Keys: %s, Metric: %s, Error: %r",
                 payload.uuid,
                 payload.composite_keys,
-                metric,
+                payload.metrics,
                 err,
             )
             static_scores = calculate_static_thresh(metric_arr, static_thresh)
@@ -76,15 +74,15 @@ class Threshold:
             return static_scores, Status.ARTIFACT_NOT_FOUND, Header.STATIC_INFERENCE, -1
 
         # Calculate anomaly score
-        recon_err = payload.get_metric_arr(metric=metric)
+        recon_err = payload.get_data()
         thresh_clf = thresh_artifact.artifact
         y_score = thresh_clf.score_samples(recon_err)
 
         return (
             y_score,
             Status.THRESHOLD,
-            payload.header[metric],
-            payload.get_metadata(key=metric)["model_version"],
+            payload.header,
+            payload.get_metadata(key="model_version"),
         )
 
     def run(self, keys: List[str], datum: Datum) -> Messages:
@@ -103,16 +101,16 @@ class Threshold:
         # Perform threshold for each metric
         for metric in payload.metrics:
             y_score, status, header, version = self.threshold(keys, metric, payload)
-            payload.set_status(metric=metric, status=status)
-            payload.set_header(metric=metric, header=header)
-            payload.set_metric_metadata(metric=metric, key="model_version", value=version)
+            payload.set_status(status=status)
+            payload.set_header(header=header)
+            payload.set_metadata(key="model_version", value=version)
 
             if y_score is not None:
-                payload.set_metric_data(metric=metric, arr=y_score)
+                payload.set_data(arr=y_score)
 
             if y_score is None or header == Header.MODEL_STALE or status == Status.ARTIFACT_NOT_FOUND:
                 train_payload = TrainerPayload(
-                    uuid=payload.uuid, composite_keys=keys, metric=metric
+                    uuid=payload.uuid, composite_keys=keys, metrics=payload.metrics
                 )
                 _LOGGER.info(
                     "%s - Sending Msg: { Keys: %s, Tags:%s, Payload: %s }",

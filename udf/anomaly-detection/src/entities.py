@@ -42,7 +42,7 @@ PayloadType = TypeVar("PayloadType", bound=_BasePayload)
 
 @dataclass
 class TrainerPayload(_BasePayload):
-    metric: str
+    metrics: List[str]
     header: Header = Header.TRAIN_REQUEST
 
     def to_json(self):
@@ -55,9 +55,9 @@ class StreamPayload(_BasePayload):
     raw_data: Matrix
     metrics: List[str]
     timestamps: List[int]
-    status: Dict[str, Status] = field(default_factory=dict)
-    header: Dict[str, Header] = field(default_factory=dict)
-    metadata: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    status: Status = field(default_factory=lambda x: Status.RAW)
+    header: Header = field(default_factory=lambda x: Header.MODEL_INFERENCE)
+    metadata: Dict[str, Any] = field(default_factory=dict)
 
     def get_df(self, original=False) -> pd.DataFrame:
         return pd.DataFrame(self.get_data(original), columns=self.metrics)
@@ -70,25 +70,16 @@ class StreamPayload(_BasePayload):
         _df[metric] = arr
         self.set_data(np.asarray(_df.values.tolist()))
 
-    def get_metric_arr(self, metric: str) -> npt.NDArray[float]:
-        return self.get_df()[metric].values
-
     def get_data(self, original=False) -> npt.NDArray[float]:
         if original:
             return np.asarray(self.raw_data)
         return np.asarray(self.data)
 
-    def set_status(self, metric: str, status: Status) -> None:
-        self.status[metric] = status
+    def set_status(self, status: Status) -> None:
+        self.status = status
 
-    def set_header(self, metric: str, header: Header) -> None:
-        self.header[metric] = header
-
-    def set_metric_metadata(self, metric: str, key: str, value) -> None:
-        if metric in self.metadata.keys():
-            self.metadata[metric][key] = value
-        else:
-            self.metadata[metric] = {key: value}
+    def set_header(self, header: Header) -> None:
+        self.header = header
 
     def set_metadata(self, key: str, value) -> None:
         self.metadata[key] = value

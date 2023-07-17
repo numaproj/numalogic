@@ -1,20 +1,14 @@
 configs:
   - name: "sandbox_numalogic_demo1"
     composite_keys: [ "namespace", "name", "hash_id" ]
-    metrics: ["rollout_error_rate", "rollout_latency"]
-    metric_configs:
-      - metric: "rollout_error_rate"
-        static_threshold:
-          weight: 0.6
-      - metric: "rollout_latency"
+    metrics: ["rollout_error_rate"]
+    static_threshold:
+      weight: 0.6
   - name: "sandbox_numalogic_demo2"
     composite_keys: [ "namespace", "name", "hash_id" ]
-    metrics: ["rollout_error_rate", "rollout_latency"]
-    metric_configs:
-      - metric: "rollout_error_rate"
-        static_threshold:
-          weight: 0.7
-      - metric: "rollout_latency"
+    metrics: ["rollout_error_rate"]
+    static_threshold:
+      weight: 0.7
     unified_config:
       weights: [0.7, 0.3]
   - name: "sandbox_numalogic_demo3"

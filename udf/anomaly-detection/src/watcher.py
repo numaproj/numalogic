@@ -8,9 +8,9 @@ from numalogic.config import NumalogicConf
 from watchdog.events import FileSystemEventHandler
 
 from src import PipelineConf, Configs
-from src.connectors import RedisConf, PrometheusConf, RegistryConf
+from src.connectors import PrometheusConf
 from src._constants import CONFIG_DIR
-from src import DataStreamConf, get_logger, MetricConf, UnifiedConf
+from src import StreamConf, get_logger, UnifiedConf
 from src.connectors._config import DruidConf
 
 _LOGGER = get_logger(__name__)
@@ -55,51 +55,34 @@ class ConfigManager:
         return cls.config
 
     @classmethod
-    def get_ds_config(cls, config_name: str) -> DataStreamConf:
+    def get_stream_config(cls, config_name: str) -> StreamConf:
         if not cls.config:
             cls.update_configs()
 
-        ds_config = None
+        stream_conf = None
 
         # search and load from user configs
         if config_name in cls.config["user_configs"]:
-            ds_config = cls.config["user_configs"][config_name]
+            stream_conf = cls.config["user_configs"][config_name]
 
         # if not search and load from default configs
-        if not ds_config and config_name in cls.config["default_configs"]:
-            ds_config = cls.config["default_configs"][config_name]
+        if not stream_conf and config_name in cls.config["default_configs"]:
+            stream_conf = cls.config["default_configs"][config_name]
 
         # if not in default configs, initialize conf with default values
-        if not ds_config:
-            ds_config = OmegaConf.structured(DataStreamConf)
+        if not stream_conf:
+            stream_conf = OmegaConf.structured(StreamConf)
 
         # loading and setting default numalogic config
-        for metric_config in ds_config.metric_configs:
-            if OmegaConf.is_missing(metric_config, "numalogic_conf"):
-                metric_config.numalogic_conf = cls.config["default_numalogic"]
+        if OmegaConf.is_missing(stream_conf, "numalogic_conf"):
+            stream_conf.numalogic_conf = cls.config["default_numalogic"]
 
-        return ds_config
-
-    @classmethod
-    def get_metric_config(cls, config_name: str, metric_name: str) -> MetricConf:
-        ds_config = cls.get_ds_config(config_name)
-        metric_config = list(
-            filter(lambda conf: (conf.metric == metric_name), ds_config.metric_configs)
-        )
-
-        # if no config found for metric, initialize with default values
-        if not metric_config:
-            metric_config = OmegaConf.structured(MetricConf(metric=metric_name))
-            if OmegaConf.is_missing(metric_config, "numalogic_conf"):
-                metric_config.numalogic_conf = cls.config["default_numalogic"]
-
-            return metric_config
-        return metric_config[0]
+        return stream_conf
 
     @classmethod
     def get_unified_config(cls, config_name: str) -> UnifiedConf:
-        ds_config = cls.get_ds_config(config_name)
-        return ds_config.unified_config
+        stream_conf = cls.get_stream_config(config_name)
+        return stream_conf.unified_config
 
     @classmethod
     def get_pipeline_config(cls) -> PipelineConf:
@@ -120,40 +103,32 @@ class ConfigManager:
         return None
 
     @classmethod
-    def get_numalogic_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(
-            config_name=config_name, metric_name=metric_name
-        ).numalogic_conf
+    def get_numalogic_config(cls, config_name: str):
+        return cls.get_stream_config(config_name=config_name).numalogic_conf
 
     @classmethod
-    def get_preprocess_config(cls, config_name: str, metric_name: str):
-        return cls.get_numalogic_config(config_name=config_name, metric_name=metric_name).preprocess
+    def get_preprocess_config(cls, config_name: str):
+        return cls.get_numalogic_config(config_name=config_name).preprocess
 
     @classmethod
-    def get_retrain_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(config_name=config_name, metric_name=metric_name).retrain_conf
+    def get_retrain_config(cls, config_name: str,):
+        return cls.get_stream_config(config_name=config_name).retrain_conf
 
     @classmethod
-    def get_static_threshold_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(
-            config_name=config_name, metric_name=metric_name
-        ).static_threshold
+    def get_static_threshold_config(cls, config_name: str):
+        return cls.get_stream_config(config_name=config_name).static_threshold
 
     @classmethod
-    def get_threshold_config(cls, config_name: str, metric_name: str):
-        return cls.get_metric_config(
-            config_name=config_name, metric_name=metric_name
-        ).numalogic_conf.threshold
+    def get_threshold_config(cls, config_name: str):
+        return cls.get_stream_config(config_name=config_name).numalogic_conf.threshold
 
     @classmethod
-    def get_postprocess_config(cls, config_name: str, metric_name: str):
-        return cls.get_numalogic_config(
-            config_name=config_name, metric_name=metric_name
-        ).postprocess
+    def get_postprocess_config(cls, config_name: str):
+        return cls.get_numalogic_config(config_name=config_name).postprocess
 
     @classmethod
-    def get_trainer_config(cls, config_name: str, metric_name: str):
-        return cls.get_numalogic_config(config_name=config_name, metric_name=metric_name).trainer
+    def get_trainer_config(cls, config_name: str):
+        return cls.get_numalogic_config(config_name=config_name).trainer
 
 
 class ConfigHandler(FileSystemEventHandler):
