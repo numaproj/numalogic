@@ -14,7 +14,7 @@ from datetime import timedelta, datetime
 from numalogic.config import PostprocessFactory, ModelInfo
 from numalogic.models.threshold import SigmoidThreshold
 
-from src import get_logger, MetricConf
+from src import get_logger
 from src._config import StaticThreshold
 from src.connectors.prometheus import Prometheus
 from src.entities import TrainerPayload, Matrix
@@ -76,7 +76,6 @@ def is_host_reachable(hostname: str, port=None, max_retries=5, sleep_sec=5) -> b
 
 def fetch_data(
     payload: TrainerPayload,
-    metric_config: MetricConf,
     labels: dict,
     return_labels=None,
     hours: int = 36,
@@ -89,12 +88,12 @@ def fetch_data(
     start_dt = end_dt - timedelta(hours=hours)
 
     df = datafetcher.query_metric(
-        metric_name=payload.composite_keys["name"],
+        metric_name=payload.composite_keys[1],
         labels_map=labels,
         return_labels=return_labels,
         start=start_dt.timestamp(),
         end=end_dt.timestamp(),
-        step=metric_config.scrape_interval,
+        step=prometheus_conf.scrape_interval,
     )
     _LOGGER.info(
         "%s - Time taken to fetch data: %s, for df shape: %s",
@@ -170,7 +169,7 @@ class WindowScorer:
         static_score = np.mean(static_scores)
         return self.postproc_clf.transform(static_score)
 
-    def get_norm_score(self, x_arr: Matrix):
+    def get_norm_score(self, x_arr: Matrix) -> float:
         """
         Returns the normalized window score
 
@@ -180,6 +179,7 @@ class WindowScorer:
         Returns:
             Score for the window
         """
+
         win_score = np.mean(x_arr)
         return self.postproc_clf.transform(win_score)
 

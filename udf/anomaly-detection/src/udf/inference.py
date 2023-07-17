@@ -33,14 +33,13 @@ class Inference:
     def _run_inference(
             cls,
             keys: list[str],
-            metric: str,
             payload: StreamPayload,
             artifact_data: ArtifactData,
     ) -> np.ndarray:
         model = artifact_data.artifact
-        win_size = ConfigManager.get_ds_config(config_name=keys[0]).window_size
-        metric_arr = payload.get_metric_arr(metric=metric).reshape(-1, 1)
-        stream_loader = DataLoader(StreamingDataset(metric_arr, win_size))
+        win_size = ConfigManager.get_stream_config(config_name=keys[0]).window_size
+        data_arr = payload.get_data().reshape(-1, 1)
+        stream_loader = DataLoader(StreamingDataset(data_arr, win_size))
 
         trainer = AutoencoderTrainer()
         try:
@@ -50,35 +49,35 @@ class Inference:
                 "%s - Runtime error while performing inference: Keys: %s, Metric: %s, Error: %r",
                 payload.uuid,
                 keys,
-                metric,
+                payload.metrics,
                 err,
             )
             raise RuntimeError("Failed to infer") from err
-        _LOGGER.info("%s - Successfully inferred: Keys: %s, Metric: %s", payload.uuid, keys, metric)
+        _LOGGER.info("%s - Successfully inferred: Keys: %s, Metric: %s", payload.uuid, keys, payload.metrics)
         return recon_err.numpy().flatten()
 
     def inference(
-            self, keys: List[str], metric: str, payload: StreamPayload
+            self, keys: List[str], payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
         static_response = (None, Status.ARTIFACT_NOT_FOUND, Header.STATIC_INFERENCE, -1)
         # Check if metric needs static inference
-        if payload.header[metric] == Header.STATIC_INFERENCE:
+        if payload.header == Header.STATIC_INFERENCE:
             _LOGGER.debug(
-                "%s - Models not found in the previous steps, forwarding for static thresholding. Keys: %s, Metric: %s",
+                "%s - Models not found in the previous steps, forwarding for static thresholding. Keys: %s, Metrics: %s",
                 payload.uuid,
                 payload.composite_keys,
-                metric,
+                payload.metrics,
             )
             return static_response
 
         # Load config
-        retrain_config = ConfigManager.get_retrain_config(config_name=keys[0], metric_name=metric)
-        numalogic_conf = ConfigManager.get_numalogic_config(config_name=keys[0], metric_name=metric)
+        retrain_config = ConfigManager.get_retrain_config(config_name=keys[0])
+        numalogic_conf = ConfigManager.get_numalogic_config(config_name=keys[0])
 
         # Load inference artifact
         try:
             artifact_data = self.model_registry.load(
-                skeys=keys + [metric],
+                skeys=keys,
                 dkeys=[numalogic_conf.model.name],
             )
         except RedisRegistryError as err:
@@ -86,7 +85,7 @@ class Inference:
                 "%s - Error while fetching inference artifact, Keys: %s, Metric: %s, Error: %r",
                 payload.uuid,
                 payload.composite_keys,
-                metric,
+                payload.metrics,
                 err,
             )
             return static_response
@@ -97,7 +96,7 @@ class Inference:
                 "%s - Inference artifact not found, forwarding for static thresholding. Keys: %s, Metric: %s",
                 payload.uuid,
                 payload.composite_keys,
-                metric,
+                payload.metrics,
             )
             return static_response
 
@@ -115,19 +114,19 @@ class Inference:
                 "%s - Inference artifact found is stale, Keys: %s, Metric: %s",
                 payload.uuid,
                 payload.composite_keys,
-                metric,
+                payload.metrics,
             )
             header = Header.MODEL_STALE
 
         # Generate predictions
         try:
-            x_infered = self._run_inference(keys, metric, payload, artifact_data)
+            x_infered = self._run_inference(keys, payload, artifact_data)
         except RuntimeError:
             _LOGGER.info(
                 "%s - Failed to infer, forwarding for static thresholding. Keys: %s, Metric: %s",
                 payload.uuid,
                 payload.composite_keys,
-                metric,
+                payload.metrics,
             )
             return None, Status.RUNTIME_ERROR, Header.STATIC_INFERENCE, -1
 
@@ -145,15 +144,14 @@ class Inference:
         _LOGGER.info("%s - Received Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
 
         messages = Messages()
-        # Perform inference for each metric
-        for metric in payload.metrics:
-            x_infered, status, header, version = self.inference(keys, metric, payload)
-            payload.set_status(metric=metric, status=status)
-            payload.set_header(metric=metric, header=header)
-            payload.set_metric_metadata(metric=metric, key="model_version", value=version)
+        # Perform inference
+        x_infered, status, header, version = self.inference(keys, payload)
+        payload.set_status(status=status)
+        payload.set_header(header=header)
+        payload.set_metadata(key="model_version", value=version)
 
-            if x_infered is not None:
-                payload.set_metric_data(metric=metric, arr=x_infered)
+        if x_infered is not None:
+            payload.set_data(arr=x_infered)
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)

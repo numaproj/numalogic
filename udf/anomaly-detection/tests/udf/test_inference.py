@@ -43,10 +43,9 @@ class TestInference(unittest.TestCase):
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
-        for metric in payload.metrics:
-            self.assertEqual(payload.status[metric], Status.INFERRED)
-            self.assertEqual(payload.header[metric], Header.MODEL_INFERENCE)
-            self.assertGreater(payload.metadata[metric]["model_version"], 0)
+        self.assertEqual(payload.status, Status.INFERRED)
+        self.assertEqual(payload.header, Header.MODEL_INFERENCE)
+        self.assertGreater(payload.metadata["model_version"], 0)
 
     @freeze_time("2022-02-20 12:00:00")
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
@@ -57,10 +56,9 @@ class TestInference(unittest.TestCase):
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
-        for metric in payload.metrics:
-            self.assertEqual(payload.status[metric], Status.RUNTIME_ERROR)
-            self.assertEqual(payload.header[metric], Header.STATIC_INFERENCE)
-            self.assertEqual(payload.metadata[metric]["model_version"], -1)
+        self.assertEqual(payload.status, Status.RUNTIME_ERROR)
+        self.assertEqual(payload.header, Header.STATIC_INFERENCE)
+        self.assertEqual(payload.metadata["model_version"], -1)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=None))
     def test_no_model(self):
@@ -69,10 +67,9 @@ class TestInference(unittest.TestCase):
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
-        for metric in payload.metrics:
-            self.assertEqual(payload.status[metric], Status.ARTIFACT_NOT_FOUND)
-            self.assertEqual(payload.header[metric], Header.STATIC_INFERENCE)
-            self.assertEqual(payload.metadata[metric]["model_version"], -1)
+        self.assertEqual(payload, Status.ARTIFACT_NOT_FOUND)
+        self.assertEqual(payload, Header.STATIC_INFERENCE)
+        self.assertEqual(payload.metadata["model_version"], -1)
 
     @freeze_time("2022-02-20 12:00:00")
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
@@ -83,10 +80,9 @@ class TestInference(unittest.TestCase):
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
-        for metric in payload.metrics:
-            self.assertEqual(payload.status[metric], Status.ARTIFACT_NOT_FOUND)
-            self.assertEqual(payload.header[metric], Header.STATIC_INFERENCE)
-            self.assertEqual(payload.metadata[metric]["model_version"], -1)
+        self.assertEqual(payload.status, Status.ARTIFACT_NOT_FOUND)
+        self.assertEqual(payload.header, Header.STATIC_INFERENCE)
+        self.assertEqual(payload.metadata["model_version"], -1)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=return_stale_model()))
     def test_stale_model(self):
@@ -95,10 +91,9 @@ class TestInference(unittest.TestCase):
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
-        for metric in payload.metrics:
-            self.assertEqual(payload.status[metric], Status.INFERRED)
-            self.assertEqual(payload.header[metric], Header.MODEL_STALE)
-            self.assertGreater(payload.metadata[metric]["model_version"], 0)
+        self.assertEqual(payload.status, Status.INFERRED)
+        self.assertEqual(payload.header, Header.MODEL_STALE)
+        self.assertGreater(payload.metadata["model_version"], 0)
 
 
 if __name__ == "__main__":

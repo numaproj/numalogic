@@ -38,18 +38,16 @@ class TestPreprocess(unittest.TestCase):
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
-        for metric in payload.metrics:
-            self.assertEqual(payload.status[metric], Status.PRE_PROCESSED)
-            self.assertEqual(payload.header[metric], Header.MODEL_INFERENCE)
+        self.assertEqual(payload.status, Status.PRE_PROCESSED)
+        self.assertEqual(payload.header, Header.MODEL_INFERENCE)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=None))
     def test_preprocess_no_clf(self):
         _out = Preprocess().run(self.keys, self.preproc_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
         self.assertIsInstance(payload, StreamPayload)
-        for metric in payload.metrics:
-            self.assertEqual(payload.status[metric], Status.ARTIFACT_NOT_FOUND)
-            self.assertEqual(payload.header[metric], Header.STATIC_INFERENCE)
+        self.assertEqual(payload.status, Status.ARTIFACT_NOT_FOUND)
+        self.assertEqual(payload.header, Header.STATIC_INFERENCE)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=return_preproc_clf()))
     def test_preprocess_with_nan(self):
@@ -61,9 +59,8 @@ class TestPreprocess(unittest.TestCase):
         self.assertTrue(np.isfinite(df.values).all())
         self.assertTrue(payload.data)
         self.assertIsInstance(payload, StreamPayload)
-        for metric in payload.metrics:
-            self.assertEqual(payload.status[metric], Status.PRE_PROCESSED)
-            self.assertEqual(payload.header[metric], Header.MODEL_INFERENCE)
+        self.assertEqual(payload.status, Status.PRE_PROCESSED)
+        self.assertEqual(payload.header, Header.MODEL_INFERENCE)
 
 
 if __name__ == "__main__":

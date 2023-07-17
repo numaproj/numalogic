@@ -25,49 +25,19 @@ class TestConfigManager(unittest.TestCase):
 
     def test_get_datastream_config(self):
         # from users config
-        ds_config = self.cm.get_ds_config(config_name="sandbox_numalogic_demo1")
-        self.assertTrue(ds_config)
-        self.assertEqual(ds_config.name, "sandbox_numalogic_demo1")
+        stream_conf = self.cm.get_stream_config(config_name="sandbox_numalogic_demo1")
+        self.assertTrue(stream_conf)
+        self.assertEqual(stream_conf.name, "sandbox_numalogic_demo1")
 
         # from given default config
-        ds_config = self.cm.get_ds_config(config_name="argo-rollouts")
-        self.assertTrue(ds_config)
-        self.assertEqual(ds_config.name, "argo-rollouts")
+        stream_conf = self.cm.get_stream_config(config_name="argo-rollouts")
+        self.assertTrue(stream_conf)
+        self.assertEqual(stream_conf.name, "argo-rollouts")
 
         # default config
-        ds_config = self.cm.get_ds_config(config_name="random")
-        self.assertTrue(ds_config)
-        self.assertEqual(ds_config.name, "default")
-
-    def test_get_metric_config(self):
-        # from given config
-        metric_config = self.cm.get_metric_config(
-            config_name="sandbox_numalogic_demo1", metric_name="rollout_latency"
-        )
-        self.assertTrue(metric_config)
-        self.assertEqual(metric_config.metric, "rollout_latency")
-
-        # from given default config
-        metric_config = self.cm.get_metric_config(
-            config_name="argo-rollouts",
-            metric_name="namespace_app_rollouts_http_request_error_rate",
-        )
-        self.assertTrue(metric_config)
-        self.assertEqual(metric_config.metric, "namespace_app_rollouts_http_request_error_rate")
-
-        # from given default config
-        metric_config = self.cm.get_metric_config(
-            config_name="fciAsset",
-            metric_name="ciStatus_failed",
-        )
-        self.assertTrue(metric_config)
-        self.assertEqual(metric_config.metric, "ciStatus_failed")
-
-        # default config
-        metric_config = self.cm.get_metric_config(config_name="random", metric_name="random_metric")
-        self.assertTrue(metric_config)
-        self.assertEqual(metric_config.metric, "random_metric")
-        self.assertTrue(metric_config.numalogic_conf)
+        stream_conf = self.cm.get_stream_config(config_name="random")
+        self.assertTrue(stream_conf)
+        self.assertEqual(stream_conf.name, "default")
 
     def test_get_unified_config(self):
         # from given config
@@ -84,27 +54,14 @@ class TestConfigManager(unittest.TestCase):
 
     def test_get_datastream_config_time(self):
         _start_time = time.perf_counter()
-        ConfigManager.get_ds_config(config_name="sandbox_numalogic_demo1")
+        ConfigManager.get_stream_config(config_name="sandbox_numalogic_demo1")
         time1 = time.perf_counter() - _start_time
 
         _start_time = time.perf_counter()
-        ConfigManager.get_ds_config(config_name="sandbox_numalogic_demo1")
+        ConfigManager.get_stream_config(config_name="sandbox_numalogic_demo1")
         time2 = time.perf_counter() - _start_time
         _start_time = time.perf_counter()
         self.assertTrue(time2 <= time1)
-
-    def test_get_metric_config_time(self):
-        _start_time = time.perf_counter()
-        ConfigManager().get_metric_config(
-            config_name="sandbox_numalogic_demo1", metric_name="rollout_latency"
-        )
-        time1 = time.perf_counter() - _start_time
-        _start_time = time.perf_counter()
-        ConfigManager().get_metric_config(
-            config_name="sandbox_numalogic_demo1", metric_name="rollout_latency"
-        )
-        time2 = time.perf_counter() - _start_time
-        self.assertTrue(time2 < time1)
 
     def test_get_unified_config_time(self):
         _start_time = time.perf_counter()

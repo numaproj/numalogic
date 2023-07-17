@@ -1,7 +1,7 @@
 import logging
 import os
 
-from src._config import UnifiedConf, MetricConf, DataStreamConf, PipelineConf, Configs
+from src._config import UnifiedConf, StreamConf, PipelineConf, Configs
 
 
 def get_logger(name):
@@ -25,4 +25,4 @@ def get_logger(name):
     return logger
 
 
-__all__ = ["get_logger", "UnifiedConf", "MetricConf", "DataStreamConf", "Configs", "PipelineConf"]
+__all__ = ["get_logger", "UnifiedConf", "StreamConf", "Configs", "PipelineConf"]

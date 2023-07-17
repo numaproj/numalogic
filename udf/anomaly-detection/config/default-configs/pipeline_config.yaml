@@ -1,5 +1,0 @@
-redis_conf:
-  host: "isbsvc-redis-isbs-redis-svc.numalogic-rollouts.svc"
-  port: 26379
-  expiry: 360
-  master_name: "mymaster"

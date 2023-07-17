@@ -27,8 +27,8 @@ class TestPostProcess(unittest.TestCase):
         payload = OutputPayload(**orjson.loads(msg.value.decode("utf-8")))
         self.assertIsInstance(payload, OutputPayload)
         self.assertTrue(payload.unified_anomaly)
+        self.assertGreater(payload.metadata["model_version"], 0)
         for metric, metric_data in payload.data.items():
-            self.assertGreater(metric_data["model_version"], 0)
             self.assertTrue(metric_data["anomaly_score"])
 
     def test_preprocess_prev_stale_model(self):
@@ -37,8 +37,8 @@ class TestPostProcess(unittest.TestCase):
         payload = OutputPayload(**orjson.loads(msg.value.decode("utf-8")))
         self.assertIsInstance(payload, OutputPayload)
         self.assertTrue(payload.unified_anomaly)
+        self.assertGreater(payload.metadata["model_version"], 0)
         for metric, metric_data in payload.data.items():
-            self.assertGreater(metric_data["model_version"], 0)
             self.assertTrue(metric_data["anomaly_score"])
 
     def test_preprocess_no_prev_clf(self):
@@ -47,8 +47,8 @@ class TestPostProcess(unittest.TestCase):
         payload = OutputPayload(**orjson.loads(msg.value.decode("utf-8")))
         self.assertIsInstance(payload, OutputPayload)
         self.assertTrue(payload.unified_anomaly)
+        self.assertEqual(payload.metadata["model_version"], -1)
         for metric, metric_data in payload.data.items():
-            self.assertEqual(metric_data["model_version"], -1)
             self.assertTrue(metric_data["anomaly_score"])
 
 

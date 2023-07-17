@@ -19,6 +19,7 @@ from src.watcher import ConfigManager
 _LOGGER = get_logger(__name__)
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 
+
 class Preprocess:
     @classmethod
     def get_df(cls, data_payload: dict, features: List[str]) -> (pd.DataFrame, List[int]):
@@ -45,25 +46,24 @@ class Preprocess:
         return df, [*timestamps]
 
     def preprocess(
-        self, keys: List[str], metric: str, payload: StreamPayload
+            self, keys: List[str], payload: StreamPayload
     ) -> (np.ndarray, Status):
-        preprocess_cfgs = ConfigManager.get_preprocess_config(
-            config_name=keys[0], metric_name=metric
-        )
+        preprocess_cfgs = ConfigManager.get_preprocess_config(config_name=keys[0])
+
         local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
         model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache)
         # Load preproc artifact
         try:
             preproc_artifact = model_registry.load(
-                skeys=keys + [metric],
+                skeys=keys,
                 dkeys=[_conf.name for _conf in preprocess_cfgs],
             )
         except RedisRegistryError as err:
             _LOGGER.error(
-                "%s - Error while fetching preproc artifact, Keys: %s, Metric: %s, Error: %r",
+                "%s - Error while fetching preproc artifact, Keys: %s, Metrics: %s, Error: %r",
                 payload.uuid,
                 keys,
-                metric,
+                payload.metrics,
                 err,
             )
             return None, Status.RUNTIME_ERROR
@@ -71,22 +71,22 @@ class Preprocess:
         # Check if artifact is found
         if not preproc_artifact:
             _LOGGER.info(
-                "%s - Preprocess artifact not found, forwarding for static thresholding. Keys: %s, Metric: %s",
+                "%s - Preprocess artifact not found, forwarding for static thresholding. Keys: %s, Metrics: %s",
                 payload.uuid,
                 keys,
-                metric,
+                payload.metrics,
             )
             return None, Status.ARTIFACT_NOT_FOUND
 
         # Perform preprocessing
-        x_raw = payload.get_metric_arr(metric).reshape(-1, 1)
+        x_raw = payload.get_data().reshape(-1, 1)
         preproc_clf = preproc_artifact.artifact
         x_scaled = preproc_clf.transform(x_raw).flatten()
         _LOGGER.info(
-            "%s - Successfully preprocessed, Keys: %s, Metric: %s, x_scaled: %s",
+            "%s - Successfully preprocessed, Keys: %s, Metrics: %s, x_scaled: %s",
             payload.uuid,
             keys,
-            metric,
+            payload.metrics,
             list(x_scaled),
         )
         return x_scaled, Status.PRE_PROCESSED
@@ -108,7 +108,7 @@ class Preprocess:
             return messages
 
         # Load config
-        stream_conf = ConfigManager.get_ds_config(config_name=keys[0])
+        stream_conf = ConfigManager.get_stream_config(config_name=keys[0])
         raw_df, timestamps = self.get_df(data_payload, stream_conf.metrics)
 
         # Prepare payload for forwarding
@@ -130,17 +130,16 @@ class Preprocess:
                 keys,
             )
 
-        # Perform preprocessing for each metric
-        for metric in payload.metrics:
-            x_scaled, status = self.preprocess(keys, metric, payload)
-            payload.set_status(metric=metric, status=status)
+        # Perform preprocessing
+        x_scaled, status = self.preprocess(keys, payload)
+        payload.set_status(status=status)
 
-            # If preprocess failed, forward for static thresholding
-            if x_scaled is None:
-                payload.set_header(metric=metric, header=Header.STATIC_INFERENCE)
-            else:
-                payload.set_header(metric=metric, header=Header.MODEL_INFERENCE)
-                payload.set_metric_data(metric=metric, arr=x_scaled)
+        # If preprocess failed, forward for static thresholding
+        if x_scaled is None:
+            payload.set_header(header=Header.STATIC_INFERENCE)
+        else:
+            payload.set_header(header=Header.MODEL_INFERENCE)
+            payload.set_data(arr=x_scaled)
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)

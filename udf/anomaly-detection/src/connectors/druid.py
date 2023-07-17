@@ -21,16 +21,16 @@ class DruidFetcher:
         self.client = PyDruid(url, endpoint)
 
     def fetch_data(
-        self,
-        datasource: str,
-        filter_keys: list[str],
-        filter_values: list[str],
-        dimensions: list[str],
-        granularity: str = "minute",
-        aggregations: dict = None,
-        group_by: list[str] = None,
-        pivot: Pivot = None,
-        hours: float = 24,
+            self,
+            datasource: str,
+            filter_keys: list[str],
+            filter_values: list[str],
+            dimensions: list[str],
+            granularity: str = "minute",
+            aggregations: dict = None,
+            group_by: list[str] = None,
+            pivot: Pivot = None,
+            hours: float = 24,
     ) -> pd.DataFrame:
         _start_time = time.time()
         filter_pairs = {}
@@ -67,7 +67,7 @@ class DruidFetcher:
             logging.warning("No data found for keys %s", filter_pairs)
             return pd.DataFrame()
 
-        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
+        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10 ** 6
 
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
@@ -86,3 +86,18 @@ class DruidFetcher:
             df.shape,
         )
         return df
+
+
+fetcher = DruidFetcher("https://getafix.odldruid-prd.a.intuit.com/", "druid/v2")
+df = fetcher.fetch_data(
+    datasource="tech-ip-customer-interaction-metrics",
+    filter_keys=["assetId"],
+    filter_values=["5984175597303660107"],
+    dimensions=["ciStatus"],
+    group_by=["timestamp", "ciStatus"],
+    pivot=Pivot(index="timestamp", columns=["ciStatus"], value=["count"]),
+    aggregations={"count": {"type": "doubleSum", "fieldName": "count", "name": "count"}},
+    hours=240,
+)
+df.to_csv("test.csv")
+print(df)
