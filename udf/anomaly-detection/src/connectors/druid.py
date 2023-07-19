@@ -80,6 +80,8 @@ class DruidFetcher:
                 columns=pivot.columns,
                 values=pivot.value,
             )
+            df.columns = df.columns.map('{0[1]}'.format)
+            df.reset_index(inplace=True)
 
         _LOGGER.info(
             "Time taken to fetch data: %s, for keys: %s, for df shape: %s",
@@ -87,6 +89,6 @@ class DruidFetcher:
             filter_pairs,
             df.shape,
         )
-        df.columns = df.columns.map('{0[1]}'.format)
-        df.reset_index(inplace=True)
         return df
+
+
