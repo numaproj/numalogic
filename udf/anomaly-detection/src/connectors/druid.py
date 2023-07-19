@@ -1,4 +1,6 @@
 import time
+from collections.abc import Hashable
+from typing import Sequence
 
 import pytz
 import logging
@@ -78,6 +80,8 @@ class DruidFetcher:
                 columns=pivot.columns,
                 values=pivot.value,
             )
+            df.columns = df.columns.map('{0[1]}'.format)
+            df.reset_index(inplace=True)
 
         _LOGGER.info(
             "Time taken to fetch data: %s, for keys: %s, for df shape: %s",
@@ -88,16 +92,3 @@ class DruidFetcher:
         return df
 
 
-fetcher = DruidFetcher("https://getafix.odldruid-prd.a.intuit.com/", "druid/v2")
-df = fetcher.fetch_data(
-    datasource="tech-ip-customer-interaction-metrics",
-    filter_keys=["assetId"],
-    filter_values=["5984175597303660107"],
-    dimensions=["ciStatus"],
-    group_by=["timestamp", "ciStatus"],
-    pivot=Pivot(index="timestamp", columns=["ciStatus"], value=["count"]),
-    aggregations={"count": {"type": "doubleSum", "fieldName": "count", "name": "count"}},
-    hours=240,
-)
-df.to_csv("test.csv")
-print(df)

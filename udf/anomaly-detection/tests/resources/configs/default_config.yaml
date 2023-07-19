@@ -10,14 +10,24 @@ configs:
       pivot:
         columns:
           - "ciStatus"
+    static_threshold:
+      weight: [ 0.7,0.3 ]
+      upper_limit: [ 3, 3 ]
   - name: "service-mesh"
     composite_keys: [ "destination_asset_id" ]
     metrics: [ "error_rate" , "error_count" ]
+    static_threshold:
+      weight: [ 0.7,0.3 ]
+      upper_limit: [ 3, 3 ]
   - name: "service-mesh-s2s"
     composite_keys: ["source_asset_id, destination_asset_id"]
     metrics: [ "error_rate", "error_count" ]
+    static_threshold:
+      weight: [ 0.7,0.3 ]
+      upper_limit: [ 3, 3 ]
   - name: "argo-rollouts"
     composite_keys: [ "namespace", "name", "app", "rollouts_pod_template_hash" ]
     metrics: [ "namespace_app_rollouts_http_request_error_rate"]
     static_threshold:
-      weight: 0.7
+      weight: [0.7]
+      upper_limit: [3]

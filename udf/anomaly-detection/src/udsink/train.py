@@ -1,5 +1,7 @@
 import os
 import time
+
+import numpy as np
 import orjson
 import pandas as pd
 from typing import List, Iterator
@@ -31,6 +33,14 @@ from src.watcher import ConfigManager
 _LOGGER = get_logger(__name__)
 
 REQUEST_EXPIRY = int(os.getenv("REQUEST_EXPIRY", 300))
+
+
+def get_feature_df(data: pd.DataFrame, metrics: list):
+    for col in metrics:
+        if col not in data:
+            data.loc[:, col] = 0
+    data.fillna(0, inplace=True)
+    return data[metrics]
 
 
 class Train:
@@ -153,7 +163,6 @@ class Train:
         # TODO: filter the metrics here
 
         x_train, preproc_clf = self._preprocess(train_df.to_numpy(), preproc_cfgs)
-
         trainer_cfg = numalogic_conf.trainer
         x_reconerr, anomaly_model, trainer = self._train_model(
             payload.uuid, x_train, model_cfg, trainer_cfg
@@ -237,12 +246,6 @@ class Train:
             is_new = self._is_new_request(redis_client, payload)
 
             if not is_new:
-                # _LOGGER.debug(
-                #     "%s - Skipping train request with keys: %s, metric: %s",
-                #     payload.uuid,
-                #     payload.composite_keys,
-                #     payload.metric,
-                # )
                 responses.append(Response.as_success(_datum.id))
                 continue
 
@@ -250,7 +253,7 @@ class Train:
             numalogic_config = ConfigManager.get_numalogic_config(payload.composite_keys[0])
 
             try:
-                train_df = self.fetch_data(payload)
+                df = self.fetch_data(payload)
             except Exception as err:
                 _LOGGER.error(
                     "%s - Error while fetching data for keys: %s, metrics: %s, err: %r",
@@ -262,19 +265,19 @@ class Train:
                 responses.append(Response.as_success(_datum.id))
                 continue
 
-            if len(train_df) < retrain_config.min_train_size:
+            if len(df) < retrain_config.min_train_size:
                 _LOGGER.warning(
                     "%s - Skipping training, train data less than minimum required: %s, df shape: %s",
                     payload.uuid,
                     retrain_config.min_train_size,
-                    train_df.shape,
+                    df.shape,
                 )
                 responses.append(Response.as_success(_datum.id))
                 continue
 
+            train_df = get_feature_df(df, payload.metrics)
             self._train_and_save(numalogic_config, payload, redis_client, train_df)
 
             responses.append(Response.as_success(_datum.id))
 
         return responses
-
