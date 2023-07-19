@@ -38,7 +38,7 @@ class Inference:
     ) -> np.ndarray:
         model = artifact_data.artifact
         win_size = ConfigManager.get_stream_config(config_name=keys[0]).window_size
-        data_arr = payload.get_data().reshape(-1, 1)
+        data_arr = payload.get_data()
         stream_loader = DataLoader(StreamingDataset(data_arr, win_size))
 
         trainer = AutoencoderTrainer()
@@ -54,7 +54,7 @@ class Inference:
             )
             raise RuntimeError("Failed to infer") from err
         _LOGGER.info("%s - Successfully inferred: Keys: %s, Metric: %s", payload.uuid, keys, payload.metrics)
-        return recon_err.numpy().flatten()
+        return recon_err.numpy()
 
     def inference(
             self, keys: List[str], payload: StreamPayload
@@ -105,8 +105,8 @@ class Inference:
 
         _LOGGER.info(
             "%s - Loaded artifact data from %s",
-            uuid=payload.uuid,
-            source=artifact_data.extras.get("source"),
+            payload.uuid,
+            artifact_data.extras.get("source"),
         )
         if RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr)) \
                 and artifact_data.extras.get("source") == "registry":
@@ -120,7 +120,7 @@ class Inference:
 
         # Generate predictions
         try:
-            x_infered = self._run_inference(keys, payload, artifact_data)
+            x_inferred = self._run_inference(keys, payload, artifact_data)
         except RuntimeError:
             _LOGGER.info(
                 "%s - Failed to infer, forwarding for static thresholding. Keys: %s, Metric: %s",
@@ -130,7 +130,7 @@ class Inference:
             )
             return None, Status.RUNTIME_ERROR, Header.STATIC_INFERENCE, -1
 
-        return x_infered, Status.INFERRED, header, int(artifact_data.extras.get("version"))
+        return x_inferred, Status.INFERRED, header, int(artifact_data.extras.get("version"))
 
     def run(self, keys: List[str], datum: Datum) -> Messages:
         _start_time = time.perf_counter()
@@ -145,13 +145,13 @@ class Inference:
 
         messages = Messages()
         # Perform inference
-        x_infered, status, header, version = self.inference(keys, payload)
+        x_inferred, status, header, version = self.inference(keys, payload)
         payload.set_status(status=status)
         payload.set_header(header=header)
         payload.set_metadata(key="model_version", value=version)
 
-        if x_infered is not None:
-            payload.set_data(arr=x_infered)
+        if x_inferred is not None:
+            payload.set_data(arr=x_inferred)
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)

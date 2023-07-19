@@ -25,8 +25,8 @@ class ReTrainConf:
 
 @dataclass
 class StaticThreshold:
-    upper_limit: int = 3
-    weight: float = 0.0
+    upper_limit: List[int] = field(default_factory=list)
+    weight: List[float] = field(default_factory=list)
 
 
 class DataSource(str, Enum):

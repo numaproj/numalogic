@@ -75,10 +75,10 @@ def is_host_reachable(hostname: str, port=None, max_retries=5, sleep_sec=5) -> b
 
 
 def fetch_data(
-    payload: TrainerPayload,
-    labels: dict,
-    return_labels=None,
-    hours: int = 36,
+        payload: TrainerPayload,
+        labels: dict,
+        return_labels=None,
+        hours: int = 36,
 ) -> pd.DataFrame:
     _start_time = time.time()
     prometheus_conf = ConfigManager.get_prom_config()
@@ -108,8 +108,10 @@ def calculate_static_thresh(x_arr: Matrix, static_threshold: StaticThreshold) ->
     """
     Calculates anomaly scores using static thresholding.
     """
-    static_clf = SigmoidThreshold(upper_limit=static_threshold.upper_limit)
-    static_scores = static_clf.score_samples(x_arr)
+    static_scores = np.zeros(x_arr.shape)
+    for col in range(x_arr.shape[1]):
+        static_clf = SigmoidThreshold(upper_limit=static_threshold.upper_limit[col])
+        static_scores[:, col] = static_clf.score_samples(x_arr[:, col])
     return static_scores
 
 
@@ -126,11 +128,11 @@ class WindowScorer:
 
     def __init__(self, static_thresh: StaticThreshold, postprocess_conf: ModelInfo):
         self.static_thresh = static_thresh
-        self.model_wt = 1.0 - self.static_thresh.weight
+        self.model_wt = 1.0 - np.array(self.static_thresh.weight)
         postproc_factory = PostprocessFactory()
         self.postproc_clf = postproc_factory.get_instance(postprocess_conf)
 
-    def get_ensemble_score(self, x_arr: Matrix) -> float:
+    def get_ensemble_score(self, x_arr: Matrix) -> np.ndarray:
         """
         Returns the final normalized window score.
 
@@ -150,11 +152,12 @@ class WindowScorer:
 
         norm_static_score = self.get_static_score(x_arr)
         ensemble_score = (self.static_thresh.weight * norm_static_score) + (
-            self.model_wt * norm_score
+                self.model_wt * norm_score
         )
+
         return ensemble_score
 
-    def get_static_score(self, x_arr) -> float:
+    def get_static_score(self, x_arr) -> np.ndarray:
         """
         Returns the normalized window score
         calculated using the static threshold estimator.
@@ -166,10 +169,10 @@ class WindowScorer:
             Score for the window
         """
         static_scores = calculate_static_thresh(x_arr, self.static_thresh)
-        static_score = np.mean(static_scores)
+        static_score = np.mean(static_scores, axis=0)
         return self.postproc_clf.transform(static_score)
 
-    def get_norm_score(self, x_arr: Matrix) -> float:
+    def get_norm_score(self, x_arr: Matrix) -> np.ndarray:
         """
         Returns the normalized window score
 
@@ -180,7 +183,7 @@ class WindowScorer:
             Score for the window
         """
 
-        win_score = np.mean(x_arr)
+        win_score = np.mean(x_arr, axis=0)
         return self.postproc_clf.transform(win_score)
 
     def adjust_weights(self):

@@ -9,9 +9,10 @@ from pynumaflow.function import Datum
 
 from src._constants import TESTS_DIR
 from src.entities import Status, StreamPayload, Header
+from src.watcher import ConfigManager
 
 # Make sure to import this in the end
-from tests import redis_client, Preprocess
+from tests import redis_client, Preprocess, mock_configs
 from tests.tools import get_prepoc_input, return_preproc_clf
 
 DATA_DIR = os.path.join(TESTS_DIR, "resources", "data")
@@ -31,7 +32,8 @@ class TestPreprocess(unittest.TestCase):
     def setUp(self) -> None:
         redis_client.flushall()
 
-    @patch.object(RedisRegistry, "load", Mock(return_value=return_preproc_clf()))
+    @patch.object(RedisRegistry, "load", Mock(return_value=return_preproc_clf(2)))
+    @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_preprocess(self):
         _out = Preprocess().run(self.keys, self.preproc_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
@@ -42,6 +44,7 @@ class TestPreprocess(unittest.TestCase):
         self.assertEqual(payload.header, Header.MODEL_INFERENCE)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=None))
+    @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_preprocess_no_clf(self):
         _out = Preprocess().run(self.keys, self.preproc_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
@@ -49,12 +52,12 @@ class TestPreprocess(unittest.TestCase):
         self.assertEqual(payload.status, Status.ARTIFACT_NOT_FOUND)
         self.assertEqual(payload.header, Header.STATIC_INFERENCE)
 
-    @patch.object(RedisRegistry, "load", Mock(return_value=return_preproc_clf()))
+    @patch.object(RedisRegistry, "load", Mock(return_value=return_preproc_clf(2)))
+    @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_preprocess_with_nan(self):
         preproc_input = get_prepoc_input(self.keys, STREAM_NAN_DATA_PATH)
         _out = Preprocess().run(self.keys, preproc_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
-
         df = payload.get_df()
         self.assertTrue(np.isfinite(df.values).all())
         self.assertTrue(payload.data)

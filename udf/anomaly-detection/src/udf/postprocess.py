@@ -18,14 +18,8 @@ class Postprocess:
     def postprocess(cls, keys: list[str], payload: StreamPayload) -> (float, dict):
         static_thresh = ConfigManager.get_static_threshold_config(config_name=keys[0])
         postprocess_conf = ConfigManager.get_postprocess_config(config_name=keys[0])
-        unified_config = ConfigManager.get_stream_config(config_name=keys[0]).unified_config
 
-        # TODO: Implement weighted average or max strategy for unified anomaly
-        # if weights:
-        #     weighted_anomalies = np.multiply(scores, unified_weights)
-        #     unified_anomaly = float(np.sum(weighted_anomalies) / np.sum(unified_weights))
-
-        # Compute score using static thresholding
+        # Compute static threshold score if header is static inference
         metric_arr = payload.get_data()
         win_scorer = WindowScorer(static_thresh, postprocess_conf)
         if payload.header == Header.STATIC_INFERENCE:
@@ -52,10 +46,10 @@ class Postprocess:
 
         # TODO: construct map
         metric_scores = {}
-        for metric in payload.metrics:
-            metric_scores[metric] = 0
+        for i in range(len(payload.metrics)):
+            metric_scores[payload.metrics[i]] = final_score[i]
 
-        return final_score, metric_scores
+        return cls.get_unified_anomaly(keys, final_score.tolist(), payload), metric_scores
 
     @classmethod
     def get_unified_anomaly(

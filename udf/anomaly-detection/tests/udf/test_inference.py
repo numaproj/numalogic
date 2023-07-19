@@ -11,7 +11,8 @@ from pynumaflow.function import Datum
 
 from src._constants import TESTS_DIR
 from src.entities import Status, StreamPayload, Header
-from tests import redis_client, Inference
+from src.watcher import ConfigManager
+from tests import redis_client, Inference, mock_configs
 from tests.tools import (
     get_inference_input,
     return_stale_model,
@@ -37,6 +38,7 @@ class TestInference(unittest.TestCase):
 
     @freeze_time("2022-02-20 12:00:00")
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
+    @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_inference(self):
         _out = Inference().run(self.keys, self.inference_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
@@ -48,6 +50,7 @@ class TestInference(unittest.TestCase):
         self.assertGreater(payload.metadata["model_version"], 0)
 
     @freeze_time("2022-02-20 12:00:00")
+    @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
     @patch.object(AutoencoderTrainer, "predict", Mock(side_effect=RuntimeError))
     def test_inference_err(self):
@@ -61,17 +64,19 @@ class TestInference(unittest.TestCase):
         self.assertEqual(payload.metadata["model_version"], -1)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=None))
+    @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_no_model(self):
         _out = Inference().run(self.keys, self.inference_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
         self.assertTrue(payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
-        self.assertEqual(payload, Status.ARTIFACT_NOT_FOUND)
-        self.assertEqual(payload, Header.STATIC_INFERENCE)
+        self.assertEqual(payload.status, Status.ARTIFACT_NOT_FOUND)
+        self.assertEqual(payload.header, Header.STATIC_INFERENCE)
         self.assertEqual(payload.metadata["model_version"], -1)
 
     @freeze_time("2022-02-20 12:00:00")
+    @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
     def test_no_prev_model(self):
         inference_input = get_inference_input(self.keys, STREAM_DATA_PATH, prev_clf_exists=False)
@@ -85,6 +90,7 @@ class TestInference(unittest.TestCase):
         self.assertEqual(payload.metadata["model_version"], -1)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=return_stale_model()))
+    @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_stale_model(self):
         _out = Inference().run(self.keys, self.inference_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))

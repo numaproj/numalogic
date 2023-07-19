@@ -18,6 +18,8 @@ from pynumaflow.function._dtypes import DROP, DatumMetadata
 
 from src._constants import TESTS_DIR, POSTPROC_VTX_KEY
 from src.udf import Preprocess, Inference, Threshold
+from src.watcher import ConfigManager
+from tests import mock_configs
 
 sys.modules["numaprom.mlflow"] = MagicMock()
 MODEL_DIR = os.path.join(TESTS_DIR, "resources", "models")
@@ -60,9 +62,10 @@ def get_prepoc_input(keys: list[str], data_path: str) -> Datum:
     return get_datum(keys, data)
 
 
+@patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
 def get_inference_input(keys: list[str], data_path: str, prev_clf_exists=True) -> Optional[Datum]:
     preproc_input = get_prepoc_input(keys, data_path)
-    _mock_return = return_preproc_clf() if prev_clf_exists else None
+    _mock_return = return_preproc_clf(2) if prev_clf_exists else None
     with patch.object(RedisRegistry, "load", Mock(return_value=_mock_return)):
         msg = Preprocess().run(keys, preproc_input)[0]
 
@@ -73,7 +76,7 @@ def get_inference_input(keys: list[str], data_path: str, prev_clf_exists=True) -
 
 
 def get_threshold_input(
-    keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
+        keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
 ) -> Optional[Datum]:
     inference_input = get_inference_input(keys, data_path)
     if prev_model_stale:
@@ -92,7 +95,7 @@ def get_threshold_input(
 
 
 def get_postproc_input(
-    keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
+        keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
 ) -> Optional[Datum]:
     thresh_input = get_threshold_input(keys, data_path, prev_model_stale=prev_model_stale)
     _mock_return = return_threshold_clf() if prev_clf_exists else None
@@ -106,7 +109,7 @@ def get_postproc_input(
 
 def return_mock_lstmae(*_, **__):
     return ArtifactData(
-        artifact=LSTMAE(seq_len=12, no_features=1, embedding_dim=4),
+        artifact=LSTMAE(seq_len=12, no_features=2, embedding_dim=4),
         metadata={},
         extras={
             "creation_timestamp": 1653402941169,
@@ -129,7 +132,7 @@ def return_mock_lstmae(*_, **__):
 
 def return_stale_model(*_, **__):
     return ArtifactData(
-        artifact=VanillaAE(seq_len=12),
+        artifact=VanillaAE(seq_len=12, n_features=2),
         metadata={},
         extras={
             "creation_timestamp": 1653402941169,
@@ -140,7 +143,7 @@ def return_stale_model(*_, **__):
             "name": "test::error",
             "run_id": "a7c0b376530b40d7b23e6ce2081c899c",
             "run_link": "",
-            "source": "mlflow-artifacts:/0/a7c0b376530b40d7b23e6ce2081c899c/artifacts/model",
+            "source": "registry",
             "status": "READY",
             "status_message": "",
             "tags": {},

@@ -55,8 +55,8 @@ class StreamPayload(_BasePayload):
     raw_data: Matrix
     metrics: List[str]
     timestamps: List[int]
-    status: Status = field(default_factory=lambda x: Status.RAW)
-    header: Header = field(default_factory=lambda x: Header.MODEL_INFERENCE)
+    status: Status = Status.RAW
+    header: Header = Header.MODEL_INFERENCE
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def get_df(self, original=False) -> pd.DataFrame:

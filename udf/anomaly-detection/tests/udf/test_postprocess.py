@@ -29,7 +29,7 @@ class TestPostProcess(unittest.TestCase):
         self.assertTrue(payload.unified_anomaly)
         self.assertGreater(payload.metadata["model_version"], 0)
         for metric, metric_data in payload.data.items():
-            self.assertTrue(metric_data["anomaly_score"])
+            self.assertTrue(metric_data)
 
     def test_preprocess_prev_stale_model(self):
         postproc_input = get_postproc_input(self.keys, STREAM_DATA_PATH, prev_model_stale=True)
@@ -39,7 +39,7 @@ class TestPostProcess(unittest.TestCase):
         self.assertTrue(payload.unified_anomaly)
         self.assertGreater(payload.metadata["model_version"], 0)
         for metric, metric_data in payload.data.items():
-            self.assertTrue(metric_data["anomaly_score"])
+            self.assertTrue(metric_data)
 
     def test_preprocess_no_prev_clf(self):
         postproc_input = get_postproc_input(self.keys, STREAM_DATA_PATH, prev_clf_exists=False)
@@ -49,7 +49,7 @@ class TestPostProcess(unittest.TestCase):
         self.assertTrue(payload.unified_anomaly)
         self.assertEqual(payload.metadata["model_version"], -1)
         for metric, metric_data in payload.data.items():
-            self.assertTrue(metric_data["anomaly_score"])
+            self.assertTrue(metric_data)
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ class Threshold:
                                             cache_registry=local_cache)
 
     def threshold(
-            self, keys: List[str], metric: str, payload: StreamPayload
+            self, keys: List[str], payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
         metric_arr = payload.get_data()
 
@@ -98,30 +98,28 @@ class Threshold:
 
         messages = Messages()
 
-        # Perform threshold for each metric
-        for metric in payload.metrics:
-            y_score, status, header, version = self.threshold(keys, metric, payload)
-            payload.set_status(status=status)
-            payload.set_header(header=header)
-            payload.set_metadata(key="model_version", value=version)
+        y_score, status, header, version = self.threshold(keys, payload)
+        payload.set_status(status=status)
+        payload.set_header(header=header)
+        payload.set_metadata(key="model_version", value=version)
 
-            if y_score is not None:
-                payload.set_data(arr=y_score)
+        if y_score is not None:
+            payload.set_data(arr=y_score)
 
-            if y_score is None or header == Header.MODEL_STALE or status == Status.ARTIFACT_NOT_FOUND:
-                train_payload = TrainerPayload(
-                    uuid=payload.uuid, composite_keys=keys, metrics=payload.metrics
-                )
-                _LOGGER.info(
-                    "%s - Sending Msg: { Keys: %s, Tags:%s, Payload: %s }",
-                    payload.uuid,
-                    keys,
-                    [TRAIN_VTX_KEY],
-                    train_payload,
-                )
-                messages.append(
-                    Message(keys=keys, value=train_payload.to_json(), tags=[TRAIN_VTX_KEY])
-                )
+        if y_score is None or header == Header.MODEL_STALE or status == Status.ARTIFACT_NOT_FOUND:
+            train_payload = TrainerPayload(
+                uuid=payload.uuid, composite_keys=keys, metrics=payload.metrics
+            )
+            _LOGGER.info(
+                "%s - Sending Msg: { Keys: %s, Tags:%s, Payload: %s }",
+                payload.uuid,
+                keys,
+                [TRAIN_VTX_KEY],
+                train_payload,
+            )
+            messages.append(
+                Message(keys=keys, value=train_payload.to_json(), tags=[TRAIN_VTX_KEY])
+            )
 
         messages.append(Message(keys=keys, value=payload.to_json(), tags=[POSTPROC_VTX_KEY]))
         _LOGGER.info(

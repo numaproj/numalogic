@@ -79,9 +79,9 @@ class Preprocess:
             return None, Status.ARTIFACT_NOT_FOUND
 
         # Perform preprocessing
-        x_raw = payload.get_data().reshape(-1, 1)
+        x_raw = payload.get_data()
         preproc_clf = preproc_artifact.artifact
-        x_scaled = preproc_clf.transform(x_raw).flatten()
+        x_scaled = preproc_clf.transform(x_raw)
         _LOGGER.info(
             "%s - Successfully preprocessed, Keys: %s, Metrics: %s, x_scaled: %s",
             payload.uuid,

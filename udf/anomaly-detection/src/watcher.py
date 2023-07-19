@@ -23,8 +23,10 @@ class ConfigManager:
     def load_configs():
         schema: Configs = OmegaConf.structured(Configs)
 
-        conf = OmegaConf.load(os.path.join(CONFIG_DIR, "user-configs", "config.yaml"))
-        user_configs = OmegaConf.merge(schema, conf).configs
+        user_configs = {}
+        if os.path.exists(os.path.join(CONFIG_DIR, "user-configs", "config.yaml")):
+            conf = OmegaConf.load(os.path.join(CONFIG_DIR, "user-configs", "config.yaml"))
+            user_configs = OmegaConf.merge(schema, conf).configs
 
         conf = OmegaConf.load(os.path.join(CONFIG_DIR, "default-configs", "config.yaml"))
         default_configs = OmegaConf.merge(schema, conf).configs
@@ -111,7 +113,7 @@ class ConfigManager:
         return cls.get_numalogic_config(config_name=config_name).preprocess
 
     @classmethod
-    def get_retrain_config(cls, config_name: str,):
+    def get_retrain_config(cls, config_name: str, ):
         return cls.get_stream_config(config_name=config_name).retrain_conf
 
     @classmethod
