@@ -35,6 +35,14 @@ _LOGGER = get_logger(__name__)
 REQUEST_EXPIRY = int(os.getenv("REQUEST_EXPIRY", 300))
 
 
+def get_feature_df(data: pd.DataFrame, metrics: list):
+    for col in metrics:
+        if col not in data:
+            data.loc[:, col] = 0
+    data.fillna(0, inplace=True)
+    return data[metrics]
+
+
 class Train:
     @classmethod
     def fetch_prometheus_data(cls, payload: TrainerPayload) -> pd.DataFrame:
@@ -103,7 +111,6 @@ class Train:
 
         model_factory = ModelFactory()
         model = model_factory.get_instance(model_cfg)
-        print(model)
         dataset = StreamingDataset(x, model.seq_len)
 
         trainer = AutoencoderTrainer(**trainer_cfg)
@@ -267,8 +274,8 @@ class Train:
                 )
                 responses.append(Response.as_success(_datum.id))
                 continue
-            train_df = df[payload.metrics]
-            train_df.fillna(0, inplace=True)
+
+            train_df = get_feature_df(df, payload.metrics)
             self._train_and_save(numalogic_config, payload, redis_client, train_df)
 
             responses.append(Response.as_success(_datum.id))
