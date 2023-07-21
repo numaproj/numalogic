@@ -23,16 +23,16 @@ class DruidFetcher:
         self.client = PyDruid(url, endpoint)
 
     def fetch_data(
-            self,
-            datasource: str,
-            filter_keys: list[str],
-            filter_values: list[str],
-            dimensions: list[str],
-            granularity: str = "minute",
-            aggregations: dict = None,
-            group_by: list[str] = None,
-            pivot: Pivot = None,
-            hours: float = 24,
+        self,
+        datasource: str,
+        filter_keys: list[str],
+        filter_values: list[str],
+        dimensions: list[str],
+        granularity: str = "minute",
+        aggregations: dict = None,
+        group_by: list[str] = None,
+        pivot: Pivot = None,
+        hours: float = 24,
     ) -> pd.DataFrame:
         _start_time = time.time()
         filter_pairs = {}
@@ -69,7 +69,7 @@ class DruidFetcher:
             logging.warning("No data found for keys %s", filter_pairs)
             return pd.DataFrame()
 
-        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10 ** 6
+        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
 
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
@@ -80,7 +80,7 @@ class DruidFetcher:
                 columns=pivot.columns,
                 values=pivot.value,
             )
-            df.columns = df.columns.map('{0[1]}'.format)
+            df.columns = df.columns.map("{0[1]}".format)
             df.reset_index(inplace=True)
 
         _LOGGER.info(
@@ -90,5 +90,3 @@ class DruidFetcher:
             df.shape,
         )
         return df
-
-

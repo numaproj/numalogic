@@ -52,9 +52,7 @@ class Postprocess:
         return cls.get_unified_anomaly(final_score.tolist(), payload), metric_scores
 
     @classmethod
-    def get_unified_anomaly(
-            cls, scores: list[float], payload: StreamPayload
-    ) -> float:
+    def get_unified_anomaly(cls, scores: list[float], payload: StreamPayload) -> float:
         unified_config = ConfigManager.get_stream_config(config_id=payload.config_id).unified_config
         unified_weights = unified_config.weights
         if unified_weights:

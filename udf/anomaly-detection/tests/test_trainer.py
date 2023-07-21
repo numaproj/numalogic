@@ -39,13 +39,13 @@ class TestTrainer(unittest.TestCase):
             "metric_1",
             "123456789",
         ],
-        "metrics": ["metric_1"]
+        "metrics": ["metric_1"],
     }
 
     train_payload2 = {
         "uuid": "2",
         "composite_keys": ["fciAsset", "5984175597303660107"],
-        "metrics": ["failed", "degraded"]
+        "metrics": ["failed", "degraded"],
     }
 
     def setUp(self) -> None:

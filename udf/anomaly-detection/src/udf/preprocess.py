@@ -44,13 +44,13 @@ class Preprocess:
         df = df.drop("timestamp", axis=1)
         return df, [*timestamps]
 
-    def preprocess(
-            self, keys: List[str], payload: StreamPayload
-    ) -> (np.ndarray, Status):
+    def preprocess(self, keys: List[str], payload: StreamPayload) -> (np.ndarray, Status):
         preprocess_cfgs = ConfigManager.get_preprocess_config(config_id=keys[0])
 
         local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
-        model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache)
+        model_registry = RedisRegistry(
+            client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache
+        )
         # Load preproc artifact
         try:
             preproc_artifact = model_registry.load(

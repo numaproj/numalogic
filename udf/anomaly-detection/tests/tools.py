@@ -76,7 +76,7 @@ def get_inference_input(keys: list[str], data_path: str, prev_clf_exists=True) -
 
 
 def get_threshold_input(
-        keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
+    keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
 ) -> Optional[Datum]:
     inference_input = get_inference_input(keys, data_path)
     if prev_model_stale:
@@ -95,7 +95,7 @@ def get_threshold_input(
 
 
 def get_postproc_input(
-        keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
+    keys: list[str], data_path: str, prev_clf_exists=True, prev_model_stale=False
 ) -> Optional[Datum]:
     thresh_input = get_threshold_input(keys, data_path, prev_model_stale=prev_model_stale)
     _mock_return = return_threshold_clf() if prev_clf_exists else None

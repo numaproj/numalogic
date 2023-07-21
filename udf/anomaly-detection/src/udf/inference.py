@@ -26,15 +26,16 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 class Inference:
     def __init__(self):
         local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
-        self.model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False),
-                                            cache_registry=local_cache)
+        self.model_registry = RedisRegistry(
+            client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache
+        )
 
     @classmethod
     def _run_inference(
-            cls,
-            keys: list[str],
-            payload: StreamPayload,
-            artifact_data: ArtifactData,
+        cls,
+        keys: list[str],
+        payload: StreamPayload,
+        artifact_data: ArtifactData,
     ) -> np.ndarray:
         model = artifact_data.artifact
         win_size = ConfigManager.get_stream_config(config_id=payload.config_id).window_size
@@ -53,11 +54,13 @@ class Inference:
                 err,
             )
             raise RuntimeError("Failed to infer") from err
-        _LOGGER.info("%s - Successfully inferred: Keys: %s, Metric: %s", payload.uuid, keys, payload.metrics)
+        _LOGGER.info(
+            "%s - Successfully inferred: Keys: %s, Metric: %s", payload.uuid, keys, payload.metrics
+        )
         return recon_err.numpy()
 
     def inference(
-            self, keys: List[str], payload: StreamPayload
+        self, keys: List[str], payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
         static_response = (None, Status.ARTIFACT_NOT_FOUND, Header.STATIC_INFERENCE, -1)
         # Check if metric needs static inference
@@ -108,8 +111,10 @@ class Inference:
             payload.uuid,
             artifact_data.extras.get("source"),
         )
-        if RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr)) \
-                and artifact_data.extras.get("source") == "registry":
+        if (
+            RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr))
+            and artifact_data.extras.get("source") == "registry"
+        ):
             _LOGGER.info(
                 "%s - Inference artifact found is stale, Keys: %s, Metric: %s",
                 payload.uuid,

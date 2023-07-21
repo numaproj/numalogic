@@ -142,11 +142,11 @@ class Train:
         return thresh_clf
 
     def _train_and_save(
-            self,
-            numalogic_conf: NumalogicConf,
-            payload: TrainerPayload,
-            redis_client: redis_client_t,
-            train_df: pd.DataFrame,
+        self,
+        numalogic_conf: NumalogicConf,
+        payload: TrainerPayload,
+        redis_client: redis_client_t,
+        train_df: pd.DataFrame,
     ) -> None:
         _LOGGER.debug(
             "%s - Starting Training for keys: %s, metric: %s",

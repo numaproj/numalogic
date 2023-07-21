@@ -113,7 +113,10 @@ class ConfigManager:
         return cls.get_numalogic_config(config_id=config_id).preprocess
 
     @classmethod
-    def get_retrain_config(cls, config_id: str, ):
+    def get_retrain_config(
+        cls,
+        config_id: str,
+    ):
         return cls.get_stream_config(config_id=config_id).retrain_conf
 
     @classmethod

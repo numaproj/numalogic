@@ -16,12 +16,12 @@ SENTINEL_CLIENT: Optional[redis_client_t] = None
 
 
 def get_redis_client(
-        host: str,
-        port: int,
-        password: str,
-        mastername: str,
-        recreate: bool = False,
-        master_node: bool = True,
+    host: str,
+    port: int,
+    password: str,
+    mastername: str,
+    recreate: bool = False,
+    master_node: bool = True,
 ) -> redis_client_t:
     """
     Return a master redis client for sentinel connections, with retry.
@@ -72,8 +72,7 @@ def get_redis_client(
         SENTINEL_CLIENT = sentinel.master_for(mastername)
     else:
         SENTINEL_CLIENT = sentinel.slave_for(mastername)
-    _LOGGER.info(
-        "Sentinel redis params: %s, master_node: %s", conn_kwargs, master_node)
+    _LOGGER.info("Sentinel redis params: %s, master_node: %s", conn_kwargs, master_node)
     return SENTINEL_CLIENT
 
 

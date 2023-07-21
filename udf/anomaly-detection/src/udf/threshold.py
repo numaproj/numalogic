@@ -23,11 +23,12 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 class Threshold:
     def __init__(self):
         local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
-        self.model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False),
-                                            cache_registry=local_cache)
+        self.model_registry = RedisRegistry(
+            client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache
+        )
 
     def threshold(
-            self, keys: List[str], payload: StreamPayload
+        self, keys: List[str], payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
         metric_arr = payload.get_data()
 
@@ -117,9 +118,7 @@ class Threshold:
                 [TRAIN_VTX_KEY],
                 train_payload,
             )
-            messages.append(
-                Message(keys=keys, value=train_payload.to_json(), tags=[TRAIN_VTX_KEY])
-            )
+            messages.append(Message(keys=keys, value=train_payload.to_json(), tags=[TRAIN_VTX_KEY]))
 
         messages.append(Message(keys=keys, value=payload.to_json(), tags=[POSTPROC_VTX_KEY]))
         _LOGGER.info(

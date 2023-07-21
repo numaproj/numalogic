@@ -55,7 +55,7 @@ class TestDruid(unittest.TestCase):
                 index="timestamp",
                 columns=["ciStatus"],
                 value=["count"],
-            )
+            ),
         )
         self.assertEqual(_out.shape, (2, 2))
 
