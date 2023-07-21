@@ -57,8 +57,7 @@ class TestDruid(unittest.TestCase):
                 value=["count"],
             )
         )
-        _out.to_csv("test.csv")
-        self.assertEqual(_out.shape, (2, 1))
+        self.assertEqual(_out.shape, (2, 2))
 
 
 if __name__ == "__main__":

@@ -37,7 +37,7 @@ class Inference:
             artifact_data: ArtifactData,
     ) -> np.ndarray:
         model = artifact_data.artifact
-        win_size = ConfigManager.get_stream_config(config_name=keys[0]).window_size
+        win_size = ConfigManager.get_stream_config(config_id=payload.config_id).window_size
         data_arr = payload.get_data()
         stream_loader = DataLoader(StreamingDataset(data_arr, win_size))
 
@@ -71,8 +71,8 @@ class Inference:
             return static_response
 
         # Load config
-        retrain_config = ConfigManager.get_retrain_config(config_name=keys[0])
-        numalogic_conf = ConfigManager.get_numalogic_config(config_name=keys[0])
+        retrain_config = ConfigManager.get_retrain_config(config_id=payload.config_id)
+        numalogic_conf = ConfigManager.get_numalogic_config(config_id=payload.config_id)
 
         # Load inference artifact
         try:

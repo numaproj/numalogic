@@ -51,6 +51,7 @@ class TrainerPayload(_BasePayload):
 
 @dataclass(repr=False)
 class StreamPayload(_BasePayload):
+    config_id: str
     data: Matrix
     raw_data: Matrix
     metrics: List[str]
@@ -102,6 +103,8 @@ class StreamPayload(_BasePayload):
 
 @dataclass
 class InputPayload:
+    uuid: str
+    config_id: str
     start_time: int
     end_time: int
     data: list[dict[str, Any]]
@@ -113,6 +116,8 @@ class InputPayload:
 
 @dataclass
 class OutputPayload:
+    uuid: str
+    config_id: str
     timestamp: int
     unified_anomaly: float
     data: dict[str, Any]

@@ -15,7 +15,7 @@ STREAM_DATA_PATH = os.path.join(DATA_DIR, "stream.json")
 
 
 class TestPostProcess(unittest.TestCase):
-    keys: list[str] = ["service-mesh", "1", "2"]
+    keys: list[str] = ["1"]
 
     def setUp(self) -> None:
         redis_client.flushall()

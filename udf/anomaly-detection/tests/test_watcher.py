@@ -25,49 +25,49 @@ class TestConfigManager(unittest.TestCase):
 
     def test_get_datastream_config(self):
         # from users config
-        stream_conf = self.cm.get_stream_config(config_name="sandbox_numalogic_demo1")
+        stream_conf = self.cm.get_stream_config(config_id="app1-config")
         self.assertTrue(stream_conf)
-        self.assertEqual(stream_conf.name, "sandbox_numalogic_demo1")
+        self.assertEqual(stream_conf.config_id, "app1-config")
 
         # from given default config
-        stream_conf = self.cm.get_stream_config(config_name="argo-rollouts")
+        stream_conf = self.cm.get_stream_config(config_id="druid-config")
         self.assertTrue(stream_conf)
-        self.assertEqual(stream_conf.name, "argo-rollouts")
+        self.assertEqual(stream_conf.config_id, "druid-config")
 
         # default config
-        stream_conf = self.cm.get_stream_config(config_name="random")
+        stream_conf = self.cm.get_stream_config(config_id="random")
         self.assertTrue(stream_conf)
-        self.assertEqual(stream_conf.name, "default")
+        self.assertEqual(stream_conf.config_id, "default")
 
     def test_get_unified_config(self):
-        # from given config
-        unified_config = self.cm.get_unified_config(config_name="sandbox_numalogic_demo1")
+        # from given user config
+        unified_config = self.cm.get_unified_config(config_id="app1-config")
         self.assertTrue(unified_config)
 
         # from given default config
-        unified_config = self.cm.get_unified_config(config_name="default-argorollouts")
+        unified_config = self.cm.get_unified_config(config_id="prometheus-config")
         self.assertTrue(unified_config)
 
         # default config - will not have unified config
-        unified_config = self.cm.get_unified_config(config_name="random")
+        unified_config = self.cm.get_unified_config(config_id="random")
         self.assertTrue(unified_config.strategy, "max")
 
     def test_get_datastream_config_time(self):
         _start_time = time.perf_counter()
-        ConfigManager.get_stream_config(config_name="sandbox_numalogic_demo1")
+        ConfigManager.get_stream_config(config_id="druid-config")
         time1 = time.perf_counter() - _start_time
 
         _start_time = time.perf_counter()
-        ConfigManager.get_stream_config(config_name="sandbox_numalogic_demo1")
+        ConfigManager.get_stream_config(config_id="druid-config")
         time2 = time.perf_counter() - _start_time
         _start_time = time.perf_counter()
         self.assertTrue(time2 <= time1)
 
     def test_get_unified_config_time(self):
         _start_time = time.perf_counter()
-        ConfigManager().get_unified_config(config_name="sandbox_numalogic_demo1")
+        ConfigManager().get_unified_config(config_id="druid-config")
         time1 = time.perf_counter() - _start_time
         _start_time = time.perf_counter()
-        ConfigManager().get_unified_config(config_name="sandbox_numalogic_demo1")
+        ConfigManager().get_unified_config(config_id="druid-config")
         time2 = time.perf_counter() - _start_time
         self.assertTrue(time2 < time1)

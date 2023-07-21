@@ -64,7 +64,7 @@ class TestTrainer(unittest.TestCase):
         _out = Train().run(datums=iter([as_datum(self.train_payload2)]))
         print(_out)
         self.assertTrue(_out[0].success)
-        self.assertEqual("2", _out[0].id)
+        self.assertEqual("1", _out[0].id)
 
 
 if __name__ == "__main__":

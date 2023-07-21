@@ -1,19 +1,22 @@
 configs:
-  - name: "sandbox_numalogic_demo1"
-    composite_keys: [ "namespace", "name", "hash_id" ]
-    metrics: ["rollout_error_rate"]
+  - config_id: "app1-config"
+    source: "prometheus"
+    composite_keys: [ "namespace", "name", "rollout_pod_template_hash" ]
+    metrics: ["error_rate"]
     static_threshold:
       weight: [0.6]
       upper_limit: [3]
-  - name: "sandbox_numalogic_demo2"
-    composite_keys: [ "namespace", "name", "hash_id" ]
-    metrics: ["rollout_error_rate"]
+  - config_id: "app2-config"
+    source: "prometheus"
+    composite_keys: [ "namespace", "name", "rollout_pod_template_hash" ]
+    metrics: ["error_rate", "error_count"]
     static_threshold:
       weight: [0.7, 0.3]
       upper_limit: [3, 3]
     unified_config:
       weights: [0.7, 0.3]
-  - name: "sandbox_numalogic_demo3"
+  - config_id: "app2-config"
+    source: "prometheus"
     metrics: ["namespace_app_rollouts_http_request_error_rate", "namespace_app_rollouts_http_request_latency"]
     composite_keys: [ "namespace", "name", "app", "rollouts_pod_template_hash" ]
     static_threshold:

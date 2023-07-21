@@ -47,9 +47,9 @@ class ConfigManager:
 
         cls.config["user_configs"] = dict()
         for _config in user_configs:
-            cls.config["user_configs"][_config.name] = _config
+            cls.config["user_configs"][_config.config_id] = _config
 
-        cls.config["default_configs"] = dict(map(lambda c: (c.name, c), default_configs))
+        cls.config["default_configs"] = dict(map(lambda c: (c.config_id, c), default_configs))
         cls.config["default_numalogic"] = default_numalogic
         cls.config["pipeline_config"] = pipeline_config
 
@@ -57,19 +57,19 @@ class ConfigManager:
         return cls.config
 
     @classmethod
-    def get_stream_config(cls, config_name: str) -> StreamConf:
+    def get_stream_config(cls, config_id: str) -> StreamConf:
         if not cls.config:
             cls.update_configs()
 
         stream_conf = None
 
         # search and load from user configs
-        if config_name in cls.config["user_configs"]:
-            stream_conf = cls.config["user_configs"][config_name]
+        if config_id in cls.config["user_configs"]:
+            stream_conf = cls.config["user_configs"][config_id]
 
         # if not search and load from default configs
-        if not stream_conf and config_name in cls.config["default_configs"]:
-            stream_conf = cls.config["default_configs"][config_name]
+        if not stream_conf and config_id in cls.config["default_configs"]:
+            stream_conf = cls.config["default_configs"][config_id]
 
         # if not in default configs, initialize conf with default values
         if not stream_conf:
@@ -82,8 +82,8 @@ class ConfigManager:
         return stream_conf
 
     @classmethod
-    def get_unified_config(cls, config_name: str) -> UnifiedConf:
-        stream_conf = cls.get_stream_config(config_name)
+    def get_unified_config(cls, config_id: str) -> UnifiedConf:
+        stream_conf = cls.get_stream_config(config_id)
         return stream_conf.unified_config
 
     @classmethod
@@ -105,32 +105,32 @@ class ConfigManager:
         return None
 
     @classmethod
-    def get_numalogic_config(cls, config_name: str):
-        return cls.get_stream_config(config_name=config_name).numalogic_conf
+    def get_numalogic_config(cls, config_id: str):
+        return cls.get_stream_config(config_id=config_id).numalogic_conf
 
     @classmethod
-    def get_preprocess_config(cls, config_name: str):
-        return cls.get_numalogic_config(config_name=config_name).preprocess
+    def get_preprocess_config(cls, config_id: str):
+        return cls.get_numalogic_config(config_id=config_id).preprocess
 
     @classmethod
-    def get_retrain_config(cls, config_name: str, ):
-        return cls.get_stream_config(config_name=config_name).retrain_conf
+    def get_retrain_config(cls, config_id: str, ):
+        return cls.get_stream_config(config_id=config_id).retrain_conf
 
     @classmethod
-    def get_static_threshold_config(cls, config_name: str):
-        return cls.get_stream_config(config_name=config_name).static_threshold
+    def get_static_threshold_config(cls, config_id: str):
+        return cls.get_stream_config(config_id=config_id).static_threshold
 
     @classmethod
-    def get_threshold_config(cls, config_name: str):
-        return cls.get_stream_config(config_name=config_name).numalogic_conf.threshold
+    def get_threshold_config(cls, config_id: str):
+        return cls.get_stream_config(config_id=config_id).numalogic_conf.threshold
 
     @classmethod
-    def get_postprocess_config(cls, config_name: str):
-        return cls.get_numalogic_config(config_name=config_name).postprocess
+    def get_postprocess_config(cls, config_id: str):
+        return cls.get_numalogic_config(config_id=config_id).postprocess
 
     @classmethod
-    def get_trainer_config(cls, config_name: str):
-        return cls.get_numalogic_config(config_name=config_name).trainer
+    def get_trainer_config(cls, config_id: str):
+        return cls.get_numalogic_config(config_id=config_id).trainer
 
 
 class ConfigHandler(FileSystemEventHandler):

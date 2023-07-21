@@ -32,8 +32,8 @@ class Threshold:
         metric_arr = payload.get_data()
 
         # Load config
-        static_thresh = ConfigManager.get_static_threshold_config(config_name=keys[0])
-        thresh_cfg = ConfigManager.get_threshold_config(config_name=keys[0])
+        static_thresh = ConfigManager.get_static_threshold_config(config_id=payload.config_id)
+        thresh_cfg = ConfigManager.get_threshold_config(config_id=payload.config_id)
 
         # Check if metric needs static inference
         if payload.header == Header.STATIC_INFERENCE:

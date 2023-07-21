@@ -27,16 +27,11 @@ class TestTools(unittest.TestCase):
 @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
 class TestWindowScorer(unittest.TestCase):
     def test_get_winscore(self):
-        static_threshold = ConfigManager().get_static_threshold_config(
-            config_name="sandbox_numalogic_demo2",
-            metric_name="namespace_app_rollouts_http_request_error_rate",
-        )
-        postprocess_conf = ConfigManager().get_postprocess_config(
-            config_name="sandbox_numalogic_demo2",
-            metric_name="namespace_app_rollouts_http_request_error_rate",
-        )
+        static_threshold = ConfigManager().get_static_threshold_config(config_id="druid-config")
+        postprocess_conf = ConfigManager().get_postprocess_config(config_id="druid-config")
 
         stream = np.random.uniform(low=1, high=2, size=(10, 1))
         winscorer = WindowScorer(static_threshold, postprocess_conf)
-        final_score = winscorer.get_ensemble_score(stream)
-        self.assertLess(final_score, 3.0)
+        final_scores = winscorer.get_ensemble_score(stream)
+        for score in final_scores:
+            self.assertLess(score, 3.0)

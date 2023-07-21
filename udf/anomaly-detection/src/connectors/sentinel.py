@@ -73,7 +73,7 @@ def get_redis_client(
     else:
         SENTINEL_CLIENT = sentinel.slave_for(mastername)
     _LOGGER.info(
-        "Sentinel redis params: %S, master_node: %s",conn_kwargs,master_node)
+        "Sentinel redis params: %s, master_node: %s", conn_kwargs, master_node)
     return SENTINEL_CLIENT
 
 

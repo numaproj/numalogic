@@ -16,8 +16,8 @@ _LOGGER = get_logger(__name__)
 class Postprocess:
     @classmethod
     def postprocess(cls, keys: list[str], payload: StreamPayload) -> (float, dict):
-        static_thresh = ConfigManager.get_static_threshold_config(config_name=keys[0])
-        postprocess_conf = ConfigManager.get_postprocess_config(config_name=keys[0])
+        static_thresh = ConfigManager.get_static_threshold_config(config_id=payload.config_id)
+        postprocess_conf = ConfigManager.get_postprocess_config(config_id=payload.config_id)
 
         # Compute static threshold score if header is static inference
         metric_arr = payload.get_data()
@@ -49,13 +49,13 @@ class Postprocess:
         for i in range(len(payload.metrics)):
             metric_scores[payload.metrics[i]] = final_score[i]
 
-        return cls.get_unified_anomaly(keys, final_score.tolist(), payload), metric_scores
+        return cls.get_unified_anomaly(final_score.tolist(), payload), metric_scores
 
     @classmethod
     def get_unified_anomaly(
-            cls, keys: List[str], scores: list[float], payload: StreamPayload
+            cls, scores: list[float], payload: StreamPayload
     ) -> float:
-        unified_config = ConfigManager.get_stream_config(config_name=keys[0]).unified_config
+        unified_config = ConfigManager.get_stream_config(config_id=payload.config_id).unified_config
         unified_weights = unified_config.weights
         if unified_weights:
             weighted_anomalies = np.multiply(scores, unified_weights)
@@ -91,11 +91,18 @@ class Postprocess:
         # Perform postprocess
         final_score, metric_scores = self.postprocess(keys, payload)
 
+        stream_conf = ConfigManager.get_stream_config(config_id=payload.config_id)
+        metadata = payload.metadata
+        metadata["composite_keys"] = list(stream_conf.composite_keys)
+
+        # Construct output payload
         out_payload = OutputPayload(
+            uuid=payload.uuid,
+            config_id=payload.config_id,
             timestamp=payload.timestamps[-1],
             unified_anomaly=final_score,
             data=metric_scores,
-            metadata=payload.metadata,
+            metadata=metadata,
         )
 
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %s }", payload.uuid, keys, out_payload)

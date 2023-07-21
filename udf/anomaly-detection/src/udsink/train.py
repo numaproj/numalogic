@@ -1,7 +1,5 @@
 import os
 import time
-
-import numpy as np
 import orjson
 import pandas as pd
 from typing import List, Iterator
@@ -70,7 +68,7 @@ class Train:
         return data_fetcher.fetch_data(
             datasource=fetcher_conf.datasource,
             filter_keys=stream_config.composite_keys,
-            filter_values=payload.composite_keys[1:],  # skip config name and add metric name
+            filter_values=payload.composite_keys,
             dimensions=OmegaConf.to_container(fetcher_conf.dimensions),
             granularity=fetcher_conf.granularity,
             aggregations=OmegaConf.to_container(fetcher_conf.aggregations),

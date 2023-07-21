@@ -1,7 +1,6 @@
 import json
 import os
 import time
-import uuid
 
 import numpy as np
 import pandas as pd
@@ -48,7 +47,7 @@ class Preprocess:
     def preprocess(
             self, keys: List[str], payload: StreamPayload
     ) -> (np.ndarray, Status):
-        preprocess_cfgs = ConfigManager.get_preprocess_config(config_name=keys[0])
+        preprocess_cfgs = ConfigManager.get_preprocess_config(config_id=keys[0])
 
         local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
         model_registry = RedisRegistry(client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache)
@@ -95,25 +94,25 @@ class Preprocess:
         _start_time = time.perf_counter()
         _ = datum.event_time
         _ = datum.watermark
-        _uuid = uuid.uuid4().hex
-        _LOGGER.info("%s - Received Msg: { Keys: %s, Value: %s }", _uuid, keys, datum.value)
+        _LOGGER.info("Received Msg: { Keys: %s, Value: %s }", keys, datum.value)
 
         messages = Messages()
         try:
             data_payload = json.loads(datum.value)
-            _LOGGER.info("%s - Data payload: %s", _uuid, data_payload)
+            _LOGGER.info("%s - Data payload: %s", data_payload["uuid"], data_payload)
         except Exception as e:
             _LOGGER.error("%s - Error while reading input json %r", e)
             messages.append(Message.to_drop())
             return messages
 
         # Load config
-        stream_conf = ConfigManager.get_stream_config(config_name=keys[0])
+        stream_conf = ConfigManager.get_stream_config(config_id=data_payload["config_id"])
         raw_df, timestamps = self.get_df(data_payload, stream_conf.metrics)
 
         # Prepare payload for forwarding
         payload = StreamPayload(
-            uuid=_uuid,
+            uuid=data_payload["uuid"],
+            config_id=data_payload["config_id"],
             composite_keys=keys,
             data=np.asarray(raw_df.values.tolist()),
             raw_data=np.asarray(raw_df.values.tolist()),
