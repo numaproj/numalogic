@@ -156,8 +156,9 @@ class Watcher:
 
     def run(self):
         for directory in self.directories:
-            self.observer.schedule(self.handler, directory, recursive=True)
-            _LOGGER.info("\nWatcher Running in {}/\n".format(directory))
+            if os.path.exists(directory):
+                self.observer.schedule(self.handler, directory, recursive=True)
+                _LOGGER.info("\nWatcher Running in {}/\n".format(directory))
 
         self.observer.start()
         try:

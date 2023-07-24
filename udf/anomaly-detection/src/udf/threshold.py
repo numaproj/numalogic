@@ -109,7 +109,10 @@ class Threshold:
 
         if y_score is None or header == Header.MODEL_STALE or status == Status.ARTIFACT_NOT_FOUND:
             train_payload = TrainerPayload(
-                uuid=payload.uuid, composite_keys=keys, metrics=payload.metrics
+                uuid=payload.uuid,
+                composite_keys=keys,
+                metrics=payload.metrics,
+                config_id=payload.config_id,
             )
             _LOGGER.info(
                 "%s - Sending Msg: { Keys: %s, Tags:%s, Payload: %s }",

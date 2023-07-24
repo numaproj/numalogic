@@ -57,7 +57,7 @@ class Train:
 
     @classmethod
     def fetch_druid_data(cls, payload: TrainerPayload) -> pd.DataFrame:
-        stream_config = ConfigManager.get_stream_config(payload.composite_keys[0])
+        stream_config = ConfigManager.get_stream_config(payload.config_id)
         druid_conf = ConfigManager.get_druid_config()
         fetcher_conf = stream_config.druid_fetcher
         if druid_conf is None:
@@ -79,7 +79,7 @@ class Train:
 
     @classmethod
     def fetch_data(cls, payload: TrainerPayload) -> pd.DataFrame:
-        stream_config = ConfigManager.get_stream_config(payload.composite_keys[0])
+        stream_config = ConfigManager.get_stream_config(payload.config_id)
         if stream_config.source == DataSource.PROMETHEUS:
             return cls.fetch_prometheus_data(payload)
         elif stream_config.source == DataSource.DRUID:
@@ -247,8 +247,8 @@ class Train:
                 responses.append(Response.as_success(_datum.id))
                 continue
 
-            retrain_config = ConfigManager.get_retrain_config(payload.composite_keys[0])
-            numalogic_config = ConfigManager.get_numalogic_config(payload.composite_keys[0])
+            retrain_config = ConfigManager.get_retrain_config(payload.config_id)
+            numalogic_config = ConfigManager.get_numalogic_config(payload.config_id)
 
             try:
                 df = self.fetch_data(payload)

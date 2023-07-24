@@ -34,6 +34,7 @@ def as_datum(data: str | bytes | dict, msg_id="1") -> Datum:
 class TestTrainer(unittest.TestCase):
     train_payload = {
         "uuid": "1",
+        "config_id": "prometheus-config",
         "composite_keys": [
             "sandbox_numalogic_demo",
             "metric_1",
@@ -44,7 +45,8 @@ class TestTrainer(unittest.TestCase):
 
     train_payload2 = {
         "uuid": "2",
-        "composite_keys": ["fciAsset", "5984175597303660107"],
+        "config_id": "druid-config",
+        "composite_keys": ["5984175597303660107"],
         "metrics": ["failed", "degraded"],
     }
 

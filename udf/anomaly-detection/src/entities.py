@@ -34,6 +34,7 @@ class Header(str, Enum):
 @dataclass
 class _BasePayload:
     uuid: str
+    config_id: str
     composite_keys: List[str]
 
 
@@ -51,7 +52,6 @@ class TrainerPayload(_BasePayload):
 
 @dataclass(repr=False)
 class StreamPayload(_BasePayload):
-    config_id: str
     data: Matrix
     raw_data: Matrix
     metrics: List[str]
