@@ -2,7 +2,7 @@ import os
 import time
 import orjson
 import pandas as pd
-from typing import List, Iterator
+from typing import List
 from numalogic.config import (
     NumalogicConf,
     ThresholdFactory,
@@ -16,7 +16,7 @@ from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import redis_client_t
 from omegaconf import OmegaConf
-from pynumaflow.sink import Datum, Responses, Response
+from pynumaflow.function import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
@@ -41,7 +41,7 @@ def get_feature_df(data: pd.DataFrame, metrics: list):
     return data[metrics]
 
 
-class Train:
+class Trainer:
     @classmethod
     def fetch_prometheus_data(cls, payload: TrainerPayload) -> pd.DataFrame:
         prometheus_conf = ConfigManager.get_prom_config()
@@ -235,47 +235,46 @@ class Train:
                 version,
             )
 
-    def run(self, datums: Iterator[Datum]) -> Responses:
-        responses = Responses()
+    def run(self, keys: List[str], datum: Datum) -> Messages:
+        messages = Messages()
         redis_client = get_redis_client_from_conf()
 
-        for _datum in datums:
-            payload = TrainerPayload(**orjson.loads(_datum.value))
-            is_new = self._is_new_request(redis_client, payload)
+        payload = TrainerPayload(**orjson.loads(datum.value))
+        is_new = self._is_new_request(redis_client, payload)
 
-            if not is_new:
-                responses.append(Response.as_success(_datum.id))
-                continue
+        if not is_new:
+            messages.append(Message.to_drop())
+            return messages
 
-            retrain_config = ConfigManager.get_retrain_config(payload.config_id)
-            numalogic_config = ConfigManager.get_numalogic_config(payload.config_id)
+        retrain_config = ConfigManager.get_retrain_config(payload.config_id)
+        numalogic_config = ConfigManager.get_numalogic_config(payload.config_id)
 
-            try:
-                df = self.fetch_data(payload)
-            except Exception as err:
-                _LOGGER.error(
-                    "%s - Error while fetching data for keys: %s, metrics: %s, err: %r",
-                    payload.uuid,
-                    payload.composite_keys,
-                    payload.metrics,
-                    err,
-                )
-                responses.append(Response.as_success(_datum.id))
-                continue
+        try:
+            df = self.fetch_data(payload)
+        except Exception as err:
+            _LOGGER.error(
+                "%s - Error while fetching data for keys: %s, metrics: %s, err: %r",
+                payload.uuid,
+                payload.composite_keys,
+                payload.metrics,
+                err,
+            )
+            messages.append(Message.to_drop())
+            return messages
 
-            if len(df) < retrain_config.min_train_size:
-                _LOGGER.warning(
-                    "%s - Skipping training, train data less than minimum required: %s, df shape: %s",
-                    payload.uuid,
-                    retrain_config.min_train_size,
-                    df.shape,
-                )
-                responses.append(Response.as_success(_datum.id))
-                continue
+        if len(df) < retrain_config.min_train_size:
+            _LOGGER.warning(
+                "%s - Skipping training, train data less than minimum required: %s, df shape: %s",
+                payload.uuid,
+                retrain_config.min_train_size,
+                df.shape,
+            )
+            messages.append(Message.to_drop())
+            return messages
 
-            train_df = get_feature_df(df, payload.metrics)
-            self._train_and_save(numalogic_config, payload, redis_client, train_df)
+        train_df = get_feature_df(df, payload.metrics)
+        self._train_and_save(numalogic_config, payload, redis_client, train_df)
 
-            responses.append(Response.as_success(_datum.id))
+        messages.append(Message(keys=keys, value=train_df.to_json()))
 
-        return responses
+        return messages

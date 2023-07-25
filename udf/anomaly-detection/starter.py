@@ -2,7 +2,7 @@ import sys
 import threading
 
 import aiorun
-from pynumaflow.function import Server, AsyncServer
+from pynumaflow.function import Server, AsyncServer, MultiProcServer
 from pynumaflow.sink import Sink
 
 from src._constants import CONFIG_PATHS
@@ -28,6 +28,9 @@ if __name__ == "__main__":
         server.start()
     elif server_type == "udf":
         server = Server(map_handler=step_handler)
+        server.start()
+    elif server_type == "multiproc_udf":
+        server = MultiProcServer(map_handler=step_handler)
         server.start()
     elif server_type == "async_udf":
         server = AsyncServer(reduce_handler=step_handler)

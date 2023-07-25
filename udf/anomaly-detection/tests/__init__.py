@@ -41,16 +41,15 @@ with patch("src.connectors.sentinel.get_redis_client") as mock_get_redis_client:
         mock_get_redis_client_from_conf.return_value = redis_client
         with patch.object(ConfigManager, "load_configs") as mock_confs:
             mock_confs.return_value = mock_configs()
-            from src.udf import Preprocess, Inference, Threshold, Postprocess
-            from src.udsink import Train
+            from src.udf import Preprocess, Inference, Threshold, Postprocess, Trainer
 
 
 __all__ = [
     "redis_client",
-    "Train",
     "Preprocess",
     "Inference",
     "Threshold",
     "Postprocess",
+    "Trainer",
     "mock_configs",
 ]

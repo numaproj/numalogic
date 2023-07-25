@@ -1,5 +1,5 @@
 from src.udf import Preprocess, Inference, Threshold, Postprocess
-from src.udsink import Train
+from src.udf.trainer import Trainer
 
 
 class HandlerFactory:
@@ -17,7 +17,7 @@ class HandlerFactory:
         if step == "postprocess":
             return Postprocess().run
 
-        if step == "train":
-            return Train().run
+        if step == "trainer":
+            return Trainer().run
 
         raise NotImplementedError(f"Invalid step provided: {step}")

@@ -14,7 +14,7 @@ from tests.tools import (
     mock_prom_query_metric,
     mock_druid_fetch_data,
 )
-from tests import redis_client, Train, mock_configs
+from tests import redis_client, Trainer, mock_configs
 
 DATA_DIR = os.path.join(TESTS_DIR, "resources", "data")
 STREAM_DATA_PATH = os.path.join(DATA_DIR, "stream.json")
@@ -56,17 +56,22 @@ class TestTrainer(unittest.TestCase):
     @patch.object(Prometheus, "query_metric", Mock(return_value=mock_prom_query_metric()))
     @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_prometheus_01(self):
-        _out = Train().run(datums=iter([as_datum(self.train_payload)]))
-        self.assertTrue(_out[0].success)
-        self.assertEqual("1", _out[0].id)
+        _out = Trainer().run(
+            keys=[
+                "sandbox_numalogic_demo",
+                "metric_1",
+                "123456789",
+            ],
+            datum=as_datum(self.train_payload),
+        )
+        self.assertTrue(_out[0])
 
     @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data()))
     @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_druid_01(self):
-        _out = Train().run(datums=iter([as_datum(self.train_payload2)]))
+        _out = Trainer().run(keys=["5984175597303660107"], datum=as_datum(self.train_payload2))
         print(_out)
-        self.assertTrue(_out[0].success)
-        self.assertEqual("1", _out[0].id)
+        self.assertTrue(_out[0])
 
 
 if __name__ == "__main__":
