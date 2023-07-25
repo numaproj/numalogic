@@ -80,7 +80,8 @@ class DynamoDBRegistry(ArtifactManager):
         role: AWS role with access to DynamoDB table
         models_to_retain: number of models to retain in the DB (default = 2)
         cache_registry: ArtifactCache instance, must have an expiration set for the
-         model to be refreshed
+         model to be refreshed.
+
     Examples
     --------
     >>> from numalogic.models.autoencoder.variants import VanillaAE
