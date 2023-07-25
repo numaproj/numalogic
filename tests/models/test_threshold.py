@@ -68,7 +68,7 @@ class TestMahalanobisThreshold(unittest.TestCase):
         clf = MahalanobisThreshold()
         clf.fit(self.x_train)
         y = clf.score_samples(self.x_test)
-        self.assertTupleEqual(self.x_test.shape, y.shape)
+        self.assertTupleEqual((self.x_test.shape[0],), y.shape)
 
     def test_score_samples_err(self):
         clf = MahalanobisThreshold()
