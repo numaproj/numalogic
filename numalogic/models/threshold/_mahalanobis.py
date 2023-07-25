@@ -34,6 +34,19 @@ class MahalanobisThreshold(BaseThresholdModel):
     Raises
     ------
         ValueError: if max_outlier_prob is not in range (0, 1)
+
+    >>> import numpy as np
+    >>> from numalogic.models.threshold import MahalanobisThreshold
+    >>> rng = np.random.default_rng(42)
+    ...
+    >>> x_train = rng.normal(size=(100, 15))
+    >>> x_test = rng.normal(size=(30, 15))
+    ...
+    >>> clf = MahalanobisThreshold()
+    >>> clf.fit(x_train)
+    ...
+    >>> y_test = clf.predict(x_test)
+    >>> test_scores = clf.score_samples(x_test)
     """
 
     def __init__(self, max_outlier_prob: float = 0.1):
