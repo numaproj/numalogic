@@ -21,6 +21,7 @@ from numalogic.tools.exceptions import ModelInitializationError, InvalidDataShap
 
 _INLIER: Final[int] = 0
 _OUTLIER: Final[int] = 1
+_INPUT_DIMS = Final[int] = 2
 
 
 class MahalanobisThreshold(BaseThresholdModel):
@@ -87,7 +88,7 @@ class MahalanobisThreshold(BaseThresholdModel):
     @staticmethod
     def _validate_input(x: npt.NDArray[float]) -> None:
         """Validate the input matrix shape."""
-        if x.ndim != 2:
+        if x.ndim != _INPUT_DIMS:
             raise InvalidDataShapeError(f"Input matrix should have 2 dims, given shape: {x.shape}.")
 
     def fit(self, x: npt.NDArray[float]) -> Self:
