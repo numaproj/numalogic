@@ -51,11 +51,17 @@ class TestMahalanobisThreshold(unittest.TestCase):
         with self.assertRaises(ValueError):
             MahalanobisThreshold(max_outlier_prob=1.0)
 
+    def test_singular(self):
+        clf = MahalanobisThreshold()
+        clf.fit(np.ones((100, 15)))
+        md = clf.mahalanobis(np.ones((30, 15)))
+        self.assertTupleEqual((30,), md.shape)
+
     def test_predict(self):
         clf = MahalanobisThreshold()
         clf.fit(self.x_train)
         y = clf.predict(self.x_test)
-        self.assertTupleEqual(self.x_test.shape, y.shape)
+        self.assertTupleEqual((self.x_test.shape[0],), y.shape)
         self.assertEqual(np.max(y), 1)
         self.assertEqual(np.min(y), 0)
 

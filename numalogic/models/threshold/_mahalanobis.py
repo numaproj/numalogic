@@ -70,12 +70,12 @@ class MahalanobisThreshold(BaseThresholdModel):
         self._is_fitted = False
 
     @property
-    def threshold(self):
+    def threshold(self) -> float:
         """Returns the threshold value."""
         return self._md_thresh
 
     @property
-    def std_factor(self):
+    def std_factor(self) -> float:
         """Returns the k value calculated using Chebyshev's inequality."""
         return self._k
 
@@ -90,7 +90,7 @@ class MahalanobisThreshold(BaseThresholdModel):
 
         Args:
         ----
-            x: training data
+            x: training data of shape (n_samples, n_features)
 
         Returns
         -------
@@ -98,7 +98,7 @@ class MahalanobisThreshold(BaseThresholdModel):
         """
         self._distr_mean = np.mean(x, axis=0)
         cov = np.cov(x, rowvar=False)
-        self._cov_inv = np.linalg.inv(cov)
+        self._cov_inv = np.linalg.pinv(cov)
         mahal_dist = self.mahalanobis(x)
         self._md_thresh = np.mean(mahal_dist) + self._k * np.std(mahal_dist)
         self._is_fitted = True
@@ -110,11 +110,11 @@ class MahalanobisThreshold(BaseThresholdModel):
 
         Args:
         ----
-            x: input data
+            x: input data of shape (n_samples, n_features)
 
         Returns
         -------
-            Mahalanobis distance vector
+            Mahalanobis distance vector of shape (n_samples,)
         """
         x_distance = x - self._distr_mean
         mahal_grid = x_distance @ self._cov_inv @ x_distance.T
@@ -127,11 +127,11 @@ class MahalanobisThreshold(BaseThresholdModel):
 
         Args:
         ----
-            x: input data
+            x: input data of shape (n_samples, n_features)
 
         Returns
         -------
-            Integer Array of 0s and 1s
+            Integer Array of shape (n_samples,)
 
         Raises
         ------
@@ -140,8 +140,7 @@ class MahalanobisThreshold(BaseThresholdModel):
         if not self._is_fitted:
             raise ModelInitializationError("Model not fitted yet.")
         md = self.mahalanobis(x)
-        y_hat = np.zeros_like(x)
-        y_hat[md < self._md_thresh] = _INLIER
+        y_hat = np.zeros(x.shape[0], dtype=int)
         y_hat[md >= self._md_thresh] = _OUTLIER
         return y_hat
 
@@ -154,11 +153,11 @@ class MahalanobisThreshold(BaseThresholdModel):
 
         Args:
         ----
-            x: input data
+            x: input data of shape (n_samples, n_features)
 
         Returns
         -------
-            Outlier score for each sample
+            Outlier score vector of shape (n_samples,)
 
         Raises
         ------
