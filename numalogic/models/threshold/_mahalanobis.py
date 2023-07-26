@@ -21,7 +21,7 @@ from numalogic.tools.exceptions import ModelInitializationError, InvalidDataShap
 
 _INLIER: Final[int] = 0
 _OUTLIER: Final[int] = 1
-_INPUT_DIMS = Final[int] = 2
+_INPUT_DIMS: Final[int] = 2
 
 
 class MahalanobisThreshold(BaseThresholdModel):
