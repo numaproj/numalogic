@@ -17,7 +17,7 @@ import numpy.typing as npt
 from numalogic.base import BaseThresholdModel
 from typing_extensions import Self
 
-from numalogic.tools.exceptions import ModelInitializationError
+from numalogic.tools.exceptions import ModelInitializationError, InvalidDataShapeError
 
 _INLIER: Final[int] = 0
 _OUTLIER: Final[int] = 1
@@ -84,6 +84,12 @@ class MahalanobisThreshold(BaseThresholdModel):
         """Calculate the k value using Chebyshev's inequality."""
         return np.reciprocal(np.sqrt(p))
 
+    @staticmethod
+    def _validate_input(x: npt.NDArray[float]) -> None:
+        """Validate the input matrix shape."""
+        if x.ndim != 2:
+            raise InvalidDataShapeError(f"Input matrix should have 2 dims, given shape: {x.shape}.")
+
     def fit(self, x: npt.NDArray[float]) -> Self:
         """
         Fit the estimator on the training set.
@@ -95,7 +101,12 @@ class MahalanobisThreshold(BaseThresholdModel):
         Returns
         -------
             self
+
+        Raises
+        ------
+            InvalidDataShapeError: if the input matrix is not 2D
         """
+        self._validate_input(x)
         self._distr_mean = np.mean(x, axis=0)
         cov = np.cov(x, rowvar=False)
         self._cov_inv = np.linalg.pinv(cov)
@@ -135,10 +146,12 @@ class MahalanobisThreshold(BaseThresholdModel):
 
         Raises
         ------
-            RuntimeError: if the model is not fitted yet
+            ModelInitializationError: if the model is not fitted yet
+            InvalidDataShapeError: if the input matrix is not 2D
         """
         if not self._is_fitted:
             raise ModelInitializationError("Model not fitted yet.")
+        self._validate_input(x)
         md = self.mahalanobis(x)
         y_hat = np.zeros(x.shape[0], dtype=int)
         y_hat[md >= self._md_thresh] = _OUTLIER
@@ -162,7 +175,9 @@ class MahalanobisThreshold(BaseThresholdModel):
         Raises
         ------
             RuntimeError: if the model is not fitted yet
+            InvalidDataShapeError: if the input matrix is not 2D
         """
         if not self._is_fitted:
             raise ModelInitializationError("Model not fitted yet.")
+        self._validate_input(x)
         return self.mahalanobis(x) / self._md_thresh

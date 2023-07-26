@@ -8,7 +8,7 @@ from numalogic.models.threshold import (
     SigmoidThreshold,
     MahalanobisThreshold,
 )
-from numalogic.tools.exceptions import ModelInitializationError
+from numalogic.tools.exceptions import ModelInitializationError, InvalidDataShapeError
 
 
 class TestStdDevThreshold(unittest.TestCase):
@@ -65,10 +65,20 @@ class TestMahalanobisThreshold(unittest.TestCase):
         self.assertEqual(np.max(y), 1)
         self.assertEqual(np.min(y), 0)
 
-    def test_predict_err(self):
+    def test_notfitted_err(self):
         clf = MahalanobisThreshold()
         with self.assertRaises(ModelInitializationError):
             clf.predict(self.x_test)
+        with self.assertRaises(ModelInitializationError):
+            clf.score_samples(self.x_test)
+
+    def test_invalid_input_err(self):
+        clf = MahalanobisThreshold()
+        clf.fit(self.x_train)
+        with self.assertRaises(InvalidDataShapeError):
+            clf.predict(np.ones((30, 15, 1)))
+        with self.assertRaises(InvalidDataShapeError):
+            clf.score_samples(np.ones(30))
 
     def test_score_samples(self):
         clf = MahalanobisThreshold()
