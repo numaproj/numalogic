@@ -63,12 +63,18 @@ class PostprocessFactory(_ObjectFactory):
 class ThresholdFactory(_ObjectFactory):
     """Factory class to create threshold instances."""
 
-    from numalogic.models.threshold import StdDevThreshold, StaticThreshold, SigmoidThreshold
+    from numalogic.models.threshold import (
+        StdDevThreshold,
+        MahalanobisThreshold,
+        StaticThreshold,
+        SigmoidThreshold,
+    )
 
     _CLS_MAP: ClassVar[dict] = {
         "StdDevThreshold": StdDevThreshold,
         "StaticThreshold": StaticThreshold,
         "SigmoidThreshold": SigmoidThreshold,
+        "MahalanobisThreshold": MahalanobisThreshold,
     }
 
 
