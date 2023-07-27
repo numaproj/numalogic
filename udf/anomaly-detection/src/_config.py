@@ -21,6 +21,8 @@ class ReTrainConf:
     min_train_size: int = 2000
     retrain_freq_hr: int = 24
     resume_training: bool = False
+    model_expiry_sec: int = 86400  # 24 hrs
+    dedup_expiry_sec: int = 1800  # 30 days
 
 
 @dataclass
