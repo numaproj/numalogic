@@ -93,6 +93,16 @@ class Inference:
             )
             return static_response
 
+        except Exception as ex:
+            _LOGGER.exception(
+                "%s - Unhandled exception while fetching  inference artifact, Keys: %s, Metric: %s, Error: %r",
+                payload.uuid,
+                payload.composite_keys,
+                payload.metrics,
+                ex,
+            )
+            return static_response
+
         # Check if artifact is found
         if not artifact_data:
             _LOGGER.info(
