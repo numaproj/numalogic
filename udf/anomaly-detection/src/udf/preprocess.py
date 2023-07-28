@@ -67,6 +67,16 @@ class Preprocess:
             )
             return None, Status.RUNTIME_ERROR
 
+        except Exception as ex:
+            _LOGGER.exception(
+                "%s - Unhandled exception while fetching preproc artifact, Keys: %s, Metric: %s, Error: %r",
+                payload.uuid,
+                payload.composite_keys,
+                payload.metrics,
+                ex,
+            )
+            return None, Status.RUNTIME_ERROR
+
         # Check if artifact is found
         if not preproc_artifact:
             _LOGGER.info(

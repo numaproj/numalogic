@@ -64,6 +64,17 @@ class Threshold:
             static_scores = calculate_static_thresh(metric_arr, static_thresh)
             return static_scores, Status.RUNTIME_ERROR, Header.STATIC_INFERENCE, -1
 
+        except Exception as ex:
+            _LOGGER.exception(
+                "%s - Unhandled exception while fetching threshold artifact, Keys: %s, Metric: %s, Error: %r",
+                payload.uuid,
+                payload.composite_keys,
+                payload.metrics,
+                ex,
+            )
+            static_scores = calculate_static_thresh(metric_arr, static_thresh)
+            return static_scores, Status.RUNTIME_ERROR, Header.STATIC_INFERENCE, -1
+
         # Check if artifact is found
         if not thresh_artifact:
             _LOGGER.info(
