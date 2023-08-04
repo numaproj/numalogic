@@ -84,6 +84,10 @@ class ConsoleLogger(Logger):
     def name(self) -> Optional[str]:
         return self._name
 
+    @property
+    def experiment(self) -> Optional[str]:
+        return self._name
+
     def log_hyperparams(self, params, *args, **kwargs):
         raise NotImplementedError("ConsoleLogger does not log hyperparameters")
 

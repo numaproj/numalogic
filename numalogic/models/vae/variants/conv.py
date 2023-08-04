@@ -1,4 +1,4 @@
-from collections.abc import Sequence, Callable
+from collections.abc import Sequence
 from typing import Final
 
 import torch
@@ -136,16 +136,6 @@ class Decoder(nn.Module):
         out = torch.relu(self.fc_out(out))
         out = out.view(-1, self.seq_len, self.n_features)
         return self.td_linear(out)
-
-
-def _init_criterion(loss_fn: str) -> Callable:
-    if loss_fn == "huber":
-        return F.huber_loss
-    if loss_fn == "l1":
-        return F.l1_loss
-    if loss_fn == "mse":
-        return F.mse_loss
-    raise ValueError(f"Unsupported loss function provided: {loss_fn}")
 
 
 class Conv1dVAE(BaseVAE):

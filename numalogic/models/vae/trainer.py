@@ -11,29 +11,29 @@ from numalogic.tools.data import inverse_window
 
 
 class VAETrainer(Trainer):
-    r"""A PyTorch Lightning Trainer for Autoencoder models.
+    """A PyTorch Lightning Trainer for VAE models.
 
     Args:
     ----
         max_epochs: The maximum number of epochs to train for. (default: 100)
-        logger: The logger to use. (default: False)
+        logger: Whether to use a console logger to log metrics. (default: True)
+        log_freq: The number of epochs between logging. (default: 5)
         check_val_every_n_epoch: The number of epochs between validation checks. (default: 5)
         enable_checkpointing: Whether to enable checkpointing. (default: False)
         enable_progress_bar: Whether to enable the progress bar. (default: False)
         enable_model_summary: Whether to enable the model summary. (default: False)
-        callbacks: A list of callbacks to use. (default: None)
         **trainer_kw: Additional keyword arguments to pass to the Lightning Trainer.
     """
 
     def __init__(
         self,
-        max_epochs=100,
-        logger=True,
-        log_freq=5,
-        check_val_every_n_epoch=5,
-        enable_checkpointing=False,
-        enable_progress_bar=False,
-        enable_model_summary=False,
+        max_epochs: int = 100,
+        logger: bool = True,
+        log_freq: int = 5,
+        check_val_every_n_epoch: int = 5,
+        enable_checkpointing: bool = False,
+        enable_progress_bar: bool = False,
+        enable_model_summary: bool = False,
         **trainer_kw
     ):
         if not sys.warnoptions:
