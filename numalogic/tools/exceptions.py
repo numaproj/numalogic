@@ -10,7 +10,7 @@
 # limitations under the License.
 
 
-class ModelInitializationError(Exception):
+class ModelInitializationError(RuntimeError):
     """Raised when a model is not initialized properly."""
 
     pass

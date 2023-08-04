@@ -11,9 +11,12 @@
 
 
 import logging
+from typing import Optional, Union
 
 import pytorch_lightning as pl
+from lightning_utilities.core.rank_zero import rank_zero_only
 from pytorch_lightning.callbacks import ProgressBar
+from pytorch_lightning.loggers import Logger
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,3 +53,53 @@ class ProgressDetails(ProgressBar):
         loss = pl_module.total_val_loss / trainer.num_val_batches[0]
         _LOGGER.info("validation_loss=%.5f", loss)
         pl_module.reset_val_loss()
+
+
+class ConsoleLogger(Logger):
+    """
+    A lightweight console logger for training metrics.
+
+    Args:
+    ----
+        log_freq: Interval of epochs to log
+        experiment_id: Optional experiment id, e.g. a uuid
+        experiment_name: Optional experiment name, e.g. a model name
+    """
+
+    def __init__(
+        self,
+        log_freq: int = 5,
+        experiment_id: Optional[str] = None,
+        experiment_name: Optional[str] = None,
+    ):
+        self.log_freq = log_freq
+        self._id = experiment_id
+        self._name = experiment_name
+
+    @property
+    def version(self) -> Optional[Union[int, str]]:
+        return self._id
+
+    @property
+    def name(self) -> Optional[str]:
+        return self._name
+
+    def log_hyperparams(self, params, *args, **kwargs):
+        raise NotImplementedError("ConsoleLogger does not log hyperparameters")
+
+    @rank_zero_only
+    def log_metrics(self, metrics: dict[str, float], step: Optional[int] = None) -> None:
+        epoch = metrics.pop("epoch", None)
+        if epoch is None:
+            _LOGGER.info("metrics=%s", metrics)
+            return
+        epoch += 1
+        if epoch == 1:
+            _LOGGER.info(self._format_metrics(epoch, metrics))
+        elif not (epoch % self.log_freq):
+            _LOGGER.info(self._format_metrics(epoch, metrics))
+
+    @staticmethod
+    def _format_metrics(epoch, metrics: dict[str, float]) -> str:
+        log_msg = ", ".join(f"{k}={v:.4f}" for k, v in metrics.items())
+        return f"epoch={epoch}, {log_msg}"
