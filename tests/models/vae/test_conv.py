@@ -9,8 +9,8 @@ from torch import nn, Tensor
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.models.vae.trainer import VAETrainer
-from numalogic.models.vae.variants.conv import Conv1dVAE
+from numalogic.models.vae import VAETrainer
+from numalogic.models.vae.variants import Conv1dVAE
 from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 from numalogic.tools.exceptions import ModelInitializationError
 
