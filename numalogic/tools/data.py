@@ -125,6 +125,10 @@ class StreamingDataset(IterableDataset):
         """Returns the full data in a sequence of shape (batch, seq_len, num_features)."""
         return self[:]
 
+    def as_tensor(self) -> Tensor:
+        """Returns the full data in a sequence of shape (batch, seq_len, num_features)."""
+        return torch.from_numpy(self[:]).contiguous()
+
     def create_seq(self, input_: npt.NDArray[float]) -> Generator[npt.NDArray[float], None, None]:
         r"""Yields sequences of specified length from the input data.
 
