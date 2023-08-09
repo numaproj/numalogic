@@ -27,9 +27,9 @@ class Preprocess:
 
         df = pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
         df.index = df.timestamp.astype(int)
-        timestamps = np.arange(start_time, end_time, 6e4, dtype=int)
+        timestamps = np.arange(start_time+6e4, end_time+6e4, 6e4, dtype=int)
         df = df.reindex(timestamps, fill_value=0)
-        return df[features], timestamps
+        return df, timestamps
 
     def preprocess(self, keys: List[str], payload: StreamPayload) -> (np.ndarray, Status):
         preprocess_cfgs = ConfigManager.get_preprocess_config(config_id=keys[0])
