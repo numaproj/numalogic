@@ -26,7 +26,7 @@ class Preprocess:
         start_time = int(data_payload["start_time"])
         end_time = int(data_payload["end_time"])
 
-        df = pd.DataFrame(data_payload["data"])
+        df = pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
         df.index = df.timestamp.astype(int)
         timestamps = np.arange(start_time, end_time, 6e4, dtype=int)
         df = df.reindex(timestamps, fill_value=0)
@@ -140,4 +140,5 @@ class Preprocess:
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
+        _LOGGER.debug("%s - Time taken in postprocess: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
         return messages

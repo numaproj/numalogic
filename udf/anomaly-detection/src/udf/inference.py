@@ -170,4 +170,5 @@ class Inference:
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
+        _LOGGER.debug("%s - Time taken in inference: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
         return messages

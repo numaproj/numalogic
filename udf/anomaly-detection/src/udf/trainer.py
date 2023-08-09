@@ -252,6 +252,7 @@ class Trainer:
             )
 
     def run(self, keys: List[str], datum: Datum) -> Messages:
+        _start_time = time.perf_counter()
         messages = Messages()
         redis_client = get_redis_client_from_conf()
         payload = TrainerPayload(**orjson.loads(datum.value))
@@ -290,7 +291,7 @@ class Trainer:
 
         train_df = get_feature_df(df, payload.metrics)
         self._train_and_save(numalogic_config, payload, redis_client, train_df)
-
+        _LOGGER.debug("%s - Time taken in training: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
         messages.append(Message(keys=keys, value=payload.to_json()))
 
         return messages
