@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import timeit
 
 import numpy as np
 import pandas as pd
@@ -22,17 +23,14 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 class Preprocess:
     @classmethod
     def get_df(cls, data_payload: dict, features: List[str]) -> (pd.DataFrame, List[int]):
-        ts = list(range(
-            int(data_payload["start_time"]), int(data_payload["end_time"]) - 1, 60 * 1000
-        ))
-        df_ts = pd.DataFrame(ts)
-        df_ts.columns = ["timestamp"]
-        df_data = pd.DataFrame(data_payload["data"]).astype(float)
-        df = pd.merge(df_ts, df_data, on="timestamp", how="outer")
-        df.sort_values("timestamp", inplace=True)
-        df.fillna(0, inplace=True)
-        df = df[features]
-        return df, ts
+        start_time = int(data_payload["start_time"])
+        end_time = int(data_payload["end_time"])
+
+        df = pd.DataFrame(data_payload["data"])
+        df.index = df.timestamp.astype(int)
+        timestamps = np.arange(start_time, end_time, 6e4, dtype=int)
+        df = df.reindex(timestamps, fill_value=0)
+        return df[features], timestamps
 
     def preprocess(self, keys: List[str], payload: StreamPayload) -> (np.ndarray, Status):
         preprocess_cfgs = ConfigManager.get_preprocess_config(config_id=keys[0])
