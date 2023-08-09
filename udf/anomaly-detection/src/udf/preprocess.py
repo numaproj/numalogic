@@ -22,27 +22,14 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 class Preprocess:
     @classmethod
     def get_df(cls, data_payload: dict, features: List[str]) -> (pd.DataFrame, List[int]):
-        timestamps = range(
-            int(data_payload["start_time"]), int(data_payload["end_time"]) - 1, 60 * 1000
-        )
-        given_timestamps = [int(data["timestamp"]) for data in data_payload["data"]]
+        start_time = int(data_payload["start_time"])
+        end_time = int(data_payload["end_time"])
 
-        rows = []
-        for data in data_payload["data"]:
-            feature_values = [float(data.get(feature)) for feature in features]
-            rows.append(pd.Series(feature_values + [int(data["timestamp"])]))
-
-        for timestamp in timestamps:
-            if timestamp not in given_timestamps:
-                rows.append(pd.Series([0] * len(features) + [timestamp]))
-
-        df = pd.concat(rows, axis=1).T
-        df.columns = features + ["timestamp"]
-        df.sort_values("timestamp", inplace=True)
-        df.reset_index(drop=True, inplace=True)
-        df = df.fillna(0)
-        df = df.drop("timestamp", axis=1)
-        return df, [*timestamps]
+        df = pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
+        df.index = df.timestamp.astype(int)
+        timestamps = np.arange(start_time+6e4, end_time+6e4, 6e4, dtype=int)
+        df = df.reindex(timestamps, fill_value=0)
+        return df, timestamps
 
     def preprocess(self, keys: List[str], payload: StreamPayload) -> (np.ndarray, Status):
         preprocess_cfgs = ConfigManager.get_preprocess_config(config_id=keys[0])
@@ -152,4 +139,5 @@ class Preprocess:
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
+        _LOGGER.debug("%s - Time taken in preprocess: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
         return messages
