@@ -22,27 +22,17 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 class Preprocess:
     @classmethod
     def get_df(cls, data_payload: dict, features: List[str]) -> (pd.DataFrame, List[int]):
-        timestamps = range(
+        ts = list(range(
             int(data_payload["start_time"]), int(data_payload["end_time"]) - 1, 60 * 1000
-        )
-        given_timestamps = [int(data["timestamp"]) for data in data_payload["data"]]
-
-        rows = []
-        for data in data_payload["data"]:
-            feature_values = [float(data.get(feature)) for feature in features]
-            rows.append(pd.Series(feature_values + [int(data["timestamp"])]))
-
-        for timestamp in timestamps:
-            if timestamp not in given_timestamps:
-                rows.append(pd.Series([0] * len(features) + [timestamp]))
-
-        df = pd.concat(rows, axis=1).T
-        df.columns = features + ["timestamp"]
+        ))
+        df_ts = pd.DataFrame(ts)
+        df_ts.columns = ["timestamp"]
+        df_data = pd.DataFrame(data_payload["data"]).astype(float)
+        df = pd.merge(df_ts, df_data, on="timestamp", how="outer")
         df.sort_values("timestamp", inplace=True)
-        df.reset_index(drop=True, inplace=True)
-        df = df.fillna(0)
-        df = df.drop("timestamp", axis=1)
-        return df, [*timestamps]
+        df.fillna(0, inplace=True)
+        df = df[features]
+        return df, ts
 
     def preprocess(self, keys: List[str], payload: StreamPayload) -> (np.ndarray, Status):
         preprocess_cfgs = ConfigManager.get_preprocess_config(config_id=keys[0])
