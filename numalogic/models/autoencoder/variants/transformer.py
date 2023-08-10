@@ -342,21 +342,21 @@ class TransformerAE(BaseAE):
         if type(m) in (nn.Linear,):
             nn.init.xavier_uniform_(m.weight, gain=2**0.5)
 
-    def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
-        batch = batch.view(-1, self.n_features, self.seq_len)
-        encoded = self.encoder(batch)
-        decoded = self.decoder(batch, encoded)
-        return encoded, decoded
+    def configure_shape(self, x: Tensor) -> Tensor:
+        return torch.swapdims(x, 1, 2)
 
-    def _get_reconstruction_loss(self, batch):
+    def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
+        encoded = self.encoder(self.configure_shape(batch))
+        decoded = self.decoder(batch, encoded)
+        return encoded, self.configure_shape(decoded)
+
+    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         _, recon = self.forward(batch)
-        x = batch.view(-1, self.n_features, self.seq_len)
-        return self.criterion(x, recon)
+        return self.criterion(batch, recon)
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
         """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
-        recon = recon.view(-1, self.seq_len, self.n_features)
         return self.criterion(batch, recon, reduction="none")
 
 
@@ -400,9 +400,8 @@ class SparseTransformerAE(TransformerAE):
         _dim = 0 if rho_hat.dim() == 1 else 1
         return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
 
-    def _get_reconstruction_loss(self, batch):
+    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         latent, recon = self.forward(batch)
-        x = batch.view(-1, self.n_features, self.seq_len)
-        loss = self.criterion(x, recon)
+        loss = self.criterion(batch, recon)
         penalty = self.kl_divergence(latent)
         return loss + penalty
