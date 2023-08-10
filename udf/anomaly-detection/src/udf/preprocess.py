@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import timeit
 
 import numpy as np
 import pandas as pd
@@ -22,13 +23,11 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 class Preprocess:
     @classmethod
     def get_df(cls, data_payload: dict, features: List[str], win_size: int) -> (pd.DataFrame, List[int]):
-        start_time = int(data_payload["start_time"])
-        end_time = int(data_payload["end_time"])
         df = pd.DataFrame(data_payload["data"], columns=["timestamp", *features]).astype(float).fillna(0)
         df.index = df.timestamp.astype(int)
-        timestamps = np.arange(start_time, end_time+6e4, 6e4, dtype='int')[-win_size:]
+        timestamps = np.arange(int(data_payload["start_time"]), int(data_payload["end_time"]) + 6e4, 6e4, dtype='int')[
+                     -win_size:]
         df = df.reindex(timestamps, fill_value=0)
-        df.reset_index(drop=True, inplace=True)
         return df[features], timestamps
 
     def preprocess(self, keys: List[str], payload: StreamPayload) -> (np.ndarray, Status):
@@ -107,7 +106,7 @@ class Preprocess:
         raw_df, timestamps = self.get_df(data_payload, stream_conf.metrics, stream_conf.window_size)
 
         if len(raw_df) < stream_conf.window_size:
-            _LOGGER.error("Dataframe shape less than window_size (%f): %f", stream_conf.window_size, len(raw_df))
+            _LOGGER.error("Dataframe len: %f less than window_size %f ", len(raw_df), stream_conf.window_size)
             messages.append(Message.to_drop())
             return messages
 
