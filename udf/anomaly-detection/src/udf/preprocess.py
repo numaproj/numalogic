@@ -25,6 +25,7 @@ class Preprocess:
         start_time = int(data_payload["start_time"])
         end_time = int(data_payload["end_time"])
         df = pd.DataFrame(data_payload["data"], columns=["timestamp", *features]).astype(float).fillna(0)
+        df.index = df.timestamp.astype(int)
         timestamps = np.arange(start_time, end_time+6e4, 6e4, dtype='int')[-win_size:]
         df = df.reindex(timestamps, fill_value=0)
         df.reset_index(drop=True, inplace=True)
@@ -104,7 +105,6 @@ class Preprocess:
         # Load config
         stream_conf = ConfigManager.get_stream_config(config_id=data_payload["config_id"])
         raw_df, timestamps = self.get_df(data_payload, stream_conf.metrics, stream_conf.window_size)
-
         # Prepare payload for forwarding
         payload = StreamPayload(
             uuid=data_payload["uuid"],
