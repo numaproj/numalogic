@@ -1,7 +1,6 @@
 import json
 import os
 import time
-import timeit
 
 import numpy as np
 import pandas as pd
