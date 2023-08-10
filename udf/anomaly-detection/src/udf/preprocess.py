@@ -105,6 +105,12 @@ class Preprocess:
         # Load config
         stream_conf = ConfigManager.get_stream_config(config_id=data_payload["config_id"])
         raw_df, timestamps = self.get_df(data_payload, stream_conf.metrics, stream_conf.window_size)
+
+        if len(raw_df) < stream_conf.window_size:
+            _LOGGER.error("Dataframe shape less than window_size (%f): %f", stream_conf.window_size, len(raw_df))
+            messages.append(Message.to_drop())
+            return messages
+
         # Prepare payload for forwarding
         payload = StreamPayload(
             uuid=data_payload["uuid"],
