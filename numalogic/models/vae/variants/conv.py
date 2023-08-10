@@ -134,7 +134,7 @@ class Decoder(nn.Module):
         out = self.unflatten(out)
         out = torch.relu(self.bnorm(self.conv_tr(out)))
         out = torch.relu(self.fc_out(out))
-        out = out.view(-1, self.seq_len, self.n_features)
+        out = torch.swapdims(out, 1, 2)
         return self.td_linear(out)
 
 
@@ -213,7 +213,7 @@ class Conv1dVAE(BaseVAE):
 
     def configure_shape(self, x: Tensor) -> Tensor:
         """Method to configure the batch shape for each type of model architecture."""
-        return x.view(-1, self.n_features, self.seq_len)
+        return torch.swapdims(x, 1, 2)
 
     def kld_loss(self, p: MultivariateNormal) -> Tensor:
         """

@@ -90,6 +90,9 @@ def inverse_window_last_only(batched: Tensor) -> Tensor:
 class StreamingDataset(IterableDataset):
     r"""An iterable Dataset designed for streaming time series input.
 
+    Iterates over the input data and returns a sequence of shape
+    (batch_size, seq_len, num_features)
+
     Args:
     ----
         data: A numpy array containing the input data in the shape of (batch, num_features).
@@ -177,6 +180,30 @@ class StreamingDataset(IterableDataset):
         if idx >= len(self):
             raise IndexError(f"{idx} out of bound!")
         return self._data[idx : idx + self._seq_len]
+
+
+class StreamingDataLoader(DataLoader):
+    """
+    A DataLoader for convinience that uses StreamingDataset for handling time series data.
+
+    Args:
+    ----
+        data: A numpy array containing the input data in the shape of (batch, num_features).
+        seq_len: Length of the sliding window sequences to be generated from the input data
+        kwargs: Additional arguments to be passed to the DataLoader
+
+    Raises
+    ------
+        ValueError: If the sequence length is greater than the data size
+        InvalidDataShapeError: If the input data array does not
+                                 have a minimum dimension size of 2
+        TypeError: If wrong argument is passed in kwargs
+    """
+
+    def __init__(self, data: npt.NDArray[float], seq_len: int, **kwargs):
+        if "dataset" in kwargs:
+            raise TypeError("dataset argument is not supported for StreamingDataLoader!")
+        super().__init__(StreamingDataset(data, seq_len), **kwargs)
 
 
 class TimeseriesDataModule(pl.LightningDataModule):

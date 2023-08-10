@@ -182,25 +182,25 @@ class VanillaAE(BaseAE):
 
     @staticmethod
     def init_weights(m: nn.Module) -> None:
-        r"""Initiate parameters in the transformer model."""
+        """Initialize the parameters in the model."""
         if type(m) == nn.Linear:
             nn.init.xavier_normal_(m.weight)
 
     def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
-        batch = batch.view(-1, self.n_features, self.seq_len)
+        batch = torch.swapdims(batch, 1, 2)
         encoded = self.encoder(batch)
         decoded = self.decoder(encoded)
-        return encoded, decoded
+        return encoded, torch.swapdims(decoded, 1, 2)
 
-    def _get_reconstruction_loss(self, batch):
+    def _get_reconstruction_loss(self, batch: Tensor):
         _, recon = self.forward(batch)
-        x = batch.view(-1, self.n_features, self.seq_len)
-        return self.criterion(x, recon)
+        # x = torch.swapdims(batch, 1, 2)
+        return self.criterion(batch, recon)
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
         """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
-        recon = recon.view(-1, self.seq_len, self.n_features)
+        # recon = torch.swapdims(recon, 1, 2)
         return self.criterion(batch, recon, reduction="none")
 
 
@@ -247,14 +247,14 @@ class SparseVanillaAE(VanillaAE):
 
     def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         latent, recon = self.forward(batch)
-        x = batch.view(-1, self.n_features, self.seq_len)
-        loss = self.criterion(x, recon)
+        # x = torch.swapdims(batch, 1, 2)
+        loss = self.criterion(batch, recon)
         penalty = self.kl_divergence(latent)
         return loss + (self.beta * penalty)
 
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         recon = self.reconstruction(batch)
-        recon = recon.view(-1, self.seq_len, self.n_features)
+        # recon = torch.swapdims(recon, 1, 2)
         loss = self.criterion(batch, recon)
         self._total_val_loss += loss.detach().item()
         return loss

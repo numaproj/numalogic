@@ -8,7 +8,12 @@ from torch.testing import assert_close
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.tools.data import StreamingDataset, TimeseriesDataModule, inverse_window
+from numalogic.tools.data import (
+    StreamingDataset,
+    TimeseriesDataModule,
+    inverse_window,
+    StreamingDataLoader,
+)
 from numalogic.tools.exceptions import InvalidDataShapeError
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
@@ -47,7 +52,7 @@ class TestStreamingDataset(unittest.TestCase):
         ds = StreamingDataset(self.data, seq_len=SEQ_LEN)
         self.assertTupleEqual((self.m - SEQ_LEN + 1, SEQ_LEN, self.n), ds.as_array().shape)
 
-    def test_w_dataloader(self):
+    def test_w_dataloader_01(self):
         batch_size = 4
         dl = DataLoader(
             StreamingDataset(self.data, seq_len=SEQ_LEN),
@@ -81,6 +86,38 @@ class TestStreamingDataset(unittest.TestCase):
     def test_dataset_err_03(self):
         with self.assertRaises(InvalidDataShapeError):
             StreamingDataset(self.data.ravel(), seq_len=SEQ_LEN)
+
+
+class TestStreamingDataLoader(unittest.TestCase):
+    data = None
+    m = None
+    n = None
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.m = 30
+        cls.n = 3
+        cls.data = np.arange(cls.m * cls.n).reshape(30, 3)
+
+    def test_dataloader(self):
+        batch_size = 4
+        dl = StreamingDataLoader(
+            self.data,
+            seq_len=SEQ_LEN,
+            batch_size=batch_size,
+            num_workers=1,
+            drop_last=True,
+        )
+        for idx, batch in enumerate(dl):
+            assert_close(batch[0, 1, :], batch[1, 0, :])
+            assert_close(batch[2, 1, :], batch[3, 0, :])
+
+        with self.assertRaises(TypeError):
+            StreamingDataLoader(
+                self.data,
+                seq_len=SEQ_LEN,
+                dataloader=DataLoader(StreamingDataset(self.data, seq_len=SEQ_LEN)),
+            )
 
 
 class TestTimeSeriesDataModule(unittest.TestCase):

@@ -80,9 +80,9 @@ class BaseAE(TorchModel):
             return optim.RMSprop(self.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         raise NotImplementedError(f"Unsupported optimizer value provided: {optim_algo}")
 
-    def configure_shape(self, batch: Tensor) -> Tensor:
+    def configure_shape(self, x: Tensor) -> Tensor:
         """Method to configure the batch shape for each type of model architecture."""
-        return batch
+        return x
 
     def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         _, recon = self.forward(batch)

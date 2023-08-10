@@ -152,7 +152,6 @@ class TestConvAE(unittest.TestCase):
             for _X_batch in train_loader:
                 optimizer.zero_grad()
                 encoded, decoded = model(_X_batch)
-                decoded = decoded.view(-1, SEQ_LEN, self.X_train.shape[1])
 
                 loss = criterion(decoded, _X_batch)
                 loss.backward()
