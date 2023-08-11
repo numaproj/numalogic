@@ -105,7 +105,8 @@ class Preprocess:
         raw_df, timestamps = self.get_df(data_payload, stream_conf.metrics, stream_conf.window_size)
 
         if raw_df.shape[0] < stream_conf.window_size or raw_df.shape[1] != len(stream_conf.metrics):
-            _LOGGER.error("Dataframe shape: (%f, %f) less than window_size %f ", raw_df.shape[0], raw_df.shape[1], stream_conf.window_size)
+            _LOGGER.error("Dataframe shape: (%f, %f) less than window_size %f ", raw_df.shape[0], raw_df.shape[1],
+                          stream_conf.window_size)
             messages.append(Message.to_drop())
             return messages
 
