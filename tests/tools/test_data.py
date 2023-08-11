@@ -116,7 +116,7 @@ class TestStreamingDataLoader(unittest.TestCase):
             StreamingDataLoader(
                 self.data,
                 seq_len=SEQ_LEN,
-                dataloader=DataLoader(StreamingDataset(self.data, seq_len=SEQ_LEN)),
+                dataset=DataLoader(StreamingDataset(self.data, seq_len=SEQ_LEN)),
             )
 
 
