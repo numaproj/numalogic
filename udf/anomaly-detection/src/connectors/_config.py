@@ -44,4 +44,3 @@ class DruidFetcherConf:
     group_by: list[str] = field(default_factory=list)
     pivot: Pivot = field(default_factory=lambda: Pivot())
     granularity: str = "minute"
-    hours: float = 36
