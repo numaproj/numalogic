@@ -3,7 +3,7 @@ import logging
 import uuid
 
 from numalogic.transforms import LogTransformer
-from numalogic.numaflow import NumalogicUDF
+from numalogic.udfs import NumalogicUDF
 from pynumaflow.function import Messages, Message, Datum
 
 from src.utils import Payload
