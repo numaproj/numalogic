@@ -284,13 +284,11 @@ class Conv1dAE(BaseAE):
 
     def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         _, recon = self.forward(batch)
-        # x = torch.swapdims(batch, 1, 2)
         return self.criterion(batch, recon)
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0) -> Tensor:
         """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
-        # recon = torch.swapdims(recon, 1, 2)
         return self.criterion(batch, recon, reduction="none")
 
 
@@ -337,14 +335,12 @@ class SparseConv1dAE(Conv1dAE):
 
     def _get_reconstruction_loss(self, batch) -> Tensor:
         latent, recon = self.forward(batch)
-        # batch = torch.swapdims(batch, 1, 2)
         loss = self.criterion(batch, recon)
         penalty = self.kl_divergence(latent)
         return loss + (self.beta * penalty)
 
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         recon = self.reconstruction(batch)
-        # loss = self.criterion(batch, torch.swapdims(recon, 1, 2))
         loss = self.criterion(batch, recon)
         self._total_val_loss += loss.detach().item()
         return loss
