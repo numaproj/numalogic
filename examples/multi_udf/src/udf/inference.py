@@ -3,7 +3,7 @@ import os
 
 import numpy.typing as npt
 from numalogic.models.autoencoder import AutoencoderTrainer
-from numalogic.numaflow import NumalogicUDF
+from numalogic.udfs import NumalogicUDF
 from numalogic.registry import MLflowRegistry, ArtifactData
 from numalogic.tools.data import StreamingDataset
 from pynumaflow.function import Messages, Message, Datum

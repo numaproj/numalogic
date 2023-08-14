@@ -7,7 +7,7 @@ import pandas as pd
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.models.threshold import StdDevThreshold
-from numalogic.numaflow import NumalogicUDF
+from numalogic.udfs import NumalogicUDF
 from numalogic.registry import MLflowRegistry
 from numalogic.tools.data import TimeseriesDataModule
 from numalogic.transforms import LogTransformer

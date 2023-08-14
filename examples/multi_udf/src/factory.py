@@ -1,7 +1,7 @@
 from typing import ClassVar
 
 from src.udf import Preprocess, Inference, Postprocess, Trainer, Threshold
-from numalogic.numaflow import NumalogicUDF
+from numalogic.udfs import NumalogicUDF
 
 
 class UDFFactory:

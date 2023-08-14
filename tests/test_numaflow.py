@@ -4,7 +4,7 @@ from datetime import datetime
 from pynumaflow.function import Datum, Messages, Message
 from pynumaflow.function._dtypes import DatumMetadata
 
-from numalogic.numaflow import NumalogicUDF
+from numalogic.udfs import NumalogicUDF
 
 
 class DummyUDF(NumalogicUDF):

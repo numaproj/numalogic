@@ -11,7 +11,7 @@ from numalogic.blocks import (
 )
 from numalogic.models.autoencoder.variants import SparseVanillaAE
 from numalogic.models.threshold import StdDevThreshold
-from numalogic.numaflow import NumalogicUDF
+from numalogic.udfs import NumalogicUDF
 from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.transforms import TanhNorm
