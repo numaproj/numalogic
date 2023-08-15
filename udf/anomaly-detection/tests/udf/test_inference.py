@@ -1,12 +1,10 @@
 import os
 import unittest
-
-from orjson import orjson
 from unittest.mock import patch, Mock
-from freezegun import freeze_time
 
-from numalogic.models.autoencoder import AutoencoderTrainer
+from freezegun import freeze_time
 from numalogic.registry import RedisRegistry
+from orjson import orjson
 from pynumaflow.function import Datum
 
 from src._constants import TESTS_DIR

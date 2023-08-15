@@ -12,8 +12,8 @@ def get_logger(name):
         logger.setLevel(logging.DEBUG)
         stream_handler.setLevel(logging.DEBUG)
     else:
-        logger.setLevel(logging.INFO)
-        stream_handler.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
+        stream_handler.setLevel(logging.DEBUG)
 
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)

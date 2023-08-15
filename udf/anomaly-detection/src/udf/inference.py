@@ -1,23 +1,19 @@
 import os
 import time
-
-import numpy as np
+from dataclasses import replace
 from typing import List
 
+import numpy as np
 import orjson
 import torch
-from torch.utils.data import DataLoader
-
-from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.registry import RedisRegistry, ArtifactData, LocalLRUCache
-from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import RedisRegistryError
 from pynumaflow.function import Datum, Messages, Message
 
 from src import get_logger
 from src.connectors.sentinel import get_redis_client_from_conf
-from src.entities import StreamPayload
 from src.entities import Status, Header
+from src.entities import StreamPayload
 from src.watcher import ConfigManager
 
 _LOGGER = get_logger(__name__)
@@ -30,6 +26,7 @@ class Inference:
         self.model_registry = RedisRegistry(
             client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache
         )
+        self.static_response = (None, Status.ARTIFACT_NOT_FOUND, Header.STATIC_INFERENCE, -1)
 
     @staticmethod
     def forward_pass(payload: StreamPayload, artifact_data: ArtifactData) -> np.ndarray:
@@ -47,7 +44,6 @@ class Inference:
     def inference(
         self, keys: List[str], payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
-        static_response = (None, Status.ARTIFACT_NOT_FOUND, Header.STATIC_INFERENCE, -1)
         # Check if metric needs static inference
         if payload.header == Header.STATIC_INFERENCE:
             _LOGGER.debug(
@@ -56,7 +52,7 @@ class Inference:
                 payload.composite_keys,
                 payload.metrics,
             )
-            return static_response
+            return self.static_response
 
         # Load config
         retrain_config = ConfigManager.get_retrain_config(config_id=payload.config_id)
@@ -76,8 +72,7 @@ class Inference:
                 payload.metrics,
                 err,
             )
-            return static_response
-
+            return self.static_response
         except Exception as ex:
             _LOGGER.exception(
                 "%s - Unhandled exception while fetching  inference artifact, Keys: %s, Metric: %s, Error: %r",
@@ -86,7 +81,7 @@ class Inference:
                 payload.metrics,
                 ex,
             )
-            return static_response
+            return self.static_response
 
         # Check if artifact is found
         if not artifact_data:
@@ -96,7 +91,7 @@ class Inference:
                 payload.composite_keys,
                 payload.metrics,
             )
-            return static_response
+            return self.static_response
 
         # Check if artifact is stale
         header = Header.MODEL_INFERENCE
@@ -134,30 +129,37 @@ class Inference:
 
     def run(self, keys: List[str], datum: Datum) -> Messages:
         _start_time = time.perf_counter()
-        _ = datum.event_time
-        _ = datum.watermark
 
         # Construct payload object
-        _in_msg = datum.value.decode("utf-8")
-        payload = StreamPayload(**orjson.loads(_in_msg))
+        payload = StreamPayload(**orjson.loads(datum.value))
 
-        _LOGGER.info("%s - Received Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
+        _LOGGER.info(
+            "%s - Received Msg: { CompositeKeys: %s, Metrics: %s }",
+            payload.uuid,
+            payload.composite_keys,
+            payload.metrics,
+        )
 
-        messages = Messages()
         # Perform inference
         x_inferred, status, header, version = self.inference(keys, payload)
-        payload.set_status(status=status)
-        payload.set_header(header=header)
-        payload.set_metadata(key="model_version", value=version)
 
-        if x_inferred is not None:
-            payload.set_data(arr=x_inferred)
+        payload = replace(
+            payload,
+            status=status,
+            header=header,
+            data=x_inferred,
+            metadata={"model_version": version, **payload.metadata},
+        )
 
-        messages.append(Message(keys=keys, value=payload.to_json()))
-        _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
+        _LOGGER.info(
+            "%s - Sending Msg: { CompositeKeys: %s, Metrics: %s }",
+            payload.uuid,
+            payload.composite_keys,
+            payload.metrics,
+        )
         _LOGGER.debug(
             "%s - Time taken in inference: %.4f sec",
             payload.uuid,
             time.perf_counter() - _start_time,
         )
-        return messages
+        return Messages(Message(keys=keys, value=payload.to_json()))
