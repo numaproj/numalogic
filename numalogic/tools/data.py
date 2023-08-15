@@ -184,7 +184,7 @@ class StreamingDataset(IterableDataset):
 
 class StreamingDataLoader(DataLoader):
     """
-    A DataLoader for convinience that uses StreamingDataset for handling time series data.
+    A DataLoader for convenience that uses StreamingDataset for handling time series data.
 
     Args:
     ----
