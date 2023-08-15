@@ -259,13 +259,24 @@ class Conv1dAE(BaseAE):
                 nn.init.xavier_normal_(module.weight, gain=calculate_gain("relu"))
 
     def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
+        """
+        Forward pass for the Conv1dAE model.
+
+        Args:
+        ----
+            batch: Input batch of shape (batch_size, seq_len, in_channels)
+
+        Returns
+        -------
+            A tuple of (encoded, decoded) tensors
+        """
         batch = self.configure_shape(batch)
         encoded = self.encoder(batch)
         decoded = self.decoder(encoded)
-        return encoded, decoded
+        return encoded, self.configure_shape(decoded)
 
-    def configure_shape(self, batch: Tensor) -> Tensor:
-        return batch.view(-1, self.in_channels, self.seq_len)
+    def configure_shape(self, x: Tensor) -> Tensor:
+        return torch.swapdims(x, 1, 2)
 
     def encode(self, batch: Tensor) -> Tensor:
         batch = self.configure_shape(batch)
@@ -273,13 +284,11 @@ class Conv1dAE(BaseAE):
 
     def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
         _, recon = self.forward(batch)
-        x = batch.view(-1, self.in_channels, self.seq_len)
-        return self.criterion(x, recon)
+        return self.criterion(batch, recon)
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0) -> Tensor:
         """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
-        recon = recon.view(-1, self.seq_len, self.in_channels)
         return self.criterion(batch, recon, reduction="none")
 
 
@@ -300,7 +309,7 @@ class SparseConv1dAE(Conv1dAE):
         **kwargs: VanillaAE kwargs
     """
 
-    def __init__(self, beta=1e-3, rho=0.05, *args, **kwargs):
+    def __init__(self, beta: float = 1e-3, rho: float = 0.05, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.beta = beta
         self.rho = rho
@@ -326,13 +335,12 @@ class SparseConv1dAE(Conv1dAE):
 
     def _get_reconstruction_loss(self, batch) -> Tensor:
         latent, recon = self.forward(batch)
-        batch = batch.view(-1, self.in_channels, self.seq_len)
         loss = self.criterion(batch, recon)
         penalty = self.kl_divergence(latent)
         return loss + (self.beta * penalty)
 
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         recon = self.reconstruction(batch)
-        loss = self.criterion(batch, recon.view(-1, self.seq_len, self.in_channels))
+        loss = self.criterion(batch, recon)
         self._total_val_loss += loss.detach().item()
         return loss
