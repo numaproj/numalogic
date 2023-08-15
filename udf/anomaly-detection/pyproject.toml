@@ -3,7 +3,6 @@ name = "anomaly-detection"
 version = "0.3.2"
 description = "Numalogic UDFs to do anomaly detection on timeseries data"
 authors = ["Numalogic developers"]
-packages = [{ include = "anomalydetection" }]
 maintainers = [
     "Avik Basu <avikbasu93@gmail.com>",
     "Nandita Koppisetty <nandita.iitkgp@gmail.com>",
@@ -21,12 +20,13 @@ repository = "https://github.com/numaproj/numalogic"
 python = ">=3.9, <3.12"
 redis = {extras = ["hiredis"], version = "^4.5" }
 pynumaflow = "~0.4.1"
-numalogic = {version = "~0.5", extras = ["redis"], allow-prereleases = true}
+# numalogic = {version = "~0.5", extras = ["redis"], allow-prereleases = true}
 orjson = "^3.8.4"
 omegaconf = "^2.3.0"
 watchdog = "^3.0.0"
 backoff = "^2.2.1"
 pydruid = "^0.6.5"
+numalogic = {git = "https://github.com/numaproj/numalogic.git", rev = "main", extras = ["redis"]}
 
 [tool.poetry.group.mlflowserver]
 optional = true

@@ -73,8 +73,8 @@ class StreamPayload(_BasePayload):
 
     def get_data(self, original=False) -> npt.NDArray[float]:
         if original:
-            return np.asarray(self.raw_data)
-        return np.asarray(self.data)
+            return np.ascontiguousarray(self.raw_data, dtype=np.float32)
+        return np.ascontiguousarray(self.data, dtype=np.float32)
 
     def set_status(self, status: Status) -> None:
         self.status = status

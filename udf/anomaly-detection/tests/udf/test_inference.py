@@ -52,7 +52,7 @@ class TestInference(unittest.TestCase):
     @freeze_time("2022-02-20 12:00:00")
     @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
-    @patch.object(AutoencoderTrainer, "predict", Mock(side_effect=RuntimeError))
+    @patch.object(Inference, "forward_pass", Mock(side_effect=RuntimeError))
     def test_inference_err(self):
         _out = Inference().run(self.keys, self.inference_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))

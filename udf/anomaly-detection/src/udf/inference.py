@@ -5,6 +5,7 @@ import numpy as np
 from typing import List
 
 import orjson
+import torch
 from torch.utils.data import DataLoader
 
 from numalogic.models.autoencoder import AutoencoderTrainer
@@ -30,34 +31,18 @@ class Inference:
             client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache
         )
 
-    @classmethod
-    def _run_inference(
-        cls,
-        keys: list[str],
-        payload: StreamPayload,
-        artifact_data: ArtifactData,
-    ) -> np.ndarray:
+    @staticmethod
+    def forward_pass(payload: StreamPayload, artifact_data: ArtifactData) -> np.ndarray:
+        x = torch.from_numpy(payload.get_data()).unsqueeze(0)
         model = artifact_data.artifact
-        win_size = ConfigManager.get_stream_config(config_id=payload.config_id).window_size
-        data_arr = payload.get_data()
-        stream_loader = DataLoader(StreamingDataset(data_arr, win_size))
-
-        trainer = AutoencoderTrainer()
+        model.eval()
         try:
-            recon_err = trainer.predict(model, dataloaders=stream_loader)
+            with torch.no_grad():
+                _, out = model.forward(x)
+            recon_err = model.criterion(out, x, reduction="none")
         except Exception as err:
-            _LOGGER.exception(
-                "%s - Runtime error while performing inference: Keys: %s, Metric: %s, Error: %r",
-                payload.uuid,
-                keys,
-                payload.metrics,
-                err,
-            )
-            raise RuntimeError("Failed to infer") from err
-        _LOGGER.info(
-            "%s - Successfully inferred: Keys: %s, Metric: %s", payload.uuid, keys, payload.metrics
-        )
-        return recon_err.numpy()
+            raise RuntimeError("Model forward pass failed!") from err
+        return np.ascontiguousarray(recon_err).squeeze(0)
 
     def inference(
         self, keys: List[str], payload: StreamPayload
@@ -135,7 +120,7 @@ class Inference:
 
         # Generate predictions
         try:
-            x_inferred = self._run_inference(keys, payload, artifact_data)
+            x_inferred = self.forward_pass(payload, artifact_data)
         except RuntimeError:
             _LOGGER.info(
                 "%s - Failed to infer, forwarding for static thresholding. Keys: %s, Metric: %s",
@@ -144,7 +129,7 @@ class Inference:
                 payload.metrics,
             )
             return None, Status.RUNTIME_ERROR, Header.STATIC_INFERENCE, -1
-
+        _LOGGER.info("%s - Successfully inferred: Metric: %s", payload.uuid, payload.metrics)
         return x_inferred, Status.INFERRED, header, int(artifact_data.extras.get("version"))
 
     def run(self, keys: List[str], datum: Datum) -> Messages:
@@ -170,5 +155,9 @@ class Inference:
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
-        _LOGGER.debug("%s - Time taken in inference: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+        _LOGGER.debug(
+            "%s - Time taken in inference: %.4f sec",
+            payload.uuid,
+            time.perf_counter() - _start_time,
+        )
         return messages
