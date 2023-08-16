@@ -30,7 +30,7 @@ class Threshold:
     def threshold(
         self, keys: List[str], payload: StreamPayload
     ) -> (np.ndarray, Status, Header, int):
-        metric_arr = payload.get_data()
+        metric_arr = payload.get_data(original=True)
 
         # Load config
         static_thresh = ConfigManager.get_static_threshold_config(config_id=payload.config_id)
@@ -118,7 +118,12 @@ class Threshold:
         if y_score is not None:
             payload.set_data(arr=y_score)
 
-        if y_score is None or header == Header.MODEL_STALE or status == Status.ARTIFACT_NOT_FOUND:
+        if (
+            y_score is None
+            or header == Header.MODEL_STALE
+            or status == Status.ARTIFACT_NOT_FOUND
+            or status == Status.RUNTIME_ERROR
+        ):
             train_payload = TrainerPayload(
                 uuid=payload.uuid,
                 composite_keys=keys,
@@ -142,5 +147,9 @@ class Threshold:
             [POSTPROC_VTX_KEY],
             payload,
         )
-        _LOGGER.debug("%s - Time taken in threshold: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+        _LOGGER.debug(
+            "%s - Time taken in threshold: %.4f sec",
+            payload.uuid,
+            time.perf_counter() - _start_time,
+        )
         return messages

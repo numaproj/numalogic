@@ -10,7 +10,7 @@ from unittest import mock
 from unittest.mock import MagicMock, patch, Mock
 from sklearn.preprocessing import MinMaxScaler
 
-from numalogic.models.autoencoder.variants import VanillaAE, LSTMAE
+from numalogic.models.autoencoder.variants import VanillaAE, LSTMAE, SparseVanillaAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.registry import ArtifactData, RedisRegistry
 from pynumaflow.function import Datum
@@ -82,7 +82,7 @@ def get_threshold_input(
     if prev_model_stale:
         _mock_return = return_stale_model()
     elif prev_clf_exists:
-        _mock_return = return_mock_lstmae()
+        _mock_return = return_mock_model_state_dict()
     else:
         _mock_return = None
     with patch.object(RedisRegistry, "load", Mock(return_value=_mock_return)):
@@ -130,9 +130,32 @@ def return_mock_lstmae(*_, **__):
     )
 
 
+def return_mock_model_state_dict(seq_len=12, n_features=2) -> ArtifactData:
+    return ArtifactData(
+        artifact=SparseVanillaAE(seq_len=seq_len, n_features=n_features).state_dict(),
+        metadata={},
+        extras={
+            "creation_timestamp": 1653402941169,
+            "timestamp": 1653402941,
+            "current_stage": "Production",
+            "description": "",
+            "last_updated_timestamp": 1645369200000,
+            "name": "test::error",
+            "run_id": "a7c0b376530b40d7b23e6ce2081c899c",
+            "run_link": "",
+            "source": "mlflow-artifacts:/0/a7c0b376530b40d7b23e6ce2081c899c/artifacts/model",
+            "status": "READY",
+            "status_message": "",
+            "tags": {},
+            "user_id": "",
+            "version": "5",
+        },
+    )
+
+
 def return_stale_model(*_, **__):
     return ArtifactData(
-        artifact=VanillaAE(seq_len=12, n_features=2),
+        artifact=SparseVanillaAE(seq_len=12, n_features=2).state_dict(),
         metadata={},
         extras={
             "creation_timestamp": 1653402941169,

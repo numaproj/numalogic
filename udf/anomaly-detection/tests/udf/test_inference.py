@@ -14,7 +14,7 @@ from tests import redis_client, Inference, mock_configs
 from tests.tools import (
     get_inference_input,
     return_stale_model,
-    return_mock_lstmae,
+    return_mock_model_state_dict,
 )
 
 DATA_DIR = os.path.join(TESTS_DIR, "resources", "data")
@@ -35,7 +35,7 @@ class TestInference(unittest.TestCase):
         redis_client.flushall()
 
     @freeze_time("2022-02-20 12:00:00")
-    @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
+    @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_model_state_dict()))
     @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
     def test_inference(self):
         _out = Inference().run(self.keys, self.inference_input)[0]
@@ -49,12 +49,12 @@ class TestInference(unittest.TestCase):
 
     @freeze_time("2022-02-20 12:00:00")
     @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
-    @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
+    @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_model_state_dict()))
     @patch.object(Inference, "forward_pass", Mock(side_effect=RuntimeError))
     def test_inference_err(self):
         _out = Inference().run(self.keys, self.inference_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
-        self.assertTrue(payload.data)
+        self.assertListEqual([[]], payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
         self.assertEqual(payload.status, Status.RUNTIME_ERROR)
@@ -66,7 +66,7 @@ class TestInference(unittest.TestCase):
     def test_no_model(self):
         _out = Inference().run(self.keys, self.inference_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
-        self.assertTrue(payload.data)
+        self.assertListEqual([[]], payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
         self.assertEqual(payload.status, Status.ARTIFACT_NOT_FOUND)
@@ -75,12 +75,12 @@ class TestInference(unittest.TestCase):
 
     @freeze_time("2022-02-20 12:00:00")
     @patch.object(ConfigManager, "load_configs", Mock(return_value=mock_configs()))
-    @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_lstmae()))
+    @patch.object(RedisRegistry, "load", Mock(return_value=return_mock_model_state_dict()))
     def test_no_prev_model(self):
         inference_input = get_inference_input(self.keys, STREAM_DATA_PATH, prev_clf_exists=False)
         _out = Inference().run(self.keys, inference_input)[0]
         payload = StreamPayload(**orjson.loads(_out.value))
-        self.assertTrue(payload.data)
+        self.assertListEqual([[]], payload.data)
         self.assertTrue(payload.raw_data)
         self.assertIsInstance(payload, StreamPayload)
         self.assertEqual(payload.status, Status.ARTIFACT_NOT_FOUND)

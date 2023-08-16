@@ -1,20 +1,21 @@
 import os
 import time
+
 import orjson
 import pandas as pd
-from typing import List
+import numpy.typing as npt
 from numalogic.config import (
-    NumalogicConf,
     ThresholdFactory,
-    ModelInfo,
     PreprocessFactory,
     ModelFactory,
+    NumalogicConf,
+    ModelInfo,
 )
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.registry import RedisRegistry
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import RedisRegistryError
-from numalogic.tools.types import redis_client_t
+from numalogic.tools.types import redis_client_t, artifact_t
 from omegaconf import OmegaConf
 from pynumaflow.function import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
@@ -53,7 +54,7 @@ class Trainer:
             metric=payload.metrics[0],
             labels={"namespace": payload.composite_keys[1]},
             return_labels=["rollouts_pod_template_hash"],
-            hours=hours
+            hours=hours,
         )
 
     @classmethod
@@ -120,7 +121,9 @@ class Trainer:
         return True
 
     @classmethod
-    def _train_model(cls, uuid, x, model_cfg, trainer_cfg):
+    def _train_model(
+        cls, uuid, x, model_cfg, trainer_cfg
+    ) -> tuple[npt.NDArray, artifact_t, AutoencoderTrainer]:
         _start_train = time.perf_counter()
 
         model_factory = ModelFactory()
@@ -139,7 +142,7 @@ class Trainer:
         return train_reconerr.numpy(), model, trainer
 
     @classmethod
-    def _preprocess(cls, x_raw, preproc_cfgs: List[ModelInfo]):
+    def _preprocess(cls, x_raw, preproc_cfgs: list[ModelInfo]):
         preproc_factory = PreprocessFactory()
         preproc_clfs = []
         for _cfg in preproc_cfgs:
@@ -195,7 +198,7 @@ class Trainer:
             version = model_registry.save(
                 skeys=skeys,
                 dkeys=[model_cfg.name],
-                artifact=anomaly_model,
+                artifact=anomaly_model.state_dict(),
                 uuid=payload.uuid,
                 train_size=train_df.shape[0],
             )
@@ -252,7 +255,7 @@ class Trainer:
                 version,
             )
 
-    def run(self, keys: List[str], datum: Datum) -> Messages:
+    def run(self, keys: list[str], datum: Datum) -> Messages:
         _start_time = time.perf_counter()
         messages = Messages()
         redis_client = get_redis_client_from_conf()
@@ -292,7 +295,9 @@ class Trainer:
 
         train_df = get_feature_df(df, payload.metrics)
         self._train_and_save(numalogic_config, payload, redis_client, train_df)
-        _LOGGER.debug("%s - Time taken in training: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+        _LOGGER.debug(
+            "%s - Time taken in training: %.4f sec", payload.uuid, time.perf_counter() - _start_time
+        )
         messages.append(Message(keys=keys, value=payload.to_json()))
 
         return messages

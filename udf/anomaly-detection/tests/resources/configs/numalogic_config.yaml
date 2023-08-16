@@ -1,7 +1,7 @@
 model:
   name: "SparseVanillaAE"
   conf:
-    seq_len: 2
+    seq_len: 12
     n_features: 2
     encoder_layersizes:
       - 16
