@@ -13,6 +13,7 @@ import logging
 import time
 from datetime import datetime, timedelta
 from typing import Optional
+import orjson
 
 from redis.exceptions import RedisError
 
@@ -128,7 +129,7 @@ class RedisRegistry(ArtifactManager):
         deserialized_artifact = loads(serialized_artifact)
         deserialized_metadata = None
         if serialized_metadata:
-            deserialized_metadata = loads(serialized_metadata)
+            deserialized_metadata = orjson.loads(serialized_metadata)
         return ArtifactData(
             artifact=deserialized_artifact,
             metadata=deserialized_metadata,
@@ -185,7 +186,7 @@ class RedisRegistry(ArtifactManager):
         _LOGGER.debug("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
         serialized_metadata = ""
         if metadata:
-            serialized_metadata = dumps(deserialized_object=metadata)
+            serialized_metadata = orjson.dumps(metadata)
         serialized_artifact = dumps(deserialized_object=artifact)
         pipe.hset(
             name=new_version_key,
