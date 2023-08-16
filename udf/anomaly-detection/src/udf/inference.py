@@ -7,9 +7,9 @@ import numpy as np
 import orjson
 import torch
 from numalogic.config import ModelFactory, NumalogicConf
-from numalogic.registry import RedisRegistry, ArtifactData, LocalLRUCache
+from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import RedisRegistryError
-from numalogic.tools.types import artifact_t, nn_model_t, state_dict_t
+from numalogic.tools.types import nn_model_t, state_dict_t
 from pynumaflow.function import Datum, Messages, Message
 
 from src import get_logger
@@ -122,7 +122,7 @@ class Inference:
             model = self.load_state_dict(numalogic_conf, artifact_data.artifact)
             x_inferred = self.forward_pass(payload, model)
         except RuntimeError as err:
-            _LOGGER.error(
+            _LOGGER.exception(
                 "%s - Failed to infer, forwarding for static thresholding. Keys: %s, Metric: %s, Error: %r",
                 payload.uuid,
                 payload.composite_keys,

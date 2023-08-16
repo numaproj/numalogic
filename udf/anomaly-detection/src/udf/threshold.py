@@ -18,11 +18,12 @@ from src.watcher import ConfigManager
 
 _LOGGER = get_logger(__name__)
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
+LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", 10000))
 
 
 class Threshold:
     def __init__(self):
-        local_cache = LocalLRUCache(ttl=LOCAL_CACHE_TTL)
+        local_cache = LocalLRUCache(cachesize=LOCAL_CACHE_SIZE, ttl=LOCAL_CACHE_TTL)
         self.model_registry = RedisRegistry(
             client=get_redis_client_from_conf(master_node=False), cache_registry=local_cache
         )
