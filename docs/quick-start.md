@@ -108,7 +108,7 @@ For more detailed experimentation, refer to [quick-start example](https://github
 
 ## Numalogic as streaming ML using Numaflow
 
-Numalogic can also be paired with our streaming platform [Numaflow](https://numaflow.numaproj.io/), to build streaming ML pipelines where Numalogic can be used in [UDF](https://numaflow.numaproj.io/user-defined-functions/).
+Numalogic can also be paired with our streaming platform [Numaflow](https://numaflow.numaproj.io/), to build streaming ML pipelines where Numalogic can be used in [UDF](https://numaflow.numaproj.io/user-guide/user-defined-functions/user-defined-functions/).
 
 ### Prerequisite
 
@@ -118,7 +118,7 @@ Numalogic can also be paired with our streaming platform [Numaflow](https://numa
 
 Once Numaflow is installed, create a simple Numalogic pipeline, which takes in time-series data, does the pre-processing, training, inference, and post-processing.
 
-For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline) under the examples folder and execute the following commands.
+For building this pipeline, navigate to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/blob/main/examples/multi_udf/numa-pl.yaml) under the examples folder and execute the following commands.
 
 1. Apply the pipeline. *Note Make sure the pipeline and, numaflow controllers and isbsvc pods are running in the same namespace (`default` in this case).*
 ```shell
@@ -164,7 +164,7 @@ Once the pipeline has been created, the data can be sent to the pipeline by port
 
 Initially, there is no ML model present; to trigger training do a curl command and send any data to the pipeline.
 
-The training data is from [train_data.csv](https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources/train_data.csv), which follows a sinusoidal pattern where values fall in the range 200-350.
+The training data is from [train_data.csv](https://github.com/numaproj/numalogic/blob/main/examples/multi_udf/src/resources/train_data.csv), which follows a sinusoidal pattern where values fall in the range 200-350.
 
 The following logs will be seen in the training pod.
 
@@ -237,6 +237,6 @@ kubectl -n numaflow-system port-forward deployment/numaflow-server 8000:8443
 
 
 ### Train on your own data
-If you want to train an ML model on your own data, replace the `train_data.csv` file with your own file under [resources.](https://github.com/numaproj/numalogic/blob/main/examples/numalogic-simple-pipeline/src/resources)
+If you want to train an ML model on your own data, replace the `train_data.csv` file with your own file under [resources.](https://github.com/numaproj/numalogic/tree/main/examples/multi_udf/src/resources)
 
-For more details, refer to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/numalogic-simple-pipeline)
+For more details, refer to [numalogic-simple-pipeline](https://github.com/numaproj/numalogic/tree/main/examples/multi_udf)
