@@ -23,7 +23,6 @@ RETRAIN_FREQ_HR = int(os.getenv("RETRAIN_FREQ_HR", "24"))
 
 
 class InferenceUDF(NumalogicUDF):
-    configs: dict[str,]
 
     def __init__(self, r_client: redis_client_t, numalogic_conf: Optional[NumalogicConf] = None):
         super().__init__(is_async=False)
