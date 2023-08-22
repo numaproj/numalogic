@@ -23,6 +23,13 @@ RETRAIN_FREQ_HR = int(os.getenv("RETRAIN_FREQ_HR", "24"))
 
 
 class InferenceUDF(NumalogicUDF):
+    """
+    Inference UDF for Numalogic.
+
+    Args:
+        r_client: Redis client
+        numalogic_conf: Numalogic configuration
+    """
 
     def __init__(self, r_client: redis_client_t, numalogic_conf: Optional[NumalogicConf] = None):
         super().__init__(is_async=False)
@@ -31,7 +38,44 @@ class InferenceUDF(NumalogicUDF):
         )
         self.numalogic_conf = numalogic_conf or NumalogicConf()
 
+    def compute(self, model: artifact_t, input_: npt.NDArray[float]) -> npt.NDArray[float]:
+        """
+        Perform inference on the input data.
+
+        Args:
+            model: Model artifact
+            input_: Input data
+
+        Returns
+        -------
+            Reconstruction error
+
+        Raises
+        ------
+            RuntimeError: If model forward pass fails
+        """
+        x = torch.from_numpy(input_).unsqueeze(0)
+        model.eval()
+        try:
+            with torch.no_grad():
+                _, out = model.forward(x)
+            recon_err = model.criterion(out, x, reduction="none")
+        except Exception as err:
+            raise RuntimeError("Model forward pass failed!") from err
+        return np.ascontiguousarray(recon_err).squeeze(0)
+
     def exec(self, keys: list[str], datum: Datum) -> Messages:
+        """
+        Perform inference on the input data.
+
+        Args:
+            keys: List of keys
+            datum: Datum object
+
+        Returns
+        -------
+            Messages instance
+        """
         _start_time = time.perf_counter()
 
         # Construct payload object
@@ -45,7 +89,7 @@ class InferenceUDF(NumalogicUDF):
         )
 
         # Forward payload if a training request is tagged
-        if payload.header is Header.TRAIN_REQUEST:
+        if payload.header == Header.TRAIN_REQUEST:
             return Messages(Message(keys=keys, value=payload.to_json()))
 
         artifact_data = self.load_artifact(keys, payload)
@@ -54,7 +98,7 @@ class InferenceUDF(NumalogicUDF):
             payload = replace(
                 payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
             )
-            Messages(Message(keys=keys, value=payload.to_json()))
+            return Messages(Message(keys=keys, value=payload.to_json()))
 
         # Perform inference
         try:
@@ -97,6 +141,17 @@ class InferenceUDF(NumalogicUDF):
         return Messages(Message(keys=keys, value=payload.to_json()))
 
     def load_artifact(self, keys: list[str], payload: StreamPayload) -> Optional[ArtifactData]:
+        """
+        Load inference artifact from the registry.
+
+        Args:
+            keys: List of keys
+            payload: StreamPayload object
+
+        Returns
+        -------
+            ArtifactData instance
+        """
         try:
             artifact_data = self.model_registry.load(
                 skeys=keys,
@@ -127,9 +182,20 @@ class InferenceUDF(NumalogicUDF):
         return artifact_data
 
     def is_model_stale(self, artifact_data: ArtifactData, payload: StreamPayload) -> bool:
+        """
+        Check if the inference artifact is stale.
+
+        Args:
+            artifact_data: ArtifactData instance
+            payload: StreamPayload object
+
+        Returns
+        -------
+            True if artifact is stale, False otherwise
+        """
         if (
             self.model_registry.is_artifact_stale(artifact_data, int(RETRAIN_FREQ_HR))
-            and artifact_data.extras.get("source") == "registry"
+            and artifact_data.extras.get("source", "registry") == "registry"
         ):
             _LOGGER.info(
                 "%s - Inference artifact found is stale, Keys: %s, Metric: %s",
@@ -139,14 +205,3 @@ class InferenceUDF(NumalogicUDF):
             )
             return True
         return False
-
-    def compute(self, model: artifact_t, input_: npt.NDArray[float]) -> npt.NDArray[float]:
-        x = torch.from_numpy(input_).unsqueeze(0)
-        model.eval()
-        try:
-            with torch.no_grad():
-                _, out = model.forward(x)
-            recon_err = model.criterion(out, x, reduction="none")
-        except Exception as err:
-            raise RuntimeError("Model forward pass failed!") from err
-        return np.ascontiguousarray(recon_err).squeeze(0)
