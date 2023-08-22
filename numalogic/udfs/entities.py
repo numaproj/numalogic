@@ -73,13 +73,14 @@ class StreamPayload(_BasePayload):
     def get_metadata(self, key: str) -> dict[str, Any]:
         return copy(self.metadata[key])
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return (
-            f"header: {self.header}, "
-            f"status: {self.status}, "
-            f"composite_keys: {self.composite_keys}, "
-            f"data: {list(self.data)}"
+            f'"StreamPayload(header={self.header}, status={self.status}, '
+            f'composite_keys={self.composite_keys}, data={list(self.data)})"'
         )
 
-    def to_json(self):
+    def __repr__(self) -> str:
+        return self.to_json().decode("utf-8")
+
+    def to_json(self) -> bytes:
         return orjson.dumps(self, option=orjson.OPT_SERIALIZE_NUMPY)
