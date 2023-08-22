@@ -15,13 +15,13 @@ class Status(str, Enum):
     ARTIFACT_NOT_FOUND = "artifact_not_found"
     ARTIFACT_STALE = "artifact_is_stale"
     RUNTIME_ERROR = "runtime_error"
+    REGISTRY_ERROR = "registry_error"
 
 
 class Header(str, Enum):
     STATIC_INFERENCE = "static_threshold"
     MODEL_INFERENCE = "model_inference"
     TRAIN_REQUEST = "request_training"
-    MODEL_STALE = "model_stale"
 
 
 @dataclass

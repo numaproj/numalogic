@@ -14,6 +14,8 @@ from collections.abc import Coroutine
 import numpy.typing as npt
 from pynumaflow.function import Datum, Messages
 
+from numalogic.tools.types import artifact_t
+
 
 class NumalogicUDF(metaclass=ABCMeta):
     """
@@ -64,7 +66,7 @@ class NumalogicUDF(metaclass=ABCMeta):
         raise NotImplementedError("aexec method not implemented")
 
     @abstractmethod
-    def compute(self, input_: npt.NDArray[float]) -> npt.NDArray[float]:
+    def compute(self, model: artifact_t, input_: npt.NDArray[float]) -> npt.NDArray[float]:
         """
         Abstract method to be implemented by subclasses.
 
