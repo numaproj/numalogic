@@ -64,7 +64,7 @@ class LightningTrainerConf:
     enable_progress_bar: bool = True
     enable_model_summary: bool = True
     limit_val_batches: bool = 0
-    calbacks: Optional[Any] = None
+    callbacks: Optional[Any] = None
 
 
 
