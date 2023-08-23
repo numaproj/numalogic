@@ -67,7 +67,6 @@ class LightningTrainerConf:
     callbacks: Optional[Any] = None
 
 
-
 @dataclass
 class NumalogicConf:
     """Top level config schema for numalogic."""
