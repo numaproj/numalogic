@@ -11,7 +11,8 @@ model:
       - 16
     dropout_p: 0.25
 trainer:
-  max_epochs: 40
+  pltrainer_conf:
+    max_epochs: 40
 preprocess:
   - name: "LogTransformer"
     stateful: false
