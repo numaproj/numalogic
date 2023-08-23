@@ -5,6 +5,7 @@ from dataclasses import replace
 from typing import Optional
 
 import orjson
+from numpy._typing import NDArray
 from pynumaflow.function import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
@@ -32,11 +33,20 @@ class PreprocessUDF(NumalogicUDF):
     """
 
     def __init__(self, r_client: redis_client_t, stream_conf: Optional[StreamConf] = None):
-        super().__init__(is_async=False)
-        self.local_cache = LocalLRUCache(cachesize=LOCAL_CACHE_SIZE, ttl=LOCAL_CACHE_TTL)
-        self.model_registry = RedisRegistry(client=r_client, cache_registry=self.local_cache)
+        super().__init__()
+        self.model_registry = RedisRegistry(
+            client=r_client,
+            cache_registry=LocalLRUCache(cachesize=LOCAL_CACHE_SIZE, ttl=LOCAL_CACHE_TTL),
+        )
         self.stream_conf = stream_conf or StreamConf()
         self.preproc_factory = PreprocessFactory()
+
+    def _load_model_from_config(self, preprocess_cfg):
+        preproc_clfs = []
+        for _cfg in preprocess_cfg:
+            _clf = self.preproc_factory.get_instance(_cfg)
+            preproc_clfs.append(_clf)
+        return make_pipeline(*preproc_clfs)
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
@@ -55,7 +65,6 @@ class PreprocessUDF(NumalogicUDF):
 
         """
         _start_time = time.perf_counter()
-        messages = Messages()
 
         # check message sanity
         try:
@@ -63,8 +72,7 @@ class PreprocessUDF(NumalogicUDF):
             _LOGGER.info("%s - Data payload: %s", data_payload["uuid"], data_payload)
         except (orjson.JSONDecodeError, KeyError) as err:  # catch json decode error only
             _LOGGER.exception("Error while decoding input json: %r", err)
-            messages.append(Message.to_drop())
-            return messages
+            return Messages(Message.to_drop())
 
         raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=self.stream_conf)
 
@@ -73,8 +81,7 @@ class PreprocessUDF(NumalogicUDF):
             self.stream_conf.metrics
         ):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
-            messages.append(Message.to_drop())
-            return messages
+            return Messages(Message.to_drop())
         # Make StreamPayload object
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
 
@@ -121,15 +128,17 @@ class PreprocessUDF(NumalogicUDF):
                 payload.metrics,
             )
             payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
-        messages.append(Message(keys=keys, value=payload.to_json()))
+            return Messages(Message(keys=keys, value=payload.to_json()))
         _LOGGER.debug(
             "%s - Time taken to execute Preprocess: %.4f sec",
             payload.uuid,
             time.perf_counter() - _start_time,
         )
-        return messages
+        return Messages(Message(keys=keys, value=payload.to_json()))
 
-    def compute(self, model: artifact_t, input_):
+    def compute(
+        self, model: artifact_t, input_: NDArray[float] = None, **_
+    ) -> NDArray[float]:
         """
         Perform inference on the input data.
 
@@ -143,19 +152,12 @@ class PreprocessUDF(NumalogicUDF):
 
         Raises
         ------
-            RuntimeError: If model forward pass fails
+            RuntimeError: If preprocess fails
         """
         _start_time = time.perf_counter()
         try:
             x_scaled = model.transform(input_)
+            _LOGGER.info("Time taken in preprocessing: %.4f sec", time.perf_counter() - _start_time)
+            return x_scaled
         except Exception as err:
             raise RuntimeError("Model transform failed!") from err
-        _LOGGER.info("Time taken in preprocessing: %.4f sec", time.perf_counter() - _start_time)
-        return x_scaled
-
-    def _load_model_from_config(self, preprocess_cfg):
-        preproc_clfs = []
-        for _cfg in preprocess_cfg:
-            _clf = self.preproc_factory.get_instance(_cfg)
-            preproc_clfs.append(_clf)
-        return make_pipeline(*preproc_clfs)

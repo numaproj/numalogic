@@ -63,7 +63,7 @@ def make_stream_payload(
 
 
 def _load_model(
-    skeys: KEYS, dkeys: KEYS, payload: dict, model_registry: ArtifactManager
+    skeys: KEYS, dkeys: KEYS, payload: StreamPayload, model_registry: ArtifactManager
 ) -> artifact_t:
     """
     Load artifact from redis

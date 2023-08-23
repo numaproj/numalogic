@@ -30,12 +30,9 @@ DATUM_KW = {
 
 
 class TestPreprocessUDF(unittest.TestCase):
-    def __init__(self, methodName: str = ...):
-        super().__init__(methodName)
+    def setUp(self) -> None:
         self.preproc_factory = None
         self.registry = RedisRegistry(REDIS_CLIENT)
-
-    def setUp(self) -> None:
         _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
         _given_conf_2 = OmegaConf.load(
             os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml")
