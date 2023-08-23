@@ -74,7 +74,7 @@ class DruidFetcher:
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
 
-        if pivot:
+        if pivot.columns:
             df = df.pivot(
                 index=pivot.index,
                 columns=pivot.columns,
