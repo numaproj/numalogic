@@ -73,6 +73,7 @@ class NumalogicUDF(metaclass=ABCMeta):
         Args:
             model: artifact for the udf.
             input_: Input array.
+            kwargs: Additional keyword arguments.
 
         Returns
         -------
