@@ -66,9 +66,6 @@ class LightningTrainerConf:
     limit_val_batches: bool = 0
     callbacks: Optional[Any] = None
 
-
-
-
 @dataclass
 class NumalogicConf:
     """Top level config schema for numalogic."""
