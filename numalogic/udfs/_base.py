@@ -71,6 +71,7 @@ class NumalogicUDF(metaclass=ABCMeta):
         Abstract method to be implemented by subclasses.
 
         Args:
+            model: artifact for the udf.
             input_: Input array.
 
         Returns
