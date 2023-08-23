@@ -87,3 +87,8 @@ class NumalogicConf:
     preprocess: list[ModelInfo] = field(default_factory=list)
     threshold: ModelInfo = field(default_factory=ModelInfo)
     postprocess: ModelInfo = field(default_factory=ModelInfo)
+
+
+@dataclass
+class DataConnectorConf:
+    source: str

@@ -11,6 +11,7 @@ from pynumaflow.function import Datum, DatumMetadata
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
+from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
 from numalogic.udfs.inference import InferenceUDF
 
@@ -82,6 +83,7 @@ DATA = {
 class TestInferenceUDF(unittest.TestCase):
     def setUp(self) -> None:
         self.udf = InferenceUDF(REDIS_CLIENT)
+        self.udf.register_conf("conf1", StreamConf(config_id="conf1"))
 
     @patch.object(
         RedisRegistry,
