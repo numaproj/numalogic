@@ -68,6 +68,7 @@ class LightningTrainerConf:
 
 
 
+
 @dataclass
 class NumalogicConf:
     """Top level config schema for numalogic."""
