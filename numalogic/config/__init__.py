@@ -12,7 +12,6 @@
 
 from numalogic.config._config import (
     NumalogicConf,
-    StreamConf,
     ModelInfo,
     LightningTrainerConf,
     RegistryInfo,
@@ -28,7 +27,6 @@ from numalogic.config.factory import (
 
 __all__ = [
     "NumalogicConf",
-    "StreamConf",
     "ModelInfo",
     "LightningTrainerConf",
     "RegistryInfo",

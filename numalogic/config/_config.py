@@ -88,13 +88,3 @@ class NumalogicConf:
     threshold: ModelInfo = field(default_factory=ModelInfo)
     postprocess: ModelInfo = field(default_factory=ModelInfo)
 
-
-@dataclass
-class StreamConf:
-    """Schema for defining the stream config."""
-
-    config_id: str = "default"
-    window_size: int = 12
-    composite_keys: list[str] = field(default_factory=list)
-    metrics: list[str] = field(default_factory=list)
-    numalogic_conf: NumalogicConf = MISSING

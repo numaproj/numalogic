@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
-from numalogic.config import StreamConf
 from numalogic.registry import ArtifactManager
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import artifact_t, KEYS
+from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import StreamPayload
 
 _LOGGER = logging.getLogger(__name__)

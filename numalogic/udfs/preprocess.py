@@ -8,10 +8,11 @@ import orjson
 from pynumaflow.function import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
-from numalogic.config import PreprocessFactory, StreamConf
+from numalogic.config import PreprocessFactory
 from numalogic.registry import LocalLRUCache, RedisRegistry
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
+from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import Status, Header
 from numalogic.udfs.tools import make_stream_payload, get_df, _load_model
 
