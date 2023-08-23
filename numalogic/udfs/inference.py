@@ -10,16 +10,15 @@ from numpy import typing as npt
 from orjson import orjson
 from pynumaflow.function import Messages, Datum, Message
 
-from numalogic.config import NumalogicConf
 from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
-from numalogic.tools.exceptions import RedisRegistryError, ModelKeyNotFound
+from numalogic.tools.exceptions import RedisRegistryError, ModelKeyNotFound, ConfigNotFoundError
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs import NumalogicUDF
+from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
 
 _LOGGER = logging.getLogger(__name__)
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
-RETRAIN_FREQ_HR = int(os.getenv("RETRAIN_FREQ_HR", "24"))
 
 
 class InferenceUDF(NumalogicUDF):
@@ -28,17 +27,35 @@ class InferenceUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        numalogic_conf: Numalogic configuration
+        stream_confs: Stream configuration per config ID
     """
 
-    def __init__(self, r_client: redis_client_t, numalogic_conf: Optional[NumalogicConf] = None):
+    def __init__(
+        self, r_client: redis_client_t, stream_confs: Optional[dict[str, StreamConf]] = None
+    ):
         super().__init__(is_async=False)
         self.model_registry = RedisRegistry(
             client=r_client, cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL)
         )
-        self.numalogic_conf = numalogic_conf or NumalogicConf()
+        self.stream_confs: dict[str, StreamConf] = stream_confs or {}
 
-    def compute(self, model: artifact_t, input_: npt.NDArray[float]) -> npt.NDArray[float]:
+    def register_conf(self, config_id: str, conf: StreamConf) -> None:
+        """
+        Register config with the UDF.
+
+        Args:
+            config_id: Config ID
+            conf: StreamConf object
+        """
+        self.stream_confs[config_id] = conf
+
+    def get_conf(self, config_id: str) -> StreamConf:
+        try:
+            return self.stream_confs[config_id]
+        except KeyError:
+            raise ConfigNotFoundError(f"Config with ID {config_id} not found!")
+
+    def compute(self, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:
         """
         Perform inference on the input data.
 
@@ -152,10 +169,11 @@ class InferenceUDF(NumalogicUDF):
         -------
             ArtifactData instance
         """
+        _conf = self.get_conf(payload.config_id).numalogic_conf
         try:
             artifact_data = self.model_registry.load(
                 skeys=keys,
-                dkeys=[self.numalogic_conf.model.name],
+                dkeys=[_conf.model.name],
             )
         except ModelKeyNotFound:
             _LOGGER.warning(
@@ -193,8 +211,11 @@ class InferenceUDF(NumalogicUDF):
         -------
             True if artifact is stale, False otherwise
         """
+        _conf = self.get_conf(payload.config_id)
         if (
-            self.model_registry.is_artifact_stale(artifact_data, int(RETRAIN_FREQ_HR))
+            self.model_registry.is_artifact_stale(
+                artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr
+            )
             and artifact_data.extras.get("source", "registry") == "registry"
         ):
             _LOGGER.info(
