@@ -21,11 +21,18 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", 3600))
 
 class Preprocess:
     @classmethod
-    def get_df(cls, data_payload: dict, features: List[str], win_size: int) -> (pd.DataFrame, List[int]):
-        df = pd.DataFrame(data_payload["data"], columns=["timestamp", *features]).astype(float).fillna(0)
+    def get_df(
+        cls, data_payload: dict, features: List[str], win_size: int
+    ) -> (pd.DataFrame, List[int]):
+        df = (
+            pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
+            .astype(float)
+            .fillna(0)
+        )
         df.index = df.timestamp.astype(int)
-        timestamps = np.arange(int(data_payload["start_time"]), int(data_payload["end_time"]) + 6e4, 6e4, dtype='int')[
-                     -win_size:]
+        timestamps = np.arange(
+            int(data_payload["start_time"]), int(data_payload["end_time"]) + 6e4, 6e4, dtype="int"
+        )[-win_size:]
         df = df.reindex(timestamps, fill_value=0)
         return df[features], timestamps
 
@@ -105,8 +112,12 @@ class Preprocess:
         raw_df, timestamps = self.get_df(data_payload, stream_conf.metrics, stream_conf.window_size)
 
         if raw_df.shape[0] < stream_conf.window_size or raw_df.shape[1] != len(stream_conf.metrics):
-            _LOGGER.error("Dataframe shape: (%f, %f) less than window_size %f ", raw_df.shape[0], raw_df.shape[1],
-                          stream_conf.window_size)
+            _LOGGER.error(
+                "Dataframe shape: (%f, %f) less than window_size %f ",
+                raw_df.shape[0],
+                raw_df.shape[1],
+                stream_conf.window_size,
+            )
             messages.append(Message.to_drop())
             return messages
 
@@ -143,5 +154,9 @@ class Preprocess:
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
-        _LOGGER.debug("%s - Time taken in preprocess: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+        _LOGGER.debug(
+            "%s - Time taken in preprocess: %.4f sec",
+            payload.uuid,
+            time.perf_counter() - _start_time,
+        )
         return messages

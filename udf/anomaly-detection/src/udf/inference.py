@@ -43,13 +43,19 @@ class Inference:
         _start_time = time.perf_counter()
         stream_loader = DataLoader(StreamingDataset(data_arr, win_size))
         _LOGGER.info(
-            "%s - Time taken for DataLoader: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+            "%s - Time taken for DataLoader: %.4f sec",
+            payload.uuid,
+            time.perf_counter() - _start_time,
+        )
         trainer = AutoencoderTrainer()
         try:
             _start_time = time.perf_counter()
             recon_err = trainer.predict(model, dataloaders=stream_loader)
             _LOGGER.info(
-                "%s - Time taken to predict from the model: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+                "%s - Time taken to predict from the model: %.4f sec",
+                payload.uuid,
+                time.perf_counter() - _start_time,
+            )
         except Exception as err:
             _LOGGER.exception(
                 "%s - Runtime error while performing inference: Keys: %s, Metric: %s, Error: %r",
@@ -90,7 +96,10 @@ class Inference:
                 dkeys=[numalogic_conf.model.name],
             )
             _LOGGER.info(
-                "%s - Time taken to load the model from registry/cache: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+                "%s - Time taken to load the model from registry/cache: %.4f sec",
+                payload.uuid,
+                time.perf_counter() - _start_time,
+            )
         except RedisRegistryError as err:
             _LOGGER.exception(
                 "%s - Error while fetching inference artifact, Keys: %s, Metric: %s, Error: %r",
@@ -130,8 +139,8 @@ class Inference:
             artifact_data.extras.get("source"),
         )
         if (
-                RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr))
-                and artifact_data.extras.get("source") == "registry"
+            RedisRegistry.is_artifact_stale(artifact_data, int(retrain_config.retrain_freq_hr))
+            and artifact_data.extras.get("source") == "registry"
         ):
             _LOGGER.info(
                 "%s - Inference artifact found is stale, Keys: %s, Metric: %s",
@@ -178,5 +187,9 @@ class Inference:
 
         messages.append(Message(keys=keys, value=payload.to_json()))
         _LOGGER.info("%s - Sending Msg: { Keys: %s, Payload: %r }", payload.uuid, keys, payload)
-        _LOGGER.debug("%s - Time taken in inference: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+        _LOGGER.debug(
+            "%s - Time taken in inference: %.4f sec",
+            payload.uuid,
+            time.perf_counter() - _start_time,
+        )
         return messages

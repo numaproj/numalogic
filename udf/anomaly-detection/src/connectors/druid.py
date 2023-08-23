@@ -1,17 +1,10 @@
 import time
-from collections.abc import Hashable
-from typing import Sequence
-
 import pytz
 import logging
 import pandas as pd
 from datetime import datetime, timedelta
-
-from omegaconf import OmegaConf
 from pydruid.client import PyDruid
 from pydruid.utils.filters import Filter
-import urllib.request
-import urllib.error
 
 from src.connectors._config import Pivot
 

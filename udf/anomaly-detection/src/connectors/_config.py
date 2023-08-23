@@ -40,7 +40,7 @@ class Pivot:
 class DruidFetcherConf:
     datasource: str
     dimensions: list[str] = field(default_factory=list)
-    aggregations: dict = field(default_factory=lambda: dict)
+    aggregations: dict = field(default_factory=dict)
     group_by: list[str] = field(default_factory=list)
     pivot: Pivot = field(default_factory=lambda: Pivot())
     granularity: str = "minute"

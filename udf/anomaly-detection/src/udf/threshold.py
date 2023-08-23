@@ -142,5 +142,9 @@ class Threshold:
             [POSTPROC_VTX_KEY],
             payload,
         )
-        _LOGGER.debug("%s - Time taken in threshold: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+        _LOGGER.debug(
+            "%s - Time taken in threshold: %.4f sec",
+            payload.uuid,
+            time.perf_counter() - _start_time,
+        )
         return messages

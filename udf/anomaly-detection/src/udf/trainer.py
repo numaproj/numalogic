@@ -53,7 +53,7 @@ class Trainer:
             metric=payload.metrics[0],
             labels={"namespace": payload.composite_keys[1]},
             return_labels=["rollouts_pod_template_hash"],
-            hours=hours
+            hours=hours,
         )
 
     @classmethod
@@ -292,7 +292,9 @@ class Trainer:
 
         train_df = get_feature_df(df, payload.metrics)
         self._train_and_save(numalogic_config, payload, redis_client, train_df)
-        _LOGGER.debug("%s - Time taken in training: %.4f sec", payload.uuid, time.perf_counter() - _start_time)
+        _LOGGER.debug(
+            "%s - Time taken in training: %.4f sec", payload.uuid, time.perf_counter() - _start_time
+        )
         messages.append(Message(keys=keys, value=payload.to_json()))
 
         return messages
