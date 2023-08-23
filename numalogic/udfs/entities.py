@@ -12,6 +12,7 @@ Matrix = Union[Vector, list[Vector], npt.ArrayLike]
 
 
 class Status(str, Enum):
+    ARTIFACT_FOUND = "artifact_found"
     ARTIFACT_NOT_FOUND = "artifact_not_found"
     ARTIFACT_STALE = "artifact_is_stale"
     RUNTIME_ERROR = "runtime_error"
