@@ -112,7 +112,12 @@ class PreprocessUDF(NumalogicUDF):
             preproc_clf = self._load_model_from_config(self.stream_conf.numalogic_conf.preprocess)
         try:
             processed_data = self.compute(model=preproc_clf, input_=payload.get_data())
-            payload = replace(payload, status=Status.ARTIFACT_FOUND, header=Header.MODEL_INFERENCE)
+            payload = replace(
+                payload,
+                data=processed_data,
+                status=Status.ARTIFACT_FOUND,
+                header=Header.MODEL_INFERENCE,
+            )
             _LOGGER.info(
                 "%s - Successfully preprocessed, Keys: %s, Metrics: %s, x_scaled: %s",
                 payload.uuid,
@@ -156,6 +161,7 @@ class PreprocessUDF(NumalogicUDF):
         try:
             x_scaled = model.transform(input_)
             _LOGGER.info("Time taken in preprocessing: %.4f sec", time.perf_counter() - _start_time)
-            return x_scaled
         except Exception as err:
             raise RuntimeError("Model transform failed!") from err
+        else:
+            return x_scaled
