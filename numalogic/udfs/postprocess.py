@@ -70,43 +70,40 @@ class PostProcessUDF(NumalogicUDF):
         )
         postproc_clf = self.postproc_factory.get_instance(postprocess_cfg)
 
+        if thresh_artifact is None:
+            payload = replace(
+                payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
+            )
+
         #  Postprocess payload
-        if payload.status in (Status.ARTIFACT_FOUND, Status.ARTIFACT_STALE):
-            if thresh_artifact:
-                thresh_clf = thresh_artifact.artifact
-                try:
-                    processed_data = self.compute(
-                        model=thresh_clf,
-                        input_=payload.get_data(),
-                        **{"postproc_clf": postproc_clf}
-                    )
-                    payload = replace(
-                        payload,
-                        data=processed_data,
-                        header=Header.MODEL_INFERENCE,
-                    )
-                    _LOGGER.info(
-                        "%s - Successfully post-processed, Keys: %s, Metrics: %s, x_scaled: %s",
-                        payload.uuid,
-                        keys,
-                        payload.metrics,
-                        list(processed_data),
-                    )
-                    messages.append(Message(keys=keys, value=payload.to_json(), tags=["output"]))
-                except RuntimeError:
-                    _LOGGER.exception(
-                        "%s - Runtime postprocess error! Keys: %s, Metric: %s",
-                        payload.uuid,
-                        payload.composite_keys,
-                        payload.metrics,
-                    )
-                    payload = replace(
-                        payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST
-                    )
-            else:
-                payload = replace(
-                    payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
+        if payload.status in (Status.ARTIFACT_FOUND, Status.ARTIFACT_STALE) and thresh_artifact:
+            try:
+                processed_data = self.compute(
+                    model=thresh_artifact.artifact,
+                    input_=payload.get_data(),
+                    postproc_clf=postproc_clf,
                 )
+                payload = replace(
+                    payload,
+                    data=processed_data,
+                    header=Header.MODEL_INFERENCE,
+                )
+                _LOGGER.info(
+                    "%s - Successfully post-processed, Keys: %s, Metrics: %s, x_scaled: %s",
+                    payload.uuid,
+                    keys,
+                    payload.metrics,
+                    list(processed_data),
+                )
+                messages.append(Message(keys=keys, value=payload.to_json(), tags=["output"]))
+            except RuntimeError:
+                _LOGGER.exception(
+                    "%s - Runtime postprocess error! Keys: %s, Metric: %s",
+                    payload.uuid,
+                    payload.composite_keys,
+                    payload.metrics,
+                )
+                payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
 
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST or payload.status == Status.ARTIFACT_STALE:
@@ -124,7 +121,9 @@ class PostProcessUDF(NumalogicUDF):
         )
         return messages
 
-    def compute(self, model: artifact_t, input_: NDArray[float], **kwargs) -> NDArray[float]:
+    def compute(
+        self, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
+    ) -> NDArray[float]:
         """
         Compute the postprocess function.
 
@@ -141,11 +140,11 @@ class PostProcessUDF(NumalogicUDF):
         _start_time = time.perf_counter()
         try:
             y_score = model.score_samples(input_)
-        except RuntimeError as err:
+        except Exception as err:
             raise RuntimeError("Threshold model scoring failed") from err
         try:
             win_score = np.mean(y_score, axis=0)
-            score = kwargs["postproc_clf"].transform(win_score)
+            score = postproc_clf.transform(win_score)
             _LOGGER.debug(
                 "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
             )
