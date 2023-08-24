@@ -48,7 +48,7 @@ class TestPreprocessUDF(unittest.TestCase):
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
 
-    def test_preprocess_1(self):
+    def test_preprocess_load_from_registry(self):
         msgs = self.udf1(
             KEYS,
             DATUM,
@@ -58,7 +58,7 @@ class TestPreprocessUDF(unittest.TestCase):
         self.assertEqual(payload.status, Status.ARTIFACT_FOUND)
         self.assertEqual(payload.header, Header.MODEL_INFERENCE)
 
-    def test_preprocess_2(self):
+    def test_preprocess_load_from_config(self):
         msgs = self.udf2(
             KEYS,
             DATUM,
@@ -70,7 +70,7 @@ class TestPreprocessUDF(unittest.TestCase):
         self.assertEqual(payload.header, Header.MODEL_INFERENCE)
 
     @patch.object(RedisRegistry, "load", Mock(return_value=None))
-    def test_preprocess_3(self):
+    def test_preprocess_model_not_found(self):
         msgs = self.udf2(KEYS, DATUM)
         self.assertEqual(1, len(msgs))
         payload = StreamPayload(**orjson.loads(msgs[0].value))
