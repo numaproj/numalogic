@@ -38,10 +38,7 @@ class TrainerUDF(NumalogicUDF):
         druid_conf: Druid configuration
         stream_confs: Stream configuration per config ID
     """
-<<<<<<< HEAD
 
-=======
->>>>>>> b5fbc0d (initial docstrings)
     def __init__(
         self,
         r_client: redis_client_t,
@@ -76,19 +73,12 @@ class TrainerUDF(NumalogicUDF):
         Args:
             config_id: Config ID
 
-<<<<<<< HEAD
         Returns
         -------
             StreamConf object
 
         Raises
         ------
-=======
-        Returns:
-            StreamConf object
-
-        Raises:
->>>>>>> b5fbc0d (initial docstrings)
             ConfigNotFoundError: If config with the given ID is not found
         """
         try:
@@ -114,19 +104,12 @@ class TrainerUDF(NumalogicUDF):
             threshold_clf: Thresholding artifact
             trainer_cfg: Trainer configuration
 
-<<<<<<< HEAD
         Returns
         -------
             Dictionary of artifacts
 
         Raises
         ------
-=======
-        Returns:
-            Dictionary of artifacts
-
-        Raises:
->>>>>>> b5fbc0d (initial docstrings)
             ConfigNotFoundError: If trainer config is not found
         """
         if not trainer_cfg:
@@ -161,12 +144,8 @@ class TrainerUDF(NumalogicUDF):
             keys: List of keys
             datum: Datum object
 
-<<<<<<< HEAD
         Returns
         -------
-=======
-        Returns:
->>>>>>> b5fbc0d (initial docstrings)
             Messages instance (no forwarding)
         """
         _start_time = time.perf_counter()
@@ -315,12 +294,8 @@ class TrainerUDF(NumalogicUDF):
         Args:
             payload: TrainerPayload object
 
-<<<<<<< HEAD
         Returns
         -------
-=======
-        Returns:
->>>>>>> b5fbc0d (initial docstrings)
             Dataframe
         """
         _start_time = time.perf_counter()
