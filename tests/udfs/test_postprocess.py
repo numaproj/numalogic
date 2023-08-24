@@ -1,27 +1,22 @@
 import logging
 import os
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from unittest.mock import patch, Mock
 
 import numpy as np
 from fakeredis import FakeServer, FakeStrictRedis
-from freezegun import freeze_time
 from omegaconf import OmegaConf
 from orjson import orjson
-from pynumaflow.function import Message, DatumMetadata, Datum
+from pynumaflow.function import DatumMetadata, Datum
 
 from numalogic._constants import TESTS_DIR
-from numalogic.models.autoencoder.variants import SparseVanillaAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import ModelKeyNotFound
 from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import Header, TrainerPayload, Status
-from numalogic.udfs.inference import InferenceUDF
 from numalogic.udfs.postprocess import PostProcessUDF
-from numalogic.udfs.preprocess import PreprocessUDF
-from tests.udfs.utility import input_json_from_file, store_in_redis
 
 logging.basicConfig(level=logging.DEBUG)
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
