@@ -31,6 +31,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class TrainerUDF(NumalogicUDF):
+    """
+    Trainer UDF for Numalogic.
+
+    Args:
+        r_client: Redis client
+        druid_conf: Druid configuration
+        stream_confs: Stream configuration per config ID
+    """
     def __init__(
         self,
         r_client: redis_client_t,
@@ -59,6 +67,18 @@ class TrainerUDF(NumalogicUDF):
         self.stream_confs[config_id] = conf
 
     def get_conf(self, config_id: str) -> StreamConf:
+        """
+        Get config with the given ID.
+
+        Args:
+            config_id: Config ID
+
+        Returns:
+            StreamConf object
+
+        Raises:
+            ConfigNotFoundError: If config with the given ID is not found
+        """
         try:
             return self.stream_confs[config_id]
         except KeyError:
@@ -72,6 +92,22 @@ class TrainerUDF(NumalogicUDF):
         threshold_clf: artifact_t = None,
         trainer_cfg: TrainerConf = None,
     ) -> dict[str, artifact_t]:
+        """
+        Train the model on the given input data.
+
+        Args:
+            model: Model artifact
+            input_: Input data
+            preproc_clf: Preprocessing artifact
+            threshold_clf: Thresholding artifact
+            trainer_cfg: Trainer configuration
+
+        Returns:
+            Dictionary of artifacts
+
+        Raises:
+            ConfigNotFoundError: If trainer config is not found
+        """
         if not trainer_cfg:
             raise ConfigNotFoundError("Trainer config not found!")
 
@@ -97,6 +133,16 @@ class TrainerUDF(NumalogicUDF):
         }
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
+        """
+        Main run function for the UDF.
+
+        Args:
+            keys: List of keys
+            datum: Datum object
+
+        Returns:
+            Messages instance (no forwarding)
+        """
         _start_time = time.perf_counter()
 
         # Construct payload object
@@ -179,6 +225,16 @@ class TrainerUDF(NumalogicUDF):
     def save_artifact(
         self, artifact: artifact_t, skeys: list[str], dkeys: list[str], uuid: str, **metadata
     ) -> None:
+        """
+        Save artifact to the registry.
+
+        Args:
+            artifact: Artifact to save
+            skeys: List of keys
+            dkeys: List of dkeys
+            uuid: UUID
+            **metadata: Additional metadata
+        """
         if not artifact:
             return
         if isinstance(artifact, StatelessTransformer):
@@ -217,6 +273,7 @@ class TrainerUDF(NumalogicUDF):
     def get_feature_arr(
         raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
     ) -> npt.NDArray[float]:
+        """Get feature array from the raw dataframe."""
         for col in metrics:
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
@@ -225,6 +282,15 @@ class TrainerUDF(NumalogicUDF):
         return feat_df.to_numpy(dtype=np.float32)
 
     def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
+        """
+        Fetch data from druid.
+
+        Args:
+            payload: TrainerPayload object
+
+        Returns:
+            Dataframe
+        """
         _start_time = time.perf_counter()
         _conf = self.get_conf(payload.config_id)
 
