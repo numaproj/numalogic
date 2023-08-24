@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
-from numalogic.registry import ArtifactManager
+from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
-from numalogic.tools.types import artifact_t, KEYS
+from numalogic.tools.types import KEYS
 from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import StreamPayload
 
@@ -64,7 +64,7 @@ def make_stream_payload(
 
 def _load_model(
     skeys: KEYS, dkeys: KEYS, payload: StreamPayload, model_registry: ArtifactManager
-) -> artifact_t:
+) -> ArtifactData | None:
     """
     Load artifact from redis
     Args:
@@ -79,7 +79,15 @@ def _load_model(
 
     """
     try:
-        preproc_artifact = model_registry.load(skeys, dkeys)
+        artifact = model_registry.load(skeys, dkeys)
+        _LOGGER.info(
+            "%s - Loaded Model. Source: %s , version: %s, Keys: %s, %s",
+            payload.uuid,
+            artifact.extras.get("source"),
+            artifact.extras.get("version"),
+            skeys,
+            dkeys,
+        )
     except RedisRegistryError as err:
         _LOGGER.exception(
             "%s - Error while fetching preproc artifact, Keys: %s, Metrics: %s, Error: %r",
@@ -101,4 +109,4 @@ def _load_model(
         )
         return None
     else:
-        return preproc_artifact
+        return artifact
