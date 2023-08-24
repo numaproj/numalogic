@@ -83,6 +83,15 @@ class PostProcessUDF(NumalogicUDF):
                     input_=payload.get_data(),
                     postproc_clf=postproc_clf,
                 )
+            except RuntimeError:
+                _LOGGER.exception(
+                    "%s - Runtime postprocess error! Keys: %s, Metric: %s",
+                    payload.uuid,
+                    payload.composite_keys,
+                    payload.metrics,
+                )
+                payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
+            else:
                 payload = replace(
                     payload,
                     data=processed_data,
@@ -96,14 +105,6 @@ class PostProcessUDF(NumalogicUDF):
                     list(processed_data),
                 )
                 messages.append(Message(keys=keys, value=payload.to_json(), tags=["output"]))
-            except RuntimeError:
-                _LOGGER.exception(
-                    "%s - Runtime postprocess error! Keys: %s, Metric: %s",
-                    payload.uuid,
-                    payload.composite_keys,
-                    payload.metrics,
-                )
-                payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
 
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST or payload.status == Status.ARTIFACT_STALE:
