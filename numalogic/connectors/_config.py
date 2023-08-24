@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from enum import Enum, IntEnum
+from enum import IntEnum
 
 from omegaconf import MISSING
 from pydruid.utils.aggregators import doublesum

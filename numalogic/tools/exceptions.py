@@ -47,7 +47,7 @@ class UnknownConfigArgsError(Exception):
 
 
 class ConfigNotFoundError(RuntimeError):
-    """Raised when a config is not found"""
+    """Raised when a config is not found."""
 
     pass
 
