@@ -56,7 +56,7 @@ class LightningTrainerConf:
     """
 
     accelerator: str = "auto"
-    max_epochs: int = 100
+    max_epochs: int = 50
     logger: bool = False
     check_val_every_n_epoch: int = 5
     log_every_n_steps: int = 20
@@ -74,6 +74,7 @@ class TrainerConf:
     retrain_freq_hr: int = 24
     model_expiry_sec: int = 86400  # 24 hrs
     dedup_expiry_sec: int = 1800  # 30 days
+    batch_size: int = 32
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
 
@@ -85,8 +86,8 @@ class NumalogicConf:
     trainer: TrainerConf = field(default_factory=TrainerConf)
     registry: RegistryInfo = field(default_factory=RegistryInfo)
     preprocess: list[ModelInfo] = field(default_factory=list)
-    threshold: ModelInfo = field(default_factory=ModelInfo)
-    postprocess: ModelInfo = field(default_factory=ModelInfo)
+    threshold: ModelInfo = ModelInfo(name="StdDevThreshold")
+    postprocess: ModelInfo = ModelInfo(name="TanhNorm", stateful=False)
 
 
 @dataclass

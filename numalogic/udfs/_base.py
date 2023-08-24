@@ -66,9 +66,7 @@ class NumalogicUDF(metaclass=ABCMeta):
         raise NotImplementedError("aexec method not implemented")
 
     @abstractmethod
-    def compute(
-        self, model: artifact_t, input_: npt.NDArray[float], **kwargs
-    ) -> npt.NDArray[float]:
+    def compute(self, model: artifact_t, input_: npt.NDArray[float], **kwargs):
         """
         Abstract method to be implemented by subclasses.
 
@@ -76,9 +74,5 @@ class NumalogicUDF(metaclass=ABCMeta):
             model: artifact for the udf.
             input_: Input array.
             kwargs: Additional keyword arguments.
-
-        Returns
-        -------
-            Output array.
         """
         pass
