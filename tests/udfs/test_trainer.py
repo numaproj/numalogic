@@ -27,12 +27,11 @@ KEYS = ["service-mesh", "1", "2"]
 
 
 def mock_druid_fetch_data(nrows=5000):
-    df = pd.read_csv(
+    return pd.read_csv(
         os.path.join(TESTS_DIR, "resources", "data", "druid.csv"),
         index_col="timestamp",
         nrows=nrows,
     )
-    return df
 
 
 class TrainTrainerUDF(unittest.TestCase):

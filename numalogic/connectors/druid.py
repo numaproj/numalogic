@@ -7,6 +7,7 @@ import pytz
 from pydruid.client import PyDruid
 from pydruid.utils.filters import Filter
 from numalogic.connectors._config import Pivot
+from typing import Optional
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,8 +23,8 @@ class DruidFetcher:
         filter_values: list[str],
         dimensions: list[str],
         granularity: str = "minute",
-        aggregations: dict = None,
-        group_by: list[str] = None,
+        aggregations: Optional[dict] = None,
+        group_by: Optional[list[str]] = None,
         pivot: Pivot = None,
         hours: float = 24,
     ) -> pd.DataFrame:

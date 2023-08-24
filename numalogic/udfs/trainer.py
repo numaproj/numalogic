@@ -7,7 +7,6 @@ import numpy as np
 import numpy.typing as npt
 import orjson
 import pandas as pd
-from omegaconf import OmegaConf
 from pynumaflow.function import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
@@ -39,6 +38,7 @@ class TrainerUDF(NumalogicUDF):
         druid_conf: Druid configuration
         stream_confs: Stream configuration per config ID
     """
+
     def __init__(
         self,
         r_client: redis_client_t,
@@ -73,10 +73,12 @@ class TrainerUDF(NumalogicUDF):
         Args:
             config_id: Config ID
 
-        Returns:
+        Returns
+        -------
             StreamConf object
 
-        Raises:
+        Raises
+        ------
             ConfigNotFoundError: If config with the given ID is not found
         """
         try:
@@ -102,10 +104,12 @@ class TrainerUDF(NumalogicUDF):
             threshold_clf: Thresholding artifact
             trainer_cfg: Trainer configuration
 
-        Returns:
+        Returns
+        -------
             Dictionary of artifacts
 
-        Raises:
+        Raises
+        ------
             ConfigNotFoundError: If trainer config is not found
         """
         if not trainer_cfg:
@@ -140,7 +144,8 @@ class TrainerUDF(NumalogicUDF):
             keys: List of keys
             datum: Datum object
 
-        Returns:
+        Returns
+        -------
             Messages instance (no forwarding)
         """
         _start_time = time.perf_counter()
@@ -237,6 +242,7 @@ class TrainerUDF(NumalogicUDF):
         """
         if not artifact:
             return
+        # TODO check for statelessness from config
         if isinstance(artifact, StatelessTransformer):
             _LOGGER.info("%s - Skipping save for stateless artifact with dkeys: %s", uuid, dkeys)
             return
@@ -288,7 +294,8 @@ class TrainerUDF(NumalogicUDF):
         Args:
             payload: TrainerPayload object
 
-        Returns:
+        Returns
+        -------
             Dataframe
         """
         _start_time = time.perf_counter()
