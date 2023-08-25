@@ -4,7 +4,7 @@ import time
 from dataclasses import replace
 
 import numpy as np
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 from orjson import orjson
 from pynumaflow.function import Messages, Datum, Message
 
@@ -22,7 +22,7 @@ LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 _LOGGER = logging.getLogger(__name__)
 
 
-class PostProcessUDF(NumalogicUDF):
+class PostprocessUDF(NumalogicUDF):
     """
     Postprocess UDF for Numalogic.
 

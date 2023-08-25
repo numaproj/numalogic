@@ -16,7 +16,7 @@ from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import ModelKeyNotFound
 from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import Header, TrainerPayload, Status
-from numalogic.udfs.postprocess import PostProcessUDF
+from numalogic.udfs.postprocess import PostprocessUDF
 
 logging.basicConfig(level=logging.DEBUG)
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
@@ -90,7 +90,7 @@ class TestPostProcessUDF(unittest.TestCase):
         _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml"))
         schema = OmegaConf.structured(StreamConf)
         stream_conf = StreamConf(**OmegaConf.merge(schema, _given_conf))
-        self.udf = PostProcessUDF(REDIS_CLIENT, stream_conf=stream_conf)
+        self.udf = PostprocessUDF(REDIS_CLIENT, stream_conf=stream_conf)
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
@@ -129,14 +129,14 @@ class TestPostProcessUDF(unittest.TestCase):
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
         self.assertEqual(1, len(msg))
 
-    @patch("numalogic.udfs.postprocess.PostProcessUDF.compute", Mock(side_effect=RuntimeError))
+    @patch("numalogic.udfs.postprocess.PostprocessUDF.compute", Mock(side_effect=RuntimeError))
     def test_postprocess_infer_runtime_error(self):
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
         self.assertEqual(1, len(msg))
         payload = TrainerPayload(**orjson.loads(msg[0].value))
         self.assertEqual(payload.header, Header.TRAIN_REQUEST)
 
-    @patch.object(PostProcessUDF, "compute", Mock(side_effect=RuntimeError))
+    @patch.object(PostprocessUDF, "compute", Mock(side_effect=RuntimeError))
     def test_preprocess_run_time_error(self):
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
         self.assertEqual(1, len(msg))
