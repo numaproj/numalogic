@@ -2,6 +2,7 @@ import logging
 import os
 import time
 from dataclasses import replace
+from typing import Optional
 
 import numpy as np
 from numpy._typing import NDArray
@@ -10,6 +11,7 @@ from pynumaflow.function import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory
 from numalogic.registry import LocalLRUCache, RedisRegistry
+from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf
@@ -32,14 +34,32 @@ class PostProcessUDF(NumalogicUDF):
 
     """
 
-    def __init__(self, r_client: redis_client_t, stream_conf: StreamConf = None):
+    def __init__(
+        self, r_client: redis_client_t, stream_confs: Optional[dict[str, StreamConf]] = None
+    ):
         super().__init__()
         self.model_registry = RedisRegistry(
             client=r_client,
             cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
         )
-        self.stream_conf = stream_conf or StreamConf()
+        self.stream_confs: dict[str, StreamConf] = stream_confs or {}
         self.postproc_factory = PostprocessFactory()
+
+    def register_conf(self, config_id: str, conf: StreamConf) -> None:
+        """
+        Register config with the UDF.
+
+        Args:
+            config_id: Config ID
+            conf: StreamConf object
+        """
+        self.stream_confs[config_id] = conf
+
+    def get_conf(self, config_id: str) -> StreamConf:
+        try:
+            return self.stream_confs[config_id]
+        except KeyError:
+            raise ConfigNotFoundError(f"Config with ID {config_id} not found!")
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
@@ -61,8 +81,8 @@ class PostProcessUDF(NumalogicUDF):
         payload = StreamPayload(**orjson.loads(datum.value))
 
         # load configs
-        thresh_cfg = self.stream_conf.numalogic_conf.threshold
-        postprocess_cfg = self.stream_conf.numalogic_conf.postprocess
+        thresh_cfg = self.get_conf(payload.config_id).numalogic_conf.threshold
+        postprocess_cfg = self.get_conf(payload.config_id).numalogic_conf.postprocess
 
         # load artifact
         thresh_artifact = _load_model(

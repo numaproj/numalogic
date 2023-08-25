@@ -42,8 +42,8 @@ class TestPreprocessUDF(unittest.TestCase):
         stream_conf_2 = StreamConf(**OmegaConf.merge(schema, _given_conf_2))
         store_in_redis(stream_conf, self.registry)
         store_in_redis(stream_conf_2, self.registry)
-        self.udf1 = PreprocessUDF(REDIS_CLIENT, stream_conf=stream_conf)
-        self.udf2 = PreprocessUDF(REDIS_CLIENT, stream_conf=stream_conf_2)
+        self.udf1 = PreprocessUDF(REDIS_CLIENT, stream_confs={"druid-config": stream_conf})
+        self.udf2 = PreprocessUDF(REDIS_CLIENT, stream_confs={"druid-config": stream_conf_2})
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
