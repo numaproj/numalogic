@@ -1,0 +1,51 @@
+name: Docker Image Push
+
+on:
+  push:
+    tags:
+      - v*
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set output
+        id: vars
+        run: |
+          echo "${{ secrets.QUAYIO_USERNAME }}"
+
+      - name: Docker Login
+        uses: docker/login-action@v2.1.0
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAYIO_USERNAME }}
+          password: ${{ secrets.QUAYIO_PASSWORD }}
+
+      - name: Docker Build
+        env:
+          QUAYIO_ORG: quay.io/numaio
+          PLATFORM: linux/x86_64
+          TARGET: numalogic/udf
+        run: |
+          type=$(basename $(dirname $GITHUB_REF))
+          tag=$(basename $GITHUB_REF)
+          
+          if [[ $type == "heads" ]]; then
+            tag="$(basename $GITHUB_REF)v${{ env.version }}"
+          fi
+          
+          image_name="${QUAYIO_ORG}/numalogic/udf:${tag}"
+          
+          docker buildx build \
+            --output "type=image,push=true" \
+            --platform="${PLATFORM}" \
+            --tag $image_name .
