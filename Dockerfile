@@ -9,7 +9,7 @@ FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 ENV PYTHONFAULTHANDLER=1 \
   PYTHONUNBUFFERED=1 \
   PYTHONHASHSEED=random \
-  PIP_NO_CACHE_DIR=on \
+  PIP_NO_CACHE_DIR=off \
   PIP_DISABLE_PIP_VERSION_CHECK=on \
   PIP_DEFAULT_TIMEOUT=100 \
   POETRY_VERSION=${POETRY_VERSION} \
@@ -24,14 +24,10 @@ ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         curl \
-        wget \
-        # deps for building python deps
         build-essential \
+        dumb-init \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    \
-    # install dumb-init
-    && wget -O /dumb-init https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64 \
-    && chmod +x /dumb-init \
+    && pip install --no-cache --upgrade pip \
     && curl -sSL https://install.python-poetry.org | python3 -
 
 ####################################################################################################
@@ -45,13 +41,15 @@ WORKDIR $PYSETUP_PATH
 COPY ./pyproject.toml ./poetry.lock ./
 COPY requirements ./requirements
 
+# TODO install cpu/gpu based on args/arch
 RUN poetry install --without dev --no-cache --no-root -E numaflow --extras "${INSTALL_EXTRAS}" && \
-    poetry run pip install --no-cache -r requirements/requirements-torch.txt && \
+    poetry run pip install --no-cache "torch>=2.0,<3.0" --index-url https://download.pytorch.org/whl/cpu && \
+    poetry run pip install --no-cache "pytorch-lightning>=2.0<3.0" && \
     rm -rf ~/.cache/pypoetry/
 
 ADD . /app
 WORKDIR /app
 
-ENTRYPOINT ["/dumb-init", "--"]
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 
 EXPOSE 5000

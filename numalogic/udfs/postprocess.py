@@ -58,8 +58,8 @@ class PostprocessUDF(NumalogicUDF):
     def get_conf(self, config_id: str) -> StreamConf:
         try:
             return self.stream_confs[config_id]
-        except KeyError:
-            raise ConfigNotFoundError(f"Config with ID {config_id} not found!")
+        except KeyError as err:
+            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """

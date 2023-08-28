@@ -301,18 +301,6 @@ class TrainerUDF(NumalogicUDF):
         _start_time = time.perf_counter()
         _conf = self.get_conf(payload.config_id)
 
-        print(
-            type(self.druid_conf.fetcher.datasource),
-            type(list(_conf.composite_keys)),
-            type(list(self.druid_conf.fetcher.dimensions)),
-            type(self.druid_conf.fetcher.granularity),
-            type(dict(self.druid_conf.fetcher.aggregations)),
-            type(self.druid_conf.fetcher.group_by),
-            type(self.druid_conf.fetcher.pivot),
-            type(_conf.numalogic_conf.trainer.train_hours),
-        )
-        print(type(self.druid_conf.fetcher.aggregations))
-
         try:
             _df = self.data_fetcher.fetch_data(
                 datasource=self.druid_conf.fetcher.datasource,

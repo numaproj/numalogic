@@ -6,6 +6,7 @@ from numalogic.udfs.trainer import TrainerUDF
 from numalogic.udfs.preprocess import PreprocessUDF
 from numalogic.udfs.postprocess import PostprocessUDF
 from numalogic.udfs.factory import UDFFactory
+from numalogic.udfs._config import StreamConf, PipelineConf, load_pipeline_conf
 
 
 __all__ = [
@@ -15,6 +16,9 @@ __all__ = [
     "TrainerUDF",
     "PostprocessUDF",
     "UDFFactory",
+    "StreamConf",
+    "PipelineConf",
+    "load_pipeline_conf",
 ]
 
 logging.basicConfig(level=logging.DEBUG)
