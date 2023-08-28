@@ -6,9 +6,9 @@ from pydruid.utils.aggregators import doublesum
 
 
 class ConnectorType(IntEnum):
-    REDIS = 0
-    PROMETHEUS = 1
-    DRUID = 2
+    redis = 0
+    prometheus = 1
+    druid = 2
 
 
 @dataclass
