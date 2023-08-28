@@ -31,8 +31,8 @@ jobs:
         id: vars
         run: |
           echo "version=$(poetry version -s)" >> $GITHUB_ENV
-          echo ${{ secrets.QUAYIO_USERNAME }}
-          echo ${{ secrets.QUAYIO_PASSWORD }}
+          echo "${{ secrets.QUAYIO_USERNAME }}"
+          echo "${{ secrets.QUAYIO_PASSWORD }}"
 
       - name: Docker Login
         uses: docker/login-action@v2
