@@ -42,8 +42,8 @@ class TestPreprocessUDF(unittest.TestCase):
         stream_conf_2 = StreamConf(**OmegaConf.merge(schema, _given_conf_2))
         store_in_redis(stream_conf, self.registry)
         store_in_redis(stream_conf_2, self.registry)
-        self.udf1 = PreprocessUDF(REDIS_CLIENT, stream_conf=stream_conf)
-        self.udf2 = PreprocessUDF(REDIS_CLIENT, stream_conf=stream_conf_2)
+        self.udf1 = PreprocessUDF(REDIS_CLIENT, stream_confs={"druid-config": stream_conf})
+        self.udf2 = PreprocessUDF(REDIS_CLIENT, stream_confs={"druid-config": stream_conf_2})
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
@@ -69,7 +69,7 @@ class TestPreprocessUDF(unittest.TestCase):
         self.assertEqual(payload.status, Status.ARTIFACT_FOUND)
         self.assertEqual(payload.header, Header.MODEL_INFERENCE)
 
-    @patch.object(RedisRegistry, "load", Mock(return_value=None))
+    @patch.object(RedisRegistry, "load", Mock(side_effect=Exception))
     def test_preprocess_model_not_found(self):
         msgs = self.udf2(KEYS, DATUM)
         self.assertEqual(1, len(msgs))

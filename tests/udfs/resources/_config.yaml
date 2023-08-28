@@ -2,6 +2,7 @@
 config_id: "druid-config"
 composite_keys: ['service-mesh', '1', '2']
 metrics: [ "failed" , "degraded" ]
+window_size: 10
 numalogic_conf:
   model:
     name: "SparseVanillaAE"
@@ -30,7 +31,3 @@ numalogic_conf:
     stateful: false
     conf:
       scale_factor: 5
-  registry:
-    name: "RedisRegistry"
-    conf:
-      ttl: 50

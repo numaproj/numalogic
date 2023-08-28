@@ -11,6 +11,7 @@ from sklearn.pipeline import make_pipeline
 
 from numalogic.config import PreprocessFactory
 from numalogic.registry import LocalLRUCache, RedisRegistry
+from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf
@@ -32,14 +33,32 @@ class PreprocessUDF(NumalogicUDF):
         stream_conf: StreamConf configuration
     """
 
-    def __init__(self, r_client: redis_client_t, stream_conf: Optional[StreamConf] = None):
+    def __init__(
+        self, r_client: redis_client_t, stream_confs: Optional[dict[str, StreamConf]] = None
+    ):
         super().__init__()
         self.model_registry = RedisRegistry(
             client=r_client,
             cache_registry=LocalLRUCache(cachesize=LOCAL_CACHE_SIZE, ttl=LOCAL_CACHE_TTL),
         )
-        self.stream_conf = stream_conf or StreamConf()
+        self.stream_confs: dict[str, StreamConf] = stream_confs or {}
         self.preproc_factory = PreprocessFactory()
+
+    def register_conf(self, config_id: str, conf: StreamConf) -> None:
+        """
+        Register config with the UDF.
+
+        Args:
+            config_id: Config ID
+            conf: StreamConf object
+        """
+        self.stream_confs[config_id] = conf
+
+    def get_conf(self, config_id: str) -> StreamConf:
+        try:
+            return self.stream_confs[config_id]
+        except KeyError:
+            raise ConfigNotFoundError(f"Config with ID {config_id} not found!")
 
     def _load_model_from_config(self, preprocess_cfg):
         preproc_clfs = []
@@ -73,23 +92,29 @@ class PreprocessUDF(NumalogicUDF):
         except (orjson.JSONDecodeError, KeyError) as err:  # catch json decode error only
             _LOGGER.exception("Error while decoding input json: %r", err)
             return Messages(Message.to_drop())
-
-        raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=self.stream_conf)
+        raw_df, timestamps = get_df(
+            data_payload=data_payload, stream_conf=self.get_conf(data_payload["config_id"])
+        )
 
         # Drop message if dataframe shape conditions are not met
-        if raw_df.shape[0] < self.stream_conf.window_size or raw_df.shape[1] != len(
-            self.stream_conf.metrics
-        ):
+        if raw_df.shape[0] < self.get_conf(data_payload["config_id"]).window_size or raw_df.shape[
+            1
+        ] != len(self.get_conf(data_payload["config_id"]).metrics):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
             return Messages(Message.to_drop())
         # Make StreamPayload object
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
 
         # Check if model will be present in registry
-        if any([_conf.stateful for _conf in self.stream_conf.numalogic_conf.preprocess]):
+        if any(
+            [_conf.stateful for _conf in self.get_conf(payload.config_id).numalogic_conf.preprocess]
+        ):
             preproc_artifact = _load_model(
                 skeys=keys,
-                dkeys=[_conf.name for _conf in self.stream_conf.numalogic_conf.preprocess],
+                dkeys=[
+                    _conf.name
+                    for _conf in self.get_conf(payload.config_id).numalogic_conf.preprocess
+                ],
                 payload=payload,
                 model_registry=self.model_registry,
             )
@@ -109,7 +134,9 @@ class PreprocessUDF(NumalogicUDF):
         else:
             # Load configuration for the config_id
             _LOGGER.info("%s - Initializing model from config: %s", payload.uuid, payload)
-            preproc_clf = self._load_model_from_config(self.stream_conf.numalogic_conf.preprocess)
+            preproc_clf = self._load_model_from_config(
+                self.get_conf(payload.config_id).numalogic_conf.preprocess
+            )
         try:
             processed_data = self.compute(model=preproc_clf, input_=payload.get_data())
             payload = replace(
