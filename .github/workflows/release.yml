@@ -1,0 +1,62 @@
+name: Docker Image Push
+
+on:
+  push:
+    tags:
+      - v*
+  pull_request:
+    branches: [ "backtest" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10"]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install poetry
+        run: pipx install poetry==1.6.1
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'poetry'
+
+      - name: Set output
+        id: vars
+        run: |
+          echo "version=$(poetry version -s)" >> $GITHUB_ENV
+          echo "${{ secrets.QUAYIO_USERNAME }}"
+          echo "${{ secrets.QUAYIO_PASSWORD }}"
+
+      - name: Docker Login
+        uses: docker/login-action@v2
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAYIO_USERNAME }}
+          password: ${{ secrets.QUAYIO_PASSWORD }}
+
+      - name: Docker Build
+        env:
+          QUAYIO_ORG: quay.io/numaio
+          PLATFORM: linux/x86_64
+          TARGET: numalogic/udf
+        run: |
+          type=$(basename $(dirname $GITHUB_REF))
+          tag=$(basename $GITHUB_REF)
+          
+          if [[ $type == "heads" ]]; then
+            tag="$(basename $GITHUB_REF)v${{ env.version }}"
+          fi
+          
+          image_name="${QUAYIO_ORG}/numalogic/udf:${tag}"
+          
+          docker buildx build \
+            --output "type=image,push=true" \
+            --platform="${PLATFORM}" \
+            --tag $image_name .
