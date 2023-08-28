@@ -5,7 +5,7 @@ on:
     tags:
       - v*
   pull_request:
-    branches: [ "backtest" ]
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
