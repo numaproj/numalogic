@@ -84,7 +84,6 @@ class NumalogicConf:
 
     model: ModelInfo = field(default_factory=ModelInfo)
     trainer: TrainerConf = field(default_factory=TrainerConf)
-    registry: RegistryInfo = field(default_factory=RegistryInfo)
     preprocess: list[ModelInfo] = field(default_factory=list)
     threshold: ModelInfo = ModelInfo(name="StdDevThreshold")
     postprocess: ModelInfo = ModelInfo(name="TanhNorm", stateful=False)
