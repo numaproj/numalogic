@@ -21,7 +21,6 @@ jobs:
       - name: Set output
         id: vars
         run: |
-          echo "version=$(poetry version -s)" >> $GITHUB_ENV
           echo "${{ secrets.QUAYIO_USERNAME }}"
 
       - name: Docker Login
