@@ -9,25 +9,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import unittest
 from unittest.mock import patch
 
 import fakeredis
-from omegaconf import OmegaConf
 
-from numalogic._constants import TESTS_DIR
 from numalogic.config import RegistryInfo
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 
 class TestOptionalDependencies(unittest.TestCase):
     def setUp(self) -> None:
-        self._given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "resources", "config.yaml"))
-        from numalogic.config import NumalogicConf
-
-        self.schema: NumalogicConf = OmegaConf.structured(NumalogicConf)
-        self.conf = OmegaConf.merge(self.schema, self._given_conf)
+        self.regconf = RegistryInfo(name="RedisRegistry", conf=dict(ttl=50))
 
     @patch("numalogic.config.factory.getattr", side_effect=AttributeError)
     def test_not_installed_dep_01(self, _):
@@ -37,7 +30,7 @@ class TestOptionalDependencies(unittest.TestCase):
         server = fakeredis.FakeServer()
         redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
         with self.assertRaises(ImportError):
-            model_factory.get_cls(self.conf.registry)(redis_cli, **self.conf.registry.conf)
+            model_factory.get_cls(self.regconf)(redis_cli, **self.regconf.conf)
 
     @patch("numalogic.config.factory.getattr", side_effect=AttributeError)
     def test_not_installed_dep_02(self, _):
@@ -47,7 +40,7 @@ class TestOptionalDependencies(unittest.TestCase):
         server = fakeredis.FakeServer()
         redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
         with self.assertRaises(ImportError):
-            model_factory.get_instance(self.conf.registry)(redis_cli, **self.conf.registry.conf)
+            model_factory.get_instance(self.regconf)(redis_cli, **self.regconf.conf)
 
     def test_unknown_registry(self):
         from numalogic.config.factory import RegistryFactory

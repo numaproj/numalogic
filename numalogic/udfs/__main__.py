@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     if step == "preprocess":
         udf = PreprocessUDF(
-            r_client=redis_client, stream_conf=pipeline_conf.stream_confs["fciAsset"]
+            r_client=redis_client, stream_confs=pipeline_conf.stream_confs
         )
     elif step == "inference":
         udf = InferenceUDF(r_client=redis_client, stream_confs=pipeline_conf.stream_confs)
@@ -51,7 +51,7 @@ if __name__ == "__main__":
         )
     elif step == "postprocess":
         udf = PostprocessUDF(
-            r_client=redis_client, stream_conf=pipeline_conf.stream_confs["fciAsset"]
+            r_client=redis_client, stream_confs=pipeline_conf.stream_confs
         )
     else:
         raise ValueError(f"Invalid step: {step}")
