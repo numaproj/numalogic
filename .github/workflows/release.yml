@@ -4,9 +4,8 @@ on:
   push:
     tags:
       - v*
-    branches:
-      - main
-      - backtest
+  pull_request:
+    branches: [ "backtest" ]
   workflow_dispatch:
 
 jobs:
