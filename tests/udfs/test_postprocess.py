@@ -90,7 +90,7 @@ class TestPostProcessUDF(unittest.TestCase):
         _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml"))
         schema = OmegaConf.structured(StreamConf)
         stream_conf = StreamConf(**OmegaConf.merge(schema, _given_conf))
-        self.udf = PostProcessUDF(REDIS_CLIENT, stream_confs={"druid-config": stream_conf})
+        self.udf = PostprocessUDF(REDIS_CLIENT, stream_confs={"druid-config": stream_conf})
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
