@@ -33,6 +33,7 @@ class ModelInfo:
     stateful: bool = True
 
 
+# TODO add this in the right config
 @dataclass
 class RegistryInfo:
     """Registry config base class.
@@ -85,8 +86,10 @@ class NumalogicConf:
     model: ModelInfo = field(default_factory=ModelInfo)
     trainer: TrainerConf = field(default_factory=TrainerConf)
     preprocess: list[ModelInfo] = field(default_factory=list)
-    threshold: ModelInfo = ModelInfo(name="StdDevThreshold")
-    postprocess: ModelInfo = ModelInfo(name="TanhNorm", stateful=False)
+    threshold: ModelInfo = field(default_factory=lambda: ModelInfo(name="StdDevThreshold"))
+    postprocess: ModelInfo = field(
+        default_factory=lambda: ModelInfo(name="TanhNorm", stateful=False)
+    )
 
 
 @dataclass

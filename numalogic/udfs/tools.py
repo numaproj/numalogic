@@ -88,24 +88,21 @@ def _load_model(
             skeys,
             dkeys,
         )
-    except RedisRegistryError as err:
+    except RedisRegistryError:
         _LOGGER.exception(
-            "%s - Error while fetching preproc artifact, Keys: %s, Metrics: %s, Error: %r",
+            "%s - Error while fetching preproc artifact, Keys: %s, Metrics: %s",
             payload.uuid,
             skeys,
             payload.metrics,
-            err,
         )
         return None
 
-    except Exception as ex:
+    except Exception:
         _LOGGER.exception(
-            "%s - Unhandled exception while fetching preproc artifact, Keys: %s, Metric: %s,"
-            " Error: %r",
+            "%s - Unhandled exception while fetching preproc artifact, Keys: %s, Metric: %s,",
             payload.uuid,
             payload.composite_keys,
             payload.metrics,
-            ex,
         )
         return None
     else:

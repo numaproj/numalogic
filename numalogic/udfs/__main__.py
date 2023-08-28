@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 
@@ -10,30 +11,36 @@ from numalogic.udfs import PreprocessUDF, InferenceUDF, TrainerUDF, PostprocessU
 from numalogic.udfs._config import PipelineConf
 
 
+LOGGER = logging.getLogger(__name__)
 CONFIG_DIR = os.path.join(BASE_DIR, "config")
 
 
-def load_conf(filename: str = "conf.yaml") -> DictConfig:
+def load_conf(filename: str) -> DictConfig:
     conf = OmegaConf.load(os.path.join(CONFIG_DIR, filename))
     schema = OmegaConf.structured(PipelineConf)
-    return OmegaConf.merge(schema, conf)
-
-
-def get_redis_client():
-    global redis_client
-
-    if redis_client:
-        return redis_client
+    conf = OmegaConf.merge(schema, conf)
+    return OmegaConf.to_object(conf)
 
 
 if __name__ == "__main__":
     step = sys.argv[1]
 
-    pipeline_conf = load_conf()
+    conf_path = "config.yaml"
+    try:
+        conf_path = sys.argv[2]
+    except (IndexError, TypeError):
+        pass
+    finally:
+        LOGGER.info("Running %s with config path %s", step, conf_path)
+
+    pipeline_conf = load_conf(conf_path)
+    logging.info("Pipeline config: %s", pipeline_conf)
     redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
 
     if step == "preprocess":
-        udf = PreprocessUDF(r_client=redis_client, stream_conf=pipeline_conf.stream_confs[0])
+        udf = PreprocessUDF(
+            r_client=redis_client, stream_conf=pipeline_conf.stream_confs["fciAsset"]
+        )
     elif step == "inference":
         udf = InferenceUDF(r_client=redis_client, stream_confs=pipeline_conf.stream_confs)
     elif step == "trainer":
@@ -43,7 +50,9 @@ if __name__ == "__main__":
             stream_confs=pipeline_conf.stream_confs,
         )
     elif step == "postprocess":
-        udf = PostprocessUDF(r_client=redis_client, stream_conf=pipeline_conf.stream_confs[0])
+        udf = PostprocessUDF(
+            r_client=redis_client, stream_conf=pipeline_conf.stream_confs["fciAsset"]
+        )
     else:
         raise ValueError(f"Invalid step: {step}")
 
