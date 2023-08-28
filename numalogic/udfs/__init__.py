@@ -1,3 +1,5 @@
+import logging
+
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs.inference import InferenceUDF
 from numalogic.udfs.trainer import TrainerUDF
@@ -14,3 +16,5 @@ __all__ = [
     "PostprocessUDF",
     "UDFFactory",
 ]
+
+logging.basicConfig(level=logging.DEBUG)

@@ -1,9 +1,11 @@
 import unittest
 from datetime import datetime
 
+import numpy.typing as npt
 from pynumaflow.function import Datum, Messages, Message
 from pynumaflow.function._dtypes import DatumMetadata
 
+from numalogic.tools.types import artifact_t
 from numalogic.udfs import NumalogicUDF
 
 
@@ -15,6 +17,9 @@ class DummyUDF(NumalogicUDF):
         val = datum.value
         return Messages(Message(value=val, keys=keys))
 
+    def compute(self, model: artifact_t, input_: npt.NDArray[float], **kwargs):
+        pass
+
 
 class DummyAsyncUDF(NumalogicUDF):
     def __init__(self):
@@ -23,6 +28,9 @@ class DummyAsyncUDF(NumalogicUDF):
     async def aexec(self, keys: list[str], datum: Datum) -> Messages:
         val = datum.value
         return Messages(Message(value=val, keys=keys))
+
+    def compute(self, model: artifact_t, input_: npt.NDArray[float], **kwargs):
+        pass
 
 
 class TestNumalogicUDF(unittest.TestCase):
