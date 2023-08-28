@@ -89,8 +89,8 @@ class PreprocessUDF(NumalogicUDF):
         try:
             data_payload = orjson.loads(datum.value)
             _LOGGER.info("%s - Data payload: %s", data_payload["uuid"], data_payload)
-        except (orjson.JSONDecodeError, KeyError) as err:  # catch json decode error only
-            _LOGGER.exception("Error while decoding input json: %r", err)
+        except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
+            _LOGGER.exception("Error while decoding input json")
             return Messages(Message.to_drop())
         raw_df, timestamps = get_df(
             data_payload=data_payload, stream_conf=self.get_conf(data_payload["config_id"])

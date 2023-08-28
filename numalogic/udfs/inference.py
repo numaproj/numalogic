@@ -52,8 +52,8 @@ class InferenceUDF(NumalogicUDF):
     def get_conf(self, config_id: str) -> StreamConf:
         try:
             return self.stream_confs[config_id]
-        except KeyError:
-            raise ConfigNotFoundError(f"Config with ID {config_id} not found!")
+        except KeyError as err:
+            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
     def compute(self, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:
         """
@@ -181,7 +181,6 @@ class InferenceUDF(NumalogicUDF):
                 payload.uuid,
                 payload.composite_keys,
                 payload.metrics,
-                exc_info=True,
             )
             return None
         except RedisRegistryError:

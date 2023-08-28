@@ -30,7 +30,8 @@ def get_redis_client(
         mastername: Redis sentinel master name
         master_node: Whether to use the master node or the slave nodes
 
-    Returns:
+    Returns
+    -------
         Redis client instance
     """
     global SENTINEL_CLIENT
@@ -80,7 +81,8 @@ def get_redis_client_from_conf(redis_conf: RedisConf = None, **kwargs) -> redis_
         redis_conf: RedisConf object with host, port, master_name, etc.
         **kwargs: Additional arguments to pass to get_redis_client.
 
-    Returns:
+    Returns
+    -------
         Redis client instance
     """
     return get_redis_client(

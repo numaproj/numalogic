@@ -1,10 +1,8 @@
 from dataclasses import dataclass, field
-
-from omegaconf import MISSING
+from typing import Optional
 
 from numalogic.config import NumalogicConf
 from numalogic.connectors._config import (
-    ConnectorConf,
     ConnectorType,
     RedisConf,
     PrometheusConf,
@@ -25,6 +23,6 @@ class StreamConf:
 @dataclass
 class PipelineConf:
     stream_confs: dict[str, StreamConf] = field(default_factory=dict)
-    redis_conf: RedisConf = MISSING
-    prometheus_conf: PrometheusConf = MISSING
-    druid_conf: DruidConf = MISSING
+    redis_conf: Optional[RedisConf] = None
+    prometheus_conf: Optional[PrometheusConf] = None
+    druid_conf: Optional[DruidConf] = None
