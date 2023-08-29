@@ -14,7 +14,6 @@ from torch.utils.data import DataLoader
 from numalogic.base import StatelessTransformer
 from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory
 from numalogic.config._config import TrainerConf
-from numalogic.connectors._config import DruidConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.registry import RedisRegistry
@@ -22,7 +21,7 @@ from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf
+from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload
 
 
@@ -35,22 +34,23 @@ class TrainerUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        druid_conf: Druid configuration
-        stream_confs: Stream configuration per config ID
+        pl_conf: Pipeline config
     """
 
     def __init__(
         self,
         r_client: redis_client_t,
-        druid_conf: DruidConf,
-        stream_confs: Optional[dict[str, StreamConf]] = None,
+        # druid_conf: DruidConf,
+        # stream_confs: Optional[dict[str, StreamConf]] = None,
+        pl_conf: Optional[PipelineConf] = None,
     ):
         super().__init__(is_async=False)
         self.r_client = r_client
         self.model_registry = RedisRegistry(client=r_client)
-        self.stream_confs: dict[str, StreamConf] = stream_confs or {}
-        self.druid_conf = druid_conf
-        self.data_fetcher = DruidFetcher(url=druid_conf.url, endpoint=druid_conf.endpoint)
+        # self.stream_confs: dict[str, StreamConf] = stream_confs or {}
+        self.pl_conf = pl_conf or PipelineConf()
+        self.druid_conf = self.pl_conf.druid_conf
+        self.data_fetcher = DruidFetcher(url=self.druid_conf.url, endpoint=self.druid_conf.endpoint)
 
         self._model_factory = ModelFactory()
         self._preproc_factory = PreprocessFactory()
@@ -64,7 +64,7 @@ class TrainerUDF(NumalogicUDF):
             config_id: Config ID
             conf: StreamConf object
         """
-        self.stream_confs[config_id] = conf
+        self.pl_conf.stream_confs[config_id] = conf
 
     def get_conf(self, config_id: str) -> StreamConf:
         """
@@ -82,7 +82,7 @@ class TrainerUDF(NumalogicUDF):
             ConfigNotFoundError: If config with the given ID is not found
         """
         try:
-            return self.stream_confs[config_id]
+            return self.pl_conf.stream_confs[config_id]
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 

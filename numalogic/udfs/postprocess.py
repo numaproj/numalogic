@@ -14,7 +14,7 @@ from numalogic.registry import LocalLRUCache, RedisRegistry
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf
+from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload
 from numalogic.udfs.tools import _load_model
 
@@ -30,19 +30,20 @@ class PostprocessUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        stream_conf: StreamConf configuration
-
+        pl_conf: PipelineConf object
     """
 
     def __init__(
-        self, r_client: redis_client_t, stream_confs: Optional[dict[str, StreamConf]] = None
+        self,
+        r_client: redis_client_t,
+        pl_conf: Optional[PipelineConf] = None,
     ):
         super().__init__()
         self.model_registry = RedisRegistry(
             client=r_client,
             cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
         )
-        self.stream_confs: dict[str, StreamConf] = stream_confs or {}
+        self.pl_conf = pl_conf or PipelineConf()
         self.postproc_factory = PostprocessFactory()
 
     def register_conf(self, config_id: str, conf: StreamConf) -> None:
@@ -53,11 +54,11 @@ class PostprocessUDF(NumalogicUDF):
             config_id: Config ID
             conf: StreamConf object
         """
-        self.stream_confs[config_id] = conf
+        self.pl_conf.stream_confs[config_id] = conf
 
     def get_conf(self, config_id: str) -> StreamConf:
         try:
-            return self.stream_confs[config_id]
+            return self.pl_conf.stream_confs[config_id]
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
@@ -171,5 +172,4 @@ class PostprocessUDF(NumalogicUDF):
             )
         except Exception as err:
             raise RuntimeError("Postprocess failed") from err
-        else:
-            return score
+        return score

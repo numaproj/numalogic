@@ -13,8 +13,8 @@ from pynumaflow.function import Messages, Datum, Message
 from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError, ModelKeyNotFound, ConfigNotFoundError
 from numalogic.tools.types import artifact_t, redis_client_t
-from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf
+from numalogic.udfs._base import NumalogicUDF
+from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
 
 _LOGGER = logging.getLogger(__name__)
@@ -27,17 +27,15 @@ class InferenceUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        stream_confs: Stream configuration per config ID
+        pl_conf: Stream configuration per config ID
     """
 
-    def __init__(
-        self, r_client: redis_client_t, stream_confs: Optional[dict[str, StreamConf]] = None
-    ):
+    def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
         super().__init__(is_async=False)
         self.model_registry = RedisRegistry(
             client=r_client, cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL)
         )
-        self.stream_confs: dict[str, StreamConf] = stream_confs or {}
+        self.pl_conf = pl_conf or PipelineConf()
 
     def register_conf(self, config_id: str, conf: StreamConf) -> None:
         """
@@ -47,11 +45,11 @@ class InferenceUDF(NumalogicUDF):
             config_id: Config ID
             conf: StreamConf object
         """
-        self.stream_confs[config_id] = conf
+        self.pl_conf.stream_confs[config_id] = conf
 
     def get_conf(self, config_id: str) -> StreamConf:
         try:
-            return self.stream_confs[config_id]
+            return self.pl_conf.stream_confs[config_id]
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 

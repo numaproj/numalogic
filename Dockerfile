@@ -39,7 +39,6 @@ ARG INSTALL_EXTRAS
 
 WORKDIR $PYSETUP_PATH
 COPY ./pyproject.toml ./poetry.lock ./
-COPY requirements ./requirements
 
 # TODO install cpu/gpu based on args/arch
 RUN poetry install --without dev --no-cache --no-root -E numaflow --extras "${INSTALL_EXTRAS}" && \
@@ -47,7 +46,7 @@ RUN poetry install --without dev --no-cache --no-root -E numaflow --extras "${IN
     poetry run pip install --no-cache "pytorch-lightning>=2.0<3.0" && \
     rm -rf ~/.cache/pypoetry/
 
-ADD . /app
+COPY . /app
 WORKDIR /app
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]

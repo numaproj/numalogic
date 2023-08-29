@@ -14,7 +14,7 @@ from numalogic.registry import LocalLRUCache, RedisRegistry
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf
+from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import Status, Header
 from numalogic.udfs.tools import make_stream_payload, get_df, _load_model
 
@@ -30,18 +30,16 @@ class PreprocessUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        stream_conf: StreamConf configuration
+        pl_conf: PipelineConf instance
     """
 
-    def __init__(
-        self, r_client: redis_client_t, stream_confs: Optional[dict[str, StreamConf]] = None
-    ):
+    def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
         super().__init__()
         self.model_registry = RedisRegistry(
             client=r_client,
             cache_registry=LocalLRUCache(cachesize=LOCAL_CACHE_SIZE, ttl=LOCAL_CACHE_TTL),
         )
-        self.stream_confs: dict[str, StreamConf] = stream_confs or {}
+        self.pl_conf = pl_conf or PipelineConf()
         self.preproc_factory = PreprocessFactory()
 
     def register_conf(self, config_id: str, conf: StreamConf) -> None:
@@ -52,11 +50,11 @@ class PreprocessUDF(NumalogicUDF):
             config_id: Config ID
             conf: StreamConf object
         """
-        self.stream_confs[config_id] = conf
+        self.pl_conf.stream_confs[config_id] = conf
 
     def get_conf(self, config_id: str) -> StreamConf:
         try:
-            return self.stream_confs[config_id]
+            return self.pl_conf.stream_confs[config_id]
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
