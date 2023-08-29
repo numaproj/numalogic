@@ -62,6 +62,14 @@ class StreamPayload(_BasePayload):
     header: Header = Header.MODEL_INFERENCE
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    @property
+    def start_ts(self) -> int:
+        return int(self.timestamps[0])
+
+    @property
+    def end_ts(self) -> int:
+        return int(self.timestamps[-1])
+
     def set_data(self, arr: Matrix) -> None:
         self.data = arr
 
@@ -69,15 +77,6 @@ class StreamPayload(_BasePayload):
         if original:
             return np.ascontiguousarray(self.raw_data, dtype=np.float32)
         return np.ascontiguousarray(self.data, dtype=np.float32)
-
-    def set_status(self, status: Status) -> None:
-        self.status = status
-
-    def set_header(self, header: Header) -> None:
-        self.header = header
-
-    def set_metadata(self, key: str, value) -> None:
-        self.metadata[key] = value
 
     def get_metadata(self, key: str) -> dict[str, Any]:
         return copy(self.metadata[key])

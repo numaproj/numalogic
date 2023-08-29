@@ -14,30 +14,31 @@ from numalogic.udfs.entities import StreamPayload
 _LOGGER = logging.getLogger(__name__)
 
 
-def get_df(data_payload: dict, stream_conf: StreamConf) -> tuple[DataFrame, list]:
+def get_df(
+    data_payload: dict, stream_conf: StreamConf, fill_value: float = 0.0
+) -> tuple[DataFrame, list[int]]:
     """
     Function is used to create a dataframe from the data payload.
     Args:
         data_payload: data payload
         stream_conf: stream configuration.
+        fill_value: nan fill value.
 
     Returns
     -------
         dataframe and timestamps
     """
     features = stream_conf.metrics
-    win_size = stream_conf.window_size
     df = (
         pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
-        .astype(float)
-        .fillna(0)
-        .tail(win_size)
+        .fillna(fill_value)
+        .tail(stream_conf.window_size)
     )
-    return df[features], df["timestamp"].values.tolist()
+    return df[features].astype(np.float32), df["timestamp"].astype(int).tolist()
 
 
 def make_stream_payload(
-    data_payload: dict, raw_df: DataFrame, timestamps: list, keys: list[str]
+    data_payload: dict, raw_df: DataFrame, timestamps: list[int], keys: list[str]
 ) -> StreamPayload:
     """
     Make StreamPayload object
@@ -55,8 +56,8 @@ def make_stream_payload(
         uuid=data_payload["uuid"],
         config_id=data_payload["config_id"],
         composite_keys=keys,
-        data=np.asarray(raw_df.values.tolist()),
-        raw_data=np.asarray(raw_df.values.tolist()),
+        data=np.ascontiguousarray(raw_df, dtype=np.float32),
+        raw_data=np.ascontiguousarray(raw_df, dtype=np.float32),
         metrics=raw_df.columns.tolist(),
         timestamps=timestamps,
         metadata=data_payload["metadata"],

@@ -65,6 +65,7 @@ class PostprocessUDF(NumalogicUDF):
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         The postprocess function here receives data from the previous udf.
+
         Args:
         -------
         keys: List of keys
@@ -99,7 +100,7 @@ class PostprocessUDF(NumalogicUDF):
         #  Postprocess payload
         if payload.status in (Status.ARTIFACT_FOUND, Status.ARTIFACT_STALE) and thresh_artifact:
             try:
-                processed_data = self.compute(
+                anomaly_scores = self.compute(
                     model=thresh_artifact.artifact,
                     input_=payload.get_data(),
                     postproc_clf=postproc_clf,
@@ -115,24 +116,25 @@ class PostprocessUDF(NumalogicUDF):
             else:
                 payload = replace(
                     payload,
-                    data=processed_data,
+                    data=anomaly_scores,
                     header=Header.MODEL_INFERENCE,
-                )
-                _LOGGER.info(
-                    "%s - Successfully post-processed, Keys: %s, Metrics: %s, x_scaled: %s",
-                    payload.uuid,
-                    keys,
-                    payload.metrics,
-                    list(processed_data),
                 )
                 out_payload = OutputPayload(
                     uuid=payload.uuid,
                     config_id=payload.config_id,
                     composite_keys=payload.composite_keys,
-                    timestamp=int(payload.timestamps[-1]),
-                    unified_anomaly=float(max(list(payload.data))),
-                    data={payload.metrics[0]: payload.data[i] for i in range(len(payload.data))},
+                    timestamp=payload.end_ts,
+                    unified_anomaly=np.max(anomaly_scores),
+                    data={
+                        _metric: _score for _metric, _score in zip(payload.metrics, anomaly_scores)
+                    },
                     metadata=payload.metadata,
+                )
+                _LOGGER.info(
+                    "%s - Successfully post-processed, Keys: %s, Scores: %s",
+                    out_payload.uuid,
+                    out_payload.composite_keys,
+                    out_payload.data,
                 )
                 messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 
@@ -170,7 +172,7 @@ class PostprocessUDF(NumalogicUDF):
         """
         _start_time = time.perf_counter()
         try:
-            y_score = model.score_samples(input_)
+            y_score = model.score_samples(input_).astype(np.float32)
         except Exception as err:
             raise RuntimeError("Threshold model scoring failed") from err
         try:
