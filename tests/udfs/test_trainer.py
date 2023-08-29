@@ -10,12 +10,12 @@ from omegaconf import OmegaConf
 from orjson import orjson
 from pynumaflow.function import Datum, DatumMetadata
 
-from numalogic._constants import TESTS_DIR, BASE_DIR
+from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
-from numalogic.config._config import TrainerConf, LightningTrainerConf
+from numalogic.config import TrainerConf, LightningTrainerConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import ConfigNotFoundError
-from numalogic.udfs._config import StreamConf, PipelineConf
+from numalogic.udfs import StreamConf, PipelineConf
 from numalogic.udfs.trainer import TrainerUDF
 
 
@@ -49,11 +49,11 @@ class TrainTrainerUDF(unittest.TestCase):
             watermark=datetime.now(),
             metadata=DatumMetadata("1", 1),
         )
-        conf = OmegaConf.load(os.path.join(BASE_DIR, "config", "conf.yaml"))
+        conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
         schema = OmegaConf.structured(PipelineConf)
         conf = OmegaConf.merge(schema, conf)
 
-        self.udf = TrainerUDF(REDIS_CLIENT, druid_conf=OmegaConf.to_object(conf.druid_conf))
+        self.udf = TrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf))
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()

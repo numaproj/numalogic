@@ -13,7 +13,6 @@
 import os
 import unittest
 
-import fakeredis
 from omegaconf import OmegaConf
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
@@ -26,13 +25,11 @@ from numalogic.config import (
     ThresholdFactory,
     NumalogicConf,
     ModelInfo,
-    RegistryFactory,
 )
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.models.autoencoder.variants import SparseVanillaAE, SparseConv1dAE, LSTMAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.transforms import LogTransformer, TanhNorm
-from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
 os.environ["OC_CAUSE"] = "1"
