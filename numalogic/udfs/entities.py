@@ -85,3 +85,16 @@ class StreamPayload(_BasePayload):
 
     def to_json(self) -> bytes:
         return orjson.dumps(self, option=orjson.OPT_SERIALIZE_NUMPY)
+
+
+@dataclass
+class OutputPayload(_BasePayload):
+    uuid: str
+    config_id: str
+    timestamp: int
+    unified_anomaly: float
+    data: dict[str, Any]
+    metadata: dict[str, Any]
+
+    def to_json(self):
+        return orjson.dumps(self, option=orjson.OPT_SERIALIZE_NUMPY)
