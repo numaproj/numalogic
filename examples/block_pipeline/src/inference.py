@@ -56,8 +56,8 @@ class Inference(NumalogicUDF):
         # Run inference
         try:
             output = block_pl(np.asarray(series).reshape(-1, self.n_features))
-        except Exception as err:
-            _LOGGER.error("Error running block pipeline: %r", err)
+        except Exception:
+            _LOGGER.exception("Error running block pipeline")
             return Messages(Message.to_drop())
 
         anomaly_score = np.mean(output)

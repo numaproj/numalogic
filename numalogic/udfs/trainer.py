@@ -86,7 +86,6 @@ class TrainerUDF(NumalogicUDF):
             ConfigNotFoundError: If config with the given ID is not found
         """
         try:
-            print(self.pl_conf)
             return self.pl_conf.stream_confs[config_id]
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
@@ -95,9 +94,9 @@ class TrainerUDF(NumalogicUDF):
         self,
         model: artifact_t,
         input_: npt.NDArray[float],
-        preproc_clf: artifact_t = None,
-        threshold_clf: artifact_t = None,
-        trainer_cfg: TrainerConf = None,
+        preproc_clf: Optional[artifact_t] = None,
+        threshold_clf: Optional[artifact_t] = None,
+        trainer_cfg: Optional[TrainerConf] = None,
     ) -> dict[str, artifact_t]:
         """
         Train the model on the given input data.
