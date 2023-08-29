@@ -73,7 +73,7 @@ def get_redis_client(
     return SENTINEL_CLIENT
 
 
-def get_redis_client_from_conf(redis_conf: RedisConf = None, **kwargs) -> redis_client_t:
+def get_redis_client_from_conf(redis_conf: Optional[RedisConf] = None, **kwargs) -> redis_client_t:
     """
     Return a master redis client from config for sentinel connections, with retry.
 

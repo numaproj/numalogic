@@ -33,7 +33,7 @@ class DruidFetcher:
         granularity: str = "minute",
         aggregations: Optional[dict] = None,
         group_by: Optional[list[str]] = None,
-        pivot: Pivot = None,
+        pivot: Optional[Pivot] = None,
         hours: float = 24,
     ) -> pd.DataFrame:
         _start_time = time.time()
