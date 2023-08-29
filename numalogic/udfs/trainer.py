@@ -40,17 +40,21 @@ class TrainerUDF(NumalogicUDF):
     def __init__(
         self,
         r_client: redis_client_t,
-        # druid_conf: DruidConf,
-        # stream_confs: Optional[dict[str, StreamConf]] = None,
         pl_conf: Optional[PipelineConf] = None,
     ):
         super().__init__(is_async=False)
         self.r_client = r_client
         self.model_registry = RedisRegistry(client=r_client)
-        # self.stream_confs: dict[str, StreamConf] = stream_confs or {}
         self.pl_conf = pl_conf or PipelineConf()
         self.druid_conf = self.pl_conf.druid_conf
-        self.data_fetcher = DruidFetcher(url=self.druid_conf.url, endpoint=self.druid_conf.endpoint)
+
+        try:
+            self.data_fetcher = DruidFetcher(
+                url=self.druid_conf.url, endpoint=self.druid_conf.endpoint
+            )
+        except AttributeError:
+            _LOGGER.warning("Druid config not found, data fetcher will not be initialized!")
+            self.data_fetcher = None
 
         self._model_factory = ModelFactory()
         self._preproc_factory = PreprocessFactory()
@@ -82,6 +86,7 @@ class TrainerUDF(NumalogicUDF):
             ConfigNotFoundError: If config with the given ID is not found
         """
         try:
+            print(self.pl_conf)
             return self.pl_conf.stream_confs[config_id]
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err

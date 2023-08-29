@@ -27,6 +27,7 @@ KEYS = ["service-mesh", "1", "2"]
 
 
 def mock_druid_fetch_data(nrows=5000):
+    """Mock druid fetch data."""
     return pd.read_csv(
         os.path.join(TESTS_DIR, "resources", "data", "druid.csv"),
         index_col="timestamp",
@@ -123,8 +124,9 @@ class TrainTrainerUDF(unittest.TestCase):
         )
 
     def test_trainer_conf_err(self):
+        udf = TrainerUDF(REDIS_CLIENT)
         with self.assertRaises(ConfigNotFoundError):
-            self.udf(KEYS, self.datum)
+            udf(KEYS, self.datum)
 
     @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data(nrows=10)))
     def test_trainer_data_insufficient(self):
