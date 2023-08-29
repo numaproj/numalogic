@@ -11,9 +11,8 @@ from pynumaflow.function import Datum, DatumMetadata
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
-from numalogic.udfs._config import StreamConf
+from numalogic.udfs import StreamConf, InferenceUDF
 from numalogic.udfs.entities import StreamPayload, Header, Status
-from numalogic.udfs.inference import InferenceUDF
 
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
 KEYS = ["service-mesh", "1", "2"]

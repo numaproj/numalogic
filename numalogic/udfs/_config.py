@@ -1,8 +1,10 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
+from omegaconf import OmegaConf
+
 from numalogic.config import NumalogicConf
-from numalogic.connectors._config import (
+from numalogic.connectors import (
     ConnectorType,
     RedisConf,
     PrometheusConf,
@@ -26,3 +28,10 @@ class PipelineConf:
     redis_conf: Optional[RedisConf] = None
     prometheus_conf: Optional[PrometheusConf] = None
     druid_conf: Optional[DruidConf] = None
+
+
+def load_pipeline_conf(path: str) -> PipelineConf:
+    conf = OmegaConf.load(path)
+    schema = OmegaConf.structured(PipelineConf)
+    conf = OmegaConf.merge(schema, conf)
+    return OmegaConf.to_object(conf)
