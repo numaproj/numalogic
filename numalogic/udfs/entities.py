@@ -12,6 +12,8 @@ Matrix = Union[Vector, list[Vector], npt.ArrayLike]
 
 
 class Status(str, Enum):
+    """Status of the current payload."""
+
     ARTIFACT_FOUND = "artifact_found"
     ARTIFACT_NOT_FOUND = "artifact_not_found"
     ARTIFACT_STALE = "artifact_is_stale"
@@ -20,6 +22,8 @@ class Status(str, Enum):
 
 
 class Header(str, Enum):
+    """Payload header indicating the path to take."""
+
     STATIC_INFERENCE = "static_threshold"
     MODEL_INFERENCE = "model_inference"
     TRAIN_REQUEST = "request_training"
@@ -37,6 +41,8 @@ payload_t = TypeVar("payload_t", bound=_BasePayload)
 
 @dataclass
 class TrainerPayload(_BasePayload):
+    """Payload for training request."""
+
     metrics: list[str]
     header: Header = Header.TRAIN_REQUEST
 
@@ -46,6 +52,8 @@ class TrainerPayload(_BasePayload):
 
 @dataclass(repr=False)
 class StreamPayload(_BasePayload):
+    """Payload that gets propagated along the numalogic UDFs."""
+
     data: Matrix
     raw_data: Matrix
     metrics: list[str]
@@ -89,8 +97,8 @@ class StreamPayload(_BasePayload):
 
 @dataclass
 class OutputPayload(_BasePayload):
-    uuid: str
-    config_id: str
+    """Payload for output data from the numalogic pipeline."""
+
     timestamp: int
     unified_anomaly: float
     data: dict[str, Any]

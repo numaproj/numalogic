@@ -13,6 +13,14 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class DruidFetcher:
+    """
+    Class for fetching data as a dataframe from Druid.
+
+    Args:
+        url: Druid URL
+        endpoint: Druid endpoint
+    """
+
     def __init__(self, url: str, endpoint: str):
         self.client = PyDruid(url, endpoint)
 

@@ -12,7 +12,7 @@ from pynumaflow.function import Datum, DatumMetadata
 from numalogic._constants import TESTS_DIR
 from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import ModelKeyNotFound
-from numalogic.udfs._config import StreamConf, PipelineConf
+from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import Status, Header, StreamPayload
 from numalogic.udfs.preprocess import PreprocessUDF
 from tests.udfs.utility import input_json_from_file, store_in_redis

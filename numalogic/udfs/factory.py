@@ -11,6 +11,8 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class UDFFactory:
+    """Factory class to fetch the right UDF."""
+
     _UDF_MAP: ClassVar[dict] = {
         "preprocess": PreprocessUDF,
         "inference": InferenceUDF,
@@ -34,6 +36,8 @@ class UDFFactory:
 
 
 class ServerFactory:
+    """Factory class to fetch the right pynumaflow function server."""
+
     _SERVER_MAP: ClassVar[dict] = {
         "sync": Server,
         "async": AsyncServer,

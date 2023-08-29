@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -64,7 +65,7 @@ def make_stream_payload(
 
 def _load_model(
     skeys: KEYS, dkeys: KEYS, payload: StreamPayload, model_registry: ArtifactManager
-) -> ArtifactData | None:
+) -> Optional[ArtifactData]:
     """
     Load artifact from redis
     Args:
