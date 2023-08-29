@@ -13,7 +13,7 @@ from pynumaflow.function import DatumMetadata, Datum
 
 from numalogic._constants import TESTS_DIR
 from numalogic.models.threshold import StdDevThreshold
-from numalogic.registry import RedisRegistry
+from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import ModelKeyNotFound
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import Header, TrainerPayload, Status
@@ -86,15 +86,15 @@ DATA = {
 class TestPostProcessUDF(unittest.TestCase):
     def setUp(self) -> None:
         self.registry = RedisRegistry(REDIS_CLIENT)
+        self.cache = LocalLRUCache()
         _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
-        # _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml"))
         schema = OmegaConf.structured(PipelineConf)
         pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
-        # print(pl_conf)
         self.udf = PostprocessUDF(REDIS_CLIENT, pl_conf=pl_conf)
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
+        self.cache.clear()
 
     def test_postprocess_preproc_artifact_not_found(self):
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
@@ -106,7 +106,6 @@ class TestPostProcessUDF(unittest.TestCase):
         data = deepcopy(DATA)
         data["status"] = Status.ARTIFACT_NOT_FOUND
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
-
         payload = TrainerPayload(**orjson.loads(msg[0].value))
         self.assertEqual(payload.header, Header.TRAIN_REQUEST)
 

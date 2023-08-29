@@ -15,7 +15,7 @@ from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
-from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload
+from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
 from numalogic.udfs.tools import _load_model
 
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -125,7 +125,16 @@ class PostprocessUDF(NumalogicUDF):
                     payload.metrics,
                     list(processed_data),
                 )
-                messages.append(Message(keys=keys, value=payload.to_json(), tags=["output"]))
+                out_payload = OutputPayload(
+                    uuid=payload.uuid,
+                    config_id=payload.config_id,
+                    composite_keys=payload.composite_keys,
+                    timestamp=int(payload.timestamps[-1]),
+                    unified_anomaly=float(max(list(payload.data))),
+                    data={payload.metrics[0]: payload.data[i] for i in range(len(payload.data))},
+                    metadata=payload.metadata,
+                )
+                messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST or payload.status == Status.ARTIFACT_STALE:

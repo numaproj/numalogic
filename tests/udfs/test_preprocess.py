@@ -12,7 +12,7 @@ from pynumaflow.function import Datum, DatumMetadata
 from numalogic._constants import TESTS_DIR
 from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import ModelKeyNotFound
-from numalogic.udfs._config import StreamConf
+from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import Status, Header, StreamPayload
 from numalogic.udfs.preprocess import PreprocessUDF
 from tests.udfs.utility import input_json_from_file, store_in_redis
@@ -37,13 +37,15 @@ class TestPreprocessUDF(unittest.TestCase):
         _given_conf_2 = OmegaConf.load(
             os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml")
         )
-        schema = OmegaConf.structured(StreamConf)
-        stream_conf = StreamConf(**OmegaConf.merge(schema, _given_conf))
-        stream_conf_2 = StreamConf(**OmegaConf.merge(schema, _given_conf_2))
-        store_in_redis(stream_conf, self.registry)
-        store_in_redis(stream_conf_2, self.registry)
-        self.udf1 = PreprocessUDF(REDIS_CLIENT, stream_confs={"druid-config": stream_conf})
-        self.udf2 = PreprocessUDF(REDIS_CLIENT, stream_confs={"druid-config": stream_conf_2})
+        schema = OmegaConf.structured(PipelineConf)
+        pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
+        pl_conf_2 = PipelineConf(**OmegaConf.merge(schema, _given_conf_2))
+        store_in_redis(pl_conf, self.registry)
+        store_in_redis(pl_conf_2, self.registry)
+        self.udf1 = PreprocessUDF(REDIS_CLIENT, pl_conf=pl_conf)
+        self.udf2 = PreprocessUDF(REDIS_CLIENT, pl_conf=pl_conf_2)
+        self.udf1.register_conf("druid-config", pl_conf.stream_confs["druid-config"])
+        self.udf1.register_conf("druid-config", pl_conf_2.stream_confs["druid-config"])
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()

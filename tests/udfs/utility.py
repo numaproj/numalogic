@@ -33,18 +33,23 @@ def input_json_from_file(data_path: str) -> Datum:
     )
 
 
-def store_in_redis(stream_conf, registry):
+def store_in_redis(pl_conf, registry):
     """Store preprocess artifacts in redis."""
     preproc_clfs = []
     preproc_factory = PreprocessFactory()
-    for _cfg in stream_conf.numalogic_conf.preprocess:
+    for _cfg in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess:
         _clf = preproc_factory.get_instance(_cfg)
         preproc_clfs.append(_clf)
-    if any([_conf.stateful for _conf in stream_conf.numalogic_conf.preprocess]):
+    if any(
+        [_conf.stateful for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess]
+    ):
         preproc_clf = make_pipeline(*preproc_clfs)
         preproc_clf.fit(np.asarray([[1, 3], [4, 6]]))
         registry.save(
-            skeys=stream_conf.composite_keys,
-            dkeys=[_conf.name for _conf in stream_conf.numalogic_conf.preprocess],
+            skeys=pl_conf.stream_confs["druid-config"].composite_keys,
+            dkeys=[
+                _conf.name
+                for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess
+            ],
             artifact=preproc_clf,
         )
