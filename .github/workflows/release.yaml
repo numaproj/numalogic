@@ -16,11 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Set output
-        id: vars
-        run: |
-          echo "${{ secrets.QUAYIO_USERNAME }}"
-
       - name: Docker Login
         uses: docker/login-action@v2.1.0
         with:
@@ -46,4 +41,5 @@ jobs:
           docker buildx build \
             --output "type=image,push=true" \
             --platform="${PLATFORM}" \
+            --build-arg INSTALL_EXTRAS='redis druid'
             --tag $image_name .
