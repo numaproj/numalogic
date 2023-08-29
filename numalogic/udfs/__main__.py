@@ -4,7 +4,7 @@ import sys
 
 from numalogic._constants import BASE_CONF_DIR
 from numalogic.connectors.redis import get_redis_client_from_conf
-from numalogic.udfs import load_pipeline_conf, UDFFactory, ServerFactory
+from numalogic.udfs import load_pipeline_conf, UDFFactory, ServerFactory, set_logger
 
 LOGGER = logging.getLogger(__name__)
 CONF_FILE_PATH = os.getenv(
@@ -13,6 +13,7 @@ CONF_FILE_PATH = os.getenv(
 
 
 if __name__ == "__main__":
+    set_logger()
     step = sys.argv[1]
 
     try:

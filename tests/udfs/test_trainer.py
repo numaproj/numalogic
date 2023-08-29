@@ -18,12 +18,11 @@ from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.udfs import StreamConf, PipelineConf
 from numalogic.udfs.trainer import TrainerUDF
 
-
-logging.basicConfig(level=logging.DEBUG)
-
-
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
 KEYS = ["service-mesh", "1", "2"]
+
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def mock_druid_fetch_data(nrows=5000):
