@@ -178,9 +178,9 @@ class PostprocessUDF(NumalogicUDF):
         try:
             win_score = np.mean(y_score, axis=0)
             score = postproc_clf.transform(win_score)
-            _LOGGER.debug(
-                "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
-            )
         except Exception as err:
             raise RuntimeError("Postprocess failed") from err
+        _LOGGER.debug(
+            "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
+        )
         return score
