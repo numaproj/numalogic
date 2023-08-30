@@ -18,6 +18,8 @@ from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
 
 _LOGGER = logging.getLogger(__name__)
+
+# TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 
 
@@ -37,6 +39,7 @@ class InferenceUDF(NumalogicUDF):
         )
         self.pl_conf = pl_conf or PipelineConf()
 
+    # TODO: remove, and have an update config method
     def register_conf(self, config_id: str, conf: StreamConf) -> None:
         """
         Register config with the UDF.
@@ -108,6 +111,8 @@ class InferenceUDF(NumalogicUDF):
             return Messages(Message(keys=keys, value=payload.to_json()))
 
         artifact_data = self.load_artifact(keys, payload)
+
+        # TODO: revisit retraining logic
         # Send training request if artifact loading is not successful
         if not artifact_data:
             payload = replace(

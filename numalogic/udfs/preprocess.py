@@ -18,6 +18,7 @@ from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import Status, Header
 from numalogic.udfs.tools import make_stream_payload, get_df, _load_model
 
+# TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 
@@ -124,6 +125,7 @@ class PreprocessUDF(NumalogicUDF):
                     preproc_artifact.extras.get("source"),
                 )
             else:
+                # TODO check again what error is causing this and if retraining is required
                 payload = replace(
                     payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
                 )
@@ -136,10 +138,10 @@ class PreprocessUDF(NumalogicUDF):
                 self.get_conf(payload.config_id).numalogic_conf.preprocess
             )
         try:
-            processed_data = self.compute(model=preproc_clf, input_=payload.get_data())
+            x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
             payload = replace(
                 payload,
-                data=processed_data,
+                data=x_scaled,
                 status=Status.ARTIFACT_FOUND,
                 header=Header.MODEL_INFERENCE,
             )
@@ -148,7 +150,7 @@ class PreprocessUDF(NumalogicUDF):
                 payload.uuid,
                 keys,
                 payload.metrics,
-                list(processed_data),
+                x_scaled,
             )
         except RuntimeError:
             _LOGGER.exception(
@@ -157,6 +159,7 @@ class PreprocessUDF(NumalogicUDF):
                 payload.composite_keys,
                 payload.metrics,
             )
+            # TODO check again what error is causing this and if retraining is required
             payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
             return Messages(Message(keys=keys, value=payload.to_json()))
         _LOGGER.debug(

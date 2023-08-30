@@ -74,3 +74,9 @@ class ModelKeyNotFound(RedisRegistryError):
     """Raised when a model key is not found in the registry."""
 
     pass
+
+
+class EnvVarNotFoundError(LookupError):
+    """Raised when an environment variable is not found."""
+
+    pass
