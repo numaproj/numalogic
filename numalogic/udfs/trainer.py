@@ -269,6 +269,7 @@ class TrainerUDF(NumalogicUDF):
         _conf = self.get_conf(payload.config_id)
         return len(df) > _conf.numalogic_conf.trainer.min_train_size
 
+    # TODO: improve the dedup logic; this is too naive
     def _is_new_request(self, payload: TrainerPayload) -> bool:
         _conf = self.get_conf(payload.config_id)
         _ckeys = ":".join(payload.composite_keys)
@@ -288,7 +289,7 @@ class TrainerUDF(NumalogicUDF):
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
         feat_df = raw_df[metrics]
-        feat_df.fillna(fill_value, inplace=True)
+        feat_df = feat_df.fillna(fill_value)
         return feat_df.to_numpy(dtype=np.float32)
 
     def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:

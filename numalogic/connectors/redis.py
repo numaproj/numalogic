@@ -3,6 +3,7 @@ import os
 from typing import Optional
 
 from numalogic.connectors._config import RedisConf
+from numalogic.tools.exceptions import EnvVarNotFoundError
 from numalogic.tools.types import redis_client_t
 from redis.backoff import ExponentialBackoff
 from redis.exceptions import RedisClusterException, RedisError
@@ -73,7 +74,7 @@ def get_redis_client(
     return SENTINEL_CLIENT
 
 
-def get_redis_client_from_conf(redis_conf: Optional[RedisConf] = None, **kwargs) -> redis_client_t:
+def get_redis_client_from_conf(redis_conf: RedisConf, **kwargs) -> redis_client_t:
     """
     Return a master redis client from config for sentinel connections, with retry.
 
@@ -85,6 +86,10 @@ def get_redis_client_from_conf(redis_conf: Optional[RedisConf] = None, **kwargs)
     -------
         Redis client instance
     """
+    auth = os.getenv("REDIS_AUTH")
+    if not auth:
+        raise EnvVarNotFoundError("REDIS_AUTH not set!")
+
     return get_redis_client(
         redis_conf.url,
         redis_conf.port,

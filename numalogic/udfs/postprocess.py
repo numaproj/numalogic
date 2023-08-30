@@ -18,6 +18,7 @@ from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
 from numalogic.udfs.tools import _load_model
 
+# TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 
@@ -128,6 +129,7 @@ class PostprocessUDF(NumalogicUDF):
                     data={
                         _metric: _score for _metric, _score in zip(payload.metrics, anomaly_scores)
                     },
+                    # TODO: add model version, & emit as ML metrics
                     metadata=payload.metadata,
                 )
                 _LOGGER.info(

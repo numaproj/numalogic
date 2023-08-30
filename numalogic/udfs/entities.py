@@ -99,7 +99,7 @@ class OutputPayload(_BasePayload):
     """Payload for output data from the numalogic pipeline."""
 
     timestamp: int
-    unified_anomaly: float
+    unified_anomaly: float  # TODO: change to a more generic name
     data: dict[str, Any]
     metadata: dict[str, Any]
 

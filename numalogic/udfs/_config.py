@@ -15,7 +15,7 @@ from numalogic.connectors import (
 @dataclass
 class StreamConf:
     config_id: str = "default"
-    source: ConnectorType = ConnectorType.druid
+    source: ConnectorType = ConnectorType.druid  # TODO: do not allow redis connector here
     window_size: int = 12
     composite_keys: list[str] = field(default_factory=list)
     metrics: list[str] = field(default_factory=list)

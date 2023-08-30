@@ -40,7 +40,7 @@ class RedisRegistry(ArtifactManager):
     >>> from numalogic.models.autoencoder.variants import VanillaAE
     >>> from numalogic.registry.redis_registry import RedisRegistry
     >>> ...
-    >>> r = redis.StrictRedis(host='127.0.0.1', port=6379)
+    >>> r = redis.Redis(host='127.0.0.1', port=6379)
     >>> registry = RedisRegistry(client=r)
     >>> skeys, dkeys = ("mymetric", "ae"), ("vanilla", "seq10")
     >>> model = VanillaAE(seq_len=10)

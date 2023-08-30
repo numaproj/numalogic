@@ -64,6 +64,7 @@ def make_stream_payload(
     )
 
 
+# TODO: move to base NumalogicUDF class
 def _load_model(
     skeys: KEYS, dkeys: KEYS, payload: StreamPayload, model_registry: ArtifactManager
 ) -> Optional[ArtifactData]:

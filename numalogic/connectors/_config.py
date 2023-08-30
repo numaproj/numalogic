@@ -2,7 +2,6 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 
 from omegaconf import MISSING
-from pydruid.utils.aggregators import doublesum
 
 
 class ConnectorType(IntEnum):
@@ -40,10 +39,16 @@ class Pivot:
 class DruidFetcherConf:
     datasource: str
     dimensions: list[str] = field(default_factory=list)
-    aggregations: dict = field(default_factory=lambda: {"count": doublesum("count")})
+    aggregations: dict = field(default_factory=dict)
     group_by: list[str] = field(default_factory=list)
     pivot: Pivot = field(default_factory=lambda: Pivot())
     granularity: str = "minute"
+
+    def __post_init__(self):
+        from pydruid.utils.aggregators import doublesum
+
+        if not self.aggregations:
+            self.aggregations = {"count": doublesum("count")}
 
 
 @dataclass

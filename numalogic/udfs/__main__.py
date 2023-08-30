@@ -7,6 +7,8 @@ from numalogic.connectors.redis import get_redis_client_from_conf
 from numalogic.udfs import load_pipeline_conf, UDFFactory, ServerFactory, set_logger
 
 LOGGER = logging.getLogger(__name__)
+
+# TODO support user config paths
 CONF_FILE_PATH = os.getenv(
     "CONF_PATH", default=os.path.join(BASE_CONF_DIR, "default-configs", "config.yaml")
 )
