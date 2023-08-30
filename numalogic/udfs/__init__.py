@@ -1,4 +1,5 @@
 import logging
+from logging import config as logconf
 import os
 
 from numalogic._constants import BASE_DIR
@@ -13,7 +14,7 @@ from numalogic.udfs.trainer import TrainerUDF
 
 def set_logger() -> None:
     """Sets the logger for the UDFs."""
-    logging.config.fileConfig(
+    logconf.fileConfig(
         fname=os.path.join(BASE_DIR, "log.conf"),
         disable_existing_loggers=False,
     )
