@@ -27,7 +27,7 @@ else:
 
 artifact_t = TypeVar(
     "artifact_t",
-    bound=Union[TorchModel, BaseThresholdModel, BaseTransformer],
+    bound=Union[TorchModel, BaseThresholdModel, BaseTransformer, BaseEstimator],
     covariant=True,
 )
 nn_model_t = TypeVar("nn_model_t", bound=TorchModel)

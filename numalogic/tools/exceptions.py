@@ -46,6 +46,12 @@ class UnknownConfigArgsError(Exception):
     pass
 
 
+class ConfigNotFoundError(RuntimeError):
+    """Raised when a config is not found."""
+
+    pass
+
+
 class ModelVersionError(Exception):
     """Raised when a model version is not found in the registry."""
 
@@ -66,5 +72,11 @@ class DynamoDBRegistryError(Exception):
 
 class ModelKeyNotFound(RedisRegistryError):
     """Raised when a model key is not found in the registry."""
+
+    pass
+
+
+class EnvVarNotFoundError(LookupError):
+    """Raised when an environment variable is not found."""
 
     pass

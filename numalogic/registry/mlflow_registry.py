@@ -175,13 +175,11 @@ class MLflowRegistry(ArtifactManager):
             model, metadata = self.__load_artifacts(skeys, dkeys, version_info, artifact_type)
         except RestException as mlflow_err:
             return self.__log_mlflow_err(mlflow_err, model_key)
-        except ModelVersionError as model_missing_err:
-            _LOGGER.error(
-                "No Model found found in %s ERROR: %r", self.model_stage, model_missing_err
-            )
+        except ModelVersionError:
+            _LOGGER.exception("No Model found found in model stage: %s", self.model_stage)
             return None
-        except Exception as ex:
-            _LOGGER.exception("Unexpected error: %r", ex)
+        except Exception:
+            _LOGGER.exception("Unexpected error while Registry loading with key: %s", model_key)
             return None
         else:
             artifact_data = ArtifactData(
@@ -231,8 +229,8 @@ class MLflowRegistry(ArtifactManager):
             if metadata:
                 mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
-        except Exception as ex:
-            _LOGGER.exception("Unhandled error when saving a model with key: %s: %r", model_key, ex)
+        except Exception:
+            _LOGGER.exception("Unhandled error when saving a model with key: %s", model_key)
             return None
         else:
             _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
@@ -272,8 +270,8 @@ class MLflowRegistry(ArtifactManager):
         try:
             self.client.delete_model_version(name=model_key, version=version)
             _LOGGER.info("Successfully deleted model %s", model_key)
-        except Exception as ex:
-            _LOGGER.exception("Error when deleting a model with key: %s: %r", model_key, ex)
+        except Exception:
+            _LOGGER.exception("Error when deleting a model with key: %s", model_key)
         else:
             self._clear_cache(model_key)
 
@@ -308,10 +306,8 @@ class MLflowRegistry(ArtifactManager):
 
             # only keep "models_to_retain" number of models.
             self.__delete_stale_models(skeys=skeys, dkeys=dkeys)
-        except RestException as ex:
-            _LOGGER.exception(
-                "Error when transitioning a model: %s to different stage: %r", model_name, ex
-            )
+        except RestException:
+            _LOGGER.exception("Error when transitioning a model: %s to different stage", model_name)
             return None
         else:
             _LOGGER.info("Successfully transitioned model to Production stage")

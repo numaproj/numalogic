@@ -8,13 +8,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from abc import ABCMeta, abstractmethod
 from typing import Union
 from collections.abc import Coroutine
-
+import numpy.typing as npt
 from pynumaflow.function import Datum, Messages
 
+from numalogic.tools.types import artifact_t
 
-class NumalogicUDF:
+
+class NumalogicUDF(metaclass=ABCMeta):
     """
     Base class for all Numalogic based UDFs.
 
@@ -24,7 +27,7 @@ class NumalogicUDF:
 
     __slots__ = ("is_async",)
 
-    def __init__(self, is_async=False):
+    def __init__(self, is_async: bool = False):
         self.is_async = is_async
 
     def __call__(
@@ -61,3 +64,15 @@ class NumalogicUDF:
             Messages instance
         """
         raise NotImplementedError("aexec method not implemented")
+
+    @abstractmethod
+    def compute(self, model: artifact_t, input_: npt.NDArray[float], **kwargs):
+        """
+        Abstract method to be implemented by subclasses.
+
+        Args:
+            model: artifact for the udf.
+            input_: Input array.
+            kwargs: Additional keyword arguments.
+        """
+        pass

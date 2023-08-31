@@ -33,6 +33,7 @@ class ModelInfo:
     stateful: bool = True
 
 
+# TODO add this in the right config
 @dataclass
 class RegistryInfo:
     """Registry config base class.
@@ -56,7 +57,7 @@ class LightningTrainerConf:
     """
 
     accelerator: str = "auto"
-    max_epochs: int = 100
+    max_epochs: int = 50
     logger: bool = False
     check_val_every_n_epoch: int = 5
     log_every_n_steps: int = 20
@@ -68,12 +69,29 @@ class LightningTrainerConf:
 
 
 @dataclass
+class TrainerConf:
+    train_hours: int = 24 * 8  # 8 days worth of data
+    min_train_size: int = 2000
+    retrain_freq_hr: int = 24
+    model_expiry_sec: int = 86400  # 24 hrs  # TODO: revisit this
+    dedup_expiry_sec: int = 1800  # 30 days  # TODO: revisit this
+    batch_size: int = 32
+    pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
+
+
+@dataclass
 class NumalogicConf:
     """Top level config schema for numalogic."""
 
     model: ModelInfo = field(default_factory=ModelInfo)
-    trainer: LightningTrainerConf = field(default_factory=LightningTrainerConf)
-    registry: RegistryInfo = field(default_factory=RegistryInfo)
+    trainer: TrainerConf = field(default_factory=TrainerConf)
     preprocess: list[ModelInfo] = field(default_factory=list)
-    threshold: ModelInfo = field(default_factory=ModelInfo)
-    postprocess: ModelInfo = field(default_factory=ModelInfo)
+    threshold: ModelInfo = field(default_factory=lambda: ModelInfo(name="StdDevThreshold"))
+    postprocess: ModelInfo = field(
+        default_factory=lambda: ModelInfo(name="TanhNorm", stateful=False)
+    )
+
+
+@dataclass
+class DataConnectorConf:
+    source: str

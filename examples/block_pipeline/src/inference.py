@@ -11,7 +11,7 @@ from numalogic.blocks import (
 )
 from numalogic.models.autoencoder.variants import SparseVanillaAE
 from numalogic.models.threshold import StdDevThreshold
-from numalogic.numaflow import NumalogicUDF
+from numalogic.udfs import NumalogicUDF
 from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.transforms import TanhNorm
@@ -56,8 +56,8 @@ class Inference(NumalogicUDF):
         # Run inference
         try:
             output = block_pl(np.asarray(series).reshape(-1, self.n_features))
-        except Exception as err:
-            _LOGGER.error("Error running block pipeline: %r", err)
+        except Exception:
+            _LOGGER.exception("Error running block pipeline")
             return Messages(Message.to_drop())
 
         anomaly_score = np.mean(output)

@@ -1,0 +1,37 @@
+stream_confs:
+  druid-config:
+    config_id: "druid-config"
+    source: "druid"
+    composite_keys: [ 'service-mesh', '1', '2' ]
+    metrics: [ "col1" , "col2" ]
+    window_size: 10
+    numalogic_conf:
+      model:
+        name: "VanillaAE"
+        conf:
+          seq_len: 10
+          n_features: 2
+      preprocess:
+        - name: "LogTransformer"
+          stateful: false
+          conf:
+            add_factor: 5
+      threshold:
+        name: "StdDevThreshold"
+        conf:
+          min_threshold: 0.1
+redis_conf:
+  url: "isbsvc-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-e2e.svc"
+  port: 26379
+  expiry: 360
+  master_name: "mymaster"
+
+druid_conf:
+  url: "druid-endpoint"
+  endpoint: "endpoint"
+  fetcher:
+    dimensions: [ "col1" ]
+    datasource: "table-name"
+    group_by: [ "timestamp", "col1" ]
+    pivot:
+      columns: [ "col2" ]

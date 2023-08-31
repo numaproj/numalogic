@@ -1,6 +1,6 @@
 import logging
 
-from numalogic.numaflow import NumalogicUDF
+from numalogic.udfs import NumalogicUDF
 from numalogic.registry import MLflowRegistry
 from pynumaflow.function import Messages, Message, Datum
 

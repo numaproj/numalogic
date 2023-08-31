@@ -1,0 +1,16 @@
+tests
+.github
+.gitignore
+.hack
+.ruff_cache
+docs
+examples
+.coveragerc
+.pre-commit-config.yaml
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+LICENSE
+mkdocs.yml
+README.md
+USERS.md
