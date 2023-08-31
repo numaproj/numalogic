@@ -25,16 +25,16 @@ class DruidFetcher:
         self.client = PyDruid(url, endpoint)
 
     def fetch_data(
-        self,
-        datasource: str,
-        filter_keys: list[str],
-        filter_values: list[str],
-        dimensions: list[str],
-        granularity: str = "minute",
-        aggregations: Optional[dict] = None,
-        group_by: Optional[list[str]] = None,
-        pivot: Optional[Pivot] = None,
-        hours: float = 24,
+            self,
+            datasource: str,
+            filter_keys: list[str],
+            filter_values: list[str],
+            dimensions: list[str],
+            granularity: str = "minute",
+            aggregations: Optional[dict] = None,
+            group_by: Optional[list[str]] = None,
+            pivot: Optional[Pivot] = None,
+            hours: float = 24,
     ) -> pd.DataFrame:
         _start_time = time.time()
         filter_pairs = {}
@@ -48,8 +48,7 @@ class DruidFetcher:
 
         end_dt = datetime.now(pytz.utc)
         start_dt = end_dt - timedelta(hours=hours)
-        intervals = f"{start_dt.isoformat()}/{end_dt.isoformat()}"
-
+        intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
         params = {
             "datasource": datasource,
             "granularity": granularity,
@@ -71,7 +70,7 @@ class DruidFetcher:
             logging.warning("No data found for keys %s", filter_pairs)
             return pd.DataFrame()
 
-        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
+        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10 ** 6
 
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
