@@ -19,6 +19,7 @@ from numalogic.udfs.entities import StreamPayload, Header, Status
 
 _LOGGER = logging.getLogger(__name__)
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
+LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 
 
 class InferenceUDF(NumalogicUDF):
@@ -33,7 +34,8 @@ class InferenceUDF(NumalogicUDF):
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
         super().__init__(is_async=False)
         self.model_registry = RedisRegistry(
-            client=r_client, cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL)
+            client=r_client,
+            cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
         )
         self.pl_conf = pl_conf or PipelineConf()
 
