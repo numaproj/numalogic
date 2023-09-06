@@ -90,8 +90,9 @@ class TrainerUDF(NumalogicUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
+    @classmethod
     def compute(
-        self,
+        cls,
         model: artifact_t,
         input_: npt.NDArray[float],
         preproc_clf: Optional[artifact_t] = None,
@@ -218,12 +219,10 @@ class TrainerUDF(NumalogicUDF):
         )
         return Messages(Message.to_drop())
 
-    @staticmethod
-    def _construct_preproc_clf(_conf: StreamConf) -> Optional[artifact_t]:
-        preproc_factory = PreprocessFactory()
+    def _construct_preproc_clf(self, _conf: StreamConf) -> Optional[artifact_t]:
         preproc_clfs = []
         for _cfg in _conf.numalogic_conf.preprocess:
-            _clf = preproc_factory.get_instance(_cfg)
+            _clf = self._preproc_factory.get_instance(_cfg)
             preproc_clfs.append(_clf)
         if not preproc_clfs:
             return None

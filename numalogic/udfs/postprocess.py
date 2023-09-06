@@ -156,8 +156,9 @@ class PostprocessUDF(NumalogicUDF):
         )
         return messages
 
+    @classmethod
     def compute(
-        self, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
+        cls, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
     ) -> NDArray[float]:
         """
         Compute the postprocess function.

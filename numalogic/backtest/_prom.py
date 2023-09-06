@@ -1,0 +1,258 @@
+import logging
+import os.path
+from datetime import datetime, timedelta
+from typing import Optional
+
+import numpy as np
+import pandas as pd
+import torch
+from fakeredis import FakeServer, FakeRedis
+from matplotlib import pyplot as plt
+from numpy.typing import NDArray
+
+from numalogic._constants import BASE_DIR
+from numalogic.backtest._constants import DEFAULT_SEQUENCE_LEN
+from numalogic.config import (
+    TrainerConf,
+    LightningTrainerConf,
+    NumalogicConf,
+    ModelInfo,
+    ModelFactory,
+    PreprocessFactory,
+    PostprocessFactory,
+    ThresholdFactory,
+)
+from numalogic.connectors import ConnectorType
+from numalogic.connectors.prometheus import PrometheusFetcher
+from numalogic.tools.data import StreamingDataset, inverse_window
+from numalogic.tools.types import artifact_t
+from numalogic.udfs import UDFFactory, StreamConf
+
+REDIS_CLIENT = FakeRedis(server=FakeServer())
+
+DEFAULT_OUTPUT_DIR = os.path.join(BASE_DIR, ".btoutput")
+LOGGER = logging.getLogger(__name__)
+
+
+def _init_default_streamconf(metrics: list[str]) -> StreamConf:
+    numalogic_cfg = NumalogicConf(
+        model=ModelInfo(
+            "VanillaAE", conf={"seq_len": DEFAULT_SEQUENCE_LEN, "n_features": len(metrics)}
+        ),
+        preprocess=[ModelInfo("StandardScaler")],
+        trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(accelerator="cpu")),
+    )
+    return StreamConf(
+        source=ConnectorType.prometheus,
+        window_size=DEFAULT_SEQUENCE_LEN,
+        metrics=metrics,
+        numalogic_conf=numalogic_cfg,
+    )
+
+
+class PromUnivarBacktester:
+    def __init__(
+        self,
+        url: str,
+        namespace: str,
+        appname: str,
+        metric: str,
+        return_labels: Optional[list[str]] = None,
+        lookback_days: int = 8,
+        output_dir: str = DEFAULT_OUTPUT_DIR,
+        test_ratio: float = 0.25,
+        stream_conf: Optional[StreamConf] = None,
+    ):
+        self._url = url
+        self.namespace = namespace
+        self.appname = appname
+        self.metric = metric
+        self.conf = stream_conf or _init_default_streamconf([metric])
+        self.test_ratio = test_ratio
+        self.lookback_days = lookback_days
+        self.return_labels = return_labels
+
+        self._seq_len = self.conf.window_size
+        self._n_features = len(self.conf.metrics)
+
+        self.out_dir = self.get_outdir(appname, metric, outdir=output_dir)
+        self._datapath = os.path.join(self.out_dir, "data.csv")
+        self._modelpath = os.path.join(self.out_dir, "models.pt")
+        self._outpath = os.path.join(self.out_dir, "output.csv")
+
+        if not os.path.exists(self.out_dir):
+            os.makedirs(self.out_dir)
+
+    @classmethod
+    def get_outdir(cls, appname: str, metric: str, outdir=DEFAULT_OUTPUT_DIR) -> str:
+        _key = ":".join([appname, metric])
+        return os.path.join(outdir, _key)
+
+    def read_data(self) -> pd.DataFrame:
+        datafetcher = PrometheusFetcher(self._url)
+        df = datafetcher.fetch_data(
+            metric_name=self.metric,
+            start=(datetime.now() - timedelta(days=self.lookback_days)),
+            end=datetime.now(),
+            filters={"namespace": self.namespace, "app": self.appname},
+            return_labels=self.return_labels,
+            aggregate=False,
+        )
+        LOGGER.info(
+            "Fetched dataframe with lookback days: %s with shape: %s", self.lookback_days, df.shape
+        )
+
+        df.set_index(["timestamp"], inplace=True)
+        df.index = pd.to_datetime(df.index)
+        df.to_csv(self._datapath, index=True)
+        return df
+
+    def train_models(
+        self,
+        df: Optional[pd.DataFrame] = None,
+    ) -> dict[str, artifact_t]:
+        if df is None:
+            df = self._read_or_fetch_data()
+
+        df_train, _ = self._split_data(df[[self.metric]])
+        x_train = df_train.to_numpy(dtype=np.float32)
+        LOGGER.info("Training data shape: %s", x_train.shape)
+
+        artifacts = UDFFactory.get_udf_cls("trainer").compute(
+            model=ModelFactory().get_instance(self.conf.numalogic_conf.model),
+            input_=x_train,
+            preproc_clf=PreprocessFactory().get_pipeline_instance(
+                self.conf.numalogic_conf.preprocess
+            ),
+            threshold_clf=ThresholdFactory().get_instance(self.conf.numalogic_conf.threshold),
+            trainer_cfg=self.conf.numalogic_conf.trainer,
+        )
+        with open(self._modelpath, "wb") as f:
+            torch.save(artifacts, f)
+        return artifacts
+
+    def generate_scores(self, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+        if df is None:
+            df = self._read_or_fetch_data()
+        artifacts = self._load_or_train_model(df)
+
+        _, df_test = self._split_data(df[[self.metric]])
+        x_test = df_test.to_numpy(dtype=np.float32)
+        LOGGER.info("Test data shape: %s", df_test.shape)
+
+        preproc_udf = UDFFactory.get_udf_cls("preprocess")
+        nn_udf = UDFFactory.get_udf_cls("inference")
+        postproc_udf = UDFFactory.get_udf_cls("postprocess")
+
+        x_scaled = preproc_udf.compute(model=artifacts["preproc_clf"], input_=x_test)
+
+        ds = StreamingDataset(x_scaled, seq_len=self.conf.window_size)
+        anomaly_scores = np.zeros(
+            (len(ds), self.conf.window_size, len(self.conf.metrics)), dtype=np.float32
+        )
+        x_recon = np.zeros_like(anomaly_scores, dtype=np.float32)
+        postproc_func = PostprocessFactory().get_instance(self.conf.numalogic_conf.postprocess)
+
+        for idx, arr in enumerate(ds):
+            x_recon[idx] = nn_udf.compute(model=artifacts["model"], input_=arr)
+            anomaly_scores[idx] = postproc_udf.compute(
+                model=artifacts["threshold_clf"],
+                input_=x_recon[idx],
+                postproc_clf=postproc_func,
+            )
+        x_recon = inverse_window(torch.from_numpy(x_recon)).numpy()
+        final_scores = np.mean(anomaly_scores, axis=1)
+        output_df = self._construct_output_df(
+            timestamps=df_test.index,
+            test_data=x_test,
+            preproc_out=x_scaled,
+            nn_out=x_recon,
+            postproc_out=final_scores,
+        )
+        output_df.to_csv(self._outpath, index=True, index_label="timestamp")
+        LOGGER.info("Results saved in: %s", self._outpath)
+        return output_df
+
+    def save_plots(
+        self, output_df: Optional[pd.DataFrame] = None, plotname: str = "plot.png"
+    ) -> None:
+        if output_df is None:
+            output_df = pd.read_csv(self._outpath, index_col="timestamp", parse_dates=True)
+
+        fig, axs = plt.subplots(4, 1, sharex="col", figsize=(15, 8))
+
+        axs[0].plot(output_df["metric"], color="b")
+        axs[0].set_ylabel("Original metric")
+        axs[0].grid(True)
+        axs[0].set_title(
+            f"TEST SET RESULTS\nMetric: {self.metric}\nnamespace: {self.namespace}\napp: {self.appname}"
+        )
+
+        axs[1].plot(output_df["preprocessed"], color="g")
+        axs[1].grid(True)
+        axs[1].set_ylabel("Preprocessed metric")
+
+        axs[2].plot(output_df["model_out"], color="black")
+        axs[2].grid(True)
+        axs[2].set_ylabel("NN model output")
+
+        axs[3].plot(output_df["scores"], color="r")
+        axs[3].grid(True)
+        axs[3].set_ylabel("Anomaly Score")
+        axs[3].set_xlabel("Time")
+        axs[3].set_ylim(0, 10)
+
+        fig.tight_layout()
+        _fname = os.path.join(self.out_dir, plotname)
+        fig.savefig(_fname)
+        LOGGER.info("Plot file: %s saved in %s", plotname, self.out_dir)
+
+    def _split_data(self, df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFrame]:
+        test_size = int(df.shape[0] * self.test_ratio)
+        return df.iloc[:-test_size], df.iloc[-test_size:]
+
+    def _read_or_fetch_data(self) -> pd.DataFrame:
+        try:
+            df = pd.read_csv(self._datapath, dtype=np.float32)
+        except FileNotFoundError:
+            LOGGER.info("No saved data found! Fetching data...")
+            df = self.read_data()
+        else:
+            LOGGER.info("Saved data found! Reading from %s", self._datapath)
+        df.set_index(["timestamp"], inplace=True)
+        df.index = pd.to_datetime(df.index)
+        return df
+
+    def _load_or_train_model(self, df: pd.DataFrame) -> dict[str, artifact_t]:
+        try:
+            with open(self._modelpath, "rb") as f:
+                artifacts = torch.load(f)
+        except FileNotFoundError:
+            LOGGER.info("No saved models found! Training models...")
+            artifacts = self.train_models(df)
+        return artifacts
+
+    def _construct_output_df(
+        self,
+        timestamps: pd.Index,
+        test_data: NDArray[float],
+        preproc_out: NDArray[float],
+        nn_out: NDArray[float],
+        postproc_out: NDArray[float],
+    ) -> pd.DataFrame:
+        scores = np.vstack(
+            [
+                np.full((self._seq_len - 1, self._n_features), fill_value=np.nan),
+                postproc_out,
+            ]
+        )
+
+        return pd.DataFrame(
+            {
+                "metric": test_data.squeeze(),
+                "preprocessed": preproc_out.squeeze(),
+                "model_out": nn_out.squeeze(),
+                "scores": scores.squeeze(),
+            },
+            index=timestamps,
+        )

@@ -15,9 +15,7 @@ CONF_FILE_PATH = os.getenv(
 
 
 def start_server():
-    """
-    Starts the pynumaflow server.
-    """
+    """Starts the pynumaflow server."""
     set_logger()
     step = sys.argv[1]
 

@@ -10,6 +10,8 @@
 # limitations under the License.
 from typing import Union, ClassVar
 
+from sklearn.pipeline import make_pipeline
+
 from numalogic.config._config import ModelInfo, RegistryInfo
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
@@ -50,6 +52,17 @@ class PreprocessFactory(_ObjectFactory):
         "StaticPowerTransformer": StaticPowerTransformer,
         "TanhScaler": TanhScaler,
     }
+
+    def get_pipeline_instance(self, objs_info: list[ModelInfo]):
+        preproc_clfs = []
+        for obj_info in objs_info:
+            _clf = self.get_instance(obj_info)
+            preproc_clfs.append(_clf)
+        if not preproc_clfs:
+            return None
+        if len(preproc_clfs) == 1:
+            return preproc_clfs[0]
+        return make_pipeline(*preproc_clfs)
 
 
 class PostprocessFactory(_ObjectFactory):

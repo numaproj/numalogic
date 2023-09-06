@@ -24,8 +24,8 @@ documentation = "https://numalogic.numaproj.io/"
 homepage = "https://numalogic.numaproj.io/"
 
 [tool.poetry.scripts]
-numalogicudf = "numalogic.udfs.__main__:start_server"
 numalogic = "numalogic.backtest.__main__:app"
+numalogic-udf = "numalogic.udfs.__main__:start_server"
 
 [tool.poetry.dependencies]
 python = ">=3.9, <3.12"
@@ -35,7 +35,8 @@ scikit-learn = "^1.2"
 omegaconf = "^2.3.0"
 cachetools = "^5.3.0"
 orjson = "^3.9.5"
-typer = {extras = ["all"], version = "^0.9.0"}
+# typer = {extras = ["all"], version = "^0.9.0"}
+typer = "^0.9"
 
 # extras
 mlflow-skinny = { version = ">2.0, <3.0", optional = true }

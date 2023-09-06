@@ -169,8 +169,9 @@ class PreprocessUDF(NumalogicUDF):
         )
         return Messages(Message(keys=keys, value=payload.to_json()))
 
+    @classmethod
     def compute(
-        self, model: artifact_t, input_: Optional[NDArray[float]] = None, **_
+        cls, model: artifact_t, input_: Optional[NDArray[float]] = None, **_
     ) -> NDArray[float]:
         """
         Perform inference on the input data.

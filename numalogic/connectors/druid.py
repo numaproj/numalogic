@@ -6,13 +6,15 @@ import pandas as pd
 import pytz
 from pydruid.client import PyDruid
 from pydruid.utils.filters import Filter
+
+from numalogic.connectors._base import DataFetcher
 from numalogic.connectors._config import Pivot
 from typing import Optional
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class DruidFetcher:
+class DruidFetcher(DataFetcher):
     """
     Class for fetching data as a dataframe from Druid.
 
@@ -22,6 +24,7 @@ class DruidFetcher:
     """
 
     def __init__(self, url: str, endpoint: str):
+        super().__init__(url)
         self.client = PyDruid(url, endpoint)
 
     def fetch_data(

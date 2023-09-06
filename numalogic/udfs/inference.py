@@ -56,7 +56,8 @@ class InferenceUDF(NumalogicUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
-    def compute(self, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:
+    @classmethod
+    def compute(cls, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:
         """
         Perform inference on the input data.
 
@@ -77,7 +78,7 @@ class InferenceUDF(NumalogicUDF):
         try:
             with torch.no_grad():
                 _, out = model.forward(x)
-            recon_err = model.criterion(out, x, reduction="none")
+                recon_err = model.criterion(out, x, reduction="none")
         except Exception as err:
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)

@@ -80,3 +80,15 @@ class EnvVarNotFoundError(LookupError):
     """Raised when an environment variable is not found."""
 
     pass
+
+
+class PrometheusFetcherError(Exception):
+    """Base class for all exceptions raised by the PrometheusFetcher class."""
+
+    pass
+
+
+class PrometheusInvalidResponseError(PrometheusFetcherError):
+    """Raised when the Prometheus response is not a success."""
+
+    pass
