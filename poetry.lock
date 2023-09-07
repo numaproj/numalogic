@@ -4950,7 +4950,7 @@ docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "rst.link
 testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-ignore-flaky", "pytest-mypy (>=0.9.1)", "pytest-ruff"]
 
 [extras]
-cli = ["matplotlib", "typer"]
+cli = ["matplotlib", "pynumaflow", "typer"]
 druid = ["pydruid"]
 dynamodb = ["boto3"]
 mlflow = ["mlflow-skinny"]
@@ -4960,4 +4960,4 @@ redis = ["redis"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9, <3.12"
-content-hash = "3f8886ae7706983d2e65915205f8861bd8ae86a37a5f2b608132ef6ad88bba51"
+content-hash = "d47466dc9ff511c46870461234813d2198d5fe392a77994dfc53e096574ea55e"

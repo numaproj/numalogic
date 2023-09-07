@@ -51,7 +51,7 @@ redis = ["redis"]
 numaflow = ["pynumaflow"]
 dynamodb = ["boto3"]
 druid = ["pydruid"]
-cli = ["typer", "matplotlib"]
+cli = ["typer", "matplotlib", "pynumaflow"]
 
 [tool.poetry.group.torch]
 optional = true
