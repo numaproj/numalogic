@@ -24,7 +24,7 @@ documentation = "https://numalogic.numaproj.io/"
 homepage = "https://numalogic.numaproj.io/"
 
 [tool.poetry.scripts]
-numalogic = "numalogic.backtest.__main__:app"
+numalogic = {reference = "numalogic.backtest.__main__:app", extras = ["cli"], type = "console"}
 numalogic-udf = "numalogic.udfs.__main__:start_server"
 
 [tool.poetry.dependencies]
@@ -35,7 +35,6 @@ scikit-learn = "^1.2"
 omegaconf = "^2.3.0"
 cachetools = "^5.3.0"
 orjson = "^3.9.5"
-typer = "^0.9"
 
 # extras
 mlflow-skinny = { version = ">2.0, <3.0", optional = true }
@@ -43,6 +42,8 @@ redis = {extras = ["hiredis"], version = "^5.0", optional = true}
 pynumaflow = { version = "~0.4", optional = true }
 boto3 = { version = "^1.24.64", optional = true }
 pydruid = {version = "^0.6", optional = true}
+typer = {version = "^0.9", extras = ["rich"], optional = true}
+matplotlib = {version = "^3.4.2", optional = true}
 
 [tool.poetry.extras]
 mlflow = ["mlflow-skinny"]
@@ -50,6 +51,7 @@ redis = ["redis"]
 numaflow = ["pynumaflow"]
 dynamodb = ["boto3"]
 druid = ["pydruid"]
+cli = ["typer", "matplotlib"]
 
 [tool.poetry.group.torch]
 optional = true
