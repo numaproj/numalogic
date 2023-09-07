@@ -1,12 +1,12 @@
 import logging
 import os.path
 from datetime import datetime, timedelta
-from typing import Optional
+from pathlib import Path
+from typing import Optional, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from fakeredis import FakeServer, FakeRedis
 from matplotlib import pyplot as plt
 from numpy.typing import NDArray
 
@@ -27,8 +27,6 @@ from numalogic.connectors.prometheus import PrometheusFetcher
 from numalogic.tools.data import StreamingDataset, inverse_window
 from numalogic.tools.types import artifact_t
 from numalogic.udfs import UDFFactory, StreamConf
-
-REDIS_CLIENT = FakeRedis(server=FakeServer())
 
 DEFAULT_OUTPUT_DIR = os.path.join(BASE_DIR, ".btoutput")
 LOGGER = logging.getLogger(__name__)
@@ -59,7 +57,7 @@ class PromUnivarBacktester:
         metric: str,
         return_labels: Optional[list[str]] = None,
         lookback_days: int = 8,
-        output_dir: str = DEFAULT_OUTPUT_DIR,
+        output_dir: Union[str, Path] = DEFAULT_OUTPUT_DIR,
         test_ratio: float = 0.25,
         stream_conf: Optional[StreamConf] = None,
     ):
@@ -85,6 +83,8 @@ class PromUnivarBacktester:
 
     @classmethod
     def get_outdir(cls, appname: str, metric: str, outdir=DEFAULT_OUTPUT_DIR) -> str:
+        if not appname:
+            return os.path.join(outdir, metric)
         _key = ":".join([appname, metric])
         return os.path.join(outdir, _key)
 
@@ -129,12 +129,16 @@ class PromUnivarBacktester:
         )
         with open(self._modelpath, "wb") as f:
             torch.save(artifacts, f)
+        LOGGER.info("Models saved in %s", self._modelpath)
         return artifacts
 
-    def generate_scores(self, df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
+    def generate_scores(
+        self, df: Optional[pd.DataFrame] = None, model_path: Optional[str] = None
+    ) -> pd.DataFrame:
         if df is None:
             df = self._read_or_fetch_data()
-        artifacts = self._load_or_train_model(df)
+
+        artifacts = self._load_or_train_model(df, model_path)
 
         _, df_test = self._split_data(df[[self.metric]])
         x_test = df_test.to_numpy(dtype=np.float32)
@@ -185,7 +189,8 @@ class PromUnivarBacktester:
         axs[0].set_ylabel("Original metric")
         axs[0].grid(True)
         axs[0].set_title(
-            f"TEST SET RESULTS\nMetric: {self.metric}\nnamespace: {self.namespace}\napp: {self.appname}"
+            f"TEST SET RESULTS\nMetric: {self.metric}\n"
+            f"namespace: {self.namespace}\napp: {self.appname}"
         )
 
         axs[1].plot(output_df["preprocessed"], color="g")
@@ -223,13 +228,16 @@ class PromUnivarBacktester:
         df.index = pd.to_datetime(df.index)
         return df
 
-    def _load_or_train_model(self, df: pd.DataFrame) -> dict[str, artifact_t]:
+    def _load_or_train_model(self, df: pd.DataFrame, model_path: str) -> dict[str, artifact_t]:
+        _modelpath = model_path or self._modelpath
         try:
-            with open(self._modelpath, "rb") as f:
+            with open(_modelpath, "rb") as f:
                 artifacts = torch.load(f)
         except FileNotFoundError:
             LOGGER.info("No saved models found! Training models...")
             artifacts = self.train_models(df)
+        else:
+            LOGGER.info("Loaded models from %s", _modelpath)
         return artifacts
 
     def _construct_output_df(
