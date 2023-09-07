@@ -1,5 +1,8 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
+from functools import reduce
+from operator import iconcat
 from typing import Optional, Final
 
 import numpy as np
@@ -158,7 +161,14 @@ class PrometheusFetcher(DataFetcher):
 
         if datapoints > MAX_DATA_POINTS:
             max_end_ts = start_ts + (MAX_DATA_POINTS * self._step_secs)
-            return self.query_range(query, start_ts, max_end_ts, _depth + 1) + self.query_range(
-                query, max_end_ts + self._step_secs, end_ts, _depth + 1
-            )
+
+            with ThreadPoolExecutor(max_workers=2) as _executor:
+                results = _executor.map(
+                    self.query_range,
+                    (query, query),
+                    (start_ts, max_end_ts + self._step_secs),
+                    (max_end_ts, end_ts),
+                    (_depth + 1, _depth + 1)
+                )
+                return reduce(iconcat, results, [])
         return self._api_query_range(query, start_ts, end_ts)
