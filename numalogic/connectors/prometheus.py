@@ -168,7 +168,7 @@ class PrometheusFetcher(DataFetcher):
                     (query, query),
                     (start_ts, max_end_ts + self._step_secs),
                     (max_end_ts, end_ts),
-                    (_depth + 1, _depth + 1)
+                    (_depth + 1, _depth + 1),
                 )
                 return reduce(iconcat, results, [])
         return self._api_query_range(query, start_ts, end_ts)

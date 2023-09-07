@@ -14,7 +14,7 @@ def univariate(
     appname: Annotated[str, typer.Argument(help="Application name")],
     metric: Annotated[str, typer.Argument(help="The timeseries metric to analyze")],
     url: Annotated[
-        str, typer.Option(envvar="PROM_URL", help="Prometheus/Thanos URL")
+        str, typer.Option(envvar="PROM_URL", help="Endpoint URL for datafetching")
     ] = DEFAULT_PROM_LOCALHOST,
     lookback_days: Annotated[int, typer.Option(help="Number of days of data to fetch")] = 8,
 ):

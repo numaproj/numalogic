@@ -1,6 +1,8 @@
 import shutil
+from pathlib import Path
 from typing import Optional
 
+import pandas as pd
 import typer
 from typing import Annotated
 
@@ -42,13 +44,45 @@ def clear(
 
 
 @app.command()
-def train():
-    pass
+def train(
+    data_file: Annotated[Optional[Path], typer.Option()] = None,
+    col_name: Annotated[Optional[str], typer.Option()] = None,
+    train_ratio: Annotated[float, typer.Option()] = 0.9,
+    output_dir: Annotated[Optional[Path], typer.Option()] = DEFAULT_OUTPUT_DIR,
+):
+    if (data_file is None) or (col_name is None):
+        print("No data file or column name provided!")
+        raise typer.Abort()
+
+    backtester = PromUnivarBacktester(
+        "", "", "", col_name, test_ratio=(1 - train_ratio), output_dir=output_dir
+    )
+
+    df = pd.read_csv(data_file)
+    df.set_index(["timestamp"], inplace=True)
+    df.index = pd.to_datetime(df.index)
+
+    backtester.train_models(df)
 
 
 @app.command()
-def score():
-    pass
+def score(
+    data_file: Annotated[Optional[Path], typer.Option()] = None,
+    col_name: Annotated[Optional[str], typer.Option()] = None,
+    model_path: Annotated[Optional[Path], typer.Option()] = None,
+    test_ratio: Annotated[float, typer.Option()] = 1.0,
+):
+    if (data_file is None) or (col_name is None):
+        print("No data file or column name provided!")
+        raise typer.Abort()
+
+    backtester = PromUnivarBacktester("", "", "", col_name, test_ratio=test_ratio)
+
+    df = pd.read_csv(data_file)
+    df.set_index(["timestamp"], inplace=True)
+    df.index = pd.to_datetime(df.index)
+
+    backtester.generate_scores(df, model_path=model_path)
 
 
 if __name__ == "__main__":
