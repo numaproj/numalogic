@@ -6,7 +6,7 @@ import pandas as pd
 import typer
 from typing import Annotated
 
-import numalogic.backtest._bt as dim
+import numalogic.backtest._bt as bt
 from numalogic.backtest._constants import DEFAULT_OUTPUT_DIR
 from numalogic.backtest._prom import PromUnivarBacktester
 from numalogic.udfs import set_logger
@@ -15,7 +15,7 @@ set_logger()
 
 
 app = typer.Typer()
-app.add_typer(dim.app, name="backtest")
+app.add_typer(bt.app, name="backtest")
 
 
 @app.command()

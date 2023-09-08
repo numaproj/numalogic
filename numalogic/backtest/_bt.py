@@ -28,8 +28,3 @@ def univariate(
 @app.command()
 def multivariate():
     raise NotImplementedError
-
-
-@app.command()
-def multiseries():
-    raise NotImplementedError
