@@ -9,8 +9,8 @@ from numpy._typing import NDArray
 from pynumaflow.function import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
-from numalogic.config import PreprocessFactory
-from numalogic.registry import LocalLRUCache, RedisRegistry
+from numalogic.config import PreprocessFactory, RegistryFactory
+from numalogic.registry import LocalLRUCache
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
@@ -36,9 +36,9 @@ class PreprocessUDF(NumalogicUDF):
 
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
         super().__init__()
-        self.model_registry = RedisRegistry(
-            client=r_client,
-            cache_registry=LocalLRUCache(cachesize=LOCAL_CACHE_SIZE, ttl=LOCAL_CACHE_TTL),
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(
+            client=r_client, cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL)
         )
         self.pl_conf = pl_conf or PipelineConf()
         self.preproc_factory = PreprocessFactory()

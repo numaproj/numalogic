@@ -12,18 +12,16 @@ from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
 from numalogic.base import StatelessTransformer
-from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory
+from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
 from numalogic.config._config import TrainerConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.models.autoencoder import AutoencoderTrainer
-from numalogic.registry import RedisRegistry
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,7 +42,10 @@ class TrainerUDF(NumalogicUDF):
     ):
         super().__init__(is_async=False)
         self.r_client = r_client
-        self.model_registry = RedisRegistry(client=r_client)
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(
+            client=r_client
+        )
         self.pl_conf = pl_conf or PipelineConf()
         self.druid_conf = self.pl_conf.druid_conf
 
