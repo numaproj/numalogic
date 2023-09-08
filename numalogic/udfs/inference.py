@@ -10,7 +10,8 @@ from numpy import typing as npt
 from orjson import orjson
 from pynumaflow.function import Messages, Datum, Message
 
-from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
+from numalogic.config import RegistryFactory
+from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError, ModelKeyNotFound, ConfigNotFoundError
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
@@ -34,7 +35,8 @@ class InferenceUDF(NumalogicUDF):
 
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
         super().__init__(is_async=False)
-        self.model_registry = RedisRegistry(
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(
             client=r_client, cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL)
         )
         self.pl_conf = pl_conf or PipelineConf()
