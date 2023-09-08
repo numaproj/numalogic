@@ -1,17 +1,17 @@
+import logging
 import shutil
 from pathlib import Path
+from typing import Annotated
 from typing import Optional
 
 import pandas as pd
 import typer
-from typing import Annotated
 
 import numalogic.backtest._bt as bt
 from numalogic.backtest._constants import DEFAULT_OUTPUT_DIR
 from numalogic.backtest._prom import PromUnivarBacktester
-from numalogic.udfs import set_logger
 
-set_logger()
+logging.basicConfig(level=logging.INFO)
 
 
 app = typer.Typer()
