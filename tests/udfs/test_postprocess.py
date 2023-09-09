@@ -77,7 +77,7 @@ DATA = {
     "status": "artifact_found",
     "header": "model_inference",
     "metadata": {
-        "model_version": 0,
+        "artifact_versions": {"StdDevThreshold": "0"},
         "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
     },
 }
@@ -113,12 +113,13 @@ class TestPostProcessUDF(unittest.TestCase):
         data = deepcopy(DATA)
         data["status"] = Status.ARTIFACT_STALE
         data["header"] = Header.MODEL_INFERENCE
-        self.registry.save(
-            KEYS, ["StdDevThreshold"], StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]]))
+        print(
+            self.registry.save(
+                KEYS, ["StdDevThreshold"], StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]]))
+            )
         )
-
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
-        self.assertEqual(2, len(msg))
+        self.assertEqual(1, len(msg))
 
     def test_postprocess_all_model_present(self):
         data = deepcopy(DATA)

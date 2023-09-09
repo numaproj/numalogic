@@ -83,7 +83,9 @@ class TrainerConf:
 class NumalogicConf:
     """Top level config schema for numalogic."""
 
-    model: ModelInfo = field(default_factory=ModelInfo)
+    model: ModelInfo = field(
+        default_factory=lambda: ModelInfo(name="VanillaAE", conf={"n_features": 2, "seq_len": 10})
+    )
     trainer: TrainerConf = field(default_factory=TrainerConf)
     preprocess: list[ModelInfo] = field(default_factory=list)
     threshold: ModelInfo = field(default_factory=lambda: ModelInfo(name="StdDevThreshold"))

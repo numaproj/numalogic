@@ -11,11 +11,12 @@ from orjson import orjson
 from pynumaflow.function import Messages, Datum, Message
 
 from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
-from numalogic.tools.exceptions import RedisRegistryError, ModelKeyNotFound, ConfigNotFoundError
+from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
+from numalogic.udfs.tools import _load_model
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -111,8 +112,12 @@ class InferenceUDF(NumalogicUDF):
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST:
             return Messages(Message(keys=keys, value=payload.to_json()))
-
-        artifact_data = self.load_artifact(keys, payload)
+        artifact_data = _load_model(
+            skeys=keys,
+            dkeys=[self.get_conf(payload.config_id).numalogic_conf.model.name],
+            payload=payload,
+            model_registry=self.model_registry,
+        )
 
         # TODO: revisit retraining logic
         # Send training request if artifact loading is not successful
@@ -161,47 +166,6 @@ class InferenceUDF(NumalogicUDF):
             time.perf_counter() - _start_time,
         )
         return Messages(Message(keys=keys, value=payload.to_json()))
-
-    def load_artifact(self, keys: list[str], payload: StreamPayload) -> Optional[ArtifactData]:
-        """
-        Load inference artifact from the registry.
-
-        Args:
-            keys: List of keys
-            payload: StreamPayload object
-
-        Returns
-        -------
-            ArtifactData instance
-        """
-        _conf = self.get_conf(payload.config_id).numalogic_conf
-        try:
-            artifact_data = self.model_registry.load(
-                skeys=keys,
-                dkeys=[_conf.model.name],
-            )
-        except ModelKeyNotFound:
-            _LOGGER.warning(
-                "%s - Model key not found for Keys: %s, Metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metrics,
-            )
-            return None
-        except RedisRegistryError:
-            _LOGGER.exception(
-                "%s - Error while fetching inference artifact, Keys: %s, Metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metrics,
-            )
-            return None
-        _LOGGER.info(
-            "%s - Loaded artifact data from %s",
-            payload.uuid,
-            artifact_data.extras.get("source"),
-        )
-        return artifact_data
 
     def is_model_stale(self, artifact_data: ArtifactData, payload: StreamPayload) -> bool:
         """

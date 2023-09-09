@@ -48,7 +48,7 @@ class DruidFetcher:
 
         end_dt = datetime.now(pytz.utc)
         start_dt = end_dt - timedelta(hours=hours)
-        intervals = f"{start_dt.isoformat()}/{end_dt.isoformat()}"
+        intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
 
         params = {
             "datasource": datasource,

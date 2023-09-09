@@ -70,11 +70,12 @@ DATA = {
     ],
     "header": "model_inference",
     "metadata": {
+        "artifact_versions": {"VanillaAE": "0"},
         "tags": {
             "asset_alias": "some-alias",
             "asset_id": "362557362191815079",
             "env": "prd",
-        }
+        },
     },
 }
 
@@ -83,6 +84,7 @@ class TestInferenceUDF(unittest.TestCase):
     def setUp(self) -> None:
         self.udf = InferenceUDF(REDIS_CLIENT)
         self.udf.register_conf("conf1", StreamConf(config_id="conf1"))
+        print(self.udf.get_conf("conf1"))
 
     @patch.object(
         RedisRegistry,
@@ -90,7 +92,7 @@ class TestInferenceUDF(unittest.TestCase):
         Mock(
             return_value=ArtifactData(
                 artifact=VanillaAE(seq_len=12, n_features=2),
-                extras=dict(version="1", timestamp=time.time(), source="registry"),
+                extras=dict(version="0", timestamp=time.time(), source="registry"),
                 metadata={},
             )
         ),
