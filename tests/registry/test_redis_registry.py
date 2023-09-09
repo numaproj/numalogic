@@ -62,9 +62,10 @@ class TestRedisRegistry(unittest.TestCase):
         data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertEqual(data.extras["version"], save_version)
         resave_version1 = self.registry.save(
-            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model, **{"lr": 0.01}
         )
         resave_data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        print(resave_data.extras)
         self.assertEqual(save_version, "0")
         self.assertEqual(resave_version1, "1")
         self.assertEqual(resave_data.extras["version"], "0")
@@ -184,6 +185,17 @@ class TestRedisRegistry(unittest.TestCase):
         artifact_data_2 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertEqual("registry", artifact_data_1.extras["source"])
         self.assertEqual("registry", artifact_data_2.extras["source"])
+
+    def test_multiple_save(self):
+        self.registry.save_multiple(
+            skeys=self.skeys,
+            list_dkeys=[["AE"], ["scaler"]],
+            list_artifacts=[VanillaAE, StandardScaler()],
+            **{"a": "b"}
+        )
+        artifact_data = self.registry.load(skeys=self.skeys, dkeys=["AE"])
+        self.assertEqual("registry", artifact_data.extras["source"])
+        self.assertIsNotNone(artifact_data.artifact)
 
     def test_load_non_latest_model_twice(self):
         old_version = self.registry.save(

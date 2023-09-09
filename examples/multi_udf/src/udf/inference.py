@@ -61,7 +61,7 @@ class Inference(NumalogicUDF):
             LOGGER.info("%s - Inference complete", payload.uuid)
         else:
             # If model not found, set status as not found
-            LOGGER.warning("%s - Model not found", payload.uuid)
+            LOGGER.exception("%s - Model not found", payload.uuid)
             payload.is_artifact_valid = False
 
         # Convert Payload back to bytes and conditional forward to threshold vertex

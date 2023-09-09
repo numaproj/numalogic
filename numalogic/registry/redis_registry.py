@@ -33,6 +33,8 @@ class RedisRegistry(ArtifactManager):
         client: Take in the redis client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
         cache_registry: Cache registry to use (default = None).
+        transactional: Flag to indicate if the registry should be transactional or
+        not (default = False).
 
     Examples
     --------
@@ -48,18 +50,20 @@ class RedisRegistry(ArtifactManager):
     >>> loaded_artifact = registry.load(skeys, dkeys)
     """
 
-    __slots__ = ("client", "ttl", "cache_registry")
+    __slots__ = ("client", "ttl", "cache_registry", "transactional")
 
     def __init__(
         self,
         client: redis_client_t,
         ttl: int = 604800,
         cache_registry: Optional[ArtifactCache] = None,
+        transactional: bool = True,
     ):
         super().__init__("")
         self.client = client
         self.ttl = ttl
         self.cache_registry = cache_registry
+        self.transactional = transactional
 
     @staticmethod
     def construct_key(skeys: KEYS, dkeys: KEYS) -> str:
@@ -171,6 +175,7 @@ class RedisRegistry(ArtifactManager):
 
     def __load_version_artifact(self, version: str, key: str) -> ArtifactData:
         model_key = self.__construct_version_key(key, version)
+        print(model_key)
         if not self.client.exists(model_key):
             raise ModelKeyNotFound("Could not find model key with key: %s" % model_key)
         return self.__get_artifact_data(
@@ -178,7 +183,7 @@ class RedisRegistry(ArtifactManager):
         )
 
     def __save_artifact(
-        self, pipe, artifact: artifact_t, metadata: META_T, key: KEYS, version: str
+        self, pipe, artifact: artifact_t, key: KEYS, version: str, **metadata: META_T
     ) -> str:
         new_version_key = self.__construct_version_key(key, version)
         latest_key = self.__construct_latest_key(key)
@@ -210,6 +215,8 @@ class RedisRegistry(ArtifactManager):
          is needed to load the respective artifact.
 
          If cache registry is provided, it will first check the cache registry for the artifact.
+         If latest is passed, latest key is saved otherwise version call saves the respective
+         version artifact in cache.
 
         Args:
         ----
@@ -239,7 +246,15 @@ class RedisRegistry(ArtifactManager):
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
-            if (not is_cached) and latest:
+            if not is_cached:
+                if latest:
+                    _LOGGER.info("Saving %s, in cache as %s", self.__construct_latest_key(key), key)
+                else:
+                    _LOGGER.info(
+                        "Saving %s,  in cache as %s",
+                        self.__construct_version_key(key, version),
+                        key,
+                    )
                 self._save_in_cache(key, artifact_data)
             return artifact_data
 
@@ -248,6 +263,7 @@ class RedisRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         artifact: artifact_t,
+        pipe=None,
         **metadata: META_VT,
     ) -> Optional[str]:
         """Saves the artifact into redis registry and updates version.
@@ -275,10 +291,16 @@ class RedisRegistry(ArtifactManager):
                 _LOGGER.debug("Latest key: %s exists for the model", latest_key)
                 version_key = self.client.get(name=latest_key)
                 version = int(self.get_version(version_key.decode())) + 1
-            with self.client.pipeline() as pipe:
-                new_version_key = self.__save_artifact(pipe, artifact, metadata, key, str(version))
-                pipe.expire(name=new_version_key, time=self.ttl)
-                pipe.execute()
+            redis_pipe = (
+                self.client.pipeline(transaction=self.transactional) if pipe is None else pipe
+            )
+            new_version_key = self.__save_artifact(
+                pipe=redis_pipe, artifact=artifact, key=key, version=str(version), **metadata
+            )
+            redis_pipe.expire(name=new_version_key, time=self.ttl)
+            # if pipe is None:
+            #     print(redis_pipe.command_stack)
+            #     redis_pipe.execute()
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
@@ -338,3 +360,48 @@ class RedisRegistry(ArtifactManager):
             raise RedisRegistryError("Error fetching timestamp information") from err
         stale_ts = (datetime.now() - timedelta(hours=freq_hr)).timestamp()
         return stale_ts > artifact_ts
+
+    def save_multiple(
+        self,
+        skeys: KEYS,
+        list_dkeys: list[KEYS],
+        list_artifacts: list[artifact_t],
+        **metadata: META_VT,
+    ):
+        """
+        Saves multiple artifacts into redis registry. The last save stores all the
+        artifact versions in the metadata.
+
+        Args:
+        ----
+            skeys: static key fields as list/tuple of strings
+            list_dkeys: list of dynamic key fields as list/tuple of strings
+            list_artifacts: list of primary artifacts to be saved
+            metadata: additional metadata surrounding the artifact that needs to be saved.
+        """
+        dict_model_ver = {}
+        try:
+            with self.client.pipeline(transaction=self.transactional) as pipe:
+                pipe.multi()
+                for count, (key, artifact) in enumerate(zip(list_dkeys, list_artifacts)):
+                    if count == len(list_artifacts) - 1:
+                        self.save(
+                            skeys=skeys,
+                            dkeys=key,
+                            artifact=artifact,
+                            pipe=pipe,
+                            artifact_versions=dict_model_ver,
+                            **metadata,
+                        )
+                        break
+                    dict_model_ver = {
+                        ":".join(key): self.save(
+                            skeys=skeys, dkeys=key, artifact=artifact, pipe=pipe, **metadata
+                        )
+                    }
+                pipe.execute()
+            _LOGGER.info("Successfully saved all the artifacts with: %s", dict_model_ver)
+        except RedisError as err:
+            raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
+        else:
+            return dict_model_ver

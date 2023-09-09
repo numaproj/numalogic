@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from typing import Optional
 
 import numpy as np
@@ -81,19 +82,20 @@ def _load_model(
     artifact_t object
 
     """
+    version_to_load = "-1"
+    str_dkeys = ":".join(dkeys)
+    if payload.metadata and "artifact_versions" in payload.metadata:
+        version_to_load = payload.metadata["artifact_versions"][str_dkeys]
     try:
-        artifact = model_registry.load(skeys, dkeys)
-        _LOGGER.info(
-            "%s - Loaded Model. Source: %s , version: %s, Keys: %s, %s",
-            payload.uuid,
-            artifact.extras.get("source"),
-            artifact.extras.get("version"),
-            skeys,
-            dkeys,
-        )
+        if version_to_load == -1:
+            artifact = model_registry.load(skeys=skeys, dkeys=dkeys)
+        else:
+            artifact = model_registry.load(
+                skeys=skeys, dkeys=dkeys, latest=False, version=version_to_load
+            )
     except RedisRegistryError:
         _LOGGER.exception(
-            "%s - Error while fetching preproc artifact, Keys: %s, Metrics: %s",
+            "%s - Error while fetching artifact, Keys: %s, Metrics: %s",
             payload.uuid,
             skeys,
             payload.metrics,
@@ -109,4 +111,20 @@ def _load_model(
         )
         return None
     else:
+        _LOGGER.info(
+            "%s - Loaded Model. Source: %s , version: %s, Keys: %s, %s",
+            payload.uuid,
+            artifact.extras.get("source"),
+            artifact.extras.get("version"),
+            skeys,
+            dkeys,
+        )
+        if artifact.metadata and "artifact_versions" in artifact.metadata:
+            replace(
+                payload,
+                metadata={
+                    "artifact_versions": artifact.metadata["artifact_versions"],
+                    **payload.metadata,
+                },
+            )
         return artifact
