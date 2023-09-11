@@ -89,17 +89,12 @@ class PrometheusFetcher(DataFetcher):
             LOGGER.warning("Query returned no results")
             return df
 
-        df = df[["values", *return_labels]]
-        df = df.explode("values", ignore_index=True)
-        df[["timestamp", metric_name]] = df["values"].to_list()
-        df.drop(columns=["values"], inplace=True)
-        df = df.astype({metric_name: float})
-
-        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
-        df.sort_values(by=["timestamp"], inplace=True)
+        df = self._consolidate_df(df, metric_name, return_labels)
 
         if aggregate and return_labels:
-            df = df.groupby(by=["timestamp"]).apply(lambda x: x[[metric_name]].mean())
+            df = self._agg_df(df, metric_name)
+
+        df.sort_values(by=["timestamp"], inplace=True)
 
         return df
 
@@ -122,19 +117,28 @@ class PrometheusFetcher(DataFetcher):
         return_labels = [f"metric.{label}" for label in return_labels or []]
         metric_name = self._extract_metric_name(df) or "metric"
 
+        df = self._consolidate_df(df, metric_name, return_labels)
+
+        if aggregate and return_labels:
+            df = self._agg_df(df, metric_name)
+
+        df.sort_values(by=["timestamp"], inplace=True)
+        return df
+
+    @staticmethod
+    def _agg_df(df, metric_name: str):
+        df = df.groupby(by=["timestamp"]).apply(lambda x: x[[metric_name]].mean())
+        df.reset_index(inplace=True)
+        return df
+
+    @staticmethod
+    def _consolidate_df(df: pd.DataFrame, metric_name: str, return_labels: list[str]):
         df = df[["values", *return_labels]]
         df = df.explode("values", ignore_index=True)
-
         df[["timestamp", metric_name]] = df["values"].to_list()
         df.drop(columns=["values"], inplace=True)
         df = df.astype({metric_name: float})
-
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
-        df.sort_values(by=["timestamp"], inplace=True)
-
-        if aggregate and return_labels:
-            df = df.groupby(by=["timestamp"]).apply(lambda x: x[[metric_name]].mean())
-
         return df
 
     @staticmethod
