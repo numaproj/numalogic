@@ -22,6 +22,7 @@ _LOGGER = logging.getLogger(__name__)
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
+LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 
 
 class InferenceUDF(NumalogicUDF):
@@ -37,7 +38,8 @@ class InferenceUDF(NumalogicUDF):
         super().__init__(is_async=False)
         model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
         self.model_registry = model_registry_cls(
-            client=r_client, cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL)
+            client=r_client,
+            cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
         )
         self.pl_conf = pl_conf or PipelineConf()
 
