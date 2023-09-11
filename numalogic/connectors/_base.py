@@ -10,7 +10,11 @@ class DataFetcher(metaclass=ABCMeta):
         self.url = url
 
     @abstractmethod
-    def fetch_data(self, *args, **kwargs) -> pd.DataFrame:
+    def fetch(self, *args, **kwargs) -> pd.DataFrame:
+        pass
+
+    @abstractmethod
+    def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
         pass
 
 
@@ -22,4 +26,8 @@ class AsyncDataFetcher(metaclass=ABCMeta):
 
     @abstractmethod
     async def fetch_data(self, *args, **kwargs) -> pd.DataFrame:
+        pass
+
+    @abstractmethod
+    async def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
         pass

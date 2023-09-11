@@ -44,7 +44,7 @@ class TestDruid(unittest.TestCase):
 
     @patch.object(PyDruid, "groupby", Mock(return_value=mock_group_by()))
     def test_fetch_data(self):
-        _out = self.druid.fetch_data(
+        _out = self.druid.fetch(
             filter_keys=["assetId"],
             filter_values=["5984175597303660107"],
             dimensions=["ciStatus"],

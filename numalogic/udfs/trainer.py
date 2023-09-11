@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 from numalogic.base import StatelessTransformer
 from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
 from numalogic.config._config import TrainerConf
-from numalogic.connectors.druid import DruidFetcher
+from numalogic.config.factory import ConnectorFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
@@ -43,14 +43,13 @@ class TrainerUDF(NumalogicUDF):
         super().__init__(is_async=False)
         self.r_client = r_client
         model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
-        self.model_registry = model_registry_cls(
-            client=r_client
-        )
+        self.model_registry = model_registry_cls(client=r_client)
         self.pl_conf = pl_conf or PipelineConf()
         self.druid_conf = self.pl_conf.druid_conf
 
+        data_fetcher_cls = ConnectorFactory.get_cls("DruidFetcher")
         try:
-            self.data_fetcher = DruidFetcher(
+            self.data_fetcher = data_fetcher_cls(
                 url=self.druid_conf.url, endpoint=self.druid_conf.endpoint
             )
         except AttributeError:
@@ -307,7 +306,7 @@ class TrainerUDF(NumalogicUDF):
         _conf = self.get_conf(payload.config_id)
 
         try:
-            _df = self.data_fetcher.fetch_data(
+            _df = self.data_fetcher.fetch(
                 datasource=self.druid_conf.fetcher.datasource,
                 filter_keys=_conf.composite_keys,
                 filter_values=payload.composite_keys,

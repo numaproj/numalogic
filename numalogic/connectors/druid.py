@@ -27,7 +27,7 @@ class DruidFetcher(DataFetcher):
         super().__init__(url)
         self.client = PyDruid(url, endpoint)
 
-    def fetch_data(
+    def fetch(
         self,
         datasource: str,
         filter_keys: list[str],
@@ -88,3 +88,6 @@ class DruidFetcher(DataFetcher):
             df.columns = df.columns.map("{0[1]}".format)
             df.reset_index(inplace=True)
         return df
+
+    def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError

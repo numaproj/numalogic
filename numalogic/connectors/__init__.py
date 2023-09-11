@@ -6,6 +6,8 @@ from numalogic.connectors._config import (
     DruidFetcherConf,
     ConnectorType,
 )
+from numalogic.connectors.prometheus import PrometheusFetcher
+from numalogic.connectors.druid import DruidFetcher
 
 __all__ = [
     "RedisConf",
@@ -14,4 +16,6 @@ __all__ = [
     "DruidConf",
     "DruidFetcherConf",
     "ConnectorType",
+    "PrometheusFetcher",
+    "DruidFetcher",
 ]

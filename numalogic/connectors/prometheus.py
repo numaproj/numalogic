@@ -5,7 +5,6 @@ from functools import reduce
 from operator import iconcat
 from typing import Optional, Final
 
-import numpy as np
 import orjson
 import pandas as pd
 import requests
@@ -45,7 +44,7 @@ class PrometheusFetcher(DataFetcher):
             return f"{metric}{{{label_filters}}}"
         return query
 
-    def fetch_data(
+    def fetch(
         self,
         metric_name: str,
         start: datetime,
@@ -53,7 +52,6 @@ class PrometheusFetcher(DataFetcher):
         filters: Optional[dict[str, str]] = None,
         return_labels: Optional[list[str]] = None,
         aggregate: bool = True,
-        fill_na_value: float = 0.0,
     ) -> pd.DataFrame:
         """
         Fetches data from Prometheus/Thanos and returns a dataframe.
@@ -80,16 +78,9 @@ class PrometheusFetcher(DataFetcher):
         """
         query = self.build_query(metric_name, filters)
 
-        LOGGER.debug("Prometheus Query: %s", query)
+        LOGGER.info("Constructed Prometheus Query: %s", query)
 
-        if not end:
-            end = datetime.now()
-        end_ts = int(end.timestamp())
-        start_ts = int(start.timestamp())
-
-        if end_ts < start_ts:
-            raise ValueError(f"end_time: {end} must not be before start_time: {start}")
-
+        end_ts, start_ts = self._init_startend_ts(end, start)
         results = self.query_range(query, start_ts, end_ts)
 
         df = pd.json_normalize(results)
@@ -107,13 +98,70 @@ class PrometheusFetcher(DataFetcher):
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
         df.sort_values(by=["timestamp"], inplace=True)
 
-        df.replace([np.inf, -np.inf], np.nan, inplace=True)
-        df = df.fillna(fill_na_value)
+        if aggregate and return_labels:
+            df = df.groupby(by=["timestamp"]).apply(lambda x: x[[metric_name]].mean())
+
+        return df
+
+    def raw_fetch(
+        self,
+        query: str,
+        start: datetime,
+        end: Optional[datetime] = None,
+        return_labels: Optional[list[str]] = None,
+        aggregate: bool = True,
+    ):
+        end_ts, start_ts = self._init_startend_ts(end, start)
+        results = self.query_range(query, start_ts, end_ts)
+
+        df = pd.json_normalize(results)
+        if df.empty:
+            LOGGER.warning("Query returned no results")
+            return df
+
+        return_labels = [f"metric.{label}" for label in return_labels or []]
+        metric_name = self._extract_metric_name(df) or "metric"
+
+        df = df[["values", *return_labels]]
+        df = df.explode("values", ignore_index=True)
+
+        df[["timestamp", metric_name]] = df["values"].to_list()
+        df.drop(columns=["values"], inplace=True)
+        df = df.astype({metric_name: float})
+
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+        df.sort_values(by=["timestamp"], inplace=True)
 
         if aggregate and return_labels:
             df = df.groupby(by=["timestamp"]).apply(lambda x: x[[metric_name]].mean())
 
         return df
+
+    @staticmethod
+    def _init_startend_ts(end: datetime, start: datetime) -> tuple[int, int]:
+        if not end:
+            end = datetime.now()
+        end_ts = int(end.timestamp())
+        start_ts = int(start.timestamp())
+        if end_ts < start_ts:
+            raise ValueError(f"end_time: {end} must not be before start_time: {start}")
+        return end_ts, start_ts
+
+    @staticmethod
+    def _extract_metric_name(df: pd.DataFrame) -> Optional[str]:
+        try:
+            metric_name = df["metric.__name__"].item()
+        except ValueError as err:
+            metric_names = df["metric.__name__"].unique()
+            if len(metric_names) > 1:
+                raise PrometheusInvalidResponseError(
+                    f"More than 1 metric names " f"were extracted in the query: {metric_names}"
+                ) from err
+            return metric_names[0]
+        except KeyError:
+            LOGGER.warning("Could not infer metric name from results")
+            return None
+        return metric_name
 
     def _api_query_range(self, query: str, start_ts: int, end_ts: int) -> list[dict]:
         """Queries Prometheus API for data.""" ""

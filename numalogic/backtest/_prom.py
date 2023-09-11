@@ -88,9 +88,9 @@ class PromUnivarBacktester:
         _key = ":".join([appname, metric])
         return os.path.join(outdir, _key)
 
-    def read_data(self) -> pd.DataFrame:
+    def read_data(self, fill_na_value: float = 0.0) -> pd.DataFrame:
         datafetcher = PrometheusFetcher(self._url)
-        df = datafetcher.fetch_data(
+        df = datafetcher.fetch(
             metric_name=self.metric,
             start=(datetime.now() - timedelta(days=self.lookback_days)),
             end=datetime.now(),
@@ -104,6 +104,10 @@ class PromUnivarBacktester:
 
         df.set_index(["timestamp"], inplace=True)
         df.index = pd.to_datetime(df.index)
+
+        df.replace([np.inf, -np.inf], np.nan, inplace=True)
+        df = df.fillna(fill_na_value)
+
         df.to_csv(self._datapath, index=True)
         return df
 

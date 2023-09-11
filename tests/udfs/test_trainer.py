@@ -58,7 +58,7 @@ class TrainTrainerUDF(unittest.TestCase):
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data()))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_01(self):
         self.udf.register_conf(
             "druid-config",
@@ -78,7 +78,7 @@ class TrainTrainerUDF(unittest.TestCase):
             ),
         )
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data()))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_02(self):
         self.udf.register_conf(
             "druid-config",
@@ -100,7 +100,7 @@ class TrainTrainerUDF(unittest.TestCase):
             ),
         )
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data()))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_03(self):
         self.udf.register_conf(
             "druid-config",
@@ -127,7 +127,7 @@ class TrainTrainerUDF(unittest.TestCase):
         with self.assertRaises(ConfigNotFoundError):
             udf(KEYS, self.datum)
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data(nrows=10)))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data(nrows=10)))
     def test_trainer_data_insufficient(self):
         self.udf.register_conf(
             "druid-config",
@@ -148,7 +148,7 @@ class TrainTrainerUDF(unittest.TestCase):
             )
         )
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(side_effect=RuntimeError))
+    @patch.object(DruidFetcher, "fetch", Mock(side_effect=RuntimeError))
     def test_trainer_datafetcher_err(self):
         self.udf.register_conf(
             "druid-config",
