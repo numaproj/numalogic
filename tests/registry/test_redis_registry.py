@@ -239,3 +239,16 @@ class TestRedisRegistry(unittest.TestCase):
     def test_exception_call3(self):
         with self.assertRaises(RedisRegistryError):
             self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version="0")
+
+    @patch("redis.Redis.set", Mock(side_effect=ConnectionError))
+    def test_exception_call4(self):
+        with self.assertRaises(RedisRegistryError):
+            self.registry.save_multiple(
+                skeys=self.skeys, list_dkeys=[self.dkeys], list_artifacts=[self.pytorch_model]
+            )
+
+    def test_exception_call5(self):
+        with self.assertRaises(IndexError):
+            self.registry.save_multiple(
+                skeys=self.skeys, list_dkeys=[self.dkeys], list_artifacts=[]
+            )
