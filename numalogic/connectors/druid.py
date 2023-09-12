@@ -51,9 +51,7 @@ class DruidFetcher:
         start_dt = end_dt - timedelta(hours=hours)
         intervals = f"{start_dt.isoformat()}/{end_dt.isoformat()}"
 
-        dimension_specs = []
-        for d in dimensions:
-            dimension_specs.append(DimensionSpec(dimension=d, output_name=d))
+        dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
 
         params = {
             "datasource": datasource,
