@@ -92,3 +92,9 @@ class PrometheusInvalidResponseError(PrometheusFetcherError):
     """Raised when the Prometheus response is not a success."""
 
     pass
+
+
+class DataFormatError(Exception):
+    """Raised when the data format is not valid."""
+
+    pass
