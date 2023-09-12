@@ -385,6 +385,8 @@ class RedisRegistry(ArtifactManager):
             metadata: additional metadata surrounding the artifact that needs to be saved.
         """
         dict_model_ver = {}
+        if len(list_artifacts) != len(list_dkeys):
+            raise IndexError("artifact list and dkeys list should have same length!")
         try:
             with self.client.pipeline(transaction=self.transactional) as pipe:
                 pipe.multi()
@@ -405,7 +407,5 @@ class RedisRegistry(ArtifactManager):
             _LOGGER.info("Successfully saved all the artifacts with: %s", dict_model_ver)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
-        except IndexError as index_err:
-            raise RedisRegistryError(f"{index_err.__class__.__name__} raised") from index_err
         else:
             return dict_model_ver
