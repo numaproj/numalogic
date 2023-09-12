@@ -1,3 +1,14 @@
+# Copyright 2022 The Numaproj Authors.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import logging
 import os.path
 from datetime import datetime, timedelta
@@ -49,6 +60,21 @@ def _init_default_streamconf(metrics: list[str]) -> StreamConf:
 
 
 class PromUnivarBacktester:
+    """
+    Class for running backtest for a single metric on data from Prometheus or Thanos.
+
+    Args:
+        url: Prometheus/Thanos URL
+        namespace: Namespace of the metric
+        appname: Application name
+        metric: Metric name
+        return_labels: Prometheus label names as columns to return
+        lookback_days: Number of days of data to fetch
+        output_dir: Output directory
+        test_ratio: Ratio of test data to total data
+        stream_conf: Stream configuration
+    """
+
     def __init__(
         self,
         url: str,
@@ -83,12 +109,23 @@ class PromUnivarBacktester:
 
     @classmethod
     def get_outdir(cls, appname: str, metric: str, outdir=DEFAULT_OUTPUT_DIR) -> str:
+        """Get the output directory for the given metric."""
         if not appname:
             return os.path.join(outdir, metric)
         _key = ":".join([appname, metric])
         return os.path.join(outdir, _key)
 
     def read_data(self, fill_na_value: float = 0.0) -> pd.DataFrame:
+        """
+        Reads data from Prometheus/Thanos and returns a dataframe.
+
+        Args:
+            fill_na_value: Value to fill NaNs with
+
+        Returns
+        -------
+            Dataframe with timestamp and metric values
+        """
         datafetcher = PrometheusFetcher(self._url)
         df = datafetcher.fetch(
             metric_name=self.metric,
@@ -115,6 +152,16 @@ class PromUnivarBacktester:
         self,
         df: Optional[pd.DataFrame] = None,
     ) -> dict[str, artifact_t]:
+        """
+        Train models for the given data.
+
+        Args:
+            df: Dataframe with timestamp and metric values
+
+        Returns
+        -------
+            Dictionary of trained models
+        """
         if df is None:
             df = self._read_or_fetch_data()
 
@@ -139,6 +186,17 @@ class PromUnivarBacktester:
     def generate_scores(
         self, df: Optional[pd.DataFrame] = None, model_path: Optional[str] = None
     ) -> pd.DataFrame:
+        """
+        Generate scores for the given data.
+
+        Args:
+            df: Dataframe with timestamp and metric values
+            model_path: Path to the saved models
+
+        Returns
+        -------
+            Dataframe with timestamp and metric values
+        """
         if df is None:
             df = self._read_or_fetch_data()
 
@@ -184,6 +242,13 @@ class PromUnivarBacktester:
     def save_plots(
         self, output_df: Optional[pd.DataFrame] = None, plotname: str = "plot.png"
     ) -> None:
+        """
+        Save plots for the given data.
+
+        Args:
+            output_df: Dataframe with timestamp, and anomaly scores
+            plotname: Name of the plot file
+        """
         if output_df is None:
             output_df = pd.read_csv(self._outpath, index_col="timestamp", parse_dates=True)
 
