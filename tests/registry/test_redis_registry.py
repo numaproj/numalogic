@@ -210,7 +210,7 @@ class TestRedisRegistry(unittest.TestCase):
             skeys=self.skeys, dkeys=self.dkeys, latest=False, version=old_version
         )
         self.assertEqual("registry", artifact_data_1.extras["source"])
-        self.assertEqual("registry", artifact_data_2.extras["source"])
+        self.assertEqual("cache", artifact_data_2.extras["source"])
 
     def test_delete_version(self):
         version = self.registry.save(

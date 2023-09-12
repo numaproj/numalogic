@@ -16,11 +16,12 @@ from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
-from numalogic.udfs.tools import _load_model
+from numalogic.udfs.tools import _load_artifact
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
+LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,8 +89,12 @@ class PostprocessUDF(NumalogicUDF):
         postprocess_cfg = self.get_conf(payload.config_id).numalogic_conf.postprocess
 
         # load artifact
-        thresh_artifact = _load_model(
-            skeys=keys, dkeys=[thresh_cfg.name], payload=payload, model_registry=self.model_registry
+        thresh_artifact, payload = _load_artifact(
+            skeys=keys,
+            dkeys=[thresh_cfg.name],
+            payload=payload,
+            model_registry=self.model_registry,
+            load_latest=LOAD_LATEST,
         )
         postproc_clf = self.postproc_factory.get_instance(postprocess_cfg)
 

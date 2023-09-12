@@ -119,7 +119,7 @@ class TestPostProcessUDF(unittest.TestCase):
             )
         )
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
-        self.assertEqual(1, len(msg))
+        self.assertEqual(2, len(msg))
 
     def test_postprocess_all_model_present(self):
         data = deepcopy(DATA)

@@ -18,13 +18,14 @@ from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
-from numalogic.udfs.tools import _load_model
+from numalogic.udfs.tools import _load_artifact
 
 _LOGGER = logging.getLogger(__name__)
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
+LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
 
 class InferenceUDF(NumalogicUDF):
@@ -116,11 +117,12 @@ class InferenceUDF(NumalogicUDF):
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST:
             return Messages(Message(keys=keys, value=payload.to_json()))
-        artifact_data = _load_model(
+        artifact_data, payload = _load_artifact(
             skeys=keys,
             dkeys=[self.get_conf(payload.config_id).numalogic_conf.model.name],
             payload=payload,
             model_registry=self.model_registry,
+            load_latest=LOAD_LATEST,
         )
 
         # TODO: revisit retraining logic
