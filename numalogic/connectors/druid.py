@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytz
 from pydruid.client import PyDruid
+from pydruid.utils.dimensions import DimensionSpec
 from pydruid.utils.filters import Filter
 from numalogic.connectors._config import Pivot
 from typing import Optional
@@ -50,13 +51,17 @@ class DruidFetcher:
         start_dt = end_dt - timedelta(hours=hours)
         intervals = f"{start_dt.isoformat()}/{end_dt.isoformat()}"
 
+        dimension_specs = []
+        for d in dimensions:
+            dimension_specs.append(DimensionSpec(dimension=d, output_name=d))
+
         params = {
             "datasource": datasource,
             "granularity": granularity,
             "intervals": intervals,
             "aggregations": aggregations,
             "filter": _filter,
-            "dimensions": dimensions,
+            "dimensions": dimension_specs,
         }
 
         _LOGGER.debug(
