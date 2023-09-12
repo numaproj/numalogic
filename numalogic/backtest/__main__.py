@@ -4,12 +4,11 @@ from pathlib import Path
 from typing import Annotated
 from typing import Optional
 
-import pandas as pd
 import typer
 
 import numalogic.backtest._bt as bt
 from numalogic.backtest._constants import DEFAULT_OUTPUT_DIR
-from numalogic.backtest._prom import PromUnivarBacktester
+from numalogic.backtest._clifunc import clear_outputs, train_models, generate_scores
 
 logging.basicConfig(level=logging.INFO)
 
@@ -25,6 +24,7 @@ def clear(
     output_dir: str = DEFAULT_OUTPUT_DIR,
     all_: Annotated[bool, typer.Option("--all")] = False,
 ):
+    """CLI entrypoint for clearing the backtest output files."""
     if all_:
         print(f"Clearing all the backtest output files in {output_dir}")
         try:
@@ -38,9 +38,7 @@ def clear(
         print(_msg)
         return
 
-    _dir = PromUnivarBacktester.get_outdir(appname, metric, outdir=output_dir)
-    print(f"Clearing backtest output files in {_dir}")
-    shutil.rmtree(_dir, ignore_errors=False, onerror=None)
+    clear_outputs(appname=appname, metric=metric, output_dir=output_dir)
 
 
 @app.command()
@@ -50,19 +48,14 @@ def train(
     train_ratio: Annotated[float, typer.Option()] = 0.9,
     output_dir: Annotated[Optional[Path], typer.Option()] = DEFAULT_OUTPUT_DIR,
 ):
+    """CLI entrypoint for training models for the given data."""
     if (data_file is None) or (col_name is None):
         print("No data file or column name provided!")
         raise typer.Abort()
 
-    backtester = PromUnivarBacktester(
-        "", "", "", col_name, test_ratio=(1 - train_ratio), output_dir=output_dir
+    train_models(
+        data_file=data_file, col_name=col_name, train_ratio=train_ratio, output_dir=output_dir
     )
-
-    df = pd.read_csv(data_file)
-    df.set_index(["timestamp"], inplace=True)
-    df.index = pd.to_datetime(df.index)
-
-    backtester.train_models(df)
 
 
 @app.command()
@@ -72,18 +65,11 @@ def score(
     model_path: Annotated[Optional[Path], typer.Option()] = None,
     test_ratio: Annotated[float, typer.Option()] = 1.0,
 ):
+    """CLI entrypoint for generating scores for the given data."""
     if (data_file is None) or (col_name is None):
         print("No data file or column name provided!")
         raise typer.Abort()
 
-    backtester = PromUnivarBacktester("", "", "", col_name, test_ratio=test_ratio)
-
-    df = pd.read_csv(data_file)
-    df.set_index(["timestamp"], inplace=True)
-    df.index = pd.to_datetime(df.index)
-
-    backtester.generate_scores(df, model_path=model_path)
-
-
-if __name__ == "__main__":
-    app()
+    generate_scores(
+        data_file=data_file, col_name=col_name, model_path=model_path, test_ratio=test_ratio
+    )

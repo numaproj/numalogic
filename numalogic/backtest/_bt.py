@@ -2,8 +2,8 @@ from typing import Annotated
 
 import typer
 
+from numalogic.backtest._clifunc import univar_backtest, multivar_backtest
 from numalogic.backtest._constants import DEFAULT_PROM_LOCALHOST
-from numalogic.backtest._prom import PromUnivarBacktester
 
 app = typer.Typer()
 
@@ -18,13 +18,13 @@ def univariate(
     ] = DEFAULT_PROM_LOCALHOST,
     lookback_days: Annotated[int, typer.Option(help="Number of days of data to fetch")] = 8,
 ):
-    backtester = PromUnivarBacktester(url, namespace, appname, metric, lookback_days=lookback_days)
-    df = backtester.read_data()
-    backtester.train_models(df)
-    out_df = backtester.generate_scores(df)
-    backtester.save_plots(out_df)
+    """CLI entry point for backtest run for a single metric."""
+    univar_backtest(
+        namespace=namespace, appname=appname, metric=metric, url=url, lookback_days=lookback_days
+    )
 
 
 @app.command()
 def multivariate():
-    raise NotImplementedError
+    """CLI entry point for backtest run for multiple metrics in a multivariate fashion."""
+    multivar_backtest()
