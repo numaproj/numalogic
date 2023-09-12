@@ -159,27 +159,33 @@ class RedisRegistry(ArtifactManager):
         ------
             ModelKeyNotFound: If the model key is not found in the registry.
         """
-        cached_artifact = self._load_from_cache(key)
-        if cached_artifact:
-            _LOGGER.debug("Found cached artifact for key: %s", key)
-            return cached_artifact, True
         latest_key = self.__construct_latest_key(key)
+        cached_artifact = self._load_from_cache(latest_key)
+        if cached_artifact:
+            _LOGGER.debug("Found cached artifact for key: %s", latest_key)
+            return cached_artifact, True
         if not self.client.exists(latest_key):
             raise ModelKeyNotFound(f"latest key: {latest_key}, Not Found !!!")
         model_key = self.client.get(latest_key)
         _LOGGER.debug("latest key, %s, is pointing to the key : %s", latest_key, model_key)
-        return (
-            self.__load_version_artifact(version=self.get_version(model_key.decode()), key=key),
-            False,
+        artifact, _ = self.__load_version_artifact(
+            version=self.get_version(model_key.decode()), key=key
         )
+        return artifact, False
 
-    def __load_version_artifact(self, version: str, key: str) -> ArtifactData:
-        model_key = self.__construct_version_key(key, version)
-        print(model_key)
-        if not self.client.exists(model_key):
-            raise ModelKeyNotFound("Could not find model key with key: %s" % model_key)
-        return self.__get_artifact_data(
-            model_key=model_key,
+    def __load_version_artifact(self, version: str, key: str) -> tuple[ArtifactData, bool]:
+        version_key = self.__construct_version_key(key, version)
+        cached_artifact = self._load_from_cache(version_key)
+        if cached_artifact:
+            _LOGGER.debug("Found cached version artifact for key: %s", version_key)
+            return cached_artifact, True
+        if not self.client.exists(version_key):
+            raise ModelKeyNotFound("Could not find model key with key: %s" % version_key)
+        return (
+            self.__get_artifact_data(
+                model_key=version_key,
+            ),
+            False,
         )
 
     def __save_artifact(
@@ -237,25 +243,25 @@ class RedisRegistry(ArtifactManager):
         if (latest and version) or (not latest and not version):
             raise ValueError("Either One of 'latest' or 'version' needed in load method call")
         key = self.construct_key(skeys, dkeys)
-        is_cached = False
         try:
             if latest:
                 artifact_data, is_cached = self.__load_latest_artifact(key)
             else:
-                artifact_data = self.__load_version_artifact(version, key)
+                artifact_data, is_cached = self.__load_version_artifact(version, key)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
             if not is_cached:
                 if latest:
                     _LOGGER.info("Saving %s, in cache as %s", self.__construct_latest_key(key), key)
+                    self._save_in_cache(self.__construct_latest_key(key), artifact_data)
                 else:
                     _LOGGER.info(
                         "Saving %s,  in cache as %s",
                         self.__construct_version_key(key, version),
                         key,
                     )
-                self._save_in_cache(key, artifact_data)
+                    self._save_in_cache(self.__construct_version_key(key, version), artifact_data)
             return artifact_data
 
     def save(
@@ -298,9 +304,8 @@ class RedisRegistry(ArtifactManager):
                 pipe=redis_pipe, artifact=artifact, key=key, version=str(version), **metadata
             )
             redis_pipe.expire(name=new_version_key, time=self.ttl)
-            # if pipe is None:
-            #     print(redis_pipe.command_stack)
-            #     redis_pipe.execute()
+            if pipe is None:
+                redis_pipe.execute()
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
@@ -384,6 +389,9 @@ class RedisRegistry(ArtifactManager):
             with self.client.pipeline(transaction=self.transactional) as pipe:
                 pipe.multi()
                 for count, (key, artifact) in enumerate(zip(list_dkeys, list_artifacts)):
+                    dict_model_ver[":".join(key)] = self.save(
+                        skeys=skeys, dkeys=key, artifact=artifact, pipe=pipe, **metadata
+                    )
                     if count == len(list_artifacts) - 1:
                         self.save(
                             skeys=skeys,
@@ -393,15 +401,11 @@ class RedisRegistry(ArtifactManager):
                             artifact_versions=dict_model_ver,
                             **metadata,
                         )
-                        break
-                    dict_model_ver = {
-                        ":".join(key): self.save(
-                            skeys=skeys, dkeys=key, artifact=artifact, pipe=pipe, **metadata
-                        )
-                    }
                 pipe.execute()
             _LOGGER.info("Successfully saved all the artifacts with: %s", dict_model_ver)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
+        except IndexError as index_err:
+            raise RedisRegistryError(f"{index_err.__class__.__name__} raised") from index_err
         else:
             return dict_model_ver

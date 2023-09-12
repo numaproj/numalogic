@@ -66,9 +66,13 @@ def make_stream_payload(
 
 
 # TODO: move to base NumalogicUDF class
-def _load_model(
-    skeys: KEYS, dkeys: KEYS, payload: StreamPayload, model_registry: ArtifactManager
-) -> Optional[ArtifactData]:
+def _load_artifact(
+    skeys: KEYS,
+    dkeys: KEYS,
+    payload: StreamPayload,
+    model_registry: ArtifactManager,
+    load_latest: bool,
+) -> tuple[Optional[ArtifactData], StreamPayload]:
     """
     Load artifact from redis
     Args:
@@ -80,27 +84,35 @@ def _load_model(
     Returns
     -------
     artifact_t object
+    StreamPayload object
 
     """
     version_to_load = "-1"
-    str_dkeys = ":".join(dkeys)
     if payload.metadata and "artifact_versions" in payload.metadata:
-        version_to_load = payload.metadata["artifact_versions"][str_dkeys]
+        version_to_load = payload.metadata["artifact_versions"][":".join(dkeys)]
+        _LOGGER.info("%s - Found version info for keys: %s, %s", payload.uuid, skeys, dkeys)
+    else:
+        _LOGGER.info(
+            "%s - No version info passed on! Loading latest artifact version for Keys: %s",
+            payload.uuid,
+            skeys,
+        )
+        load_latest = True
     try:
-        if version_to_load == -1:
+        if load_latest:
             artifact = model_registry.load(skeys=skeys, dkeys=dkeys)
         else:
             artifact = model_registry.load(
                 skeys=skeys, dkeys=dkeys, latest=False, version=version_to_load
             )
     except RedisRegistryError:
-        _LOGGER.exception(
+        _LOGGER.warning(
             "%s - Error while fetching artifact, Keys: %s, Metrics: %s",
             payload.uuid,
             skeys,
             payload.metrics,
         )
-        return None
+        return None, payload
 
     except Exception:
         _LOGGER.exception(
@@ -109,7 +121,7 @@ def _load_model(
             payload.composite_keys,
             payload.metrics,
         )
-        return None
+        return None, payload
     else:
         _LOGGER.info(
             "%s - Loaded Model. Source: %s , version: %s, Keys: %s, %s",
@@ -120,11 +132,11 @@ def _load_model(
             dkeys,
         )
         if artifact.metadata and "artifact_versions" in artifact.metadata:
-            replace(
+            payload = replace(
                 payload,
                 metadata={
                     "artifact_versions": artifact.metadata["artifact_versions"],
                     **payload.metadata,
                 },
             )
-        return artifact
+        return artifact, payload

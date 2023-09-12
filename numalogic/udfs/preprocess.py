@@ -16,11 +16,12 @@ from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import Status, Header
-from numalogic.udfs.tools import make_stream_payload, get_df, _load_model
+from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
+LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -108,7 +109,7 @@ class PreprocessUDF(NumalogicUDF):
         if any(
             [_conf.stateful for _conf in self.get_conf(payload.config_id).numalogic_conf.preprocess]
         ):
-            preproc_artifact = _load_model(
+            preproc_artifact, payload = _load_artifact(
                 skeys=keys,
                 dkeys=[
                     _conf.name
@@ -116,6 +117,7 @@ class PreprocessUDF(NumalogicUDF):
                 ],
                 payload=payload,
                 model_registry=self.model_registry,
+                load_latest=LOAD_LATEST,
             )
             if preproc_artifact:
                 preproc_clf = preproc_artifact.artifact

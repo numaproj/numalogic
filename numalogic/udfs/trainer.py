@@ -201,7 +201,7 @@ class TrainerUDF(NumalogicUDF):
         # Save in reverse order so that version info is stored for other models in the
         # metadata of first model
         list_artifacts = [artifacts["threshold_clf"], artifacts["model"], artifacts["preproc_clf"]]
-        list_dkeys = [thresh_dkeys, preproc_dkeys, model_dkeys]
+        list_dkeys = [thresh_dkeys, model_dkeys, preproc_dkeys]
         list_dkeys_save, list_artifacts_save = self.artifacts_to_save(
             list_dkeys=list_dkeys, list_artifacts=list_artifacts
         )

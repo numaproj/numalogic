@@ -37,7 +37,7 @@ mlflow-skinny = { version = ">2.0, <3.0", optional = true }
 redis = {extras = ["hiredis"], version = "^5.0", optional = true}
 pynumaflow = { version = "~0.4", optional = true }
 boto3 = { version = "^1.24.64", optional = true }
-pydruid= {git="git@github.com:cosmic-chichu/pydruid.git", branch = "master", optional = true }
+pydruid = {version = "^0.6", optional = true }
 
 [tool.poetry.extras]
 mlflow = ["mlflow-skinny"]

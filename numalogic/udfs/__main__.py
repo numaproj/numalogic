@@ -12,8 +12,13 @@ LOGGER = logging.getLogger(__name__)
 CONF_FILE_PATH = os.getenv(
     "CONF_PATH", default=os.path.join(BASE_CONF_DIR, "default-configs", "config.yaml")
 )
+pipeline_conf = load_pipeline_conf(CONF_FILE_PATH)
+logging.info("Pipeline config: %s", pipeline_conf)
 
+redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
 
+for key in redis_client.scan_iter("*"):
+    redis_client.delete(key)
 if __name__ == "__main__":
     set_logger()
     step = sys.argv[1]
