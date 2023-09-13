@@ -20,7 +20,7 @@ from redis.exceptions import RedisError
 from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
-from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT, artifact_tuple
+from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT, ArtifactTuple
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -369,7 +369,7 @@ class RedisRegistry(ArtifactManager):
     def save_multiple(
         self,
         skeys: KEYS,
-        dict_artifacts: dict[str, artifact_tuple],
+        dict_artifacts: dict[str, ArtifactTuple],
         **metadata: META_VT,
     ):
         """
@@ -379,7 +379,7 @@ class RedisRegistry(ArtifactManager):
         Args:
         ----
             skeys: static key fields as list/tuple of strings
-
+            dict_artifacts: dict of artifacts to save
             metadata: additional metadata surrounding the artifact that needs to be saved.
         """
         dict_model_ver = {}

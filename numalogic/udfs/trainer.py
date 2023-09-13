@@ -18,10 +18,10 @@ from numalogic.config.factory import ConnectorFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
-from numalogic.tools.types import redis_client_t, artifact_t, KEYS, artifact_tuple
+from numalogic.tools.types import redis_client_t, artifact_t, KEYS, ArtifactTuple
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
-from numalogic.udfs.entities import TrainerPayload
+from numalogic.udfs.entities import TrainerPayload, StreamPayload
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -196,13 +196,13 @@ class TrainerUDF(NumalogicUDF):
         # TODO perform multi-save here
         skeys = payload.composite_keys
         dict_artifacts = {
-            "postproc": artifact_tuple(
+            "postproc": ArtifactTuple(
                 dkeys=[_conf.numalogic_conf.threshold.name], artifact=artifacts["threshold_clf"]
             ),
-            "inference": artifact_tuple(
+            "inference": ArtifactTuple(
                 dkeys=[_conf.numalogic_conf.model.name], artifact=artifacts["model"]
             ),
-            "preproc": artifact_tuple(
+            "preproc": ArtifactTuple(
                 dkeys=[_conf.name for _conf in _conf.numalogic_conf.preprocess],
                 artifact=artifacts["preproc_clf"],
             ),
@@ -232,14 +232,19 @@ class TrainerUDF(NumalogicUDF):
 
     @staticmethod
     def artifacts_to_save(
-        skeys, dict_artifacts: dict, model_registry, payload
-    ) -> tuple[list[KEYS], list[artifact_t]]:
+        skeys: KEYS,
+        dict_artifacts: dict[str, ArtifactTuple],
+        model_registry: RedisRegistry,
+        payload: StreamPayload,
+    ) -> None:
         """
-        Identify what artifacts to save in to the registry.
-
+        Save artifacts.
         Args:
-            list_artifacts: List of artifacts
-            list_dkeys: List of dkeys
+        _______
+        skeys: list keys
+        dict_artifacts: artifact_tuple which has dkeys and artifact as fields
+        model_registry: RedisRegistry type registry that supports multiple_save
+        payload: payload.
 
         Returns
         -------
