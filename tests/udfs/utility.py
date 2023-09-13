@@ -1,5 +1,6 @@
 import datetime
 import json
+from collections import namedtuple
 
 import numpy as np
 from pynumaflow.function import Datum, DatumMetadata
@@ -44,16 +45,19 @@ def store_in_redis(pl_conf, registry):
     if any(
         [_conf.stateful for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess]
     ):
+        artifact_tuple = namedtuple("artifact_tuple", ["dkeys", "artifact"])
         preproc_clf = make_pipeline(*preproc_clfs)
         preproc_clf.fit(np.asarray([[1, 3], [4, 6]]))
         registry.save_multiple(
             skeys=pl_conf.stream_confs["druid-config"].composite_keys,
-            list_dkeys=[
-                ["AE"],
-                [
-                    _conf.name
-                    for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess
-                ],
-            ],
-            list_artifacts=[VanillaAE(10), preproc_clf],
+            dict_artifacts={
+                "inference": artifact_tuple(dkeys=["AE"], artifact=VanillaAE(10)),
+                "preproc": artifact_tuple(
+                    dkeys=[
+                        _conf.name
+                        for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess
+                    ],
+                    artifact=preproc_clf,
+                ),
+            },
         )

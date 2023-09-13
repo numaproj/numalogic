@@ -20,7 +20,7 @@ from redis.exceptions import RedisError
 from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
-from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT
+from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT, artifact_tuple
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -369,8 +369,7 @@ class RedisRegistry(ArtifactManager):
     def save_multiple(
         self,
         skeys: KEYS,
-        list_dkeys: list[KEYS],
-        list_artifacts: list[artifact_t],
+        dict_artifacts: dict[str, artifact_tuple],
         **metadata: META_VT,
     ):
         """
@@ -380,25 +379,27 @@ class RedisRegistry(ArtifactManager):
         Args:
         ----
             skeys: static key fields as list/tuple of strings
-            list_dkeys: list of dynamic key fields as list/tuple of strings
-            list_artifacts: list of primary artifacts to be saved
+
             metadata: additional metadata surrounding the artifact that needs to be saved.
         """
         dict_model_ver = {}
-        if len(list_artifacts) != len(list_dkeys):
-            raise IndexError("artifact list and dkeys list should have same length!")
         try:
             with self.client.pipeline(transaction=self.transactional) as pipe:
                 pipe.multi()
-                for count, (key, artifact) in enumerate(zip(list_dkeys, list_artifacts)):
-                    dict_model_ver[":".join(key)] = self.save(
-                        skeys=skeys, dkeys=key, artifact=artifact, pipe=pipe, **metadata
+                for key, value in dict_artifacts.items():
+                    dict_model_ver[":".join(value.dkeys)] = self.save(
+                        skeys=skeys,
+                        dkeys=value.dkeys,
+                        artifact=value.artifact,
+                        pipe=pipe,
+                        **metadata,
                     )
-                    if count == len(list_artifacts) - 1:
+
+                    if len(dict_artifacts) == len(dict_model_ver):
                         self.save(
                             skeys=skeys,
-                            dkeys=key,
-                            artifact=artifact,
+                            dkeys=value.dkeys,
+                            artifact=value.artifact,
                             pipe=pipe,
                             artifact_versions=dict_model_ver,
                             **metadata,
