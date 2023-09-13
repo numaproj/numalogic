@@ -7,6 +7,7 @@ from mlflow import ActiveRun
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode, RESOURCE_LIMIT_EXCEEDED
 from mlflow.store.entities import PagedList
+from sklearn.preprocessing import StandardScaler
 
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import MLflowRegistry, ArtifactData, LocalLRUCache
@@ -116,6 +117,30 @@ class TestMLflow(unittest.TestCase):
         data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
         self.assertEqual(data.metadata, {})
         self.assertIsInstance(data.artifact, VanillaAE)
+
+    @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_sklearn_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_sklearn_rundata()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.sklearn.load_model", Mock(return_value=StandardScaler()))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
+    @patch.object(
+        MLflowRegistry,
+        "load",
+        Mock(return_value=ArtifactData(artifact=StandardScaler(), extras=None, metadata={})),
+    )
+    def test_load_model_when_sklearn_model_exist(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        skeys = self.skeys
+        dkeys = self.dkeys
+        scaler = StandardScaler()
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=scaler)
+        data = ml.load(skeys=skeys, dkeys=dkeys)
+        print(data)
+        self.assertIsInstance(data.artifact, StandardScaler)
+        self.assertEqual(data.metadata, {})
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_empty_rundata())))
