@@ -81,9 +81,6 @@ class StreamPayload(_BasePayload):
     def get_metadata(self, key: str) -> dict[str, Any]:
         return copy(self.metadata[key])
 
-    def add_metadata(self, data: dict[str, Any]):
-        self.metadata.update(data)
-
     def __str__(self) -> str:
         return (
             f'"StreamPayload(header={self.header}, status={self.status}, '
