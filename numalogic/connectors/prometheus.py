@@ -68,13 +68,13 @@ class PrometheusFetcher(DataFetcher):
         Fetches data from Prometheus/Thanos and returns a dataframe.
 
         Args:
+        -------
             metric_name: Prometheus metric name
             start: Start time
             end: End time
             filters: Prometheus label filters
             return_labels: Prometheus label names as columns to return
             aggregate: Whether to aggregate the data
-            fill_na_value: Value to fill NaNs with
 
         Returns
         -------
@@ -117,6 +117,28 @@ class PrometheusFetcher(DataFetcher):
         return_labels: Optional[list[str]] = None,
         aggregate: bool = True,
     ):
+        """
+        Fetches data from Prometheus/Thanos using the provided raw query and returns a dataframe.
+
+        Args:
+        -------
+            query: Raw prometheus query
+            start: Start time
+            end: End time
+            return_labels: Prometheus label names as columns to return
+            aggregate: Whether to aggregate the data
+
+        Returns
+        -------
+            Dataframe with timestamp and metric values
+
+        Raises
+        ------
+            ValueError: If end time is before start time
+            PrometheusFetcherError: If there is an error while fetching data
+            PrometheusInvalidResponseError: If the response from Prometheus is invalid
+            RecursionError: If the recursive depth exceeds the max depth
+        """
         end_ts, start_ts = self._init_startend_ts(end, start)
         results = self.query_range(query, start_ts, end_ts)
 
@@ -205,6 +227,7 @@ class PrometheusFetcher(DataFetcher):
         Queries Prometheus API recursively for data.
 
         Args:
+        -------
             query: Prometheus query string
             start_ts: Start timestamp
             end_ts: End timestamp

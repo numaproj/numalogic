@@ -66,7 +66,7 @@ class DruidFetcher(DataFetcher):
             "Fetching data with params: %s",
             params,
         )
-
+        self.client.sub_query(**params)
         response = self.client.groupby(**params)
         df = response.export_pandas()
 
