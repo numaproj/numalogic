@@ -8,9 +8,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from collections import namedtuple
 from collections.abc import Sequence
-from typing import Union, TypeVar, ClassVar
+from typing import Union, TypeVar, ClassVar, NamedTuple
 
 from sklearn.base import BaseEstimator
 from torch import Tensor
@@ -37,7 +36,13 @@ META_T = TypeVar("META_T", bound=dict[str, Union[str, float, int, list, dict]])
 META_VT = TypeVar("META_VT", str, int, float, list, dict)
 EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
 KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
-artifact_tuple = namedtuple("artifact_tuple", ["dkeys", "artifact"])
+
+
+class ArtifactTuple(NamedTuple):
+    r"""namedtuple for artifacts."""
+
+    dkeys: KEYS
+    artifact: artifact_t
 
 
 class Singleton(type):
