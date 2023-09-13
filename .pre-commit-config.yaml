@@ -31,4 +31,3 @@ repos:
   rev: "1.6"
   hooks:
   -   id: poetry-check
-  -   id: poetry-lock

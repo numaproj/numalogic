@@ -50,7 +50,6 @@ mlflow = ["mlflow-skinny"]
 redis = ["redis"]
 dynamodb = ["boto3"]
 druid = ["pydruid"]
-cli = ["typer", "matplotlib", "pynumaflow"]
 
 [tool.poetry.group.torch]
 optional = true
