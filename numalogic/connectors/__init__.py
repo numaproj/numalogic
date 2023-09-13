@@ -1,3 +1,5 @@
+from importlib.util import find_spec
+
 from numalogic.connectors._config import (
     RedisConf,
     PrometheusConf,
@@ -7,7 +9,6 @@ from numalogic.connectors._config import (
     ConnectorType,
 )
 from numalogic.connectors.prometheus import PrometheusFetcher
-from numalogic.connectors.druid import DruidFetcher
 
 __all__ = [
     "RedisConf",
@@ -17,5 +18,12 @@ __all__ = [
     "DruidFetcherConf",
     "ConnectorType",
     "PrometheusFetcher",
-    "DruidFetcher",
 ]
+
+try:
+    find_spec("pydruid")
+except (ImportError, ModuleNotFoundError):
+    pass
+else:
+
+    __all__.append("DruidFetcher")
