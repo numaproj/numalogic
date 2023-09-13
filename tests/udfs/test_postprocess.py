@@ -113,10 +113,8 @@ class TestPostProcessUDF(unittest.TestCase):
         data = deepcopy(DATA)
         data["status"] = Status.ARTIFACT_STALE
         data["header"] = Header.MODEL_INFERENCE
-        print(
-            self.registry.save(
-                KEYS, ["StdDevThreshold"], StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]]))
-            )
+        self.registry.save(
+            KEYS, ["StdDevThreshold"], StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]]))
         )
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
         self.assertEqual(2, len(msg))

@@ -131,7 +131,11 @@ def _load_artifact(
             skeys,
             dkeys,
         )
-        if artifact.metadata and "artifact_versions" in artifact.metadata:
+        if (
+            artifact.metadata
+            and "artifact_versions" in artifact.metadata
+            and "artifact_versions" not in payload.metadata
+        ):
             payload = replace(
                 payload,
                 metadata={

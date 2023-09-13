@@ -84,7 +84,6 @@ class TestInferenceUDF(unittest.TestCase):
     def setUp(self) -> None:
         self.udf = InferenceUDF(REDIS_CLIENT)
         self.udf.register_conf("conf1", StreamConf(config_id="conf1"))
-        print(self.udf.get_conf("conf1"))
 
     @patch.object(
         RedisRegistry,
