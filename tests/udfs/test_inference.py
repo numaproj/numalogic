@@ -8,6 +8,7 @@ from freezegun import freeze_time
 from orjson import orjson
 from pynumaflow.function import Datum, DatumMetadata
 
+from numalogic.config import NumalogicConf, ModelInfo, TrainerConf, LightningTrainerConf
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
@@ -83,7 +84,15 @@ DATA = {
 class TestInferenceUDF(unittest.TestCase):
     def setUp(self) -> None:
         self.udf = InferenceUDF(REDIS_CLIENT)
-        self.udf.register_conf("conf1", StreamConf(config_id="conf1"))
+        self.udf.register_conf(
+            "conf1",
+            StreamConf(
+                numalogic_conf=NumalogicConf(
+                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                )
+            ),
+        )
 
     @patch.object(
         RedisRegistry,
