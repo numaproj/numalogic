@@ -17,8 +17,6 @@ logging.info("Pipeline config: %s", pipeline_conf)
 
 redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
 
-for key in redis_client.scan_iter("*"):
-    redis_client.delete(key)
 if __name__ == "__main__":
     set_logger()
     step = sys.argv[1]
