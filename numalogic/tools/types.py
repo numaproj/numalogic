@@ -38,7 +38,7 @@ EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
 KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
 
 
-class ArtifactTuple(NamedTuple):
+class KeyedArtifact(NamedTuple):
     r"""namedtuple for artifacts."""
 
     dkeys: KEYS

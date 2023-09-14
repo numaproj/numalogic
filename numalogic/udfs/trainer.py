@@ -19,7 +19,7 @@ from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.registry import RedisRegistry
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
-from numalogic.tools.types import redis_client_t, artifact_t, KEYS, ArtifactTuple
+from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload, StreamPayload
@@ -194,13 +194,13 @@ class TrainerUDF(NumalogicUDF):
         # TODO perform multi-save here
         skeys = payload.composite_keys
         dict_artifacts = {
-            "postproc": ArtifactTuple(
+            "postproc": KeyedArtifact(
                 dkeys=[_conf.numalogic_conf.threshold.name], artifact=artifacts["threshold_clf"]
             ),
-            "inference": ArtifactTuple(
+            "inference": KeyedArtifact(
                 dkeys=[_conf.numalogic_conf.model.name], artifact=artifacts["model"]
             ),
-            "preproc": ArtifactTuple(
+            "preproc": KeyedArtifact(
                 dkeys=[_conf.name for _conf in _conf.numalogic_conf.preprocess],
                 artifact=artifacts["preproc_clf"],
             ),
@@ -233,7 +233,7 @@ class TrainerUDF(NumalogicUDF):
     @staticmethod
     def artifacts_to_save(
         skeys: KEYS,
-        dict_artifacts: dict[str, ArtifactTuple],
+        dict_artifacts: dict[str, KeyedArtifact],
         model_registry: RedisRegistry,
         payload: StreamPayload,
     ) -> None:

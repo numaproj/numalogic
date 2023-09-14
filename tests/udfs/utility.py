@@ -7,7 +7,7 @@ from sklearn.pipeline import make_pipeline
 
 from numalogic.config import PreprocessFactory
 from numalogic.models.autoencoder.variants import VanillaAE
-from numalogic.tools.types import ArtifactTuple
+from numalogic.tools.types import KeyedArtifact
 
 
 def input_json_from_file(data_path: str) -> Datum:
@@ -50,8 +50,8 @@ def store_in_redis(pl_conf, registry):
         registry.save_multiple(
             skeys=pl_conf.stream_confs["druid-config"].composite_keys,
             dict_artifacts={
-                "inference": ArtifactTuple(dkeys=["AE"], artifact=VanillaAE(10)),
-                "preproc": ArtifactTuple(
+                "inference": KeyedArtifact(dkeys=["AE"], artifact=VanillaAE(10)),
+                "preproc": KeyedArtifact(
                     dkeys=[
                         _conf.name
                         for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess
