@@ -26,4 +26,5 @@ except (ImportError, ModuleNotFoundError):
     pass
 else:
     from numalogic.connectors.druid import DruidFetcher  # noqa: F401
+
     __all__.append("DruidFetcher")
