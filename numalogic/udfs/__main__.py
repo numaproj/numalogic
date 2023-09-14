@@ -12,10 +12,6 @@ LOGGER = logging.getLogger(__name__)
 CONF_FILE_PATH = os.getenv(
     "CONF_PATH", default=os.path.join(BASE_CONF_DIR, "default-configs", "config.yaml")
 )
-pipeline_conf = load_pipeline_conf(CONF_FILE_PATH)
-logging.info("Pipeline config: %s", pipeline_conf)
-
-redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
 
 if __name__ == "__main__":
     set_logger()
