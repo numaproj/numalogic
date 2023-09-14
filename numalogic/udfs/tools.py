@@ -65,7 +65,7 @@ def make_stream_payload(
     )
 
 
-# TODO: move to base NumalogicUDF class
+# TODO: move to base NumalogicUDF class and look into payload mutation
 def _load_artifact(
     skeys: KEYS,
     dkeys: KEYS,

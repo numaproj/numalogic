@@ -14,13 +14,14 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional
 import orjson
+import redis.client
 
 from redis.exceptions import RedisError
 
 from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
-from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT, ArtifactTuple
+from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT, KeyedArtifact
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -180,7 +181,7 @@ class RedisRegistry(ArtifactManager):
             _LOGGER.debug("Found cached version artifact for key: %s", version_key)
             return cached_artifact, True
         if not self.client.exists(version_key):
-            raise ModelKeyNotFound("Could not find model key with key: %s" % version_key)
+            raise ModelKeyNotFound(f"Could not find model key with key: {version_key}")
         return (
             self.__get_artifact_data(
                 model_key=version_key,
@@ -253,7 +254,9 @@ class RedisRegistry(ArtifactManager):
         else:
             if not is_cached:
                 if latest:
-                    _LOGGER.info("Saving %s, in cache as %s", self.__construct_latest_key(key), key)
+                    _LOGGER.debug(
+                        "Saving %s, in cache as %s", self.__construct_latest_key(key), key
+                    )
                     self._save_in_cache(self.__construct_latest_key(key), artifact_data)
                 else:
                     _LOGGER.info(
@@ -269,7 +272,7 @@ class RedisRegistry(ArtifactManager):
         skeys: KEYS,
         dkeys: KEYS,
         artifact: artifact_t,
-        pipe=None,
+        _pipe: Optional[redis.client.Pipeline] = None,
         **metadata: META_VT,
     ) -> Optional[str]:
         """Saves the artifact into redis registry and updates version.
@@ -279,6 +282,7 @@ class RedisRegistry(ArtifactManager):
             skeys: static key fields as list/tuple of strings
             dkeys: dynamic key fields as list/tuple of strings
             artifact: primary artifact to be saved
+            _pipe: RedisPipeline object
             metadata: additional metadata surrounding the artifact that needs to be saved.
 
         Returns
@@ -297,15 +301,15 @@ class RedisRegistry(ArtifactManager):
                 _LOGGER.debug("Latest key: %s exists for the model", latest_key)
                 version_key = self.client.get(name=latest_key)
                 version = int(self.get_version(version_key.decode())) + 1
-            redis_pipe = (
-                self.client.pipeline(transaction=self.transactional) if pipe is None else pipe
+            _redis_pipe = (
+                self.client.pipeline(transaction=self.transactional) if _pipe is None else _pipe
             )
             new_version_key = self.__save_artifact(
-                pipe=redis_pipe, artifact=artifact, key=key, version=str(version), **metadata
+                pipe=_redis_pipe, artifact=artifact, key=key, version=str(version), **metadata
             )
-            redis_pipe.expire(name=new_version_key, time=self.ttl)
-            if pipe is None:
-                redis_pipe.execute()
+            _redis_pipe.expire(name=new_version_key, time=self.ttl)
+            if _pipe is None:
+                _redis_pipe.execute()
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
@@ -333,7 +337,7 @@ class RedisRegistry(ArtifactManager):
                 self.client.delete(del_key)
             else:
                 raise ModelKeyNotFound(
-                    "Key to delete: %s, Not Found!" % del_key,
+                    f"Key to delete: {del_key}, Not Found!",
                 )
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
@@ -369,7 +373,7 @@ class RedisRegistry(ArtifactManager):
     def save_multiple(
         self,
         skeys: KEYS,
-        dict_artifacts: dict[str, ArtifactTuple],
+        dict_artifacts: dict[str, KeyedArtifact],
         **metadata: META_VT,
     ):
         """
@@ -391,7 +395,7 @@ class RedisRegistry(ArtifactManager):
                         skeys=skeys,
                         dkeys=value.dkeys,
                         artifact=value.artifact,
-                        pipe=pipe,
+                        _pipe=pipe,
                         **metadata,
                     )
 
@@ -400,7 +404,7 @@ class RedisRegistry(ArtifactManager):
                             skeys=skeys,
                             dkeys=value.dkeys,
                             artifact=value.artifact,
-                            pipe=pipe,
+                            _pipe=pipe,
                             artifact_versions=dict_model_ver,
                             **metadata,
                         )

@@ -13,7 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
-from numalogic.tools.types import ArtifactTuple
+from numalogic.tools.types import KeyedArtifact
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -191,8 +191,8 @@ class TestRedisRegistry(unittest.TestCase):
         self.registry.save_multiple(
             skeys=self.skeys,
             dict_artifacts={
-                "AE": ArtifactTuple(dkeys=["AE"], artifact=VanillaAE(10)),
-                "scaler": ArtifactTuple(dkeys=["scaler"], artifact=StandardScaler()),
+                "AE": KeyedArtifact(dkeys=["AE"], artifact=VanillaAE(10)),
+                "scaler": KeyedArtifact(dkeys=["scaler"], artifact=StandardScaler()),
             },
             **{"a": "b"}
         )
@@ -248,5 +248,5 @@ class TestRedisRegistry(unittest.TestCase):
         with self.assertRaises(RedisRegistryError):
             self.registry.save_multiple(
                 skeys=self.skeys,
-                dict_artifacts={"AE": ArtifactTuple(dkeys=self.dkeys, artifact=VanillaAE(10))},
+                dict_artifacts={"AE": KeyedArtifact(dkeys=self.dkeys, artifact=VanillaAE(10))},
             )
