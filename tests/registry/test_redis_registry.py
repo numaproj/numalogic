@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
+from numalogic.tools.types import ArtifactTuple
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -189,8 +190,10 @@ class TestRedisRegistry(unittest.TestCase):
     def test_multiple_save(self):
         self.registry.save_multiple(
             skeys=self.skeys,
-            list_dkeys=[["AE"], ["scaler"]],
-            list_artifacts=[VanillaAE, StandardScaler()],
+            dict_artifacts={
+                "AE": ArtifactTuple(dkeys=["AE"], artifact=VanillaAE(10)),
+                "scaler": ArtifactTuple(dkeys=["scaler"], artifact=StandardScaler()),
+            },
             **{"a": "b"}
         )
         artifact_data = self.registry.load(skeys=self.skeys, dkeys=["AE"])
@@ -244,11 +247,6 @@ class TestRedisRegistry(unittest.TestCase):
     def test_exception_call4(self):
         with self.assertRaises(RedisRegistryError):
             self.registry.save_multiple(
-                skeys=self.skeys, list_dkeys=[self.dkeys], list_artifacts=[self.pytorch_model]
-            )
-
-    def test_exception_call5(self):
-        with self.assertRaises(IndexError):
-            self.registry.save_multiple(
-                skeys=self.skeys, list_dkeys=[self.dkeys], list_artifacts=[]
+                skeys=self.skeys,
+                dict_artifacts={"AE": ArtifactTuple(dkeys=self.dkeys, artifact=VanillaAE(10))},
             )
