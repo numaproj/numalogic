@@ -75,7 +75,7 @@ class TrainerConf:
     retrain_freq_hr: int = 24
     model_expiry_sec: int = 86400  # 24 hrs  # TODO: revisit this
     dedup_expiry_sec: int = 1800  # 30 days  # TODO: revisit this
-    batch_size: int = 32
+    batch_size: int = 64
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
 

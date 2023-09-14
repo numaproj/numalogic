@@ -10,7 +10,8 @@ from numpy import typing as npt
 from orjson import orjson
 from pynumaflow.function import Messages, Datum, Message
 
-from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
+from numalogic.config import RegistryFactory
+from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError, ModelKeyNotFound, ConfigNotFoundError
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
@@ -35,7 +36,8 @@ class InferenceUDF(NumalogicUDF):
 
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
         super().__init__(is_async=False)
-        self.model_registry = RedisRegistry(
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(
             client=r_client,
             cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
         )
@@ -58,7 +60,8 @@ class InferenceUDF(NumalogicUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
-    def compute(self, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:
+    @classmethod
+    def compute(cls, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:
         """
         Perform inference on the input data.
 
@@ -79,7 +82,7 @@ class InferenceUDF(NumalogicUDF):
         try:
             with torch.no_grad():
                 _, out = model.forward(x)
-            recon_err = model.criterion(out, x, reduction="none")
+                recon_err = model.criterion(out, x, reduction="none")
         except Exception as err:
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)

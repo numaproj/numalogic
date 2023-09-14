@@ -17,7 +17,8 @@ class DummyUDF(NumalogicUDF):
         val = datum.value
         return Messages(Message(value=val, keys=keys))
 
-    def compute(self, model: artifact_t, input_: npt.NDArray[float], **kwargs):
+    @classmethod
+    def compute(cls, model: artifact_t, input_: npt.NDArray[float], **kwargs):
         pass
 
 
@@ -29,7 +30,8 @@ class DummyAsyncUDF(NumalogicUDF):
         val = datum.value
         return Messages(Message(value=val, keys=keys))
 
-    def compute(self, model: artifact_t, input_: npt.NDArray[float], **kwargs):
+    @classmethod
+    def compute(cls, model: artifact_t, input_: npt.NDArray[float], **kwargs):
         pass
 
 

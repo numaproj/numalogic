@@ -1,6 +1,7 @@
 import logging
 from typing import ClassVar
 
+from numalogic.udfs import NumalogicUDF
 from numalogic.udfs.inference import InferenceUDF
 from numalogic.udfs.trainer import TrainerUDF
 from numalogic.udfs.preprocess import PreprocessUDF
@@ -21,7 +22,7 @@ class UDFFactory:
     }
 
     @classmethod
-    def get_udf_cls(cls, udf_name: str):
+    def get_udf_cls(cls, udf_name: str) -> type[NumalogicUDF]:
         try:
             return cls._UDF_MAP[udf_name]
         except KeyError as err:
@@ -30,7 +31,7 @@ class UDFFactory:
             raise ValueError(_msg) from err
 
     @classmethod
-    def get_udf_instance(cls, udf_name: str, **kwargs):
+    def get_udf_instance(cls, udf_name: str, **kwargs) -> NumalogicUDF:
         udf_cls = cls.get_udf_cls(udf_name)
         return udf_cls(**kwargs)
 

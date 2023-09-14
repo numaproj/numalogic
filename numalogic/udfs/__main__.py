@@ -14,7 +14,8 @@ CONF_FILE_PATH = os.getenv(
 )
 
 
-if __name__ == "__main__":
+def start_server():
+    """Starts the pynumaflow server."""
     set_logger()
     step = sys.argv[1]
 
@@ -33,3 +34,7 @@ if __name__ == "__main__":
 
     server = ServerFactory.get_server_instance(server_type, map_handler=udf)
     server.start()
+
+
+if __name__ == "__main__":
+    start_server()

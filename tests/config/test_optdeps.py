@@ -30,7 +30,7 @@ class TestOptionalDependencies(unittest.TestCase):
         server = fakeredis.FakeServer()
         redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
         with self.assertRaises(ImportError):
-            model_factory.get_cls(self.regconf)(redis_cli, **self.regconf.conf)
+            model_factory.get_cls("RedisRegistry")(redis_cli, **self.regconf.conf)
 
     @patch("numalogic.config.factory.getattr", side_effect=AttributeError)
     def test_not_installed_dep_02(self, _):
@@ -48,7 +48,7 @@ class TestOptionalDependencies(unittest.TestCase):
         model_factory = RegistryFactory()
         reg_conf = RegistryInfo(name="UnknownRegistry")
         with self.assertRaises(UnknownConfigArgsError):
-            model_factory.get_cls(reg_conf)
+            model_factory.get_cls("UnknownRegistry")
         with self.assertRaises(UnknownConfigArgsError):
             model_factory.get_instance(reg_conf)
 

@@ -9,8 +9,8 @@ from numpy.typing import NDArray
 from orjson import orjson
 from pynumaflow.function import Messages, Datum, Message
 
-from numalogic.config import PostprocessFactory
-from numalogic.registry import LocalLRUCache, RedisRegistry
+from numalogic.config import PostprocessFactory, RegistryFactory
+from numalogic.registry import LocalLRUCache
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
@@ -40,9 +40,9 @@ class PostprocessUDF(NumalogicUDF):
         pl_conf: Optional[PipelineConf] = None,
     ):
         super().__init__()
-        self.model_registry = RedisRegistry(
-            client=r_client,
-            cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(
+            client=r_client, cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL)
         )
         self.pl_conf = pl_conf or PipelineConf()
         self.postproc_factory = PostprocessFactory()
@@ -156,8 +156,9 @@ class PostprocessUDF(NumalogicUDF):
         )
         return messages
 
+    @classmethod
     def compute(
-        self, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
+        cls, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
     ) -> NDArray[float]:
         """
         Compute the postprocess function.
