@@ -124,12 +124,15 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
-    @patch("mlflow.sklearn.load_model", Mock(return_value=StandardScaler()))
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
     @patch.object(
         MLflowRegistry,
         "load",
-        Mock(return_value=ArtifactData(artifact=StandardScaler(), extras=None, metadata={})),
+        Mock(
+            return_value=ArtifactData(
+                artifact=StandardScaler(), extras={"metric": ["error"]}, metadata={}
+            )
+        ),
     )
     def test_load_model_when_sklearn_model_exist(self):
         ml = MLflowRegistry(TRACKING_URI)
