@@ -19,7 +19,7 @@ from numalogic.base import TorchModel, BaseThresholdModel, BaseTransformer
 try:
     from redis.client import AbstractRedis
 except ImportError:
-    pass
+    redis_client_t = TypeVar("redis_client_t")
 else:
     redis_client_t = TypeVar("redis_client_t", bound=AbstractRedis, covariant=True)
 
@@ -36,6 +36,7 @@ META_T = TypeVar("META_T", bound=dict[str, Union[str, float, int, list, dict]])
 META_VT = TypeVar("META_VT", str, int, float, list, dict)
 EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
 KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
+
 
 
 class KeyedArtifact(NamedTuple):

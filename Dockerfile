@@ -41,7 +41,7 @@ WORKDIR $PYSETUP_PATH
 COPY ./pyproject.toml ./poetry.lock ./
 
 # TODO install cpu/gpu based on args/arch
-RUN poetry install --without dev --no-cache --no-root -E numaflow --extras "${INSTALL_EXTRAS}" && \
+RUN poetry install --without dev --no-cache --no-root --extras "${INSTALL_EXTRAS}" && \
     poetry run pip install --no-cache "torch>=2.0,<3.0" --index-url https://download.pytorch.org/whl/cpu && \
     poetry run pip install --no-cache "pytorch-lightning>=2.0<3.0" && \
     rm -rf ~/.cache/pypoetry/
