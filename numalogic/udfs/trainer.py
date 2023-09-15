@@ -22,6 +22,7 @@ from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifac
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload, StreamPayload
+
 _LOGGER = logging.getLogger(__name__)
 
 
