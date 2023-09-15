@@ -5,14 +5,17 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytz
 from pydruid.client import PyDruid
+from pydruid.utils.dimensions import DimensionSpec
 from pydruid.utils.filters import Filter
+
+from numalogic.connectors._base import DataFetcher
 from numalogic.connectors._config import Pivot
 from typing import Optional
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class DruidFetcher:
+class DruidFetcher(DataFetcher):
     """
     Class for fetching data as a dataframe from Druid.
 
@@ -22,9 +25,10 @@ class DruidFetcher:
     """
 
     def __init__(self, url: str, endpoint: str):
+        super().__init__(url)
         self.client = PyDruid(url, endpoint)
 
-    def fetch_data(
+    def fetch(
         self,
         datasource: str,
         filter_keys: list[str],
@@ -50,20 +54,22 @@ class DruidFetcher:
         start_dt = end_dt - timedelta(hours=hours)
         intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
 
+        dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
+
         params = {
             "datasource": datasource,
             "granularity": granularity,
             "intervals": intervals,
             "aggregations": aggregations,
             "filter": _filter,
-            "dimensions": dimensions,
+            "dimensions": dimension_specs,
         }
 
         _LOGGER.debug(
             "Fetching data with params: %s",
             params,
         )
-
+        self.client.sub_query(**params)
         response = self.client.groupby(**params)
         df = response.export_pandas()
 
@@ -85,3 +91,6 @@ class DruidFetcher:
             df.columns = df.columns.map("{0[1]}".format)
             df.reset_index(inplace=True)
         return df
+
+    def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
+        raise NotImplementedError

@@ -12,11 +12,10 @@ from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
 from numalogic.base import StatelessTransformer
-from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory
+from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
 from numalogic.config._config import TrainerConf
-from numalogic.connectors.druid import DruidFetcher
+from numalogic.config.factory import ConnectorFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
-from numalogic.registry import RedisRegistry
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
@@ -43,12 +42,14 @@ class TrainerUDF(NumalogicUDF):
     ):
         super().__init__(is_async=False)
         self.r_client = r_client
-        self.model_registry = RedisRegistry(client=r_client)
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(client=r_client)
         self.pl_conf = pl_conf or PipelineConf()
         self.druid_conf = self.pl_conf.druid_conf
 
+        data_fetcher_cls = ConnectorFactory.get_cls("DruidFetcher")
         try:
-            self.data_fetcher = DruidFetcher(
+            self.data_fetcher = data_fetcher_cls(
                 url=self.druid_conf.url, endpoint=self.druid_conf.endpoint
             )
         except AttributeError:
@@ -89,8 +90,9 @@ class TrainerUDF(NumalogicUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
+    @classmethod
     def compute(
-        self,
+        cls,
         model: artifact_t,
         input_: npt.NDArray[float],
         preproc_clf: Optional[artifact_t] = None,
@@ -217,12 +219,10 @@ class TrainerUDF(NumalogicUDF):
         )
         return Messages(Message.to_drop())
 
-    @staticmethod
-    def _construct_preproc_clf(_conf: StreamConf) -> Optional[artifact_t]:
-        preproc_factory = PreprocessFactory()
+    def _construct_preproc_clf(self, _conf: StreamConf) -> Optional[artifact_t]:
         preproc_clfs = []
         for _cfg in _conf.numalogic_conf.preprocess:
-            _clf = preproc_factory.get_instance(_cfg)
+            _clf = self._preproc_factory.get_instance(_cfg)
             preproc_clfs.append(_clf)
         if not preproc_clfs:
             return None
@@ -234,7 +234,7 @@ class TrainerUDF(NumalogicUDF):
     def artifacts_to_save(
         skeys: KEYS,
         dict_artifacts: dict[str, KeyedArtifact],
-        model_registry: RedisRegistry,
+        model_registry,
         payload: StreamPayload,
     ) -> None:
         """
@@ -243,7 +243,7 @@ class TrainerUDF(NumalogicUDF):
         _______
         skeys: list keys
         dict_artifacts: artifact_tuple which has dkeys and artifact as fields
-        model_registry: RedisRegistry type registry that supports multiple_save
+        model_registry: registry that supports multiple_save
         payload: payload.
 
         Returns
@@ -308,7 +308,7 @@ class TrainerUDF(NumalogicUDF):
         _conf = self.get_conf(payload.config_id)
 
         try:
-            _df = self.data_fetcher.fetch_data(
+            _df = self.data_fetcher.fetch(
                 datasource=self.druid_conf.fetcher.datasource,
                 filter_keys=_conf.composite_keys,
                 filter_values=payload.composite_keys,

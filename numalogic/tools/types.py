@@ -19,7 +19,7 @@ from numalogic.base import TorchModel, BaseThresholdModel, BaseTransformer
 try:
     from redis.client import AbstractRedis
 except ImportError:
-    pass
+    redis_client_t = TypeVar("redis_client_t")
 else:
     redis_client_t = TypeVar("redis_client_t", bound=AbstractRedis, covariant=True)
 

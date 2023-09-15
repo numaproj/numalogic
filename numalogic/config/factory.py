@@ -8,10 +8,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Union, ClassVar
+from typing import Union, ClassVar, TypeVar
+
+from sklearn.pipeline import make_pipeline
 
 from numalogic.config._config import ModelInfo, RegistryInfo
 from numalogic.tools.exceptions import UnknownConfigArgsError
+
+
+conf_t = TypeVar("conf_t", bound=Union[ModelInfo, RegistryInfo], covariant=True)
 
 
 class _ObjectFactory:
@@ -26,13 +31,12 @@ class _ObjectFactory:
             ) from err
         return _cls(**object_info.conf)
 
-    def get_cls(self, object_info: Union[ModelInfo, RegistryInfo]):
+    @classmethod
+    def get_cls(cls, name: str):
         try:
-            return self._CLS_MAP[object_info.name]
-        except KeyError as err:
-            raise UnknownConfigArgsError(
-                f"Invalid model info instance provided: {object_info}"
-            ) from err
+            return cls._CLS_MAP[name]
+        except KeyError:
+            raise UnknownConfigArgsError(f"Invalid name provided for factory: {name}") from None
 
 
 class PreprocessFactory(_ObjectFactory):
@@ -50,6 +54,17 @@ class PreprocessFactory(_ObjectFactory):
         "StaticPowerTransformer": StaticPowerTransformer,
         "TanhScaler": TanhScaler,
     }
+
+    def get_pipeline_instance(self, objs_info: list[ModelInfo]):
+        preproc_clfs = []
+        for obj_info in objs_info:
+            _clf = self.get_instance(obj_info)
+            preproc_clfs.append(_clf)
+        if not preproc_clfs:
+            return None
+        if len(preproc_clfs) == 1:
+            return preproc_clfs[0]
+        return make_pipeline(*preproc_clfs)
 
 
 class PostprocessFactory(_ObjectFactory):
@@ -107,7 +122,7 @@ class ModelFactory(_ObjectFactory):
 class RegistryFactory(_ObjectFactory):
     """Factory class to create registry instances."""
 
-    _CLS_SET: ClassVar[frozenset] = {"RedisRegistry", "MLflowRegistry"}
+    _CLS_SET: ClassVar[frozenset] = frozenset({"RedisRegistry", "MLflowRegistry"})
 
     def get_instance(self, object_info: Union[ModelInfo, RegistryInfo]):
         import numalogic.registry as reg
@@ -124,16 +139,38 @@ class RegistryFactory(_ObjectFactory):
             ) from err
         return _cls(**object_info.conf)
 
-    def get_cls(self, object_info: Union[ModelInfo, RegistryInfo]):
+    @classmethod
+    def get_cls(cls, name: str):
         import numalogic.registry as reg
 
         try:
-            return getattr(reg, object_info.name)
+            return getattr(reg, name)
         except AttributeError as err:
-            if object_info.name in self._CLS_SET:
+            if name in cls._CLS_SET:
                 raise ImportError(
                     "Please install the required dependencies for the registry you want to use."
                 ) from err
             raise UnknownConfigArgsError(
-                f"Invalid model info instance provided: {object_info}"
-            ) from err
+                f"Invalid name provided for RegistryFactory: {name}"
+            ) from None
+
+
+class ConnectorFactory(_ObjectFactory):
+    """Factory class for data connectors."""
+
+    _CLS_SET: ClassVar[frozenset] = frozenset({"PrometheusFetcher", "DruidFetcher"})
+
+    @classmethod
+    def get_cls(cls, name: str):
+        import numalogic.connectors as conn
+
+        try:
+            return getattr(conn, name)
+        except AttributeError as err:
+            if name in cls._CLS_SET:
+                raise ImportError(
+                    "Please install the required dependencies for the connector you want to use."
+                ) from err
+            raise UnknownConfigArgsError(
+                f"Invalid name provided for ConnectorFactory: {name}"
+            ) from None
