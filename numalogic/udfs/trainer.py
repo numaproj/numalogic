@@ -18,10 +18,10 @@ from numalogic.config.factory import ConnectorFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
-from numalogic.tools.types import redis_client_t, artifact_t
+from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
-from numalogic.udfs.entities import TrainerPayload
+from numalogic.udfs.entities import TrainerPayload, StreamPayload
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -194,24 +194,24 @@ class TrainerUDF(NumalogicUDF):
 
         # Save artifacts
         # TODO perform multi-save here
-        self.save_artifact(
-            artifacts["preproc_clf"],
-            skeys=payload.composite_keys,
-            dkeys=[_conf.name for _conf in _conf.numalogic_conf.preprocess],
-            uuid=payload.uuid,
-        )
-        self.save_artifact(
-            artifacts["model"],
-            skeys=payload.composite_keys,
-            dkeys=[_conf.numalogic_conf.model.name],
-            uuid=payload.uuid,
-            train_size=x_train.shape[0],
-        )
-        self.save_artifact(
-            artifacts["threshold_clf"],
-            skeys=payload.composite_keys,
-            dkeys=[_conf.numalogic_conf.threshold.name],
-            uuid=payload.uuid,
+        skeys = payload.composite_keys
+        dict_artifacts = {
+            "postproc": KeyedArtifact(
+                dkeys=[_conf.numalogic_conf.threshold.name], artifact=artifacts["threshold_clf"]
+            ),
+            "inference": KeyedArtifact(
+                dkeys=[_conf.numalogic_conf.model.name], artifact=artifacts["model"]
+            ),
+            "preproc": KeyedArtifact(
+                dkeys=[_conf.name for _conf in _conf.numalogic_conf.preprocess],
+                artifact=artifacts["preproc_clf"],
+            ),
+        }
+        self.artifacts_to_save(
+            skeys=skeys,
+            dict_artifacts=dict_artifacts,
+            model_registry=self.model_registry,
+            payload=payload,
         )
 
         _LOGGER.debug(
@@ -230,39 +230,41 @@ class TrainerUDF(NumalogicUDF):
             return preproc_clfs[0]
         return make_pipeline(*preproc_clfs)
 
-    def save_artifact(
-        self, artifact: artifact_t, skeys: list[str], dkeys: list[str], uuid: str, **metadata
+    @staticmethod
+    def artifacts_to_save(
+        skeys: KEYS,
+        dict_artifacts: dict[str, KeyedArtifact],
+        model_registry,
+        payload: StreamPayload,
     ) -> None:
         """
-        Save artifact to the registry.
-
+        Save artifacts.
         Args:
-            artifact: Artifact to save
-            skeys: List of keys
-            dkeys: List of dkeys
-            uuid: UUID
-            **metadata: Additional metadata
+        _______
+        skeys: list keys
+        dict_artifacts: artifact_tuple which has dkeys and artifact as fields
+        model_registry: registry that supports multiple_save
+        payload: payload.
+
+        Returns
+        -------
+            Tuple of keys and artifacts
+
         """
-        if not artifact:
-            return
-        # TODO check for statelessness from config
-        if isinstance(artifact, StatelessTransformer):
-            _LOGGER.info("%s - Skipping save for stateless artifact with dkeys: %s", uuid, dkeys)
-            return
+        for key, value in dict_artifacts.items():
+            if value.artifact:
+                if isinstance(value.artifact, StatelessTransformer):
+                    del dict_artifacts[key]
         try:
-            version = self.model_registry.save(
+            ver_dict = model_registry.save_multiple(
                 skeys=skeys,
-                dkeys=dkeys,
-                artifact=artifact,
-                uuid=uuid,
-                **metadata,
+                dict_artifacts=dict_artifacts,
+                uuid=payload.uuid,
             )
         except RedisRegistryError:
-            _LOGGER.exception("%s - Error while saving Model with skeys: %s", uuid, skeys)
+            _LOGGER.exception("%s - Error while saving Model with skeys: %s", payload.uuid, skeys)
         else:
-            _LOGGER.info(
-                "%s - Artifact saved with dkeys: %s with version: %s", uuid, dkeys, version
-            )
+            _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
         _conf = self.get_conf(payload.config_id)

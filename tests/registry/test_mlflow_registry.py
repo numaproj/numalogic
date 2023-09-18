@@ -7,7 +7,7 @@ from mlflow import ActiveRun
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import RESOURCE_DOES_NOT_EXIST, ErrorCode, RESOURCE_LIMIT_EXCEEDED
 from mlflow.store.entities import PagedList
-from sklearn.ensemble import RandomForestRegressor
+from sklearn.preprocessing import StandardScaler
 
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import MLflowRegistry, ArtifactData, LocalLRUCache
@@ -124,16 +124,25 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
-    @patch("mlflow.sklearn.load_model", Mock(return_value=RandomForestRegressor()))
     @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
+    @patch.object(
+        MLflowRegistry,
+        "load",
+        Mock(
+            return_value=ArtifactData(
+                artifact=StandardScaler(), extras={"metric": ["error"]}, metadata={}
+            )
+        ),
+    )
     def test_load_model_when_sklearn_model_exist(self):
-        model = self.model_sklearn
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
-        data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="sklearn")
-        self.assertIsInstance(data.artifact, RandomForestRegressor)
+        scaler = StandardScaler()
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=scaler)
+        data = ml.load(skeys=skeys, dkeys=dkeys)
+        print(data)
+        self.assertIsInstance(data.artifact, StandardScaler)
         self.assertEqual(data.metadata, {})
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())

@@ -13,6 +13,7 @@ from sklearn.preprocessing import StandardScaler
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
+from numalogic.tools.types import KeyedArtifact
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -62,9 +63,10 @@ class TestRedisRegistry(unittest.TestCase):
         data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertEqual(data.extras["version"], save_version)
         resave_version1 = self.registry.save(
-            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
+            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model, **{"lr": 0.01}
         )
         resave_data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        print(resave_data.extras)
         self.assertEqual(save_version, "0")
         self.assertEqual(resave_version1, "1")
         self.assertEqual(resave_data.extras["version"], "0")
@@ -185,6 +187,19 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertEqual("registry", artifact_data_1.extras["source"])
         self.assertEqual("registry", artifact_data_2.extras["source"])
 
+    def test_multiple_save(self):
+        self.registry.save_multiple(
+            skeys=self.skeys,
+            dict_artifacts={
+                "AE": KeyedArtifact(dkeys=["AE"], artifact=VanillaAE(10)),
+                "scaler": KeyedArtifact(dkeys=["scaler"], artifact=StandardScaler()),
+            },
+            **{"a": "b"}
+        )
+        artifact_data = self.registry.load(skeys=self.skeys, dkeys=["AE"])
+        self.assertEqual("registry", artifact_data.extras["source"])
+        self.assertIsNotNone(artifact_data.artifact)
+
     def test_load_non_latest_model_twice(self):
         old_version = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
@@ -198,7 +213,7 @@ class TestRedisRegistry(unittest.TestCase):
             skeys=self.skeys, dkeys=self.dkeys, latest=False, version=old_version
         )
         self.assertEqual("registry", artifact_data_1.extras["source"])
-        self.assertEqual("registry", artifact_data_2.extras["source"])
+        self.assertEqual("cache", artifact_data_2.extras["source"])
 
     def test_delete_version(self):
         version = self.registry.save(
@@ -227,3 +242,11 @@ class TestRedisRegistry(unittest.TestCase):
     def test_exception_call3(self):
         with self.assertRaises(RedisRegistryError):
             self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version="0")
+
+    @patch("redis.Redis.set", Mock(side_effect=ConnectionError))
+    def test_exception_call4(self):
+        with self.assertRaises(RedisRegistryError):
+            self.registry.save_multiple(
+                skeys=self.skeys,
+                dict_artifacts={"AE": KeyedArtifact(dkeys=self.dkeys, artifact=VanillaAE(10))},
+            )

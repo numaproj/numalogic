@@ -52,7 +52,7 @@ class DruidFetcher(DataFetcher):
 
         end_dt = datetime.now(pytz.utc)
         start_dt = end_dt - timedelta(hours=hours)
-        intervals = f"{start_dt.isoformat()}/{end_dt.isoformat()}"
+        intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
 
         dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
 
