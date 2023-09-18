@@ -20,11 +20,8 @@ __all__ = [
     "PrometheusFetcher",
 ]
 
-try:
-    find_spec("pydruid")
-except (ImportError, ModuleNotFoundError):
-    pass
-else:
+
+if find_spec("pydruid"):
     from numalogic.connectors.druid import DruidFetcher  # noqa: F401
 
     __all__.append("DruidFetcher")
