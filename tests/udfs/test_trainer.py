@@ -8,7 +8,7 @@ import pandas as pd
 from fakeredis import FakeStrictRedis, FakeServer
 from omegaconf import OmegaConf
 from orjson import orjson
-from pynumaflow.function import Datum, DatumMetadata
+from pynumaflow.mapper import Datum
 
 from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
@@ -47,7 +47,6 @@ class TrainTrainerUDF(unittest.TestCase):
             value=orjson.dumps(payload),
             event_time=datetime.now(),
             watermark=datetime.now(),
-            metadata=DatumMetadata("1", 1),
         )
         conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
         schema = OmegaConf.structured(PipelineConf)
