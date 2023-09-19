@@ -207,7 +207,7 @@ class PromUnivarBacktester:
             RuntimeError: If valid model is not provided when use_full_data is True
         """
         try:
-            artifacts = self._load_or_train_model(df, model_path, avoid_training=True)
+            artifacts = self._load_or_train_model(df, model_path, avoid_training=use_full_data)
         except FileNotFoundError as err:
             raise RuntimeError(
                 "Valid model needs to be provided if use_full_data is True!"
