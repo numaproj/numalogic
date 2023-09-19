@@ -6,7 +6,7 @@ from typing import Optional
 
 import orjson
 from numpy._typing import NDArray
-from pynumaflow.function import Datum, Messages, Message
+from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
 from numalogic.config import PreprocessFactory, RegistryFactory

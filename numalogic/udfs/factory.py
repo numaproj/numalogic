@@ -1,12 +1,13 @@
 import logging
 from typing import ClassVar
 
+from pynumaflow.mapper import Mapper, MultiProcMapper, AsyncMapper
+
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs.inference import InferenceUDF
-from numalogic.udfs.trainer import TrainerUDF
-from numalogic.udfs.preprocess import PreprocessUDF
 from numalogic.udfs.postprocess import PostprocessUDF
-from pynumaflow.function import Server, AsyncServer, MultiProcServer
+from numalogic.udfs.preprocess import PreprocessUDF
+from numalogic.udfs.trainer import TrainerUDF
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 class UDFFactory:
     """Factory class to fetch the right UDF."""
 
-    _UDF_MAP: ClassVar[dict] = {
+    _UDF_MAP: ClassVar[dict[str, type[NumalogicUDF]]] = {
         "preprocess": PreprocessUDF,
         "inference": InferenceUDF,
         "postprocess": PostprocessUDF,
@@ -37,12 +38,12 @@ class UDFFactory:
 
 
 class ServerFactory:
-    """Factory class to fetch the right pynumaflow function server."""
+    """Factory class to fetch the right pynumaflow function server/mapper."""
 
     _SERVER_MAP: ClassVar[dict] = {
-        "sync": Server,
-        "async": AsyncServer,
-        "multiproc": MultiProcServer,
+        "sync": Mapper,
+        "async": AsyncMapper,
+        "multiproc": MultiProcMapper,
     }
 
     @classmethod

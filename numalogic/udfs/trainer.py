@@ -7,7 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import orjson
 import pandas as pd
-from pynumaflow.function import Datum, Messages, Message
+from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 

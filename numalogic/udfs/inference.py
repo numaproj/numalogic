@@ -8,7 +8,7 @@ import numpy as np
 import torch
 from numpy import typing as npt
 from orjson import orjson
-from pynumaflow.function import Messages, Datum, Message
+from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import RegistryFactory
 from numalogic.registry import LocalLRUCache, ArtifactData

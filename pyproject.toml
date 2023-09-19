@@ -36,7 +36,7 @@ cachetools = "^5.3.0"
 orjson = "^3.9.5"
 typer = {version = "^0.9", extras = ["rich"]}
 matplotlib = "^3.4.2"
-pynumaflow = "~0.4"
+pynumaflow = "~0.5"
 
 
 # extras

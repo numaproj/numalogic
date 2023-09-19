@@ -12,7 +12,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Union
 from collections.abc import Coroutine
 import numpy.typing as npt
-from pynumaflow.function import Datum, Messages
+from pynumaflow.mapper import Datum, Messages
 
 from numalogic.tools.types import artifact_t
 
