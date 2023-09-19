@@ -28,7 +28,7 @@ jobs:
       - name: Docker Build
         env:
           QUAYIO_ORG: quay.io/numaio
-          PLATFORM: linux/amd64
+          PLATFORM: linux/x86_64
           TARGET: numalogic/udf
         run: |
           type=$(basename $(dirname $GITHUB_REF))
