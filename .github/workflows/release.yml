@@ -28,7 +28,7 @@ jobs:
       - name: Docker Build
         env:
           QUAYIO_ORG: quay.io/numaio
-          PLATFORM: linux/x86_64
+          PLATFORM: linux/amd64
           TARGET: numalogic/udf
         run: |
           type=$(basename $(dirname $GITHUB_REF))
@@ -40,7 +40,4 @@ jobs:
           
           image_name="${QUAYIO_ORG}/numalogic/udf:${tag}"
           
-          docker build \
-            --platform="${PLATFORM}" \
-            --build-arg INSTALL_EXTRAS='redis druid' .\
-            --tag $image_name .
+          docker buildx build --platform ${PLATFORM} --build-arg INSTALL_EXTRAS='redis druid' . -t $image_name .
