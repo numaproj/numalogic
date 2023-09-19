@@ -6,7 +6,7 @@ from unittest.mock import patch, Mock
 from fakeredis import FakeServer, FakeStrictRedis
 from freezegun import freeze_time
 from orjson import orjson
-from pynumaflow.function import Datum, DatumMetadata
+from pynumaflow.mapper import Datum
 
 from numalogic.config import NumalogicConf, ModelInfo, TrainerConf, LightningTrainerConf
 from numalogic.models.autoencoder.variants import VanillaAE
@@ -20,7 +20,6 @@ KEYS = ["service-mesh", "1", "2"]
 DATUM_KW = {
     "event_time": datetime.now(),
     "watermark": datetime.now(),
-    "metadata": DatumMetadata("1", 1),
 }
 DATA = {
     "uuid": "dd7dfb43-532b-49a3-906e-f78f82ad9c4b",

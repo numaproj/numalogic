@@ -2,7 +2,7 @@ import datetime
 import json
 
 import numpy as np
-from pynumaflow.function import Datum, DatumMetadata
+from pynumaflow.mapper import Datum
 from sklearn.pipeline import make_pipeline
 
 from numalogic.config import PreprocessFactory
@@ -31,7 +31,6 @@ def input_json_from_file(data_path: str) -> Datum:
         value=data,
         event_time=datetime.datetime.now(),
         watermark=datetime.datetime.now(),
-        metadata=DatumMetadata(msg_id="", num_delivered=0),
     )
 
 

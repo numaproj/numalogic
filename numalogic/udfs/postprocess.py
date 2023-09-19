@@ -7,7 +7,7 @@ from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 from orjson import orjson
-from pynumaflow.function import Messages, Datum, Message
+from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
 from numalogic.registry import LocalLRUCache

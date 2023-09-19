@@ -7,7 +7,7 @@ from unittest.mock import patch, Mock
 from fakeredis import FakeServer, FakeStrictRedis
 from omegaconf import OmegaConf
 from orjson import orjson
-from pynumaflow.function import Datum, DatumMetadata
+from pynumaflow.mapper import Datum
 
 from numalogic._constants import TESTS_DIR
 from numalogic.registry import RedisRegistry
@@ -25,7 +25,6 @@ DATUM = input_json_from_file(os.path.join(TESTS_DIR, "udfs", "resources", "data"
 DATUM_KW = {
     "event_time": datetime.now(),
     "watermark": datetime.now(),
-    "metadata": DatumMetadata("1", 1),
 }
 
 

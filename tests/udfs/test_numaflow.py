@@ -2,8 +2,7 @@ import unittest
 from datetime import datetime
 
 import numpy.typing as npt
-from pynumaflow.function import Datum, Messages, Message
-from pynumaflow.function._dtypes import DatumMetadata
+from pynumaflow.mapper import Datum, Messages, Message
 
 from numalogic.tools.types import artifact_t
 from numalogic.udfs import NumalogicUDF
@@ -42,7 +41,6 @@ class TestNumalogicUDF(unittest.TestCase):
             value=b"100",
             event_time=datetime.now(),
             watermark=datetime.now(),
-            metadata=DatumMetadata("1", 0),
         )
 
     def test_exec(self):
@@ -68,7 +66,6 @@ class TestNumalogicAsyncUDF(unittest.IsolatedAsyncioTestCase):
             value=b"100",
             event_time=datetime.now(),
             watermark=datetime.now(),
-            metadata=DatumMetadata("1", 0),
         )
 
     async def test_aexec(self):

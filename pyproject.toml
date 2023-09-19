@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.6.0a1"
+version = "0.6.0a2"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -36,7 +36,7 @@ cachetools = "^5.3.0"
 orjson = "^3.9.5"
 typer = {version = "^0.9", extras = ["rich"]}
 matplotlib = "^3.4.2"
-pynumaflow = "~0.4"
+pynumaflow = "~0.5"
 
 
 # extras
@@ -70,7 +70,7 @@ pre-commit = "^3.3.1"
 fakeredis = "^2.11.2"
 freezegun = "^1.2.2"
 pympler = "^1.0.1"
-moto = "^4.0.1"
+moto = "~4.1"
 
 [tool.poetry.group.jupyter]
 optional = true
