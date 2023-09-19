@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.6.0a1 (2023-09-19)
+
+ * [3e89ccd](https://github.com/numaproj/numalogic/commit/3e89ccd3ac5e78a26eef735daa93a3aedf4a0668) fix: allow full df scores in backtest (#288)
+ * [bc1c627](https://github.com/numaproj/numalogic/commit/bc1c627cf89e9a41fa2194df3a2a1ed33e5d989e) feat: add multiple save for redis registry (#281)
+ * [a364721](https://github.com/numaproj/numalogic/commit/a364721d617f42a56badde501b98e4e2684ea684) feat: initial version of backtest tool (#282)
+ * [0cdc257](https://github.com/numaproj/numalogic/commit/0cdc257e11c1c92fedc3409435091141b1a8c71e) feat: use well-defined dimensions instead of strings (#284)
+ * [de8930a](https://github.com/numaproj/numalogic/commit/de8930a38b5069adb53dbdf58bad3d68f2b79ce9) feat!: numalogic udfs (#271)
+ * [c62c902](https://github.com/numaproj/numalogic/commit/c62c9023c5e0f37aefa4a6d753ae52dae4b626c1) doc: update quick-start.md (#246)
+ * [52a65c0](https://github.com/numaproj/numalogic/commit/52a65c0b05df53fc5f6497bf0c71991482d88be5) fix: improve metadata serialization (#244)
+ * [8482c01](https://github.com/numaproj/numalogic/commit/8482c0168d89faf7d7d1cb19a2849d366314c5c6) perf: improve serialization performance (#243)
+ * [76cac48](https://github.com/numaproj/numalogic/commit/76cac48363f9371ee506c9aaa39f50a67571c8c1) fix: tensor dimension swap instead of view change (#240)
+ * [2dfd84c](https://github.com/numaproj/numalogic/commit/2dfd84c2d020dfc1c07b7dea07987eda270384ef) feat: convolutional vae for multivariate time series (#237)
+ * [dc18442](https://github.com/numaproj/numalogic/commit/dc18442caccd85bd6ca639110613bfaf88f0ed34) feat: Multivariate threshold using Mahalanobis distance (#234)
+ * [466681b](https://github.com/numaproj/numalogic/commit/466681b37193e99b1abae0b1a15b50416035e73d) feat: add thread safety to local cache (#224)
+
+### Contributors
+
+ * Avik Basu
+ * Jason Zesheng Chen
+ * Kushal Batra
+ * shrivardhan
+
 ## v0.5.0.post1 (2023-07-10)
 
  * [adebf98](https://github.com/numaproj/numalogic/commit/adebf98e9143ec569901c64f72a106575898b6ef) feat: add thread safety to local cache (#224)
