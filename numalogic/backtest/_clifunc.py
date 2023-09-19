@@ -76,10 +76,10 @@ def generate_scores(
     ts_col_name: str,
     model_path: Union[Path, str],
     test_ratio: float,
+    use_full_data: bool = False,
 ):
     """Generate scores for the given data."""
     backtester = PromUnivarBacktester("", "", "", col_name, test_ratio=test_ratio)
-
     df = pd.read_csv(data_file)
     try:
         df.set_index([ts_col_name], inplace=True)
@@ -87,4 +87,4 @@ def generate_scores(
         raise DataFormatError(f"Timestamp column {ts_col_name} not found in the data!") from None
 
     df.index = pd.to_datetime(df.index)
-    backtester.generate_scores(df, model_path=model_path)
+    backtester.generate_scores(df, model_path=model_path, use_full_data=use_full_data)
