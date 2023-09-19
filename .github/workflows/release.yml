@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - v*
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
@@ -41,5 +43,5 @@ jobs:
           docker buildx build \
             --output "type=image,push=true" \
             --platform="${PLATFORM}" \
-            --build-arg INSTALL_EXTRAS='redis druid'
+            --build-arg INSTALL_EXTRAS='redis druid' .\
             --tag $image_name .
