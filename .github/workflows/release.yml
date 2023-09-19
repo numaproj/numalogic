@@ -40,4 +40,8 @@ jobs:
           
           image_name="${QUAYIO_ORG}/numalogic/udf:${tag}"
           
-          docker buildx build --platform ${PLATFORM} --build-arg INSTALL_EXTRAS='redis druid' . -t $image_name
+          docker buildx build \
+            --output "type=image,push=true" \
+            --platform="${PLATFORM}" \
+            --build-arg INSTALL_EXTRAS='redis druid'
+            --tag $image_name
