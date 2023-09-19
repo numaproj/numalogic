@@ -87,6 +87,9 @@ def score(
     ts_col_name: Annotated[str, typer.Option()] = "timestamp",
     model_path: Annotated[Optional[Path], typer.Option()] = None,
     test_ratio: Annotated[float, typer.Option()] = 1.0,
+    use_full_data: Annotated[
+        bool, typer.Option(help="Whether to use the full data for testing")
+    ] = False,
 ):
     """CLI entrypoint for generating scores for the given data."""
     if (data_file is None) or (col_name is None):
@@ -99,4 +102,5 @@ def score(
         ts_col_name=ts_col_name,
         model_path=model_path,
         test_ratio=test_ratio,
+        use_full_data=use_full_data,
     )

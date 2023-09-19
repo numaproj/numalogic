@@ -123,6 +123,42 @@ class TestRoot(unittest.TestCase):
         self.assertEqual(0, res.exit_code)
         self.assertIsNone(res.exception)
 
+    def test_score_fulldata(self):
+        data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
+        runner.invoke(
+            rootapp,
+            [
+                "train",
+                "--data-file",
+                data_path,
+                "--col-name",
+                "failure",
+                "--ts-col-name",
+                "ts",
+                "--train-ratio",
+                "0.1",
+            ],
+            catch_exceptions=False,
+        )
+        res = runner.invoke(
+            rootapp,
+            [
+                "score",
+                "--data-file",
+                data_path,
+                "--model-path",
+                os.path.join(TESTS_DIR, ".btoutput", "failure", "models.pt"),
+                "--col-name",
+                "failure",
+                "--ts-col-name",
+                "ts",
+                "--use-full-data",
+            ],
+            catch_exceptions=False,
+        )
+        self.assertEqual(0, res.exit_code)
+        self.assertIsNone(res.exception)
+
     def test_score_err(self):
         data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
         with self.assertRaises(DataFormatError):

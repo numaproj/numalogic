@@ -185,14 +185,15 @@ class PromUnivarBacktester:
 
     def generate_scores(
         self,
-        df: Optional[pd.DataFrame] = None,
+        df: pd.DataFrame,
         model_path: Optional[str] = None,
-        use_full_data: bool = True,
+        use_full_data: bool = False,
     ) -> pd.DataFrame:
         """
         Generate scores for the given data.
 
         Args:
+        -------
             df: Dataframe with timestamp and metric values
             model_path: Path to the saved models
             use_full_data: If True, use the full data for generating scores else use only the test
@@ -200,11 +201,17 @@ class PromUnivarBacktester:
         Returns
         -------
             Dataframe with timestamp and metric values
-        """
-        if df is None:
-            df = self._read_or_fetch_data()
 
-        artifacts = self._load_or_train_model(df, model_path)
+        Raises
+        ------
+            RuntimeError: If valid model is not provided when use_full_data is True
+        """
+        try:
+            artifacts = self._load_or_train_model(df, model_path, avoid_training=True)
+        except FileNotFoundError as err:
+            raise RuntimeError(
+                "Valid model needs to be provided if use_full_data is True!"
+            ) from err
 
         if use_full_data:
             df_test = df[[self.metric]]
@@ -304,12 +311,16 @@ class PromUnivarBacktester:
         df.index = pd.to_datetime(df.index)
         return df
 
-    def _load_or_train_model(self, df: pd.DataFrame, model_path: str) -> dict[str, artifact_t]:
+    def _load_or_train_model(
+        self, df: pd.DataFrame, model_path: str, avoid_training: bool = False
+    ) -> dict[str, artifact_t]:
         _modelpath = model_path or self._modelpath
         try:
             with open(_modelpath, "rb") as f:
                 artifacts = torch.load(f)
         except FileNotFoundError:
+            if avoid_training:
+                raise
             LOGGER.info("No saved models found! Training models...")
             artifacts = self.train_models(df)
         else:
