@@ -184,7 +184,9 @@ class PromUnivarBacktester:
         return artifacts
 
     def generate_scores(
-        self, df: Optional[pd.DataFrame] = None, model_path: Optional[str] = None,
+        self,
+        df: Optional[pd.DataFrame] = None,
+        model_path: Optional[str] = None,
         use_full_data: bool = True,
     ) -> pd.DataFrame:
         """

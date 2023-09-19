@@ -12,6 +12,4 @@ def _validate_req_pkgs():
 _validate_req_pkgs()
 
 
-__all__ = [
-    "PromUnivarBacktester"
-]
+__all__ = ["PromUnivarBacktester"]
