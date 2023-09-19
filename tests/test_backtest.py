@@ -1,5 +1,6 @@
 import os.path
 import shutil
+import tempfile
 import unittest
 from unittest.mock import patch, Mock
 
@@ -125,39 +126,63 @@ class TestRoot(unittest.TestCase):
 
     def test_score_fulldata(self):
         data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
-        runner.invoke(
-            rootapp,
-            [
-                "train",
-                "--data-file",
-                data_path,
-                "--col-name",
-                "failure",
-                "--ts-col-name",
-                "ts",
-                "--train-ratio",
-                "0.1",
-            ],
-            catch_exceptions=False,
-        )
-        res = runner.invoke(
-            rootapp,
-            [
-                "score",
-                "--data-file",
-                data_path,
-                "--model-path",
-                os.path.join(TESTS_DIR, ".btoutput", "failure", "models.pt"),
-                "--col-name",
-                "failure",
-                "--ts-col-name",
-                "ts",
-                "--use-full-data",
-            ],
-            catch_exceptions=False,
-        )
+        with tempfile.TemporaryDirectory() as tmpdir:
+            runner.invoke(
+                rootapp,
+                [
+                    "train",
+                    "--data-file",
+                    data_path,
+                    "--col-name",
+                    "failure",
+                    "--ts-col-name",
+                    "ts",
+                    "--train-ratio",
+                    "0.1",
+                    "--output-dir",
+                    tmpdir,
+                ],
+                catch_exceptions=False,
+            )
+            res = runner.invoke(
+                rootapp,
+                [
+                    "score",
+                    "--data-file",
+                    data_path,
+                    "--model-path",
+                    os.path.join(tmpdir, "failure", "models.pt"),
+                    "--col-name",
+                    "failure",
+                    "--ts-col-name",
+                    "ts",
+                    "--use-full-data",
+                ],
+                catch_exceptions=False,
+            )
         self.assertEqual(0, res.exit_code)
         self.assertIsNone(res.exception)
+
+    def test_score_fulldata_err(self):
+        data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            with self.assertRaises(RuntimeError):
+                runner.invoke(
+                    rootapp,
+                    [
+                        "score",
+                        "--data-file",
+                        data_path,
+                        "--model-path",
+                        os.path.join(tmpdir, "models.pt"),
+                        "--col-name",
+                        "failure",
+                        "--ts-col-name",
+                        "ts",
+                        "--use-full-data",
+                    ],
+                    catch_exceptions=False,
+                )
 
     def test_score_err(self):
         data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
