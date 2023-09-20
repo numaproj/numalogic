@@ -14,6 +14,17 @@ CONF_FILE_PATH = os.getenv(
 )
 
 
+def init_server(step: str, server_type: str):
+    """Initializes and returns the server."""
+    pipeline_conf = load_pipeline_conf(CONF_FILE_PATH)
+    LOGGER.info("Pipeline config: %s", pipeline_conf)
+
+    redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
+    udf = UDFFactory.get_udf_instance(step, r_client=redis_client, pl_conf=pipeline_conf)
+
+    return ServerFactory.get_server_instance(server_type, handler=udf)
+
+
 def start_server():
     """Starts the pynumaflow server."""
     set_logger()
@@ -26,13 +37,7 @@ def start_server():
 
     LOGGER.info("Running %s on %s server with config path %s", step, server_type, CONF_FILE_PATH)
 
-    pipeline_conf = load_pipeline_conf(CONF_FILE_PATH)
-    logging.info("Pipeline config: %s", pipeline_conf)
-
-    redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
-    udf = UDFFactory.get_udf_instance(step, r_client=redis_client, pl_conf=pipeline_conf)
-
-    server = ServerFactory.get_server_instance(server_type, map_handler=udf)
+    server = init_server(step, server_type)
     server.start()
 
 
