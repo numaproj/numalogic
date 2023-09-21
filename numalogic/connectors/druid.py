@@ -15,7 +15,8 @@ from typing import Optional
 _LOGGER = logging.getLogger(__name__)
 
 
-def make_filter_pairs(filter_keys, filter_values):
+# TODO: pass dictionary of keys and values as dict
+def make_filter_pairs(filter_keys: list[str], filter_values: list[str]) -> dict:
     """
 
     Args:
@@ -25,13 +26,17 @@ def make_filter_pairs(filter_keys, filter_values):
     Returns: a dict of key value pairs
 
     """
-    filter_pairs = {}
-    for k, v in zip(filter_keys, filter_values):
-        filter_pairs[k] = v
-    return filter_pairs
+    return dict(zip(filter_keys, filter_values))
 
 
-def build_params(aggregations, datasource, dimensions, filter_pairs, granularity, hours):
+def build_params(
+    aggregations: list[str],
+    datasource: str,
+    dimensions: list[str],
+    filter_pairs: dict,
+    granularity: str,
+    hours: float,
+) -> object:
     """
 
     Args:
@@ -47,8 +52,6 @@ def build_params(aggregations, datasource, dimensions, filter_pairs, granularity
     Returns: a dict of parameters
 
     """
-    _start_time = time.time()
-
     _filter = Filter(
         type="and",
         fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
@@ -101,7 +104,7 @@ class DruidFetcher(DataFetcher):
         pivot: Optional[Pivot] = None,
         hours: float = 24,
     ) -> pd.DataFrame:
-        _start_time = time.time()
+        _start_time = time.perf_counter()
         filter_pairs = make_filter_pairs(filter_keys, filter_values)
         query_params = build_params(
             aggregations, datasource, dimensions, filter_pairs, granularity, hours
@@ -127,6 +130,12 @@ class DruidFetcher(DataFetcher):
             )
             df.columns = df.columns.map("{0[1]}".format)
             df.reset_index(inplace=True)
+
+        _end_time = time.perf_counter() - _start_time
+        _LOGGER.debug(
+            "Druid query latency: %s",
+            f"{_end_time:.6f}s for the calculation",
+        )
         return df
 
     def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
