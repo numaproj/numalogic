@@ -15,6 +15,43 @@ from typing import Optional
 _LOGGER = logging.getLogger(__name__)
 
 
+def make_filter_pairs(filter_keys, filter_values):
+    filter_pairs = {}
+    for k, v in zip(filter_keys, filter_values):
+        filter_pairs[k] = v
+    return filter_pairs
+
+
+def build_params(aggregations, datasource, dimensions, filter_pairs, granularity, hours):
+    _start_time = time.time()
+
+    _filter = Filter(
+        type="and",
+        fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
+    )
+    end_dt = datetime.now(pytz.utc)
+    start_dt = end_dt - timedelta(hours=hours)
+
+    intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
+    dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
+
+    params = {
+        "datasource": datasource,
+        "granularity": granularity,
+        "intervals": intervals,
+        "aggregations": aggregations,
+        "filter": _filter,
+        "dimensions": dimension_specs,
+    }
+
+    _LOGGER.debug(
+        "Druid query params: %s",
+        params,
+    )
+
+    return params
+
+
 class DruidFetcher(DataFetcher):
     """
     Class for fetching data as a dataframe from Druid.
@@ -41,38 +78,12 @@ class DruidFetcher(DataFetcher):
         hours: float = 24,
     ) -> pd.DataFrame:
         _start_time = time.time()
-        filter_pairs = {}
-        for k, v in zip(filter_keys, filter_values):
-            filter_pairs[k] = v
-
-        _filter = Filter(
-            type="and",
-            fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
+        filter_pairs = make_filter_pairs(filter_keys, filter_values)
+        query_params = build_params(
+            aggregations, datasource, dimensions, filter_pairs, granularity, hours
         )
 
-        end_dt = datetime.now(pytz.utc)
-        start_dt = end_dt - timedelta(hours=hours)
-        intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
-
-        dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
-
-        dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
-
-        params = {
-            "datasource": datasource,
-            "granularity": granularity,
-            "intervals": intervals,
-            "aggregations": aggregations,
-            "filter": _filter,
-            "dimensions": dimension_specs,
-        }
-
-        _LOGGER.debug(
-            "Fetching data with params: %s",
-            params,
-        )
-        self.client.sub_query(**params)
-        response = self.client.groupby(**params)
+        response = self.client.groupby(**query_params)
         df = response.export_pandas()
 
         if df is None or df.shape[0] == 0:

@@ -4,10 +4,13 @@ import datetime
 from unittest.mock import patch, Mock
 import pydruid.query
 from pydruid.client import PyDruid
+from pydruid.utils.dimensions import DimensionSpec
 from pydruid.utils.aggregators import doublesum
+from pydruid.utils.filters import Filter
+from deepdiff import DeepDiff
 
 from numalogic.connectors._config import Pivot
-from numalogic.connectors.druid import DruidFetcher
+from numalogic.connectors.druid import DruidFetcher, make_filter_pairs, build_params
 
 
 def mock_group_by(*_, **__):
@@ -43,7 +46,7 @@ class TestDruid(unittest.TestCase):
         cls.druid = DruidFetcher(url="http://localhost:8888", endpoint="druid/v2/")
 
     @patch.object(PyDruid, "groupby", Mock(return_value=mock_group_by()))
-    def test_fetch_data(self):
+    def test_fetch(self):
         _out = self.druid.fetch(
             filter_keys=["assetId"],
             filter_values=["5984175597303660107"],
@@ -59,6 +62,21 @@ class TestDruid(unittest.TestCase):
             ),
         )
         self.assertEqual(_out.shape, (2, 2))
+
+    def test_build_param(self):
+        expected = {
+            "datasource": "foo",
+            "dimensions": map(lambda d: DimensionSpec(dimension=d, output_name=d), ["bar"]),
+            "filter": [Filter(type="selector", dimension="ciStatus", value="false")],
+            "granularity": "all",
+            "aggregations": "",
+            "intervals": "",
+        }
+
+        filter_pairs = make_filter_pairs(list["ciStatus"], list["false"])
+        actual = build_params("", "foo", ["bar"], filter_pairs, "all", float(24))
+        actual["intervals"] = ""
+        DeepDiff(expected, actual).get("values_changed", {})
 
 
 if __name__ == "__main__":
