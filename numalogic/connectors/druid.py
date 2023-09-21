@@ -16,6 +16,15 @@ _LOGGER = logging.getLogger(__name__)
 
 
 def make_filter_pairs(filter_keys, filter_values):
+    """
+
+    Args:
+        filter_keys: keys
+        filter_values: values.
+
+    Returns: a dict of key value pairs
+
+    """
     filter_pairs = {}
     for k, v in zip(filter_keys, filter_values):
         filter_pairs[k] = v
@@ -23,6 +32,21 @@ def make_filter_pairs(filter_keys, filter_values):
 
 
 def build_params(aggregations, datasource, dimensions, filter_pairs, granularity, hours):
+    """
+
+    Args:
+        aggregations: A map from aggregator name to one of the
+          ``pydruid.utils.aggregators`` e.g., ``doublesum``
+        datasource: Data source to query
+        dimensions: The dimensions to group by
+        filter_pairs: Indicates which rows of
+          data to include in the query
+        granularity: Time bucket to aggregate data by hour, day, minute, etc.,
+        hours: Hours from now to skip training.
+
+    Returns: a dict of parameters
+
+    """
     _start_time = time.time()
 
     _filter = Filter(
