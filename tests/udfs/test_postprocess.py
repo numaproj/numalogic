@@ -9,13 +9,13 @@ import numpy as np
 from fakeredis import FakeServer, FakeStrictRedis
 from omegaconf import OmegaConf
 from orjson import orjson
-from pynumaflow.function import DatumMetadata, Datum
+from pynumaflow.mapper import Datum
 
 from numalogic._constants import TESTS_DIR
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import ModelKeyNotFound
-from numalogic.udfs._config import PipelineConf
+from numalogic.udfs import PipelineConf
 from numalogic.udfs.entities import Header, TrainerPayload, Status
 from numalogic.udfs.postprocess import PostprocessUDF
 
@@ -25,7 +25,6 @@ KEYS = ["service-mesh", "1", "2"]
 DATUM_KW = {
     "event_time": datetime.now(),
     "watermark": datetime.now(),
-    "metadata": DatumMetadata("1", 1),
 }
 DATA = {
     "uuid": "dd7dfb43-532b-49a3-906e-f78f82ad9c4b",
@@ -77,7 +76,7 @@ DATA = {
     "status": "artifact_found",
     "header": "model_inference",
     "metadata": {
-        "model_version": 0,
+        "artifact_versions": {"StdDevThreshold": "0"},
         "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
     },
 }
@@ -116,7 +115,6 @@ class TestPostProcessUDF(unittest.TestCase):
         self.registry.save(
             KEYS, ["StdDevThreshold"], StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]]))
         )
-
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
         self.assertEqual(2, len(msg))
 

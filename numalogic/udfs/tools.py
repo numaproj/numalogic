@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 from typing import Optional
 
 import numpy as np
@@ -64,10 +65,14 @@ def make_stream_payload(
     )
 
 
-# TODO: move to base NumalogicUDF class
-def _load_model(
-    skeys: KEYS, dkeys: KEYS, payload: StreamPayload, model_registry: ArtifactManager
-) -> Optional[ArtifactData]:
+# TODO: move to base NumalogicUDF class and look into payload mutation
+def _load_artifact(
+    skeys: KEYS,
+    dkeys: KEYS,
+    payload: StreamPayload,
+    model_registry: ArtifactManager,
+    load_latest: bool,
+) -> tuple[Optional[ArtifactData], StreamPayload]:
     """
     Load artifact from redis
     Args:
@@ -79,26 +84,35 @@ def _load_model(
     Returns
     -------
     artifact_t object
+    StreamPayload object
 
     """
-    try:
-        artifact = model_registry.load(skeys, dkeys)
+    version_to_load = "-1"
+    if payload.metadata and "artifact_versions" in payload.metadata:
+        version_to_load = payload.metadata["artifact_versions"][":".join(dkeys)]
+        _LOGGER.info("%s - Found version info for keys: %s, %s", payload.uuid, skeys, dkeys)
+    else:
         _LOGGER.info(
-            "%s - Loaded Model. Source: %s , version: %s, Keys: %s, %s",
+            "%s - No version info passed on! Loading latest artifact version for Keys: %s",
             payload.uuid,
-            artifact.extras.get("source"),
-            artifact.extras.get("version"),
             skeys,
-            dkeys,
         )
+        load_latest = True
+    try:
+        if load_latest:
+            artifact = model_registry.load(skeys=skeys, dkeys=dkeys)
+        else:
+            artifact = model_registry.load(
+                skeys=skeys, dkeys=dkeys, latest=False, version=version_to_load
+            )
     except RedisRegistryError:
-        _LOGGER.exception(
-            "%s - Error while fetching preproc artifact, Keys: %s, Metrics: %s",
+        _LOGGER.warning(
+            "%s - Error while fetching artifact, Keys: %s, Metrics: %s",
             payload.uuid,
             skeys,
             payload.metrics,
         )
-        return None
+        return None, payload
 
     except Exception:
         _LOGGER.exception(
@@ -107,6 +121,26 @@ def _load_model(
             payload.composite_keys,
             payload.metrics,
         )
-        return None
+        return None, payload
     else:
-        return artifact
+        _LOGGER.info(
+            "%s - Loaded Model. Source: %s , version: %s, Keys: %s, %s",
+            payload.uuid,
+            artifact.extras.get("source"),
+            artifact.extras.get("version"),
+            skeys,
+            dkeys,
+        )
+        if (
+            artifact.metadata
+            and "artifact_versions" in artifact.metadata
+            and "artifact_versions" not in payload.metadata
+        ):
+            payload = replace(
+                payload,
+                metadata={
+                    "artifact_versions": artifact.metadata["artifact_versions"],
+                    **payload.metadata,
+                },
+            )
+        return artifact, payload

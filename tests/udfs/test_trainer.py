@@ -8,7 +8,7 @@ import pandas as pd
 from fakeredis import FakeStrictRedis, FakeServer
 from omegaconf import OmegaConf
 from orjson import orjson
-from pynumaflow.function import Datum, DatumMetadata
+from pynumaflow.mapper import Datum
 
 from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
@@ -47,7 +47,6 @@ class TrainTrainerUDF(unittest.TestCase):
             value=orjson.dumps(payload),
             event_time=datetime.now(),
             watermark=datetime.now(),
-            metadata=DatumMetadata("1", 1),
         )
         conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
         schema = OmegaConf.structured(PipelineConf)
@@ -58,7 +57,7 @@ class TrainTrainerUDF(unittest.TestCase):
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data()))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_01(self):
         self.udf.register_conf(
             "druid-config",
@@ -78,7 +77,7 @@ class TrainTrainerUDF(unittest.TestCase):
             ),
         )
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data()))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_02(self):
         self.udf.register_conf(
             "druid-config",
@@ -100,7 +99,7 @@ class TrainTrainerUDF(unittest.TestCase):
             ),
         )
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data()))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_03(self):
         self.udf.register_conf(
             "druid-config",
@@ -127,7 +126,7 @@ class TrainTrainerUDF(unittest.TestCase):
         with self.assertRaises(ConfigNotFoundError):
             udf(KEYS, self.datum)
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(return_value=mock_druid_fetch_data(nrows=10)))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data(nrows=10)))
     def test_trainer_data_insufficient(self):
         self.udf.register_conf(
             "druid-config",
@@ -148,7 +147,7 @@ class TrainTrainerUDF(unittest.TestCase):
             )
         )
 
-    @patch.object(DruidFetcher, "fetch_data", Mock(side_effect=RuntimeError))
+    @patch.object(DruidFetcher, "fetch", Mock(side_effect=RuntimeError))
     def test_trainer_datafetcher_err(self):
         self.udf.register_conf(
             "druid-config",

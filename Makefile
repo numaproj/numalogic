@@ -23,7 +23,7 @@ lint: format
 
 # install all dependencies
 setup:
-	poetry install --with dev,torch --all-extras --no-root
+	poetry install --with dev,torch --all-extras
 
 # test your application (tests in the tests/ directory)
 test:
@@ -36,6 +36,11 @@ publish:
 
 requirements:
 	poetry export -f requirements.txt --output requirements.txt --without-hashes
+
+tag:
+	VERSION=v$(shell poetry version -s)
+	@echo "Tagging version $(VERSION)"
+	git tag -s -a $(VERSION) -m "Release $(VERSION)"
 
 /usr/local/bin/mkdocs:
 	$(PYTHON) -m pip install mkdocs==1.3.0 mkdocs_material==8.3.9

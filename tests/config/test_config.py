@@ -90,7 +90,8 @@ class TestFactory(unittest.TestCase):
 
     def test_cls(self):
         factory = ModelFactory()
-        model_cls = factory.get_cls(ModelInfo(name="LSTMAE"))
+        model_cls = factory.get_cls("LSTMAE")
+        print(model_cls)
         self.assertEqual(model_cls.__class__, LSTMAE.__class__)
 
     def test_instance_err(self):
@@ -101,7 +102,7 @@ class TestFactory(unittest.TestCase):
     def test_cls_err(self):
         factory = ModelFactory()
         with self.assertRaises(UnknownConfigArgsError):
-            factory.get_cls(ModelInfo(name="Random"))
+            factory.get_cls("Random")
 
 
 if __name__ == "__main__":

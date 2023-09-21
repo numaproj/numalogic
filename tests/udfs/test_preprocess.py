@@ -7,7 +7,7 @@ from unittest.mock import patch, Mock
 from fakeredis import FakeServer, FakeStrictRedis
 from omegaconf import OmegaConf
 from orjson import orjson
-from pynumaflow.function import Datum, DatumMetadata
+from pynumaflow.mapper import Datum
 
 from numalogic._constants import TESTS_DIR
 from numalogic.registry import RedisRegistry
@@ -25,7 +25,6 @@ DATUM = input_json_from_file(os.path.join(TESTS_DIR, "udfs", "resources", "data"
 DATUM_KW = {
     "event_time": datetime.now(),
     "watermark": datetime.now(),
-    "metadata": DatumMetadata("1", 1),
 }
 
 
@@ -45,13 +44,13 @@ class TestPreprocessUDF(unittest.TestCase):
         self.udf1 = PreprocessUDF(REDIS_CLIENT, pl_conf=pl_conf)
         self.udf2 = PreprocessUDF(REDIS_CLIENT, pl_conf=pl_conf_2)
         self.udf1.register_conf("druid-config", pl_conf.stream_confs["druid-config"])
-        self.udf1.register_conf("druid-config", pl_conf_2.stream_confs["druid-config"])
+        self.udf2.register_conf("druid-config", pl_conf_2.stream_confs["druid-config"])
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
 
     def test_preprocess_load_from_registry(self):
-        msgs = self.udf1(
+        msgs = self.udf2(
             KEYS,
             DATUM,
         )
@@ -61,7 +60,7 @@ class TestPreprocessUDF(unittest.TestCase):
         self.assertEqual(payload.header, Header.MODEL_INFERENCE)
 
     def test_preprocess_load_from_config(self):
-        msgs = self.udf2(
+        msgs = self.udf1(
             KEYS,
             DATUM,
         )

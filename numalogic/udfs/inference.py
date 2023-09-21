@@ -8,20 +8,23 @@ import numpy as np
 import torch
 from numpy import typing as npt
 from orjson import orjson
-from pynumaflow.function import Messages, Datum, Message
+from pynumaflow.mapper import Messages, Datum, Message
 
-from numalogic.registry import RedisRegistry, LocalLRUCache, ArtifactData
-from numalogic.tools.exceptions import RedisRegistryError, ModelKeyNotFound, ConfigNotFoundError
+from numalogic.config import RegistryFactory
+from numalogic.registry import LocalLRUCache, ArtifactData
+from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
+from numalogic.udfs.tools import _load_artifact
 
 _LOGGER = logging.getLogger(__name__)
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
+LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
 
 class InferenceUDF(NumalogicUDF):
@@ -35,7 +38,8 @@ class InferenceUDF(NumalogicUDF):
 
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
         super().__init__(is_async=False)
-        self.model_registry = RedisRegistry(
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(
             client=r_client,
             cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
         )
@@ -58,7 +62,8 @@ class InferenceUDF(NumalogicUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
-    def compute(self, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:
+    @classmethod
+    def compute(cls, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:
         """
         Perform inference on the input data.
 
@@ -79,7 +84,7 @@ class InferenceUDF(NumalogicUDF):
         try:
             with torch.no_grad():
                 _, out = model.forward(x)
-            recon_err = model.criterion(out, x, reduction="none")
+                recon_err = model.criterion(out, x, reduction="none")
         except Exception as err:
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)
@@ -111,8 +116,13 @@ class InferenceUDF(NumalogicUDF):
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST:
             return Messages(Message(keys=keys, value=payload.to_json()))
-
-        artifact_data = self.load_artifact(keys, payload)
+        artifact_data, payload = _load_artifact(
+            skeys=keys,
+            dkeys=[self.get_conf(payload.config_id).numalogic_conf.model.name],
+            payload=payload,
+            model_registry=self.model_registry,
+            load_latest=LOAD_LATEST,
+        )
 
         # TODO: revisit retraining logic
         # Send training request if artifact loading is not successful
@@ -161,47 +171,6 @@ class InferenceUDF(NumalogicUDF):
             time.perf_counter() - _start_time,
         )
         return Messages(Message(keys=keys, value=payload.to_json()))
-
-    def load_artifact(self, keys: list[str], payload: StreamPayload) -> Optional[ArtifactData]:
-        """
-        Load inference artifact from the registry.
-
-        Args:
-            keys: List of keys
-            payload: StreamPayload object
-
-        Returns
-        -------
-            ArtifactData instance
-        """
-        _conf = self.get_conf(payload.config_id).numalogic_conf
-        try:
-            artifact_data = self.model_registry.load(
-                skeys=keys,
-                dkeys=[_conf.model.name],
-            )
-        except ModelKeyNotFound:
-            _LOGGER.warning(
-                "%s - Model key not found for Keys: %s, Metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metrics,
-            )
-            return None
-        except RedisRegistryError:
-            _LOGGER.exception(
-                "%s - Error while fetching inference artifact, Keys: %s, Metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metrics,
-            )
-            return None
-        _LOGGER.info(
-            "%s - Loaded artifact data from %s",
-            payload.uuid,
-            artifact_data.extras.get("source"),
-        )
-        return artifact_data
 
     def is_model_stale(self, artifact_data: ArtifactData, payload: StreamPayload) -> bool:
         """

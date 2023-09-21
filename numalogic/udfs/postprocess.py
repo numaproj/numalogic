@@ -7,20 +7,21 @@ from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 from orjson import orjson
-from pynumaflow.function import Messages, Datum, Message
+from pynumaflow.mapper import Messages, Datum, Message
 
-from numalogic.config import PostprocessFactory
-from numalogic.registry import LocalLRUCache, RedisRegistry
+from numalogic.config import PostprocessFactory, RegistryFactory
+from numalogic.registry import LocalLRUCache
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
-from numalogic.udfs.tools import _load_model
+from numalogic.udfs.tools import _load_artifact
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
+LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,9 +41,9 @@ class PostprocessUDF(NumalogicUDF):
         pl_conf: Optional[PipelineConf] = None,
     ):
         super().__init__()
-        self.model_registry = RedisRegistry(
-            client=r_client,
-            cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(
+            client=r_client, cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL)
         )
         self.pl_conf = pl_conf or PipelineConf()
         self.postproc_factory = PostprocessFactory()
@@ -88,8 +89,12 @@ class PostprocessUDF(NumalogicUDF):
         postprocess_cfg = self.get_conf(payload.config_id).numalogic_conf.postprocess
 
         # load artifact
-        thresh_artifact = _load_model(
-            skeys=keys, dkeys=[thresh_cfg.name], payload=payload, model_registry=self.model_registry
+        thresh_artifact, payload = _load_artifact(
+            skeys=keys,
+            dkeys=[thresh_cfg.name],
+            payload=payload,
+            model_registry=self.model_registry,
+            load_latest=LOAD_LATEST,
         )
         postproc_clf = self.postproc_factory.get_instance(postprocess_cfg)
 
@@ -156,8 +161,9 @@ class PostprocessUDF(NumalogicUDF):
         )
         return messages
 
+    @classmethod
     def compute(
-        self, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
+        cls, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
     ) -> NDArray[float]:
         """
         Compute the postprocess function.

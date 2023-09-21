@@ -7,23 +7,21 @@ import numpy as np
 import numpy.typing as npt
 import orjson
 import pandas as pd
-from pynumaflow.function import Datum, Messages, Message
+from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
 from numalogic.base import StatelessTransformer
-from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory
+from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
 from numalogic.config._config import TrainerConf
-from numalogic.connectors.druid import DruidFetcher
+from numalogic.config.factory import ConnectorFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
-from numalogic.registry import RedisRegistry
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
-from numalogic.tools.types import redis_client_t, artifact_t
+from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
-from numalogic.udfs.entities import TrainerPayload
-
+from numalogic.udfs.entities import TrainerPayload, StreamPayload
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -44,12 +42,14 @@ class TrainerUDF(NumalogicUDF):
     ):
         super().__init__(is_async=False)
         self.r_client = r_client
-        self.model_registry = RedisRegistry(client=r_client)
+        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.model_registry = model_registry_cls(client=r_client)
         self.pl_conf = pl_conf or PipelineConf()
         self.druid_conf = self.pl_conf.druid_conf
 
+        data_fetcher_cls = ConnectorFactory.get_cls("DruidFetcher")
         try:
-            self.data_fetcher = DruidFetcher(
+            self.data_fetcher = data_fetcher_cls(
                 url=self.druid_conf.url, endpoint=self.druid_conf.endpoint
             )
         except AttributeError:
@@ -90,8 +90,9 @@ class TrainerUDF(NumalogicUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
+    @classmethod
     def compute(
-        self,
+        cls,
         model: artifact_t,
         input_: npt.NDArray[float],
         preproc_clf: Optional[artifact_t] = None,
@@ -193,24 +194,24 @@ class TrainerUDF(NumalogicUDF):
 
         # Save artifacts
         # TODO perform multi-save here
-        self.save_artifact(
-            artifacts["preproc_clf"],
-            skeys=payload.composite_keys,
-            dkeys=[_conf.name for _conf in _conf.numalogic_conf.preprocess],
-            uuid=payload.uuid,
-        )
-        self.save_artifact(
-            artifacts["model"],
-            skeys=payload.composite_keys,
-            dkeys=[_conf.numalogic_conf.model.name],
-            uuid=payload.uuid,
-            train_size=x_train.shape[0],
-        )
-        self.save_artifact(
-            artifacts["threshold_clf"],
-            skeys=payload.composite_keys,
-            dkeys=[_conf.numalogic_conf.threshold.name],
-            uuid=payload.uuid,
+        skeys = payload.composite_keys
+        dict_artifacts = {
+            "postproc": KeyedArtifact(
+                dkeys=[_conf.numalogic_conf.threshold.name], artifact=artifacts["threshold_clf"]
+            ),
+            "inference": KeyedArtifact(
+                dkeys=[_conf.numalogic_conf.model.name], artifact=artifacts["model"]
+            ),
+            "preproc": KeyedArtifact(
+                dkeys=[_conf.name for _conf in _conf.numalogic_conf.preprocess],
+                artifact=artifacts["preproc_clf"],
+            ),
+        }
+        self.artifacts_to_save(
+            skeys=skeys,
+            dict_artifacts=dict_artifacts,
+            model_registry=self.model_registry,
+            payload=payload,
         )
 
         _LOGGER.debug(
@@ -218,12 +219,10 @@ class TrainerUDF(NumalogicUDF):
         )
         return Messages(Message.to_drop())
 
-    @staticmethod
-    def _construct_preproc_clf(_conf: StreamConf) -> Optional[artifact_t]:
-        preproc_factory = PreprocessFactory()
+    def _construct_preproc_clf(self, _conf: StreamConf) -> Optional[artifact_t]:
         preproc_clfs = []
         for _cfg in _conf.numalogic_conf.preprocess:
-            _clf = preproc_factory.get_instance(_cfg)
+            _clf = self._preproc_factory.get_instance(_cfg)
             preproc_clfs.append(_clf)
         if not preproc_clfs:
             return None
@@ -231,39 +230,41 @@ class TrainerUDF(NumalogicUDF):
             return preproc_clfs[0]
         return make_pipeline(*preproc_clfs)
 
-    def save_artifact(
-        self, artifact: artifact_t, skeys: list[str], dkeys: list[str], uuid: str, **metadata
+    @staticmethod
+    def artifacts_to_save(
+        skeys: KEYS,
+        dict_artifacts: dict[str, KeyedArtifact],
+        model_registry,
+        payload: StreamPayload,
     ) -> None:
         """
-        Save artifact to the registry.
-
+        Save artifacts.
         Args:
-            artifact: Artifact to save
-            skeys: List of keys
-            dkeys: List of dkeys
-            uuid: UUID
-            **metadata: Additional metadata
+        _______
+        skeys: list keys
+        dict_artifacts: artifact_tuple which has dkeys and artifact as fields
+        model_registry: registry that supports multiple_save
+        payload: payload.
+
+        Returns
+        -------
+            Tuple of keys and artifacts
+
         """
-        if not artifact:
-            return
-        # TODO check for statelessness from config
-        if isinstance(artifact, StatelessTransformer):
-            _LOGGER.info("%s - Skipping save for stateless artifact with dkeys: %s", uuid, dkeys)
-            return
+        for key, value in dict_artifacts.items():
+            if value.artifact:
+                if isinstance(value.artifact, StatelessTransformer):
+                    del dict_artifacts[key]
         try:
-            version = self.model_registry.save(
+            ver_dict = model_registry.save_multiple(
                 skeys=skeys,
-                dkeys=dkeys,
-                artifact=artifact,
-                uuid=uuid,
-                **metadata,
+                dict_artifacts=dict_artifacts,
+                uuid=payload.uuid,
             )
         except RedisRegistryError:
-            _LOGGER.exception("%s - Error while saving Model with skeys: %s", uuid, skeys)
+            _LOGGER.exception("%s - Error while saving Model with skeys: %s", payload.uuid, skeys)
         else:
-            _LOGGER.info(
-                "%s - Artifact saved with dkeys: %s with version: %s", uuid, dkeys, version
-            )
+            _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
         _conf = self.get_conf(payload.config_id)
@@ -307,7 +308,7 @@ class TrainerUDF(NumalogicUDF):
         _conf = self.get_conf(payload.config_id)
 
         try:
-            _df = self.data_fetcher.fetch_data(
+            _df = self.data_fetcher.fetch(
                 datasource=self.druid_conf.fetcher.datasource,
                 filter_keys=_conf.composite_keys,
                 filter_values=payload.composite_keys,
