@@ -77,7 +77,7 @@ class TestDruid(unittest.TestCase):
         actual = build_params("", "foo", ["bar"], filter_pairs, "all", float(24))
         actual["intervals"] = ""
         diff = DeepDiff(expected, actual).get("values_changed", {})
-        self.assertEqual({}, diff)
+        self.assertDictEqual({}, diff)
 
 
 if __name__ == "__main__":

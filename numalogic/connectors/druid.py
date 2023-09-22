@@ -16,7 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 # TODO: pass dictionary of keys and values as dict
-def make_filter_pairs(filter_keys: list[str], filter_values: list[str]) -> dict:
+def make_filter_pairs(filter_keys: list[str], filter_values: list[str]) -> dict[str, str]:
     """
 
     Args:
@@ -36,7 +36,7 @@ def build_params(
     filter_pairs: dict,
     granularity: str,
     hours: float,
-) -> object:
+) -> dict:
     """
 
     Args:
@@ -132,10 +132,7 @@ class DruidFetcher(DataFetcher):
             df.reset_index(inplace=True)
 
         _end_time = time.perf_counter() - _start_time
-        _LOGGER.debug(
-            "Druid query latency: %s",
-            f"{_end_time:.6f}s for the calculation",
-        )
+        _LOGGER.debug("Druid query latency: %.6fs", _end_time)
         return df
 
     def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
