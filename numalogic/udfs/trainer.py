@@ -245,9 +245,11 @@ class TrainerUDF(NumalogicUDF):
             Tuple of keys and artifacts
 
         """
-        for key in list(dict_artifacts):
-            if isinstance(dict_artifacts[key].artifact, StatelessTransformer):
-                del dict_artifacts[key]
+        dict_artifacts = {
+            k: v
+            for k, v in dict_artifacts.items()
+            if not isinstance(v.artifact, StatelessTransformer)
+        }
 
         try:
             ver_dict = model_registry.save_multiple(
