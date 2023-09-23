@@ -245,7 +245,7 @@ class TrainerUDF(NumalogicUDF):
             Tuple of keys and artifacts
 
         """
-        for key in list(dict_artifacts.keys()):
+        for key in list(dict_artifacts):
             if isinstance(dict_artifacts[key].artifact, StatelessTransformer):
                 del dict_artifacts[key]
 
