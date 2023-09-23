@@ -106,7 +106,7 @@ class DruidFetcher(DataFetcher):
         aggregations: Optional[dict] = None,
         post_aggregations: Optional[dict] = None,
         group_by: Optional[list[str]] = None,
-        pivot: Optional[Pivot] = Pivot(),
+        pivot: Optional[Pivot] = None,
         hours: float = 24,
     ) -> pd.DataFrame:
         _start_time = time.perf_counter()
@@ -133,7 +133,7 @@ class DruidFetcher(DataFetcher):
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
 
-        if pivot.columns:
+        if pivot and pivot.columns:
             df = df.pivot(
                 index=pivot.index,
                 columns=pivot.columns,

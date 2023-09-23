@@ -128,7 +128,7 @@ class TestDruid(unittest.TestCase):
             dimensions=["bar"],
             filter_pairs=filter_pairs,
             granularity="all",
-            hours=float(24),
+            hours=24.0,
         )
         diff = DeepDiff(expected, actual).get("values_changed", {})
         self.assertDictEqual({}, diff)
