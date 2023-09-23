@@ -378,7 +378,7 @@ class RedisRegistry(ArtifactManager):
                     key = self.construct_key(skeys, value.dkeys)
                     latest_key = self.__construct_latest_key(key)
                     version_key = self.client.get(name=latest_key)
-                    self.client.hset(
+                    pipe.hset(
                         name=version_key.decode(), key="metadata", value=orjson.dumps(metadata)
                     )
                 pipe.execute()
