@@ -30,18 +30,21 @@ def make_filter_pairs(filter_keys: list[str], filter_values: list[str]) -> dict[
 
 
 def build_params(
-    aggregations: list[str],
     datasource: str,
     dimensions: list[str],
     filter_pairs: dict,
     granularity: str,
     hours: float,
+    aggregations: Optional[list[str]] = None,
+    post_aggregations: Optional[list[str]] = None,
 ) -> dict:
     """
 
     Args:
         aggregations: A map from aggregator name to one of the
           ``pydruid.utils.aggregators`` e.g., ``doublesum``
+        post_aggregations: A map from post aggregator name to one of the
+          ``pydruid.utils.postaggregator`` e.g., ``QuantilesDoublesSketchToQuantile``
         datasource: Data source to query
         dimensions: The dimensions to group by
         filter_pairs: Indicates which rows of
@@ -67,6 +70,7 @@ def build_params(
         "granularity": granularity,
         "intervals": intervals,
         "aggregations": aggregations,
+        "post_aggregations": post_aggregations,
         "filter": _filter,
         "dimensions": dimension_specs,
     }
@@ -100,14 +104,21 @@ class DruidFetcher(DataFetcher):
         dimensions: list[str],
         granularity: str = "minute",
         aggregations: Optional[dict] = None,
+        post_aggregations: Optional[dict] = None,
         group_by: Optional[list[str]] = None,
-        pivot: Optional[Pivot] = None,
+        pivot: Optional[Pivot] = Pivot(),
         hours: float = 24,
     ) -> pd.DataFrame:
         _start_time = time.perf_counter()
         filter_pairs = make_filter_pairs(filter_keys, filter_values)
         query_params = build_params(
-            aggregations, datasource, dimensions, filter_pairs, granularity, hours
+            datasource,
+            dimensions,
+            filter_pairs,
+            granularity,
+            hours,
+            aggregations,
+            post_aggregations,
         )
 
         response = self.client.groupby(**query_params)

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.6.0a5"
+version = "0.6.0a6"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -43,7 +43,7 @@ pynumaflow = "~0.5"
 mlflow-skinny = { version = "^2.0", optional = true }
 redis = {extras = ["hiredis"], version = "^5.0", optional = true}
 boto3 = { version = "^1.24.64", optional = true }
-pydruid= {git="https://github.com/cosmic-chichu/pydruid.git", branch = "master", optional = true }
+pydruid= {git="https://github.com/cosmic-chichu/pydruid.git", branch = "addDoublesSketch", optional = true }
 
 [tool.poetry.extras]
 mlflow = ["mlflow-skinny"]
