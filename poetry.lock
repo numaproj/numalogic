@@ -3574,8 +3574,8 @@ files = [
 
 [[package]]
 name = "pydruid"
-version = "0.999.0dev"
-description = ""
+version = "0.999.0.dev0"
+description = "A Python connector for Druid."
 optional = true
 python-versions = "*"
 files = []

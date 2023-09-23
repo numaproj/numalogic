@@ -176,12 +176,17 @@ class PromUnivarBacktester:
                 self.conf.numalogic_conf.preprocess
             ),
             threshold_clf=ThresholdFactory().get_instance(self.conf.numalogic_conf.threshold),
-            trainer_cfg=self.conf.numalogic_conf.trainer,
+            numalogic_cfg=self.conf.numalogic_conf,
         )
+        artifacts_dict = {
+            "model": artifacts["inference"].artifact,
+            "preproc_clf": artifacts["preproc_clf"].artifact,
+            "threshold_clf": artifacts["threshold_clf"].artifact,
+        }
         with open(self._modelpath, "wb") as f:
-            torch.save(artifacts, f)
+            torch.save(artifacts_dict, f)
         LOGGER.info("Models saved in %s", self._modelpath)
-        return artifacts
+        return artifacts_dict
 
     def generate_scores(
         self,

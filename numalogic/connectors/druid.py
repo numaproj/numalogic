@@ -41,16 +41,16 @@ def build_params(
     """
 
     Args:
-        aggregations: A map from aggregator name to one of the
-          ``pydruid.utils.aggregators`` e.g., ``doublesum``
-        post_aggregations: A map from post aggregator name to one of the
-          ``pydruid.utils.postaggregator`` e.g., ``QuantilesDoublesSketchToQuantile``
         datasource: Data source to query
         dimensions: The dimensions to group by
         filter_pairs: Indicates which rows of
           data to include in the query
         granularity: Time bucket to aggregate data by hour, day, minute, etc.,
         hours: Hours from now to skip training.
+        aggregations: A map from aggregator name to one of the
+          ``pydruid.utils.aggregators`` e.g., ``doublesum``
+        post_aggregations: A map from post aggregator name to one of the
+          ``pydruid.utils.postaggregator`` e.g., ``QuantilesDoublesSketchToQuantile``.
 
     Returns: a dict of parameters
 
@@ -112,13 +112,13 @@ class DruidFetcher(DataFetcher):
         _start_time = time.perf_counter()
         filter_pairs = make_filter_pairs(filter_keys, filter_values)
         query_params = build_params(
-            datasource,
-            dimensions,
-            filter_pairs,
-            granularity,
-            hours,
-            aggregations,
-            post_aggregations,
+            datasource=datasource,
+            dimensions=dimensions,
+            filter_pairs=filter_pairs,
+            granularity=granularity,
+            hours=hours,
+            aggregations=aggregations,
+            post_aggregations=post_aggregations,
         )
 
         response = self.client.groupby(**query_params)

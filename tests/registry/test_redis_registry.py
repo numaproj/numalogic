@@ -66,7 +66,6 @@ class TestRedisRegistry(unittest.TestCase):
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model, **{"lr": 0.01}
         )
         resave_data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
-        print(resave_data.extras)
         self.assertEqual(save_version, "0")
         self.assertEqual(resave_version1, "1")
         self.assertEqual(resave_data.extras["version"], "0")
