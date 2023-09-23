@@ -21,7 +21,6 @@ from numalogic.udfs.trainer import TrainerUDF
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
 KEYS = ["service-mesh", "1", "2"]
 
-
 logging.basicConfig(level=logging.DEBUG)
 
 
@@ -63,12 +62,16 @@ class TrainTrainerUDF(unittest.TestCase):
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                    model=ModelInfo(
+                        name="VanillaAE", stateful=True, conf={"seq_len": 12, "n_features": 2}
+                    ),
+                    preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
                     trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
                 )
             ),
         )
         self.udf(KEYS, self.datum)
+
         self.assertEqual(
             2,
             REDIS_CLIENT.exists(
