@@ -54,4 +54,5 @@ class DruidFetcherConf:
 @dataclass
 class DruidConf(ConnectorConf):
     endpoint: str
+    delay_hrs: float = 3.0
     fetcher: DruidFetcherConf = MISSING

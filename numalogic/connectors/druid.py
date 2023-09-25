@@ -34,6 +34,7 @@ class DruidFetcher(DataFetcher):
         filter_keys: list[str],
         filter_values: list[str],
         dimensions: list[str],
+        delay: float = 3.0,
         granularity: str = "minute",
         aggregations: Optional[dict] = None,
         group_by: Optional[list[str]] = None,
@@ -50,7 +51,7 @@ class DruidFetcher(DataFetcher):
             fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
         )
 
-        end_dt = datetime.now(pytz.utc)
+        end_dt = datetime.now(pytz.utc) - timedelta(hours=delay)
         start_dt = end_dt - timedelta(hours=hours)
         intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
 

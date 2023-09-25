@@ -22,6 +22,7 @@ from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifac
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload, StreamPayload
+from numalogic.udfs.tools import TrainMsgDeduplicator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,6 +60,7 @@ class TrainerUDF(NumalogicUDF):
         self._model_factory = ModelFactory()
         self._preproc_factory = PreprocessFactory()
         self._thresh_factory = ThresholdFactory()
+        self.train_msg_deduplicator = TrainMsgDeduplicator(r_client)
 
     def register_conf(self, config_id: str, conf: StreamConf) -> None:
         """
@@ -157,7 +159,7 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
-        if not self._is_new_request(payload):
+        if not self.train_msg_deduplicator.ack_read(key=payload.composite_keys, uuid=payload.uuid):
             return Messages(Message.to_drop())
 
         # Fetch data
@@ -177,6 +179,10 @@ class TrainerUDF(NumalogicUDF):
         # Construct feature array
         x_train = self.get_feature_arr(df, payload.metrics)
         _conf = self.get_conf(payload.config_id)
+
+        # set the retry and retrain_freq
+        self.train_msg_deduplicator.retrain_freq = _conf.numalogic_conf.trainer.retrain_freq_hr
+        self.train_msg_deduplicator.retry = _conf.numalogic_conf.trainer.retry_secs
 
         # Initialize artifacts
         preproc_clf = self._construct_preproc_clf(_conf)
@@ -213,7 +219,7 @@ class TrainerUDF(NumalogicUDF):
             model_registry=self.model_registry,
             payload=payload,
         )
-
+        self.train_msg_deduplicator.ack_train(key=payload.composite_keys, uuid=payload.uuid)
         _LOGGER.debug(
             "%s - Time taken in trainer: %.4f sec", payload.uuid, time.perf_counter() - _start_time
         )
@@ -313,6 +319,7 @@ class TrainerUDF(NumalogicUDF):
                 filter_keys=_conf.composite_keys,
                 filter_values=payload.composite_keys,
                 dimensions=list(self.druid_conf.fetcher.dimensions),
+                delay=self.druid_conf.delay_hrs,
                 granularity=self.druid_conf.fetcher.granularity,
                 aggregations=dict(self.druid_conf.fetcher.aggregations),
                 group_by=list(self.druid_conf.fetcher.group_by),
