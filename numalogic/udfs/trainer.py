@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 
 from numalogic.base import StatelessTransformer
 from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
-from numalogic.config._config import TrainerConf
+from numalogic.config._config import NumalogicConf
 from numalogic.config.factory import ConnectorFactory
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.tools.data import StreamingDataset
@@ -21,7 +21,7 @@ from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
-from numalogic.udfs.entities import TrainerPayload, StreamPayload
+from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
 _LOGGER = logging.getLogger(__name__)
@@ -99,8 +99,8 @@ class TrainerUDF(NumalogicUDF):
         input_: npt.NDArray[float],
         preproc_clf: Optional[artifact_t] = None,
         threshold_clf: Optional[artifact_t] = None,
-        trainer_cfg: Optional[TrainerConf] = None,
-    ) -> dict[str, artifact_t]:
+        numalogic_cfg: Optional[NumalogicConf] = None,
+    ) -> dict[str, KeyedArtifact]:
         """
         Train the model on the given input data.
 
@@ -109,7 +109,7 @@ class TrainerUDF(NumalogicUDF):
             input_: Input data
             preproc_clf: Preprocessing artifact
             threshold_clf: Thresholding artifact
-            trainer_cfg: Trainer configuration
+            numalogic_cfg: Numalogic configuration
 
         Returns
         -------
@@ -119,11 +119,15 @@ class TrainerUDF(NumalogicUDF):
         ------
             ConfigNotFoundError: If trainer config is not found
         """
-        if not trainer_cfg:
-            raise ConfigNotFoundError("Trainer config not found!")
-
+        if not (numalogic_cfg and numalogic_cfg.trainer):
+            raise ConfigNotFoundError("Numalogic Trainer config not found!")
+        dict_artifacts = {}
+        trainer_cfg = numalogic_cfg.trainer
         if preproc_clf:
             input_ = preproc_clf.fit_transform(input_)
+            dict_artifacts["preproc_clf"] = KeyedArtifact(
+                dkeys=[_conf.name for _conf in numalogic_cfg.preprocess], artifact=preproc_clf
+            )
 
         train_ds = StreamingDataset(input_, model.seq_len)
         trainer = AutoencoderTrainer(**asdict(trainer_cfg.pltrainer_conf))
@@ -133,15 +137,17 @@ class TrainerUDF(NumalogicUDF):
         train_reconerr = trainer.predict(
             model, dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
         ).numpy()
+        dict_artifacts["inference"] = KeyedArtifact(
+            dkeys=[numalogic_cfg.model.name], artifact=model
+        )
 
         if threshold_clf:
             threshold_clf.fit(train_reconerr)
+            dict_artifacts["threshold_clf"] = KeyedArtifact(
+                dkeys=[numalogic_cfg.threshold.name], artifact=threshold_clf
+            )
 
-        return {
-            "model": model,
-            "preproc_clf": preproc_clf,
-            "threshold_clf": threshold_clf,
-        }
+        return dict_artifacts
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
@@ -190,29 +196,17 @@ class TrainerUDF(NumalogicUDF):
         thresh_clf = self._thresh_factory.get_instance(_conf.numalogic_conf.threshold)
 
         # Train artifacts
-        artifacts = self.compute(
+        dict_artifacts = self.compute(
             model,
             x_train,
             preproc_clf=preproc_clf,
             threshold_clf=thresh_clf,
-            trainer_cfg=_conf.numalogic_conf.trainer,
+            numalogic_cfg=_conf.numalogic_conf,
         )
 
-        # Save artifacts
-        # TODO perform multi-save here
+        # Save artifacts`
         skeys = payload.composite_keys
-        dict_artifacts = {
-            "postproc": KeyedArtifact(
-                dkeys=[_conf.numalogic_conf.threshold.name], artifact=artifacts["threshold_clf"]
-            ),
-            "inference": KeyedArtifact(
-                dkeys=[_conf.numalogic_conf.model.name], artifact=artifacts["model"]
-            ),
-            "preproc": KeyedArtifact(
-                dkeys=[_conf.name for _conf in _conf.numalogic_conf.preprocess],
-                artifact=artifacts["preproc_clf"],
-            ),
-        }
+
         self.artifacts_to_save(
             skeys=skeys,
             dict_artifacts=dict_artifacts,
@@ -241,7 +235,7 @@ class TrainerUDF(NumalogicUDF):
         skeys: KEYS,
         dict_artifacts: dict[str, KeyedArtifact],
         model_registry,
-        payload: StreamPayload,
+        payload: TrainerPayload,
     ) -> None:
         """
         Save artifacts.
@@ -257,10 +251,12 @@ class TrainerUDF(NumalogicUDF):
             Tuple of keys and artifacts
 
         """
-        for key, value in dict_artifacts.items():
-            if value.artifact:
-                if isinstance(value.artifact, StatelessTransformer):
-                    del dict_artifacts[key]
+        dict_artifacts = {
+            k: v
+            for k, v in dict_artifacts.items()
+            if not isinstance(v.artifact, StatelessTransformer)
+        }
+
         try:
             ver_dict = model_registry.save_multiple(
                 skeys=skeys,

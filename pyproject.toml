@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.6.0a4"
+version = "0.6.0a6"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -71,6 +71,7 @@ fakeredis = "^2.11.2"
 freezegun = "^1.2.2"
 pympler = "^1.0.1"
 moto = "~4.1"
+deepdiff = "^6.5.0"
 
 [tool.poetry.group.jupyter]
 optional = true

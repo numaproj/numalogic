@@ -370,6 +370,21 @@ class RedisRegistry(ArtifactManager):
         stale_ts = (datetime.now() - timedelta(hours=freq_hr)).timestamp()
         return stale_ts > artifact_ts
 
+    def __update_metadata(self, skeys: KEYS, dict_artifacts: dict[str, KeyedArtifact], metadata):
+        try:
+            with self.client.pipeline(transaction=self.transactional) as pipe:
+                pipe.multi()
+                for _, value in dict_artifacts.items():
+                    key = self.construct_key(skeys, value.dkeys)
+                    latest_key = self.__construct_latest_key(key)
+                    version_key = self.client.get(name=latest_key)
+                    pipe.hset(
+                        name=version_key.decode(), key="metadata", value=orjson.dumps(metadata)
+                    )
+                pipe.execute()
+        except RedisError as err:
+            raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
+
     def save_multiple(
         self,
         skeys: KEYS,
@@ -388,27 +403,18 @@ class RedisRegistry(ArtifactManager):
         """
         dict_model_ver = {}
         try:
-            with self.client.pipeline(transaction=self.transactional) as pipe:
-                pipe.multi()
-                for key, value in dict_artifacts.items():
-                    dict_model_ver[":".join(value.dkeys)] = self.save(
-                        skeys=skeys,
-                        dkeys=value.dkeys,
-                        artifact=value.artifact,
-                        _pipe=pipe,
-                        **metadata,
-                    )
-
-                    if len(dict_artifacts) == len(dict_model_ver):
-                        self.save(
-                            skeys=skeys,
-                            dkeys=value.dkeys,
-                            artifact=value.artifact,
-                            _pipe=pipe,
-                            artifact_versions=dict_model_ver,
-                            **metadata,
-                        )
-                pipe.execute()
+            for key, value in dict_artifacts.items():
+                dict_model_ver[":".join(value.dkeys)] = self.save(
+                    skeys=skeys,
+                    dkeys=value.dkeys,
+                    artifact=value.artifact,
+                    **metadata,
+                )
+            self.__update_metadata(
+                skeys=skeys,
+                dict_artifacts=dict_artifacts,
+                metadata={**{"artifact_versions": dict_model_ver}, **metadata},
+            )
             _LOGGER.info("Successfully saved all the artifacts with: %s", dict_model_ver)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
