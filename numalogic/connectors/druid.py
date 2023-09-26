@@ -114,31 +114,34 @@ class DruidFetcher(DataFetcher):
         query_params = build_params(
             aggregations, datasource, dimensions, filter_pairs, granularity, hours, delay
         )
-
-        response = self.client.groupby(**query_params)
-        df = response.export_pandas()
-
-        if df is None or df.shape[0] == 0:
-            logging.warning("No data found for keys %s", filter_pairs)
+        try:
+            response = self.client.groupby(**query_params)
+        except OSError:
+            _LOGGER.exception("Problem with getting response from client")
             return pd.DataFrame()
+        else:
+            df = response.export_pandas()
+            if df is None or df.shape[0] == 0:
+                logging.warning("No data found for keys %s", filter_pairs)
+                return pd.DataFrame()
 
-        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
+            df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
 
-        if group_by:
-            df = df.groupby(by=group_by).sum().reset_index()
+            if group_by:
+                df = df.groupby(by=group_by).sum().reset_index()
 
-        if pivot.columns:
-            df = df.pivot(
-                index=pivot.index,
-                columns=pivot.columns,
-                values=pivot.value,
-            )
-            df.columns = df.columns.map("{0[1]}".format)
-            df.reset_index(inplace=True)
+            if pivot.columns:
+                df = df.pivot(
+                    index=pivot.index,
+                    columns=pivot.columns,
+                    values=pivot.value,
+                )
+                df.columns = df.columns.map("{0[1]}".format)
+                df.reset_index(inplace=True)
 
-        _end_time = time.perf_counter() - _start_time
-        _LOGGER.debug("Druid query latency: %.6fs", _end_time)
-        return df
+            _end_time = time.perf_counter() - _start_time
+            _LOGGER.debug("Druid query latency: %.6fs", _end_time)
+            return df
 
     def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
         raise NotImplementedError
