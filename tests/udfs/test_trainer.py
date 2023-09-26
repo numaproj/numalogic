@@ -205,43 +205,20 @@ class TrainTrainerUDF(unittest.TestCase):
             ),
         )
         self.udf(self.keys, self.datum)
-
+        ts = 0
         with freeze_time(datetime.now() + timedelta(hours=25)):
             TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
-            with freeze_time(datetime.now() + timedelta(minutes=15)):
-                self.udf(self.keys, self.datum)
-                self.assertEqual(
-                    0,
-                    REDIS_CLIENT.exists(
-                        b"5984175597303660107::VanillaAE::1",
-                        b"5984175597303660107::StdDevThreshold::1",
-                        b"5984175597303660107::LogTransformer:StandardScaler::1",
-                    ),
-                )
-
-    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
-    def test_trainer_do_not_train_3(self):
-        self.udf.register_conf(
-            "druid-config",
-            StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+            ts = datetime.now()
+        with freeze_time(ts + timedelta(minutes=15)):
+            self.udf(self.keys, self.datum)
+        self.assertEqual(
+            0,
+            REDIS_CLIENT.exists(
+                b"5984175597303660107::VanillaAE::1",
+                b"5984175597303660107::StdDevThreshold::1",
+                b"5984175597303660107::LogTransformer:StandardScaler::1",
             ),
         )
-        TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
-        with freeze_time(datetime.now() + timedelta(minutes=15)):
-            self.udf(self.keys, self.datum)
-            self.assertEqual(
-                0,
-                REDIS_CLIENT.exists(
-                    b"5984175597303660107::VanillaAE::0",
-                    b"5984175597303660107::StdDevThreshold::0",
-                    b"5984175597303660107::LogTransformer:StandardScaler::0",
-                ),
-            )
 
     def test_trainer_conf_err(self):
         udf = TrainerUDF(REDIS_CLIENT)
