@@ -210,8 +210,10 @@ class TrainTrainerUDF(unittest.TestCase):
         with freeze_time(datetime.now() + timedelta(hours=25)):
             TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
             ts = datetime.now()
+            print(datetime.now())
         with freeze_time(ts + timedelta(minutes=15)):
             self.udf(self.keys, self.datum)
+            print(datetime.now())
         print(REDIS_CLIENT.keys())
         self.assertEqual(
             0,
