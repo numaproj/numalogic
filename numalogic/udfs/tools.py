@@ -159,7 +159,7 @@ class TrainMsgDeduplicator:
 
     __slots__ = ("client", "_msg_read_ts", "_msg_train_ts", "retrain_freq", "retry")
 
-    def __init__(self, r_client: redis_client_t, retrain_freq: int = 8, retry: int = 0.1):
+    def __init__(self, r_client: redis_client_t, retrain_freq: int = 8, retry: int = 600):
         self.client = r_client
         self._msg_read_ts: Optional[str] = None
         self._msg_train_ts: Optional[str] = None
@@ -179,7 +179,7 @@ class TrainMsgDeduplicator:
     @property
     def retry_var(self) -> int:
         """Get the retry time."""
-        return self.retry_var
+        return self.retry
 
     @retry_var.setter
     def retry_var(self, retry: int):
@@ -193,8 +193,12 @@ class TrainMsgDeduplicator:
             _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
         else:
             data = {key.decode(): data.get(key).decode() for key in data.keys()}
-            self._msg_read_ts = str(data["_msg_read_ts"]) if data else None
-            self._msg_train_ts = str(data["_msg_train_ts"]) if data else None
+            self._msg_read_ts = (
+                str(data["_msg_read_ts"]) if data and "_msg_read_ts" in data else None
+            )
+            self._msg_train_ts = (
+                str(data["_msg_train_ts"]) if data and "_msg_train_ts" in data else None
+            )
 
     @staticmethod
     def __construct_key(keys: KEYS) -> str:
@@ -215,7 +219,7 @@ class TrainMsgDeduplicator:
         _key = self.__construct_key(key)
         self.__fetch_ts(_key)
         if self._msg_read_ts and time.time() - float(self._msg_read_ts) < self.retry:
-            _LOGGER.info("%s - Model is being trained by another model", uuid)
+            _LOGGER.info("%s - Model is being trained by another process", uuid)
             return False
 
         # This check is needed if there is backpressure in the pl.

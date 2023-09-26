@@ -272,17 +272,6 @@ class TrainerUDF(NumalogicUDF):
         _conf = self.get_conf(payload.config_id)
         return len(df) > _conf.numalogic_conf.trainer.min_train_size
 
-    # TODO: improve the dedup logic; this is too naive
-    def _is_new_request(self, payload: TrainerPayload) -> bool:
-        _conf = self.get_conf(payload.config_id)
-        _ckeys = ":".join(payload.composite_keys)
-        r_key = f"train::{_ckeys}"
-        value = self.r_client.get(r_key)
-        if value:
-            return False
-        self.r_client.setex(r_key, time=_conf.numalogic_conf.trainer.dedup_expiry_sec, value=1)
-        return True
-
     @staticmethod
     def get_feature_arr(
         raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0

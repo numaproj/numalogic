@@ -74,7 +74,7 @@ class TestDruid(unittest.TestCase):
         }
 
         filter_pairs = make_filter_pairs(["ciStatus"], ["false"])
-        actual = build_params("", "foo", ["bar"], filter_pairs, "all", float(24))
+        actual = build_params("", "foo", ["bar"], filter_pairs, "all", 24, 3)
         actual["intervals"] = ""
         diff = DeepDiff(expected, actual).get("values_changed", {})
         self.assertDictEqual({}, diff)

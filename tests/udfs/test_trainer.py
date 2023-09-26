@@ -1,11 +1,13 @@
 import logging
 import os
 import unittest
-from datetime import datetime
+import time
+from datetime import datetime, timedelta
 from unittest.mock import patch, Mock
 
 import pandas as pd
 from fakeredis import FakeStrictRedis, FakeServer
+from freezegun import freeze_time
 from omegaconf import OmegaConf
 from orjson import orjson
 from pynumaflow.mapper import Datum
@@ -16,10 +18,10 @@ from numalogic.config import TrainerConf, LightningTrainerConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.udfs import StreamConf, PipelineConf
+from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer import TrainerUDF
 
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
-KEYS = ["service-mesh", "1", "2"]
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -41,8 +43,9 @@ class TrainTrainerUDF(unittest.TestCase):
             "composite_keys": ["5984175597303660107"],
             "metrics": ["failed", "degraded"],
         }
+        self.keys = payload["composite_keys"]
         self.datum = Datum(
-            keys=KEYS,
+            keys=self.keys,
             value=orjson.dumps(payload),
             event_time=datetime.now(),
             watermark=datetime.now(),
@@ -70,13 +73,13 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(KEYS, self.datum)
+        self.udf(self.keys, self.datum)
 
         self.assertEqual(
             2,
             REDIS_CLIENT.exists(
-                "5984175597303660107::VanillaAE::LATEST",
-                "5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107::VanillaAE::LATEST",
+                b"5984175597303660107::StdDevThreshold::LATEST",
             ),
         )
 
@@ -92,13 +95,13 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(KEYS, self.datum)
+        self.udf(self.keys, self.datum)
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                "5984175597303660107::VanillaAE::LATEST",
-                "5984175597303660107::StdDevThreshold::LATEST",
-                "5984175597303660107::StandardScaler::LATEST",
+                b"5984175597303660107::VanillaAE::LATEST",
+                b"5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107::StandardScaler::LATEST",
             ),
         )
 
@@ -114,20 +117,108 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(KEYS, self.datum)
+        self.udf(self.keys, self.datum)
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                "5984175597303660107::VanillaAE::LATEST",
-                "5984175597303660107::StdDevThreshold::LATEST",
-                "5984175597303660107::LogTransformer:StandardScaler::LATEST",
+                b"5984175597303660107::VanillaAE::LATEST",
+                b"5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107::LogTransformer:StandardScaler::LATEST",
+            ),
+        )
+
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
+    def test_trainer_do_train(self):
+        self.udf.register_conf(
+            "druid-config",
+            StreamConf(
+                numalogic_conf=NumalogicConf(
+                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
+                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                )
+            ),
+        )
+        self.udf(self.keys, self.datum)
+        with freeze_time(datetime.fromtimestamp(time.time() + timedelta(hours=12).seconds)):
+            self.udf(self.keys, self.datum)
+        self.assertEqual(
+            3,
+            REDIS_CLIENT.exists(
+                b"5984175597303660107::VanillaAE::LATEST",
+                b"5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107::LogTransformer:StandardScaler::LATEST",
+            ),
+        )
+        self.assertEqual(
+            3,
+            REDIS_CLIENT.exists(
+                b"5984175597303660107::VanillaAE::1",
+                b"5984175597303660107::StdDevThreshold::1",
+                b"5984175597303660107::LogTransformer:StandardScaler::1",
+            ),
+        )
+
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
+    def test_trainer_do_not_train(self):
+        self.udf.register_conf(
+            "druid-config",
+            StreamConf(
+                numalogic_conf=NumalogicConf(
+                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
+                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                )
+            ),
+        )
+        self.udf(self.keys, self.datum)
+        self.udf(self.keys, self.datum)
+        self.assertEqual(
+            3,
+            REDIS_CLIENT.exists(
+                b"5984175597303660107::VanillaAE::LATEST",
+                b"5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107::LogTransformer:StandardScaler::LATEST",
+            ),
+        )
+        self.assertEqual(
+            0,
+            REDIS_CLIENT.exists(
+                b"5984175597303660107::VanillaAE::1",
+                b"5984175597303660107::StdDevThreshold::1",
+                b"5984175597303660107::LogTransformer:StandardScaler::1",
+            ),
+        )
+
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
+    def test_trainer_do_not_train_2(self):
+        TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
+        self.udf.register_conf(
+            "druid-config",
+            StreamConf(
+                numalogic_conf=NumalogicConf(
+                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
+                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                )
+            ),
+        )
+        ts = time.time()
+        with freeze_time(datetime.fromtimestamp(ts + timedelta(minutes=10).seconds)):
+            self.udf(self.keys, self.datum)
+        self.assertEqual(
+            0,
+            REDIS_CLIENT.exists(
+                b"5984175597303660107::VanillaAE::1",
+                b"5984175597303660107::StdDevThreshold::1",
+                b"5984175597303660107::LogTransformer:StandardScaler::1",
             ),
         )
 
     def test_trainer_conf_err(self):
         udf = TrainerUDF(REDIS_CLIENT)
         with self.assertRaises(ConfigNotFoundError):
-            udf(KEYS, self.datum)
+            udf(self.keys, self.datum)
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data(nrows=10)))
     def test_trainer_data_insufficient(self):
@@ -141,12 +232,12 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(KEYS, self.datum)
+        self.udf(self.keys, self.datum)
         self.assertFalse(
             REDIS_CLIENT.exists(
-                "5984175597303660107::VanillaAE::LATEST",
-                "5984175597303660107::StdDevThreshold::LATEST",
-                "5984175597303660107::StandardScaler::LATEST",
+                b"5984175597303660107::VanillaAE::LATEST",
+                b"5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107::StandardScaler::LATEST",
             )
         )
 
@@ -162,12 +253,12 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(KEYS, self.datum)
+        self.udf(self.keys, self.datum)
         self.assertFalse(
             REDIS_CLIENT.exists(
-                "5984175597303660107::VanillaAE::LATEST",
-                "5984175597303660107::StdDevThreshold::LATEST",
-                "5984175597303660107::StandardScaler::LATEST",
+                b"5984175597303660107::VanillaAE::LATEST",
+                b"5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107::StandardScaler::LATEST",
             )
         )
 
