@@ -152,38 +152,20 @@ class TrainMsgDeduplicator:
     """
     TrainMsgDeduplicator class is used to deduplicate the train messages.
     Args:
-        r_client: Redis client
-        retrain_freq: retrain frequency for the model in hrs
-        retry: Time difference(in secs) between triggering retraining and msg read_ack.
+        r_client: Redis client.
     """
 
     __slots__ = ("client", "_msg_read_ts", "_msg_train_ts", "retrain_freq", "retry")
 
-    def __init__(self, r_client: redis_client_t, retrain_freq: int = 24, retry: int = 600):
+    def __init__(self, r_client: redis_client_t):
         self.client = r_client
         self._msg_read_ts: Optional[str] = None
         self._msg_train_ts: Optional[str] = None
-        self.retrain_freq = retrain_freq * 60 * 60
-        self.retry = retry
+        self.retrain_freq = None
+        self.retry = None
 
-    @property
-    def retrain_freq_ts(self) -> int:
-        """Get the retrain frequency."""
-        return self.retrain_freq
-
-    @retrain_freq_ts.setter
-    def retrain_freq_ts(self, retrain_freq: int):
-        """Set the retrain frequency."""
-        self.retrain_freq = retrain_freq * 60 * 60  # hrs -> secs
-
-    @property
-    def retry_ts(self) -> int:
-        """Get the retry time."""
-        return self.retry
-
-    @retry_ts.setter
-    def retry_ts(self, retry: int):
-        """Set the retry time."""
+    def __update_params(self, retrain_freq: int, retry: int):
+        self.retrain_freq = retrain_freq * 60 * 60  # hrs->secs
         self.retry = retry
 
     def __fetch_ts(self, key):
@@ -192,7 +174,8 @@ class TrainMsgDeduplicator:
         except RedisError:
             _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
         else:
-            data = {key.decode(): data.get(key).decode() for key in data.keys()}
+            # decode the key:value pair and update the values
+            data = {key.decode(): data.get(key).decode() for key in data}
             self._msg_read_ts = (
                 str(data["_msg_read_ts"]) if data and "_msg_read_ts" in data else None
             )
@@ -204,12 +187,14 @@ class TrainMsgDeduplicator:
     def __construct_key(keys: KEYS) -> str:
         return f"TRAIN::{':'.join(keys)}"
 
-    def ack_read(self, key: KEYS, uuid: str) -> bool:
+    def ack_read(self, key: KEYS, uuid: str, retrain_freq: int = 24, retry: int = 600) -> bool:
         """
         Acknowledge the read message. Return True wh`en the msg has to be trained.
         Args:
             key: key
             uuid: uuid.
+            retrain_freq: retrain frequency for the model in hrs
+            retry: Time difference(in secs) between triggering retraining and msg read_ack.
 
         Returns
         -------
@@ -217,6 +202,7 @@ class TrainMsgDeduplicator:
 
         """
         _key = self.__construct_key(key)
+        self.__update_params(retrain_freq, retry)
         self.__fetch_ts(_key)
         if self._msg_read_ts and time.time() - float(self._msg_read_ts) < self.retry:
             _LOGGER.info("%s - Model with key : %s is being trained by another process", uuid, key)

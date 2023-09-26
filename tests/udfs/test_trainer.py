@@ -292,13 +292,6 @@ class TrainTrainerUDF(unittest.TestCase):
             )
         )
 
-    def test_TrainMsgDeduplicator(self):
-        train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
-        train_dedup.retrain_freq_ts = 10
-        train_dedup.retry_ts = 5
-        self.assertEqual(train_dedup.retrain_freq, 10 * 60 * 60)
-        self.assertEqual(train_dedup.retry, 5)
-
     @patch("redis.Redis.hset", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_1(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)

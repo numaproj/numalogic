@@ -165,7 +165,17 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
-        if not self.train_msg_deduplicator.ack_read(key=payload.composite_keys, uuid=payload.uuid):
+        _conf = self.get_conf(payload.config_id)
+
+        # set the retry and retrain_freq
+        retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
+        retry_ts = _conf.numalogic_conf.trainer.retry_secs
+        if not self.train_msg_deduplicator.ack_read(
+            key=payload.composite_keys,
+            uuid=payload.uuid,
+            retrain_freq=retrain_freq_ts,
+            retry=retry_ts,
+        ):
             return Messages(Message.to_drop())
 
         # Fetch data
@@ -184,11 +194,6 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct feature array
         x_train = self.get_feature_arr(df, payload.metrics)
-        _conf = self.get_conf(payload.config_id)
-
-        # set the retry and retrain_freq
-        self.train_msg_deduplicator.retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
-        self.train_msg_deduplicator.retry_ts = _conf.numalogic_conf.trainer.retry_secs
 
         # Initialize artifacts
         preproc_clf = self._construct_preproc_clf(_conf)
