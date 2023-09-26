@@ -116,7 +116,7 @@ class DruidFetcher(DataFetcher):
         )
         try:
             response = self.client.groupby(**query_params)
-        except OSError:
+        except Exception:
             _LOGGER.exception("Problem with getting response from client")
             return pd.DataFrame()
         else:
