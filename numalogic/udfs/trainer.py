@@ -187,8 +187,8 @@ class TrainerUDF(NumalogicUDF):
         _conf = self.get_conf(payload.config_id)
 
         # set the retry and retrain_freq
-        self.train_msg_deduplicator.retrain_freq = _conf.numalogic_conf.trainer.retrain_freq_hr
-        self.train_msg_deduplicator.retry = _conf.numalogic_conf.trainer.retry_secs
+        self.train_msg_deduplicator.retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
+        self.train_msg_deduplicator.retry_ts = _conf.numalogic_conf.trainer.retry_secs
 
         # Initialize artifacts
         preproc_clf = self._construct_preproc_clf(_conf)
@@ -213,7 +213,12 @@ class TrainerUDF(NumalogicUDF):
             model_registry=self.model_registry,
             payload=payload,
         )
-        self.train_msg_deduplicator.ack_train(key=payload.composite_keys, uuid=payload.uuid)
+        if self.train_msg_deduplicator.ack_train(key=payload.composite_keys, uuid=payload.uuid):
+            _LOGGER.info(
+                "%s - Model trained and saved successfully.",
+                payload.uuid,
+            )
+
         _LOGGER.debug(
             "%s - Time taken in trainer: %.4f sec", payload.uuid, time.perf_counter() - _start_time
         )

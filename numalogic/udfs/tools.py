@@ -159,7 +159,7 @@ class TrainMsgDeduplicator:
 
     __slots__ = ("client", "_msg_read_ts", "_msg_train_ts", "retrain_freq", "retry")
 
-    def __init__(self, r_client: redis_client_t, retrain_freq: int = 8, retry: int = 600):
+    def __init__(self, r_client: redis_client_t, retrain_freq: int = 24, retry: int = 600):
         self.client = r_client
         self._msg_read_ts: Optional[str] = None
         self._msg_train_ts: Optional[str] = None
@@ -167,22 +167,22 @@ class TrainMsgDeduplicator:
         self.retry = retry
 
     @property
-    def retrain_freq_var(self) -> int:
+    def retrain_freq_ts(self) -> int:
         """Get the retrain frequency."""
         return self.retrain_freq
 
-    @retrain_freq_var.setter
-    def retrain_freq_var(self, retrain_freq: int):
+    @retrain_freq_ts.setter
+    def retrain_freq_ts(self, retrain_freq: int):
         """Set the retrain frequency."""
         self.retrain_freq = retrain_freq * 60 * 60  # hrs -> secs
 
     @property
-    def retry_var(self) -> int:
+    def retry_ts(self) -> int:
         """Get the retry time."""
         return self.retry
 
-    @retry_var.setter
-    def retry_var(self, retry: int):
+    @retry_ts.setter
+    def retry_ts(self, retry: int):
         """Set the retry time."""
         self.retry = retry
 
@@ -206,7 +206,7 @@ class TrainMsgDeduplicator:
 
     def ack_read(self, key: KEYS, uuid: str) -> bool:
         """
-        Acknowledge the read message. Return True when the msg has to be trained.
+        Acknowledge the read message. Return True wh`en the msg has to be trained.
         Args:
             key: key
             uuid: uuid.
@@ -219,15 +219,15 @@ class TrainMsgDeduplicator:
         _key = self.__construct_key(key)
         self.__fetch_ts(_key)
         if self._msg_read_ts and time.time() - float(self._msg_read_ts) < self.retry:
-            _LOGGER.info("%s - Model is being trained by another process", uuid)
+            _LOGGER.info("%s - Model with key : %s is being trained by another process", uuid, key)
             return False
-
         # This check is needed if there is backpressure in the pl.
         if self._msg_train_ts and time.time() - float(self._msg_train_ts) < self.retrain_freq:
             _LOGGER.info(
-                "%s - Model was saved for the key in less than %r hrs, skipping training",
+                "%s - Model was saved for the key: %s in less than %s secs, skipping training",
                 uuid,
                 key,
+                self.retrain_freq,
             )
             return False
         try:
@@ -244,7 +244,8 @@ class TrainMsgDeduplicator:
 
     def ack_train(self, key: KEYS, uuid: str) -> bool:
         """
-        Acknowledge the train message. Return True when the model is trained and saved.
+        Acknowledge the train message is trained and saved. Return True when
+                _msg_train_ts is updated.
         Args:
             key: key
             uuid: uuid.
@@ -260,7 +261,7 @@ class TrainMsgDeduplicator:
             _LOGGER.exception(
                 " %s - Problem while updating msg_train_ts information for the key: %s",
                 uuid,
-                _key,
+                key,
             )
             return False
         else:

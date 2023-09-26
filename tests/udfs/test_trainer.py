@@ -11,6 +11,7 @@ from freezegun import freeze_time
 from omegaconf import OmegaConf
 from orjson import orjson
 from pynumaflow.mapper import Datum
+from redis import RedisError
 
 from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
@@ -139,8 +140,9 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
+        time.time()
         self.udf(self.keys, self.datum)
-        with freeze_time(datetime.fromtimestamp(time.time() + timedelta(hours=12).seconds)):
+        with freeze_time(datetime.now() + timedelta(days=2)):
             self.udf(self.keys, self.datum)
         self.assertEqual(
             3,
@@ -160,7 +162,7 @@ class TrainTrainerUDF(unittest.TestCase):
         )
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
-    def test_trainer_do_not_train(self):
+    def test_trainer_do_not_train_1(self):
         self.udf.register_conf(
             "druid-config",
             StreamConf(
@@ -192,7 +194,6 @@ class TrainTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_do_not_train_2(self):
-        TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
         self.udf.register_conf(
             "druid-config",
             StreamConf(
@@ -203,17 +204,44 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        ts = time.time()
-        with freeze_time(datetime.fromtimestamp(ts + timedelta(minutes=10).seconds)):
-            self.udf(self.keys, self.datum)
-        self.assertEqual(
-            0,
-            REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::1",
-                b"5984175597303660107::StdDevThreshold::1",
-                b"5984175597303660107::LogTransformer:StandardScaler::1",
+        self.udf(self.keys, self.datum)
+
+        with freeze_time(datetime.now() + timedelta(hours=25)):
+            TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
+            with freeze_time(datetime.now() + timedelta(minutes=15)):
+                self.udf(self.keys, self.datum)
+                self.assertEqual(
+                    0,
+                    REDIS_CLIENT.exists(
+                        b"5984175597303660107::VanillaAE::1",
+                        b"5984175597303660107::StdDevThreshold::1",
+                        b"5984175597303660107::LogTransformer:StandardScaler::1",
+                    ),
+                )
+
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
+    def test_trainer_do_not_train_3(self):
+        self.udf.register_conf(
+            "druid-config",
+            StreamConf(
+                numalogic_conf=NumalogicConf(
+                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
+                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                )
             ),
         )
+        TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
+        with freeze_time(datetime.now() + timedelta(minutes=15)):
+            self.udf(self.keys, self.datum)
+            self.assertEqual(
+                0,
+                REDIS_CLIENT.exists(
+                    b"5984175597303660107::VanillaAE::0",
+                    b"5984175597303660107::StdDevThreshold::0",
+                    b"5984175597303660107::LogTransformer:StandardScaler::0",
+                ),
+            )
 
     def test_trainer_conf_err(self):
         udf = TrainerUDF(REDIS_CLIENT)
@@ -261,6 +289,27 @@ class TrainTrainerUDF(unittest.TestCase):
                 b"5984175597303660107::StandardScaler::LATEST",
             )
         )
+
+    def test_TrainMsgDeduplicator(self):
+        train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
+        train_dedup.retrain_freq_ts = 10
+        train_dedup.retry_ts = 5
+        self.assertEqual(train_dedup.retrain_freq, 10 * 60 * 60)
+        self.assertEqual(train_dedup.retry, 5)
+
+    @patch("redis.Redis.hset", Mock(side_effect=RedisError))
+    def test_TrainMsgDeduplicator_exception_1(self):
+        train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
+        train_dedup.ack_read(self.keys, "some-uuid")
+        self.assertLogs("RedisError")
+        train_dedup.ack_train(self.keys, "some-uuid")
+        self.assertLogs("RedisError")
+
+    @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
+    def test_TrainMsgDeduplicator_exception_2(self):
+        train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
+        train_dedup.ack_read(self.keys, "some-uuid")
+        self.assertLogs("RedisError")
 
 
 if __name__ == "__main__":
