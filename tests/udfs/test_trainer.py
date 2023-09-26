@@ -205,19 +205,14 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        print(REDIS_CLIENT.keys())
         self.udf(self.keys, self.datum)
-        print(datetime.now())
-        print(REDIS_CLIENT.keys())
-        ts = 0
-        with freeze_time(datetime.now() + timedelta(hours=25)):
+        ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
+        with freeze_time(ts + timedelta(hours=25)):
             TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
-            ts = datetime.now()
-            print(REDIS_CLIENT.keys())
-        with freeze_time(ts + timedelta(minutes=15)):
+            print(datetime.now())
+        with freeze_time(ts + timedelta(hours=25) + timedelta(minutes=15)):
             self.udf(self.keys, self.datum)
             print(datetime.now())
-        print(REDIS_CLIENT.keys())
         self.assertEqual(
             0,
             REDIS_CLIENT.exists(
