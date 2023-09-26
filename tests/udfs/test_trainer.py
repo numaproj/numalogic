@@ -38,6 +38,7 @@ def mock_druid_fetch_data(nrows=5000):
 
 class TrainTrainerUDF(unittest.TestCase):
     def setUp(self):
+        REDIS_CLIENT.flushall()
         payload = {
             "uuid": "some-uuid",
             "config_id": "druid-config",
@@ -211,6 +212,7 @@ class TrainTrainerUDF(unittest.TestCase):
             ts = datetime.now()
         with freeze_time(ts + timedelta(minutes=15)):
             self.udf(self.keys, self.datum)
+        print(REDIS_CLIENT.keys())
         self.assertEqual(
             0,
             REDIS_CLIENT.exists(

@@ -59,6 +59,8 @@ def build_params(
         fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
     )
     end_dt = datetime.now(pytz.utc) - timedelta(hours=delay)
+    _LOGGER.debug("Querying with end_dt: %s, that is with delay of %s hrs", end_dt, delay)
+
     start_dt = end_dt - timedelta(hours=hours)
 
     intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
