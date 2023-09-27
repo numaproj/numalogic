@@ -73,9 +73,7 @@ def build_params(
         "post_aggregations": post_aggregations,
         "filter": _filter,
         "dimensions": dimension_specs,
-        "context": {
-            "timeout": 10000
-        }
+        "context": {"timeout": 10000},
     }
 
 

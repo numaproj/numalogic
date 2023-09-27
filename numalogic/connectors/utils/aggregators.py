@@ -1,5 +1,5 @@
 def quantiles_doubles_sketch(
-        raw_column: str, aggregator_name: str, k: int = 128, max_stream_length: int = 1000000000
+    raw_column: str, aggregator_name: str, k: int = 128, max_stream_length: int = 1000000000
 ) -> dict:
     """
 
