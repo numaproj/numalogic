@@ -34,4 +34,5 @@ __all__ = [
     "load_pipeline_conf",
     "ServerFactory",
     "set_logger",
+    "LoadTestDataConnector",
 ]
