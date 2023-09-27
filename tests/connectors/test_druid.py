@@ -7,6 +7,8 @@ from pydruid.client import PyDruid
 from pydruid.utils.dimensions import DimensionSpec
 from pydruid.utils import aggregators
 from pydruid.utils import postaggregator
+from numalogic.connectors.utils import aggregators as _agg
+from numalogic.connectors.utils import postaggregator as _post_agg
 from pydruid.utils.filters import Filter
 from deepdiff import DeepDiff
 
@@ -101,10 +103,10 @@ class TestDruid(unittest.TestCase):
             dimensions=["assetAlias", "env"],
             datasource="coredevx-rum-perf-metrics",
             aggregations={
-                "agg0": aggregators.quantilesdoublessketch("valuesDoublesSketch", "agg0", 256)
+                "agg0": _agg.quantiles_doubles_sketch("valuesDoublesSketch", "agg0", 256)
             },
             post_aggregations={
-                "postAgg0": postaggregator.QuantilesDoublesSketchToQuantile(
+                "postAgg0": _post_agg.QuantilesDoublesSketchToQuantile(
                     output_name="agg0", field=postaggregator.Field("agg0"), fraction=0.9
                 )
             },

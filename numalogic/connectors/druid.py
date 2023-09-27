@@ -65,7 +65,7 @@ def build_params(
     intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
     dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
 
-    params = {
+    return {
         "datasource": datasource,
         "granularity": granularity,
         "intervals": intervals,
@@ -73,14 +73,10 @@ def build_params(
         "post_aggregations": post_aggregations,
         "filter": _filter,
         "dimensions": dimension_specs,
+        "context": {
+            "timeout": 10000
+        }
     }
-
-    _LOGGER.debug(
-        "Druid query params: %s",
-        params,
-    )
-
-    return params
 
 
 class DruidFetcher(DataFetcher):
@@ -143,7 +139,7 @@ class DruidFetcher(DataFetcher):
             df.reset_index(inplace=True)
 
         _end_time = time.perf_counter() - _start_time
-        _LOGGER.debug("Druid query latency: %.6fs", _end_time)
+        _LOGGER.debug("params: %s latency: %.6fs", query_params, _end_time)
         return df
 
     def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:

@@ -3593,8 +3593,8 @@ sqlalchemy = ["sqlalchemy"]
 [package.source]
 type = "git"
 url = "https://github.com/cosmic-chichu/pydruid.git"
-reference = "addDoublesSketch"
-resolved_reference = "36eed65542f0f98c4a597cdaee98bba6b9610555"
+reference = "master"
+resolved_reference = "0ce16bcfd2dd666ff5294469cc47263acafca1d7"
 
 [[package]]
 name = "pygments"
@@ -5041,4 +5041,4 @@ redis = ["redis"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9, <3.12"
-content-hash = "d748f3312db92b69b5c3d2891b8ba6c81fd41c3d32c7117bc81aa97c7bd3a482"
+content-hash = "1ecd73d61f3490abaf467ff1fe0e58045f75da651f0027d22076b8649c587f63"
