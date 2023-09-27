@@ -36,6 +36,7 @@ def build_params(
     filter_pairs: dict,
     granularity: str,
     hours: float,
+    delay: float,
     aggregations: Optional[list[str]] = None,
     post_aggregations: Optional[list[str]] = None,
 ) -> dict:
@@ -48,6 +49,7 @@ def build_params(
           data to include in the query
         granularity: Time bucket to aggregate data by hour, day, minute, etc.,
         hours: Hours from now to skip training.
+        delay: Added delay to the fetch query from current time.
         aggregations: A map from aggregator name to one of the
           ``pydruid.utils.aggregators`` e.g., ``doublesum``
         post_aggregations: A map from post aggregator name to one of the
@@ -60,7 +62,9 @@ def build_params(
         type="and",
         fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
     )
-    end_dt = datetime.now(pytz.utc)
+    end_dt = datetime.now(pytz.utc) - timedelta(hours=delay)
+    _LOGGER.debug("Querying with end_dt: %s, that is with delay of %s hrs", end_dt, delay)
+
     start_dt = end_dt - timedelta(hours=hours)
 
     intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
@@ -97,6 +101,7 @@ class DruidFetcher(DataFetcher):
         filter_keys: list[str],
         filter_values: list[str],
         dimensions: list[str],
+        delay: float = 3.0,
         granularity: str = "minute",
         aggregations: Optional[dict] = None,
         post_aggregations: Optional[dict] = None,
@@ -112,34 +117,38 @@ class DruidFetcher(DataFetcher):
             filter_pairs=filter_pairs,
             granularity=granularity,
             hours=hours,
+            delay=delay,
             aggregations=aggregations,
             post_aggregations=post_aggregations,
         )
-
-        response = self.client.groupby(**query_params)
-        df = response.export_pandas()
-
-        if df is None or df.shape[0] == 0:
-            logging.warning("No data found for keys %s", filter_pairs)
+        try:
+            response = self.client.groupby(**query_params)
+        except Exception:
+            _LOGGER.exception("Problem with getting response from client")
             return pd.DataFrame()
+        else:
+            df = response.export_pandas()
+            if df.empty or df.shape[0] == 0:
+                logging.warning("No data found for keys %s", filter_pairs)
+                return pd.DataFrame()
 
-        df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
+            df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
 
-        if group_by:
-            df = df.groupby(by=group_by).sum().reset_index()
+            if group_by:
+                df = df.groupby(by=group_by).sum().reset_index()
 
-        if pivot and pivot.columns:
-            df = df.pivot(
-                index=pivot.index,
-                columns=pivot.columns,
-                values=pivot.value,
-            )
-            df.columns = df.columns.map("{0[1]}".format)
-            df.reset_index(inplace=True)
+            if pivot and pivot.columns:
+                df = df.pivot(
+                    index=pivot.index,
+                    columns=pivot.columns,
+                    values=pivot.value,
+                )
+                df.columns = df.columns.map("{0[1]}".format)
+                df.reset_index(inplace=True)
 
-        _end_time = time.perf_counter() - _start_time
-        _LOGGER.debug("params: %s latency: %.6fs", query_params, _end_time)
-        return df
+            _end_time = time.perf_counter() - _start_time
+            _LOGGER.debug("params: %s latency: %.6fs", query_params, _end_time)
+            return df
 
     def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
         raise NotImplementedError

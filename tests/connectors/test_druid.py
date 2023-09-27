@@ -1,4 +1,5 @@
 import json
+import logging
 import unittest
 import datetime
 from unittest.mock import patch, Mock
@@ -19,6 +20,8 @@ from numalogic.connectors.druid import (
     postaggregator as _post_agg,
     aggregators as _agg,
 )
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def mock_group_by(*_, **__):
@@ -136,9 +139,28 @@ class TestDruid(unittest.TestCase):
             filter_pairs=filter_pairs,
             granularity="all",
             hours=24.0,
+            delay=3,
         )
         diff = DeepDiff(expected, actual).get("values_changed", {})
         self.assertDictEqual({}, diff)
+
+    @patch.object(PyDruid, "groupby", Mock(side_effect=OSError))
+    def test_fetch_exception(self):
+        _out = self.druid.fetch(
+            filter_keys=["assetId"],
+            filter_values=["5984175597303660107"],
+            dimensions=["ciStatus"],
+            datasource="customer-interaction-metrics",
+            aggregations={"count": aggregators.doublesum("count")},
+            group_by=["timestamp", "ciStatus"],
+            hours=36,
+            pivot=Pivot(
+                index="timestamp",
+                columns=["ciStatus"],
+                value=["count"],
+            ),
+        )
+        self.assertTrue(_out.empty)
 
 
 if __name__ == "__main__":
