@@ -121,7 +121,7 @@ class DruidFetcher(DataFetcher):
             return pd.DataFrame()
         else:
             df = response.export_pandas()
-            if df is None or df.shape[0] == 0:
+            if df.empty or df.shape[0] == 0:
                 logging.warning("No data found for keys %s", filter_pairs)
                 return pd.DataFrame()
 

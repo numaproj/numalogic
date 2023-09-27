@@ -155,31 +155,27 @@ class TrainMsgDeduplicator:
         r_client: Redis client.
     """
 
-    __slots__ = ("client", "_msg_read_ts", "_msg_train_ts")
+    __slots__ = "client"
 
     def __init__(self, r_client: redis_client_t):
         self.client = r_client
-        self._msg_read_ts: Optional[str] = None
-        self._msg_train_ts: Optional[str] = None
-
-    def __fetch_ts(self, key):
-        try:
-            data = self.client.hgetall(key)
-        except RedisError:
-            _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
-        else:
-            # decode the key:value pair and update the values
-            data = {key.decode(): data.get(key).decode() for key in data}
-            self._msg_read_ts = (
-                str(data["_msg_read_ts"]) if data and "_msg_read_ts" in data else None
-            )
-            self._msg_train_ts = (
-                str(data["_msg_train_ts"]) if data and "_msg_train_ts" in data else None
-            )
 
     @staticmethod
     def __construct_key(keys: KEYS) -> str:
         return f"TRAIN::{':'.join(keys)}"
+
+    def __fetch_ts(self, key: str) -> tuple[Optional[str], Optional[str]]:
+        try:
+            data = self.client.hgetall(key)
+        except RedisError:
+            _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
+            return None, None
+        else:
+            # decode the key:value pair and update the values
+            data = {key.decode(): data.get(key).decode() for key in data}
+            _msg_read_ts = str(data["_msg_read_ts"]) if data and "_msg_read_ts" in data else None
+            _msg_train_ts = str(data["_msg_train_ts"]) if data and "_msg_train_ts" in data else None
+            return _msg_read_ts, _msg_train_ts
 
     def ack_read(self, key: KEYS, uuid: str, retrain_freq: int = 24, retry: int = 600) -> bool:
         """
@@ -196,18 +192,18 @@ class TrainMsgDeduplicator:
 
         """
         _key = self.__construct_key(key)
-        self.__fetch_ts(_key)
-        if self._msg_read_ts and time.time() - float(self._msg_read_ts) < retry:
+        _msg_read_ts, _msg_train_ts = self.__fetch_ts(key=_key)
+        if _msg_read_ts and time.time() - float(_msg_read_ts) < retry:
             _LOGGER.info("%s - Model with key : %s is being trained by another process", uuid, key)
             return False
 
         # This check is needed if there is backpressure in the pl.
-        if self._msg_train_ts and time.time() - float(self._msg_train_ts) < retrain_freq * 60 * 60:
+        if _msg_train_ts and time.time() - float(_msg_train_ts) < retrain_freq * 60 * 60:
             _LOGGER.info(
                 "%s - Model was saved for the key: %s in less than %s secs, skipping training",
                 uuid,
                 key,
-                self.retrain_freq,
+                retrain_freq,
             )
             return False
         try:
