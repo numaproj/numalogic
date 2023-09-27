@@ -49,7 +49,7 @@ def build_params(
           data to include in the query
         granularity: Time bucket to aggregate data by hour, day, minute, etc.,
         hours: Hours from now to skip training.
-        delay: added delay to endTS.
+        delay: Added delay to the fetch query from current time.
 
     Returns: a dict of parameters
 
