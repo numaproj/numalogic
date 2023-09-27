@@ -6,12 +6,9 @@ class QuantilesDoublesSketchToQuantile(Postaggregator):
     """Class for building QuantilesDoublesSketchToQuantile post aggregator."""
 
     def __init__(self, field: Field, fraction: float, output_name=None):
-        if output_name is None:
-            name = "quantilesDoublesSketchToQuantile"
-        else:
-            name = output_name
+        name = output_name or "quantilesDoublesSketchToQuantile"
 
-        Postaggregator.__init__(self, None, None, name)
+        super().__init__(None, None, name)
         self.field = field
         self.fraction = fraction
         self.post_aggregator = {

@@ -3574,12 +3574,13 @@ files = [
 
 [[package]]
 name = "pydruid"
-version = "0.999.0.dev0"
+version = "0.6.5"
 description = "A Python connector for Druid."
 optional = true
 python-versions = "*"
-files = []
-develop = false
+files = [
+    {file = "pydruid-0.6.5.tar.gz", hash = "sha256:30b6efa722234183239296bf8e6d41aba7eea0eec3d68233ce6c413986864fea"},
+]
 
 [package.dependencies]
 requests = "*"
@@ -3589,12 +3590,6 @@ async = ["tornado"]
 cli = ["prompt_toolkit (>=2.0.0)", "pygments", "tabulate"]
 pandas = ["pandas"]
 sqlalchemy = ["sqlalchemy"]
-
-[package.source]
-type = "git"
-url = "https://github.com/cosmic-chichu/pydruid.git"
-reference = "master"
-resolved_reference = "0ce16bcfd2dd666ff5294469cc47263acafca1d7"
 
 [[package]]
 name = "pygments"
@@ -5041,4 +5036,4 @@ redis = ["redis"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9, <3.12"
-content-hash = "1ecd73d61f3490abaf467ff1fe0e58045f75da651f0027d22076b8649c587f63"
+content-hash = "44a69d22f0e1128aceaf58257b29dfb1dd359bb36b50b503c0238ac3efe4a29c"

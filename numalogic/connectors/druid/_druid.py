@@ -13,6 +13,7 @@ from numalogic.connectors._config import Pivot
 from typing import Optional
 
 _LOGGER = logging.getLogger(__name__)
+TIMEOUT = 10000
 
 
 # TODO: pass dictionary of keys and values as dict
@@ -69,11 +70,11 @@ def build_params(
         "datasource": datasource,
         "granularity": granularity,
         "intervals": intervals,
-        "aggregations": aggregations,
-        "post_aggregations": post_aggregations,
+        "aggregations": aggregations or dict(),
+        "post_aggregations": post_aggregations or dict(),
         "filter": _filter,
         "dimensions": dimension_specs,
-        "context": {"timeout": 10000},
+        "context": {"timeout": TIMEOUT},
     }
 
 

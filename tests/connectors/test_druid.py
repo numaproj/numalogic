@@ -2,18 +2,23 @@ import json
 import unittest
 import datetime
 from unittest.mock import patch, Mock
+
 import pydruid.query
 from pydruid.client import PyDruid
 from pydruid.utils.dimensions import DimensionSpec
 from pydruid.utils import aggregators
 from pydruid.utils import postaggregator
-from numalogic.connectors.utils import aggregators as _agg
-from numalogic.connectors.utils import postaggregator as _post_agg
 from pydruid.utils.filters import Filter
 from deepdiff import DeepDiff
 
 from numalogic.connectors._config import Pivot
-from numalogic.connectors.druid import DruidFetcher, make_filter_pairs, build_params
+from numalogic.connectors.druid import (
+    DruidFetcher,
+    make_filter_pairs,
+    build_params,
+    postaggregator as _post_agg,
+    aggregators as _agg,
+)
 
 
 def mock_group_by(*_, **__):
@@ -83,17 +88,17 @@ class TestDruid(unittest.TestCase):
             filter_keys=["assetId"],
             filter_values=["5984175597303660107"],
             dimensions=["ciStatus"],
-            datasource="customer-interaction-metrics",
+            datasource="tech-ip-customer-interaction-metrics",
             aggregations={"count": aggregators.doublesum("count")},
             group_by=["timestamp", "ciStatus"],
-            hours=36,
+            hours=2,
             pivot=Pivot(
                 index="timestamp",
                 columns=["ciStatus"],
                 value=["count"],
             ),
         )
-        self.assertEqual(_out.shape, (2, 2))
+        self.assertEqual((2, 2), _out.shape)
 
     @patch.object(PyDruid, "groupby", Mock(return_value=mock_group_by_doubles_sketch()))
     def test_fetch_double_sketch(self):
@@ -112,7 +117,7 @@ class TestDruid(unittest.TestCase):
             },
             hours=2,
         )
-        self.assertEqual(_out.shape, (2, 5))
+        self.assertEqual((2, 5), _out.shape)
 
     def test_build_param(self):
         expected = {
