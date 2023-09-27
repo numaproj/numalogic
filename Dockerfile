@@ -1,54 +1,50 @@
 ####################################################################################################
-# builder: install needed dependencies
+# builder: install needed dependencies and setup virtual environment
 ####################################################################################################
 
 ARG PYTHON_VERSION=3.11
 ARG POETRY_VERSION=1.6
+ARG INSTALL_EXTRAS
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
-ENV PYTHONFAULTHANDLER=1 \
-  PYTHONUNBUFFERED=1 \
-  PYTHONHASHSEED=random \
-  PIP_NO_CACHE_DIR=off \
-  PIP_DISABLE_PIP_VERSION_CHECK=on \
-  PIP_DEFAULT_TIMEOUT=100 \
-  POETRY_VERSION=${POETRY_VERSION} \
-  POETRY_HOME="/opt/poetry" \
-  POETRY_VIRTUALENVS_IN_PROJECT=true \
-  POETRY_NO_INTERACTION=1 \
-  PYSETUP_PATH="/opt/pysetup" \
-  VENV_PATH="/opt/pysetup/.venv"
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache \
+    POETRY_VERSION=${POETRY_VERSION} \
+    POETRY_HOME="/opt/poetry" \
+    PATH="$POETRY_HOME/bin:$PATH"
 
-ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
+WORKDIR /app
+COPY poetry.lock pyproject.toml ./
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y \
-        curl \
-        build-essential \
-        dumb-init \
+    && apt-get install --no-install-recommends -y build-essential dumb-init \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache --upgrade pip \
-    && curl -sSL https://install.python-poetry.org | python3 -
+    && pip install --no-cache-dir poetry \
+    && poetry install --without dev --no-root --extras "${INSTALL_EXTRAS}"  \
+    && poetry run pip install --no-cache-dir "lightning[pytorch]>=2.0,<3.0" \
+    && rm -rf $POETRY_CACHE_DIR \
+    && pip cache purge \
+    && apt-get purge -y --auto-remove build-essential
 
 ####################################################################################################
-# udf: used for running the udf vertices
+# runtime: used for running the udf vertices
 ####################################################################################################
-FROM builder AS udf
+FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
 
-ARG INSTALL_EXTRAS
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y dumb-init \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && apt-get purge -y --auto-remove
 
-WORKDIR $PYSETUP_PATH
-COPY ./pyproject.toml ./poetry.lock ./
 
-# TODO install cpu/gpu based on args/arch
-RUN poetry install --without dev --no-cache --no-root --extras "${INSTALL_EXTRAS}" && \
-    poetry run pip install --no-cache "torch>=2.0,<3.0" --index-url https://download.pytorch.org/whl/cpu && \
-    poetry run pip install --no-cache "pytorch-lightning>=2.0<3.0" && \
-    rm -rf ~/.cache/pypoetry/
+ENV VIRTUAL_ENV=/app/.venv
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 COPY . /app
 WORKDIR /app
 
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-
 EXPOSE 5000
