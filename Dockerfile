@@ -23,6 +23,7 @@ RUN apt-get update \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir poetry \
     && poetry install --without dev --no-root --extras "${INSTALL_EXTRAS}"  \
+    && poetry run pip install --no-cache-dir "torch>=2.0,<3.0" --index-url https://download.pytorch.org/whl/cpu && \
     && poetry run pip install --no-cache-dir "lightning[pytorch]>=2.0,<3.0" \
     && rm -rf $POETRY_CACHE_DIR \
     && pip cache purge \
