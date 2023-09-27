@@ -155,18 +155,12 @@ class TrainMsgDeduplicator:
         r_client: Redis client.
     """
 
-    __slots__ = ("client", "_msg_read_ts", "_msg_train_ts", "retrain_freq", "retry")
+    __slots__ = ("client", "_msg_read_ts", "_msg_train_ts")
 
     def __init__(self, r_client: redis_client_t):
         self.client = r_client
         self._msg_read_ts: Optional[str] = None
         self._msg_train_ts: Optional[str] = None
-        self.retrain_freq = None
-        self.retry = None
-
-    def __update_params(self, retrain_freq: int, retry: int):
-        self.retrain_freq = retrain_freq * 60 * 60  # hrs->secs
-        self.retry = retry
 
     def __fetch_ts(self, key):
         try:
@@ -202,13 +196,13 @@ class TrainMsgDeduplicator:
 
         """
         _key = self.__construct_key(key)
-        self.__update_params(retrain_freq, retry)
         self.__fetch_ts(_key)
-        if self._msg_read_ts and time.time() - float(self._msg_read_ts) < self.retry:
+        if self._msg_read_ts and time.time() - float(self._msg_read_ts) < retry:
             _LOGGER.info("%s - Model with key : %s is being trained by another process", uuid, key)
             return False
+
         # This check is needed if there is backpressure in the pl.
-        if self._msg_train_ts and time.time() - float(self._msg_train_ts) < self.retrain_freq:
+        if self._msg_train_ts and time.time() - float(self._msg_train_ts) < retrain_freq * 60 * 60:
             _LOGGER.info(
                 "%s - Model was saved for the key: %s in less than %s secs, skipping training",
                 uuid,
