@@ -73,8 +73,8 @@ class TrainerConf:
     train_hours: int = 24 * 8  # 8 days worth of data
     min_train_size: int = 2000
     retrain_freq_hr: int = 24
-    model_expiry_sec: int = 86400  # 24 hrs  # TODO: revisit this
-    dedup_expiry_sec: int = 1800  # 30 days  # TODO: revisit this
+    model_expiry_sec: int = 172800  # 48 hrs  # TODO: revisit this
+    retry_secs: int = 600  # 10 min  # TODO: revisit this
     batch_size: int = 64
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 

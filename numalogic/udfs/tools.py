@@ -1,14 +1,16 @@
 import logging
 from dataclasses import replace
+import time
 from typing import Optional
 
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+from redis import RedisError
 
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
-from numalogic.tools.types import KEYS
+from numalogic.tools.types import KEYS, redis_client_t
 from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import StreamPayload
 
@@ -144,3 +146,100 @@ def _load_artifact(
                 },
             )
         return artifact, payload
+
+
+class TrainMsgDeduplicator:
+    """
+    TrainMsgDeduplicator class is used to deduplicate the train messages.
+    Args:
+        r_client: Redis client.
+    """
+
+    __slots__ = "client"
+
+    def __init__(self, r_client: redis_client_t):
+        self.client = r_client
+
+    @staticmethod
+    def __construct_key(keys: KEYS) -> str:
+        return f"TRAIN::{':'.join(keys)}"
+
+    def __fetch_ts(self, key: str) -> tuple[Optional[str], Optional[str]]:
+        try:
+            data = self.client.hgetall(key)
+        except RedisError:
+            _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
+            return None, None
+        else:
+            # decode the key:value pair and update the values
+            data = {key.decode(): data.get(key).decode() for key in data}
+            _msg_read_ts = str(data["_msg_read_ts"]) if data and "_msg_read_ts" in data else None
+            _msg_train_ts = str(data["_msg_train_ts"]) if data and "_msg_train_ts" in data else None
+            return _msg_read_ts, _msg_train_ts
+
+    def ack_read(self, key: KEYS, uuid: str, retrain_freq: int = 24, retry: int = 600) -> bool:
+        """
+        Acknowledge the read message. Return True wh`en the msg has to be trained.
+        Args:
+            key: key
+            uuid: uuid.
+            retrain_freq: retrain frequency for the model in hrs
+            retry: Time difference(in secs) between triggering retraining and msg read_ack.
+
+        Returns
+        -------
+            bool
+
+        """
+        _key = self.__construct_key(key)
+        _msg_read_ts, _msg_train_ts = self.__fetch_ts(key=_key)
+        if _msg_read_ts and time.time() - float(_msg_read_ts) < retry:
+            _LOGGER.info("%s - Model with key : %s is being trained by another process", uuid, key)
+            return False
+
+        # This check is needed if there is backpressure in the pl.
+        if _msg_train_ts and time.time() - float(_msg_train_ts) < retrain_freq * 60 * 60:
+            _LOGGER.info(
+                "%s - Model was saved for the key: %s in less than %s secs, skipping training",
+                uuid,
+                key,
+                retrain_freq,
+            )
+            return False
+        try:
+            self.client.hset(name=_key, key="_msg_read_ts", value=str(time.time()))
+        except RedisError:
+            _LOGGER.exception(
+                "%s - Problem while updating msg_read_ts information for the key: %s",
+                uuid,
+                key,
+            )
+            return False
+        _LOGGER.info("%s - Acknowledging request for Training for key : %s", uuid, key)
+        return True
+
+    def ack_train(self, key: KEYS, uuid: str) -> bool:
+        """
+        Acknowledge the train message is trained and saved. Return True when
+                _msg_train_ts is updated.
+        Args:
+            key: key
+            uuid: uuid.
+
+        Returns
+        -------
+            bool
+        """
+        _key = self.__construct_key(key)
+        try:
+            self.client.hset(name=_key, key="_msg_train_ts", value=str(time.time()))
+        except RedisError:
+            _LOGGER.exception(
+                " %s - Problem while updating msg_train_ts information for the key: %s",
+                uuid,
+                key,
+            )
+            return False
+        else:
+            _LOGGER.info("%s - Acknowledging model saving complete for for the key: %s", uuid, key)
+            return True
