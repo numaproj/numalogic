@@ -7,13 +7,13 @@ from numalogic.synthetic import SyntheticTSGenerator
 def getConfig():
     # ToDo: Load configs from a file
     return {
-        "uniqueKeys": 10,
+        "uniqueKeys": 4,
         "windowSize": 12,
         "testSize": 50,
         "configTags": [1, 2],
         "SyntheticTSGeneratorConfigs": [
             {
-                "seq_len": 501,
+                "seq_len": 5001,
                 "num_series": 1,
                 "freq": "T",
                 "primary_period": 720,
@@ -26,7 +26,7 @@ def getConfig():
                 "noise_range": [5, 15],
             },
             {
-                "seq_len": 501,
+                "seq_len": 5001,
                 "num_series": 1,
                 "freq": "T",
                 "primary_period": 720,
