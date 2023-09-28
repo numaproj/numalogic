@@ -42,7 +42,7 @@ class TrainTrainerUDF(unittest.TestCase):
         payload = {
             "uuid": "some-uuid",
             "config_id": "druid-config",
-            "composite_keys": ["5984175597303660107"],
+            "composite_keys": ["5984175597303660107_test_load_3"],
             "metrics": ["failed", "degraded"],
         }
         self.keys = payload["composite_keys"]
@@ -80,8 +80,8 @@ class TrainTrainerUDF(unittest.TestCase):
         self.assertEqual(
             2,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107_test_load_3::VanillaAE::LATEST",
+                b"5984175597303660107_test_load_3::StdDevThreshold::LATEST",
             ),
         )
 
@@ -101,9 +101,9 @@ class TrainTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
-                b"5984175597303660107::StandardScaler::LATEST",
+                b"5984175597303660107_test_load_3::VanillaAE::LATEST",
+                b"5984175597303660107_test_load_3::StdDevThreshold::LATEST",
+                b"5984175597303660107_test_load_3::StandardScaler::LATEST",
             ),
         )
 
@@ -123,9 +123,9 @@ class TrainTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
-                b"5984175597303660107::LogTransformer:StandardScaler::LATEST",
+                b"5984175597303660107_test_load_3::VanillaAE::LATEST",
+                b"5984175597303660107_test_load_3::StdDevThreshold::LATEST",
+                b"5984175597303660107_test_load_3::LogTransformer:StandardScaler::LATEST",
             ),
         )
 

@@ -23,6 +23,7 @@ from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
+from numalogic.udfs.LoadTestDataConnector import LoadTestDataConnector
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -48,14 +49,7 @@ class TrainerUDF(NumalogicUDF):
         self.pl_conf = pl_conf or PipelineConf()
         self.druid_conf = self.pl_conf.druid_conf
 
-        data_fetcher_cls = ConnectorFactory.get_cls("DruidFetcher")
-        try:
-            self.data_fetcher = data_fetcher_cls(
-                url=self.druid_conf.url, endpoint=self.druid_conf.endpoint
-            )
-        except AttributeError:
-            _LOGGER.warning("Druid config not found, data fetcher will not be initialized!")
-            self.data_fetcher = None
+        self.load_test_data_connector = LoadTestDataConnector()
 
         self._model_factory = ModelFactory()
         self._preproc_factory = PreprocessFactory()
@@ -307,23 +301,11 @@ class TrainerUDF(NumalogicUDF):
         """
         _start_time = time.perf_counter()
         _conf = self.get_conf(payload.config_id)
-
-        try:
-            _df = self.data_fetcher.fetch(
-                datasource=self.druid_conf.fetcher.datasource,
-                filter_keys=_conf.composite_keys,
-                filter_values=payload.composite_keys,
-                dimensions=list(self.druid_conf.fetcher.dimensions),
-                delay=self.druid_conf.delay_hrs,
-                granularity=self.druid_conf.fetcher.granularity,
-                aggregations=dict(self.druid_conf.fetcher.aggregations),
-                group_by=list(self.druid_conf.fetcher.group_by),
-                pivot=self.druid_conf.fetcher.pivot,
-                hours=_conf.numalogic_conf.trainer.train_hours,
-            )
-        except Exception:
-            _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
-            return pd.DataFrame()
+        str_key = payload.composite_keys[-1]
+        split_key = str_key.split("_")
+        # convert the last part of the key to int
+        int_key = int(split_key[-1])
+        _df = self.load_test_data_connector.my_handler(int_key)
 
         _LOGGER.debug(
             "%s - Time taken to fetch data: %.3f sec, df shape: %s",
