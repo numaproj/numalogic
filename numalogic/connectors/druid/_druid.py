@@ -70,9 +70,11 @@ def build_params(
     intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
     dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
 
-    config_ids = ""
-    if filter_pairs:
-        config_ids = list(filter_pairs)
+    context = {
+       ...,
+       configIds: list(filter_pairs)
+    }
+    
 
     return {
         "datasource": datasource,
