@@ -26,6 +26,8 @@ class RedisConf(ConnectorConf):
     port: int
     expiry: int = 300
     master_name: str = "mymaster"
+    model_expiry_sec: int = 172800  # 48 hrs
+    jitter_secs: int = 30 * 60  # 30 minutes
 
 
 @dataclass

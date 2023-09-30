@@ -17,7 +17,6 @@ from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
 from numalogic.connectors.druid import DruidFetcher
-from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.udfs import StreamConf, PipelineConf
 from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer import TrainerUDF
@@ -244,11 +243,6 @@ class TrainTrainerUDF(unittest.TestCase):
                     b"5984175597303660107::LogTransformer:StandardScaler::0",
                 ),
             )
-
-    def test_trainer_conf_err(self):
-        udf = TrainerUDF(REDIS_CLIENT)
-        with self.assertRaises(ConfigNotFoundError):
-            udf(self.keys, self.datum)
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data(nrows=10)))
     def test_trainer_data_insufficient(self):

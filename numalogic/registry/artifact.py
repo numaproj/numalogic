@@ -8,8 +8,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
+import random
 from dataclasses import dataclass
 from typing import Any, Generic, TypeVar, Union, Optional
 
@@ -143,9 +142,9 @@ class ArtifactCache(Generic[M_K, A_D]):
 
     __slots__ = ("_cachesize", "_ttl")
 
-    def __init__(self, cachesize: int, ttl: int):
+    def __init__(self, cachesize: int, ttl: int, jitter_secs: int = 0):
         self._cachesize = cachesize
-        self._ttl = ttl
+        self._ttl = abs(random.randrange(ttl - jitter_secs, ttl + jitter_secs + 1, 2 * 60))
 
     @property
     def cachesize(self):

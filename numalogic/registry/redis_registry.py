@@ -12,6 +12,7 @@
 import logging
 import time
 from datetime import datetime, timedelta
+import random
 from typing import Optional
 import orjson
 import redis.client
@@ -33,6 +34,8 @@ class RedisRegistry(ArtifactManager):
     ----
         client: Take in the redis client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
+        jitter_secs: Jitter (in secs) added to model timestamp information to solve
+                    Thundering Herd problem (default = 0)
         cache_registry: Cache registry to use (default = None).
         transactional: Flag to indicate if the registry should be transactional or
         not (default = False).
@@ -51,18 +54,20 @@ class RedisRegistry(ArtifactManager):
     >>> loaded_artifact = registry.load(skeys, dkeys)
     """
 
-    __slots__ = ("client", "ttl", "cache_registry", "transactional")
+    __slots__ = ("client", "ttl", "jitter_secs", "cache_registry", "transactional")
 
     def __init__(
         self,
         client: redis_client_t,
         ttl: int = 604800,
+        jitter_secs: int = 30 * 60,
         cache_registry: Optional[ArtifactCache] = None,
         transactional: bool = True,
     ):
         super().__init__("")
         self.client = client
         self.ttl = ttl
+        self.jitter_secs = jitter_secs
         self.cache_registry = cache_registry
         self.transactional = transactional
 
@@ -116,9 +121,7 @@ class RedisRegistry(ArtifactManager):
 
     def _clear_cache(self, key: Optional[str] = None) -> Optional[ArtifactData]:
         if self.cache_registry:
-            if key:
-                return self.cache_registry.delete(key)
-            return self.cache_registry.clear()
+            return self.cache_registry.delete(key) if key else self.cache_registry.clear()
         return None
 
     def __get_artifact_data(
@@ -196,16 +199,19 @@ class RedisRegistry(ArtifactManager):
         latest_key = self.__construct_latest_key(key)
         pipe.set(name=latest_key, value=new_version_key)
         _LOGGER.debug("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
-        serialized_metadata = ""
-        if metadata:
-            serialized_metadata = orjson.dumps(metadata)
+        serialized_metadata = orjson.dumps(metadata) if metadata else ""
         serialized_artifact = dumps(deserialized_object=artifact)
+        _cur_ts = int(time.time())
         pipe.hset(
             name=new_version_key,
             mapping={
                 "artifact": serialized_artifact,
-                "version": str(version),
-                "timestamp": time.time(),
+                "version": version,
+                "timestamp": random.randrange(
+                    _cur_ts - self.jitter_secs,
+                    _cur_ts + self.jitter_secs + 1,
+                    60 * 2,
+                ),
                 "metadata": serialized_metadata,
             },
         )
@@ -403,7 +409,7 @@ class RedisRegistry(ArtifactManager):
         """
         dict_model_ver = {}
         try:
-            for key, value in dict_artifacts.items():
+            for value in dict_artifacts.values():
                 dict_model_ver[":".join(value.dkeys)] = self.save(
                     skeys=skeys,
                     dkeys=value.dkeys,
