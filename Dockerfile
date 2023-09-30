@@ -3,9 +3,10 @@
 ####################################################################################################
 
 ARG PYTHON_VERSION=3.11
+FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
+
 ARG POETRY_VERSION=1.6
 ARG INSTALL_EXTRAS
-FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
 ENV POETRY_NO_INTERACTION=1 \
     POETRY_VIRTUALENVS_IN_PROJECT=1 \
@@ -16,9 +17,9 @@ ENV POETRY_NO_INTERACTION=1 \
     PATH="$POETRY_HOME/bin:$PATH"
 
 RUN apt-get update \
-    && apt-get install --no-install-recommends -y build-essential dumb-init \
+    && apt-get install --no-install-recommends -y build-essential \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && pip install --no-cache-dir poetry
+    && pip install --no-cache-dir poetry==$POETRY_VERSION
 
 WORKDIR /app
 COPY poetry.lock pyproject.toml ./
