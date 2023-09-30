@@ -48,12 +48,12 @@ class TrainerUDF(NumalogicUDF):
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         model_expiry_sec = self.pl_conf.registry_conf.model_expiry_sec
         jitter_secs = self.registry_conf.jitter_conf.jitter_secs
-        jitter_steps = self.registry_conf.jitter_conf.jitter_steps
+        jitter_steps_min = self.registry_conf.jitter_conf.jitter_steps_min
         self.model_registry = model_registry_cls(
             client=r_client,
             ttl=model_expiry_sec,
             jitter_secs=jitter_secs,
-            jitter_steps=jitter_steps,
+            jitter_steps_min=jitter_steps_min,
         )
         self.druid_conf = self.pl_conf.druid_conf
 

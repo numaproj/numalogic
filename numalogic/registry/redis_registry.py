@@ -12,14 +12,13 @@
 import logging
 import time
 from datetime import datetime, timedelta
-import random
 from typing import Optional
 import orjson
 import redis.client
 
 from redis.exceptions import RedisError
 
-from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
+from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache, _apply_jitter
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT, KeyedArtifact
@@ -36,7 +35,7 @@ class RedisRegistry(ArtifactManager):
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
         jitter_secs: Jitter (in secs) added to model timestamp information to solve
                     Thundering Herd problem (default = 30 mins)
-        jitter_steps: granularity of jitter secs in secs() (default = 2 mins)
+        jitter_steps_min: Step interval value (in mins) for jitter_secs value (default = 2 mins)
         cache_registry: Cache registry to use (default = None).
         transactional: Flag to indicate if the registry should be transactional or
         not (default = False).
@@ -55,14 +54,21 @@ class RedisRegistry(ArtifactManager):
     >>> loaded_artifact = registry.load(skeys, dkeys)
     """
 
-    __slots__ = ("client", "ttl", "jitter_secs", "jitter_steps", "cache_registry", "transactional")
+    __slots__ = (
+        "client",
+        "ttl",
+        "jitter_secs",
+        "jitter_steps_min",
+        "cache_registry",
+        "transactional",
+    )
 
     def __init__(
         self,
         client: redis_client_t,
         ttl: int = 604800,
         jitter_secs: int = 30 * 60,
-        jitter_steps: int = 2 * 60,
+        jitter_steps_min: int = 2,
         cache_registry: Optional[ArtifactCache] = None,
         transactional: bool = True,
     ):
@@ -70,7 +76,7 @@ class RedisRegistry(ArtifactManager):
         self.client = client
         self.ttl = ttl
         self.jitter_secs = jitter_secs
-        self.jitter_steps = jitter_steps
+        self.jitter_steps_min = jitter_steps_min
         self.cache_registry = cache_registry
         self.transactional = transactional
 
@@ -210,11 +216,7 @@ class RedisRegistry(ArtifactManager):
             mapping={
                 "artifact": serialized_artifact,
                 "version": version,
-                "timestamp": random.randrange(
-                    _cur_ts - self.jitter_secs,
-                    _cur_ts + self.jitter_secs + 1,
-                    60 * self.jitter_steps,
-                ),
+                "timestamp": _apply_jitter(_cur_ts, self.jitter_secs, self.jitter_steps_min),
                 "metadata": serialized_metadata,
             },
         )

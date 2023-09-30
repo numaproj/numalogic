@@ -49,9 +49,7 @@ class TestLocalLRUCache(unittest.TestCase):
         )
 
         loaded_artifact = cache_registry.load("m1")
-        ts = datetime.now()
-        with freeze_time(ts + timedelta(minutes=70)):
-            self.assertDictEqual({"version": "2", "source": "cache"}, loaded_artifact.extras)
+        self.assertDictEqual({"version": "2", "source": "cache"}, loaded_artifact.extras)
 
     def test_cache_ttl(self):
         ts = "2021-01-01 00:00:00"

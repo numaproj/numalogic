@@ -27,15 +27,15 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
                    i.e. number of elements the cache can hold
         ttl: Time to live for each item in seconds
         jitter_secs: Jitter in seconds to add to the ttl (to solve Thundering Herd problem)
-        jitter_steps: Granularity of the jitter_secs
+        jitter_steps_min: Step interval value (in mins) for jitter_secs value (default = 2 mins)
     """
 
     __cache: Optional[TTLCache] = None
 
     def __init__(
-        self, cachesize: int = 512, ttl: int = 120, jitter_secs: int = 0, jitter_steps: int = 1
+        self, cachesize: int = 512, ttl: int = 120, jitter_secs: int = 0, jitter_steps_min: int = 2
     ):
-        super().__init__(cachesize, ttl, jitter_secs, jitter_steps)
+        super().__init__(cachesize, ttl, jitter_secs, jitter_steps_min)
         if not self.__cache:
             self.__cache = TTLCache(maxsize=self.cachesize, ttl=self._ttl)
         self.__lock = Lock()

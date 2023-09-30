@@ -47,7 +47,7 @@ class InferenceUDF(NumalogicUDF):
                 ttl=LOCAL_CACHE_TTL,
                 cachesize=LOCAL_CACHE_SIZE,
                 jitter_secs=self.registry_conf.jitter_conf.jitter_secs,
-                jitter_steps=self.registry_conf.jitter_conf.jitter_steps,
+                jitter_steps_min=self.registry_conf.jitter_conf.jitter_steps_min,
             ),
         )
 

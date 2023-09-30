@@ -128,6 +128,14 @@ class ArtifactManager(Generic[KEYS, A_D]):
         return "::".join([_static_key, _dynamic_key])
 
 
+def _apply_jitter(ts: int, jitter_secs: int, jitter_steps_min: int):
+    return random.randrange(
+        min(ts - jitter_secs, ts),
+        ts + jitter_secs + 1,
+        60 * jitter_steps_min,
+    )
+
+
 class ArtifactCache(Generic[M_K, A_D]):
     r"""Base class for all artifact caches.
     Caches support saving, loading and deletion, but not artifact versioning.
@@ -137,18 +145,16 @@ class ArtifactCache(Generic[M_K, A_D]):
         cachesize: size of the cache
         ttl: time to live for each item in the cache
         jitter_secs: jitter in seconds to add to the ttl (to solve Thundering Herd problem)
-        jitter_steps: granularity of jitter_secs
+        jitter_steps_min: Step interval value (in mins) for jitter_secs value (default = 2 mins)
     """
 
     _STORETYPE = "cache"
 
     __slots__ = ("_cachesize", "_ttl")
 
-    def __init__(self, cachesize: int, ttl: int, jitter_secs: int = 0, jitter_steps: int = 1):
+    def __init__(self, cachesize: int, ttl: int, jitter_secs: int = 0, jitter_steps_min: int = 2):
         self._cachesize = cachesize
-        self._ttl = abs(
-            random.randrange(ttl - jitter_secs, ttl + jitter_secs + 1, jitter_steps * 60)
-        )
+        self._ttl = _apply_jitter(ttl, jitter_secs=jitter_secs, jitter_steps_min=jitter_steps_min)
 
     @property
     def cachesize(self):
