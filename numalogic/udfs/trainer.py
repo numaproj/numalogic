@@ -44,8 +44,8 @@ class TrainerUDF(NumalogicUDF):
         super().__init__(is_async=False)
         self.r_client = r_client
         self.pl_conf = pl_conf or PipelineConf()
-        self.redis_conf = self.pl_conf.redis_conf
         model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.redis_conf = self.pl_conf.redis_conf
         model_expiry_sec = self.pl_conf.redis_conf.model_expiry_sec
         jitter_secs = self.pl_conf.redis_conf.jitter_secs
         self.model_registry = model_registry_cls(

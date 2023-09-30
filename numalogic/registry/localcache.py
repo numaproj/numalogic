@@ -35,7 +35,6 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
         super().__init__(cachesize, ttl, jitter_secs)
         if not self.__cache:
             self.__cache = TTLCache(maxsize=self.cachesize, ttl=self._ttl)
-            print(ttl)
         self.__lock = Lock()
 
     def __contains__(self, artifact_key: str) -> bool:
