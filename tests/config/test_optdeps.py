@@ -20,7 +20,9 @@ from numalogic.tools.exceptions import UnknownConfigArgsError
 
 class TestOptionalDependencies(unittest.TestCase):
     def setUp(self) -> None:
-        self.regconf = RegistryInfo(name="RedisRegistry", conf=dict(ttl=50))
+        self.regconf = RegistryInfo(
+            name="RedisRegistry", model_expiry_sec=10, extra_param=dict(ttl=50)
+        )
 
     @patch("numalogic.config.factory.getattr", side_effect=AttributeError)
     def test_not_installed_dep_01(self, _):
@@ -30,7 +32,7 @@ class TestOptionalDependencies(unittest.TestCase):
         server = fakeredis.FakeServer()
         redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
         with self.assertRaises(ImportError):
-            model_factory.get_cls("RedisRegistry")(redis_cli, **self.regconf.conf)
+            model_factory.get_cls("RedisRegistry")(redis_cli, **self.regconf.extra_param)
 
     @patch("numalogic.config.factory.getattr", side_effect=AttributeError)
     def test_not_installed_dep_02(self, _):
@@ -40,13 +42,13 @@ class TestOptionalDependencies(unittest.TestCase):
         server = fakeredis.FakeServer()
         redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
         with self.assertRaises(ImportError):
-            model_factory.get_instance(self.regconf)(redis_cli, **self.regconf.conf)
+            model_factory.get_instance(self.regconf)(redis_cli, **self.regconf.extra_param)
 
     def test_unknown_registry(self):
         from numalogic.config.factory import RegistryFactory
 
         model_factory = RegistryFactory()
-        reg_conf = RegistryInfo(name="UnknownRegistry")
+        reg_conf = RegistryInfo(name="UnknownRegistry", model_expiry_sec=1)
         with self.assertRaises(UnknownConfigArgsError):
             model_factory.get_cls("UnknownRegistry")
         with self.assertRaises(UnknownConfigArgsError):

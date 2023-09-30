@@ -35,7 +35,8 @@ class RedisRegistry(ArtifactManager):
         client: Take in the redis client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
         jitter_secs: Jitter (in secs) added to model timestamp information to solve
-                    Thundering Herd problem (default = 0)
+                    Thundering Herd problem (default = 30 mins)
+        jitter_steps: granularity of jitter secs in secs() (default = 2 mins)
         cache_registry: Cache registry to use (default = None).
         transactional: Flag to indicate if the registry should be transactional or
         not (default = False).
@@ -54,13 +55,14 @@ class RedisRegistry(ArtifactManager):
     >>> loaded_artifact = registry.load(skeys, dkeys)
     """
 
-    __slots__ = ("client", "ttl", "jitter_secs", "cache_registry", "transactional")
+    __slots__ = ("client", "ttl", "jitter_secs", "jitter_steps", "cache_registry", "transactional")
 
     def __init__(
         self,
         client: redis_client_t,
         ttl: int = 604800,
         jitter_secs: int = 30 * 60,
+        jitter_steps: int = 2 * 60,
         cache_registry: Optional[ArtifactCache] = None,
         transactional: bool = True,
     ):
@@ -68,6 +70,7 @@ class RedisRegistry(ArtifactManager):
         self.client = client
         self.ttl = ttl
         self.jitter_secs = jitter_secs
+        self.jitter_steps = jitter_steps
         self.cache_registry = cache_registry
         self.transactional = transactional
 
@@ -210,7 +213,7 @@ class RedisRegistry(ArtifactManager):
                 "timestamp": random.randrange(
                     _cur_ts - self.jitter_secs,
                     _cur_ts + self.jitter_secs + 1,
-                    60 * 2,
+                    60 * self.jitter_steps,
                 ),
                 "metadata": serialized_metadata,
             },

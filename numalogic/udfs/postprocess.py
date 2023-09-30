@@ -20,7 +20,6 @@ from numalogic.udfs.tools import _load_artifact
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
-LOCAL_CACHE_JITTER = int(os.getenv("LOCAL_CACHE_JITTER", "1800"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
@@ -42,14 +41,18 @@ class PostprocessUDF(NumalogicUDF):
         pl_conf: Optional[PipelineConf] = None,
     ):
         super().__init__()
-        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.pl_conf = pl_conf or PipelineConf()
+        self.registry_conf = self.pl_conf.registry_conf
+        model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
             client=r_client,
             cache_registry=LocalLRUCache(
-                ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE, jitter_secs=LOCAL_CACHE_JITTER
+                ttl=LOCAL_CACHE_TTL,
+                cachesize=LOCAL_CACHE_SIZE,
+                jitter_secs=self.registry_conf.jitter_conf.jitter_secs,
+                jitter_steps=self.registry_conf.jitter_conf.jitter_steps,
             ),
         )
-        self.pl_conf = pl_conf or PipelineConf()
         self.postproc_factory = PostprocessFactory()
 
     def register_conf(self, config_id: str, conf: StreamConf) -> None:

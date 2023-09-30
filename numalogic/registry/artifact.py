@@ -136,15 +136,19 @@ class ArtifactCache(Generic[M_K, A_D]):
     ----
         cachesize: size of the cache
         ttl: time to live for each item in the cache
+        jitter_secs: jitter in seconds to add to the ttl (to solve Thundering Herd problem)
+        jitter_steps: granularity of jitter_secs
     """
 
     _STORETYPE = "cache"
 
     __slots__ = ("_cachesize", "_ttl")
 
-    def __init__(self, cachesize: int, ttl: int, jitter_secs: int = 0):
+    def __init__(self, cachesize: int, ttl: int, jitter_secs: int = 0, jitter_steps: int = 1):
         self._cachesize = cachesize
-        self._ttl = abs(random.randrange(ttl - jitter_secs, ttl + jitter_secs + 1, 2 * 60))
+        self._ttl = abs(
+            random.randrange(ttl - jitter_secs, ttl + jitter_secs + 1, jitter_steps * 60)
+        )
 
     @property
     def cachesize(self):

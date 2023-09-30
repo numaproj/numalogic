@@ -35,6 +35,21 @@ class ModelInfo:
 
 # TODO add this in the right config
 @dataclass
+class JitterConf:
+    """
+    Schema for defining the jitter config to solve the Thundering Herd problem.
+
+    Args:
+    ----
+        jitter_secs: Jitter in seconds
+        jitter_steps: Jitter in steps
+    """
+
+    jitter_secs: int = 30 * 60
+    jitter_steps: int = 2 * 60
+
+
+@dataclass
 class RegistryInfo:
     """Registry config base class.
 
@@ -44,8 +59,10 @@ class RegistryInfo:
         conf: kwargs for instantiating the model class
     """
 
-    name: str = MISSING
-    conf: dict[str, Any] = field(default_factory=dict)
+    name: str
+    model_expiry_sec: int
+    jitter_conf: JitterConf = field(default_factory=JitterConf)
+    extra_param: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
