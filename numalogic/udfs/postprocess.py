@@ -50,7 +50,7 @@ class PostprocessUDF(NumalogicUDF):
                 ttl=LOCAL_CACHE_TTL,
                 cachesize=LOCAL_CACHE_SIZE,
                 jitter_sec=self.registry_conf.jitter_conf.jitter_sec,
-                jitter_steps_min=self.registry_conf.jitter_conf.jitter_steps_min,
+                jitter_steps_sec=self.registry_conf.jitter_conf.jitter_steps_sec,
             ),
         )
         self.postproc_factory = PostprocessFactory()

@@ -180,7 +180,7 @@ class TestRedisRegistry(unittest.TestCase):
             self.assertEqual("cache", artifact_data_2.extras["source"])
 
     def test_load_latest_cache_ttl_expire(self):
-        cache = LocalLRUCache(cachesize=4, ttl=1, jitter_sec=0, jitter_steps_min=0)
+        cache = LocalLRUCache(cachesize=4, ttl=1, jitter_sec=0, jitter_steps_sec=0)
         registry = RedisRegistry(
             client=self.redis_client,
             cache_registry=cache,

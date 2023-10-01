@@ -35,7 +35,7 @@ class RedisRegistry(ArtifactManager):
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
         jitter_sec: Jitter (in secs) added to model timestamp information to solve
                     Thundering Herd problem (default = 30 mins)
-        jitter_steps_min: Step interval value (in mins) for jitter_sec value (default = 2 mins)
+        jitter_steps_sec: Step interval value (in sec) for jitter_sec value (default = 120 secs)
         cache_registry: Cache registry to use (default = None).
         transactional: Flag to indicate if the registry should be transactional or
         not (default = False).
@@ -58,7 +58,7 @@ class RedisRegistry(ArtifactManager):
         "client",
         "ttl",
         "jitter_sec",
-        "jitter_steps_min",
+        "jitter_steps_sec",
         "cache_registry",
         "transactional",
     )
@@ -68,7 +68,7 @@ class RedisRegistry(ArtifactManager):
         client: redis_client_t,
         ttl: int = 604800,
         jitter_sec: int = 30 * 60,
-        jitter_steps_min: int = 2,
+        jitter_steps_sec: int = 2 * 60,
         cache_registry: Optional[ArtifactCache] = None,
         transactional: bool = True,
     ):
@@ -76,7 +76,7 @@ class RedisRegistry(ArtifactManager):
         self.client = client
         self.ttl = ttl
         self.jitter_sec = jitter_sec
-        self.jitter_steps_min = jitter_steps_min
+        self.jitter_steps_sec = jitter_steps_sec
         self.cache_registry = cache_registry
         self.transactional = transactional
 
@@ -216,7 +216,7 @@ class RedisRegistry(ArtifactManager):
             mapping={
                 "artifact": serialized_artifact,
                 "version": version,
-                "timestamp": _apply_jitter(_cur_ts, self.jitter_sec, self.jitter_steps_min),
+                "timestamp": _apply_jitter(_cur_ts, self.jitter_sec, self.jitter_steps_sec),
                 "metadata": serialized_metadata,
             },
         )

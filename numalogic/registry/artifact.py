@@ -129,19 +129,19 @@ class ArtifactManager(Generic[KEYS, A_D]):
         return "::".join([_static_key, _dynamic_key])
 
 
-def _apply_jitter(ts: int, jitter_sec: int, jitter_steps_min: int):
+def _apply_jitter(ts: int, jitter_sec: int, jitter_steps_sec: int):
     """
-    Applies jitter to the ttl value to solve Thundering Herd problem.
-
-    Note: Jitter is not applied if jitter_sec and jitter_steps_min are both 0.
+        Applies jitter to the ttl value to solve Thundering Herd problem.
+    z
+        Note: Jitter izs not applied if jitter_sec and jitter_steps_sec are both 0.
     """
-    if jitter_sec == jitter_steps_min == 0:
+    if jitter_sec == jitter_steps_sec == 0:
         return ts
-    if jitter_sec < 60 * jitter_steps_min:
-        raise ConfigError("jitter_sec should be at least 60*jitter_steps_min")
+    if jitter_sec < jitter_steps_sec:
+        raise ConfigError("jitter_sec should be at least 60*jitter_steps_sec")
     begin = ts if ts - jitter_sec < 0 else ts - jitter_sec
     end = ts + jitter_sec + 1
-    return random.randrange(begin, end, 60 * jitter_steps_min)
+    return random.randrange(begin, end, jitter_steps_sec)
 
 
 class ArtifactCache(Generic[M_K, A_D]):
@@ -153,16 +153,16 @@ class ArtifactCache(Generic[M_K, A_D]):
         cachesize: size of the cache
         ttl: time to live for each item in the cache
         jitter_sec: jitter in seconds to add to the ttl (to solve Thundering Herd problem)
-        jitter_steps_min: Step interval value (in mins) for jitter_sec value
+        jitter_steps_sec: Step interval value (in mins) for jitter_sec value
     """
 
     _STORETYPE = "cache"
 
-    __slots__ = ("_cachesize", "_ttl", "jitter_sec", "jitter_steps_min")
+    __slots__ = ("_cachesize", "_ttl", "jitter_sec", "jitter_steps_sec")
 
-    def __init__(self, cachesize: int, ttl: int, jitter_sec: int, jitter_steps_min: int):
+    def __init__(self, cachesize: int, ttl: int, jitter_sec: int, jitter_steps_sec: int):
         self._cachesize = cachesize
-        self._ttl = _apply_jitter(ts=ttl, jitter_sec=jitter_sec, jitter_steps_min=jitter_steps_min)
+        self._ttl = _apply_jitter(ts=ttl, jitter_sec=jitter_sec, jitter_steps_sec=jitter_steps_sec)
 
     @property
     def cachesize(self):

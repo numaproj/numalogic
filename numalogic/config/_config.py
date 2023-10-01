@@ -42,11 +42,11 @@ class JitterConf:
     Args:
     ----
         jitter_sec: Jitter in seconds
-        jitter_steps_min: Step interval value (in mins) for jitter_sec value (default = 2 mins)
+        jitter_steps_sec: Step interval value (in secs) for jitter_sec value (default = 120 sec)
     """
 
     jitter_sec: int = 30 * 60
-    jitter_steps_min: int = 2
+    jitter_steps_sec: int = 2 * 60
 
 
 @dataclass
