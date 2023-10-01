@@ -1,7 +1,6 @@
 import time
 import unittest
 from concurrent.futures import ThreadPoolExecutor
-from datetime import timedelta, datetime
 from threading import Thread
 
 from freezegun import freeze_time
@@ -25,19 +24,17 @@ class TestArtifactCache(unittest.TestCase):
 
 class TestLocalLRUCache(unittest.TestCase):
     def test_cache_size(self):
-        cache_registry = LocalLRUCache(cachesize=2, ttl=1)
+        cache_registry = LocalLRUCache(cachesize=2, ttl=1, jitter_sec=5)
         cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         cache_registry.save("m2", ArtifactData(VanillaAE(12, 1), metadata={}, extras={}))
         cache_registry.save("m3", ArtifactData(VanillaAE(14, 1), metadata={}, extras={}))
-        ts = datetime.now()
-        with freeze_time(ts + timedelta(minutes=70)):
-            self.assertIsNone(cache_registry.load("m1"))
-            self.assertIsInstance(cache_registry.load("m2"), ArtifactData)
-            self.assertEqual(2, cache_registry.cachesize)
-            self.assertEqual(1, cache_registry.ttl)
-            self.assertTrue("m2" in cache_registry)
-            self.assertTrue("m3" in cache_registry)
-            self.assertListEqual(["m2", "m3"], cache_registry.keys())
+        self.assertIsNone(cache_registry.load("m1"))
+        self.assertIsInstance(cache_registry.load("m2"), ArtifactData)
+        self.assertEqual(2, cache_registry.cachesize)
+        self.assertEqual(1, cache_registry.ttl)
+        self.assertTrue("m2" in cache_registry)
+        self.assertTrue("m3" in cache_registry)
+        self.assertListEqual(["m2", "m3"], cache_registry.keys())
 
     def test_cache_overwrite(self):
         cache_registry = LocalLRUCache(cachesize=2, ttl=1)
@@ -54,7 +51,7 @@ class TestLocalLRUCache(unittest.TestCase):
     def test_cache_ttl(self):
         ts = "2021-01-01 00:00:00"
         with freeze_time(ts):
-            cache_registry = LocalLRUCache(cachesize=2, ttl=1, jitter_secs=1)
+            cache_registry = LocalLRUCache(cachesize=2, ttl=1, jitter_sec=1)
             cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
             self.assertIsInstance(cache_registry.load("m1"), ArtifactData)
             time.sleep(1)

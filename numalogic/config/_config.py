@@ -41,11 +41,11 @@ class JitterConf:
 
     Args:
     ----
-        jitter_secs: Jitter in seconds
-        jitter_steps_min: Step interval value (in mins) for jitter_secs value (default = 2 mins)
+        jitter_sec: Jitter in seconds
+        jitter_steps_min: Step interval value (in mins) for jitter_sec value (default = 2 mins)
     """
 
-    jitter_secs: int = 30 * 60
+    jitter_sec: int = 30 * 60
     jitter_steps_min: int = 2
 
 
@@ -90,7 +90,7 @@ class TrainerConf:
     train_hours: int = 24 * 8  # 8 days worth of data
     min_train_size: int = 2000
     retrain_freq_hr: int = 24
-    retry_secs: int = 600  # 10 min
+    retry_sec: int = 600  # 10 min
     batch_size: int = 64
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
