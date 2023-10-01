@@ -52,6 +52,12 @@ class ConfigNotFoundError(RuntimeError):
     pass
 
 
+class ConfigError(RuntimeError):
+    """Raised when a config value has a problem."""
+
+    pass
+
+
 class ModelVersionError(Exception):
     """Raised when a model version is not found in the registry."""
 

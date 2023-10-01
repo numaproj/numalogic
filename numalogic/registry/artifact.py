@@ -12,6 +12,7 @@ import random
 from dataclasses import dataclass
 from typing import Any, Generic, TypeVar, Union, Optional
 
+from numalogic.tools.exceptions import ConfigError
 from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T, state_dict_t
 
 
@@ -129,7 +130,18 @@ class ArtifactManager(Generic[KEYS, A_D]):
 
 
 def _apply_jitter(ts: int, jitter_sec: int, jitter_steps_min: int):
-    return random.randrange(max(ts - jitter_sec, ts), ts + jitter_sec + 1, 60 * jitter_steps_min)
+    """
+    Applies jitter to the ttl value to solve Thundering Herd problem.
+
+    Note: Jitter is not applied if jitter_sec and jitter_steps_min are both 0.
+    """
+    if jitter_sec == jitter_steps_min == 0:
+        return ts
+    if jitter_sec < 60 * jitter_steps_min:
+        raise ConfigError("jitter_sec should be at least 60*jitter_steps_min")
+    begin = ts if ts - jitter_sec < 0 else ts - jitter_sec
+    end = ts + jitter_sec + 1
+    return random.randrange(begin, end, 60 * jitter_steps_min)
 
 
 class ArtifactCache(Generic[M_K, A_D]):
@@ -141,16 +153,16 @@ class ArtifactCache(Generic[M_K, A_D]):
         cachesize: size of the cache
         ttl: time to live for each item in the cache
         jitter_sec: jitter in seconds to add to the ttl (to solve Thundering Herd problem)
-        jitter_steps_min: Step interval value (in mins) for jitter_sec value (default = 2 mins)
+        jitter_steps_min: Step interval value (in mins) for jitter_sec value
     """
 
     _STORETYPE = "cache"
 
-    __slots__ = ("_cachesize", "_ttl")
+    __slots__ = ("_cachesize", "_ttl", "jitter_sec", "jitter_steps_min")
 
-    def __init__(self, cachesize: int, ttl: int, jitter_sec: int = 0, jitter_steps_min: int = 2):
+    def __init__(self, cachesize: int, ttl: int, jitter_sec: int, jitter_steps_min: int):
         self._cachesize = cachesize
-        self._ttl = _apply_jitter(ttl, jitter_sec=jitter_sec, jitter_steps_min=jitter_steps_min)
+        self._ttl = _apply_jitter(ts=ttl, jitter_sec=jitter_sec, jitter_steps_min=jitter_steps_min)
 
     @property
     def cachesize(self):
