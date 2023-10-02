@@ -135,14 +135,14 @@ class TestRedisRegistry(unittest.TestCase):
         self.assertEqual(data.extras["version"], version)
 
     def test_check_if_model_stale_true(self):
-        delta = datetime.today() - timedelta(days=5)
+        delta = datetime.now() - timedelta(days=5)
         with freeze_time(delta):
             self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
         data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertTrue(self.registry.is_artifact_stale(data, 12))
 
     def test_check_if_model_stale_false(self):
-        delta = datetime.today()
+        delta = datetime.now()
         with freeze_time(delta):
             self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
         with freeze_time(delta + timedelta(hours=7)):
@@ -169,21 +169,27 @@ class TestRedisRegistry(unittest.TestCase):
             self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
 
     def test_load_latest_model_twice(self):
-        with freeze_time(datetime.today() - timedelta(days=5)):
+        with freeze_time(datetime.now() - timedelta(days=5)):
             self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
 
         artifact_data_1 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         artifact_data_2 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertTrue(self.registry.is_artifact_stale(artifact_data_1, 4))
         self.assertEqual("registry", artifact_data_1.extras["source"])
-        self.assertEqual("cache", artifact_data_2.extras["source"])
+        with freeze_time(datetime.now() - timedelta(minutes=60)):
+            self.assertEqual("cache", artifact_data_2.extras["source"])
 
     def test_load_latest_cache_ttl_expire(self):
-        self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
-        artifact_data_1 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
-        time.sleep(1)
-        artifact_data_2 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
+        cache = LocalLRUCache(cachesize=4, ttl=1, jitter_sec=0, jitter_steps_sec=0)
+        registry = RedisRegistry(
+            client=self.redis_client,
+            cache_registry=cache,
+        )
+        registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
+        artifact_data_1 = registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertEqual("registry", artifact_data_1.extras["source"])
+        time.sleep(1)
+        artifact_data_2 = registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertEqual("registry", artifact_data_2.extras["source"])
 
     def test_multiple_save(self):

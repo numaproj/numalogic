@@ -3,7 +3,8 @@ from typing import Optional
 
 from omegaconf import OmegaConf
 
-from numalogic.config import NumalogicConf
+from numalogic.config import NumalogicConf, RegistryInfo
+
 from numalogic.connectors import (
     ConnectorType,
     RedisConf,
@@ -26,6 +27,9 @@ class StreamConf:
 class PipelineConf:
     stream_confs: dict[str, StreamConf] = field(default_factory=dict)
     redis_conf: Optional[RedisConf] = None
+    registry_conf: Optional[RegistryInfo] = field(
+        default_factory=lambda: RegistryInfo(name="RedisRegistry", model_expiry_sec=172800)
+    )
     prometheus_conf: Optional[PrometheusConf] = None
     druid_conf: Optional[DruidConf] = None
 

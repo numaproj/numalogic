@@ -16,6 +16,7 @@ from redis import RedisError
 from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
+from numalogic.connectors import RedisConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.udfs import StreamConf, PipelineConf
@@ -246,9 +247,12 @@ class TrainTrainerUDF(unittest.TestCase):
             )
 
     def test_trainer_conf_err(self):
-        udf = TrainerUDF(REDIS_CLIENT)
+        self.udf = TrainerUDF(
+            REDIS_CLIENT,
+            pl_conf=PipelineConf(redis_conf=RedisConf(url="redis://localhost:6379", port=0)),
+        )
         with self.assertRaises(ConfigNotFoundError):
-            udf(self.keys, self.datum)
+            self.udf(self.keys, self.datum)
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data(nrows=10)))
     def test_trainer_data_insufficient(self):

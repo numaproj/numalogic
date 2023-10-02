@@ -43,9 +43,18 @@ class TrainerUDF(NumalogicUDF):
     ):
         super().__init__(is_async=False)
         self.r_client = r_client
-        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
-        self.model_registry = model_registry_cls(client=r_client)
         self.pl_conf = pl_conf or PipelineConf()
+        self.registry_conf = self.pl_conf.registry_conf
+        model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
+        model_expiry_sec = self.pl_conf.registry_conf.model_expiry_sec
+        jitter_sec = self.registry_conf.jitter_conf.jitter_sec
+        jitter_steps_sec = self.registry_conf.jitter_conf.jitter_steps_sec
+        self.model_registry = model_registry_cls(
+            client=r_client,
+            ttl=model_expiry_sec,
+            jitter_sec=jitter_sec,
+            jitter_steps_sec=jitter_steps_sec,
+        )
         self.druid_conf = self.pl_conf.druid_conf
 
         data_fetcher_cls = ConnectorFactory.get_cls("DruidFetcher")
@@ -169,7 +178,7 @@ class TrainerUDF(NumalogicUDF):
 
         # set the retry and retrain_freq
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
-        retry_ts = _conf.numalogic_conf.trainer.retry_secs
+        retry_ts = _conf.numalogic_conf.trainer.retry_sec
         if not self.train_msg_deduplicator.ack_read(
             key=payload.composite_keys,
             uuid=payload.uuid,

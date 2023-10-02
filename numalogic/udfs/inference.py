@@ -38,12 +38,18 @@ class InferenceUDF(NumalogicUDF):
 
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
         super().__init__(is_async=False)
-        model_registry_cls = RegistryFactory.get_cls("RedisRegistry")
+        self.pl_conf = pl_conf or PipelineConf()
+        self.registry_conf = self.pl_conf.registry_conf
+        model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
             client=r_client,
-            cache_registry=LocalLRUCache(ttl=LOCAL_CACHE_TTL, cachesize=LOCAL_CACHE_SIZE),
+            cache_registry=LocalLRUCache(
+                ttl=LOCAL_CACHE_TTL,
+                cachesize=LOCAL_CACHE_SIZE,
+                jitter_sec=self.registry_conf.jitter_conf.jitter_sec,
+                jitter_steps_sec=self.registry_conf.jitter_conf.jitter_steps_sec,
+            ),
         )
-        self.pl_conf = pl_conf or PipelineConf()
 
     # TODO: remove, and have an update config method
     def register_conf(self, config_id: str, conf: StreamConf) -> None:

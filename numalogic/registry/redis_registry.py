@@ -18,7 +18,7 @@ import redis.client
 
 from redis.exceptions import RedisError
 
-from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache
+from numalogic.registry.artifact import ArtifactManager, ArtifactData, ArtifactCache, _apply_jitter
 from numalogic.registry._serialize import loads, dumps
 from numalogic.tools.exceptions import ModelKeyNotFound, RedisRegistryError
 from numalogic.tools.types import artifact_t, redis_client_t, KEYS, META_T, META_VT, KeyedArtifact
@@ -33,6 +33,9 @@ class RedisRegistry(ArtifactManager):
     ----
         client: Take in the redis client already established/created
         ttl: Total Time to Live (in seconds) for the key when saving in redis (dafault = 604800)
+        jitter_sec: Jitter (in secs) added to model timestamp information to solve
+                    Thundering Herd problem (default = 30 mins)
+        jitter_steps_sec: Step interval value (in sec) for jitter_sec value (default = 120 secs)
         cache_registry: Cache registry to use (default = None).
         transactional: Flag to indicate if the registry should be transactional or
         not (default = False).
@@ -51,18 +54,29 @@ class RedisRegistry(ArtifactManager):
     >>> loaded_artifact = registry.load(skeys, dkeys)
     """
 
-    __slots__ = ("client", "ttl", "cache_registry", "transactional")
+    __slots__ = (
+        "client",
+        "ttl",
+        "jitter_sec",
+        "jitter_steps_sec",
+        "cache_registry",
+        "transactional",
+    )
 
     def __init__(
         self,
         client: redis_client_t,
         ttl: int = 604800,
+        jitter_sec: int = 30 * 60,
+        jitter_steps_sec: int = 2 * 60,
         cache_registry: Optional[ArtifactCache] = None,
         transactional: bool = True,
     ):
         super().__init__("")
         self.client = client
         self.ttl = ttl
+        self.jitter_sec = jitter_sec
+        self.jitter_steps_sec = jitter_steps_sec
         self.cache_registry = cache_registry
         self.transactional = transactional
 
@@ -116,9 +130,7 @@ class RedisRegistry(ArtifactManager):
 
     def _clear_cache(self, key: Optional[str] = None) -> Optional[ArtifactData]:
         if self.cache_registry:
-            if key:
-                return self.cache_registry.delete(key)
-            return self.cache_registry.clear()
+            return self.cache_registry.delete(key) if key else self.cache_registry.clear()
         return None
 
     def __get_artifact_data(
@@ -196,16 +208,15 @@ class RedisRegistry(ArtifactManager):
         latest_key = self.__construct_latest_key(key)
         pipe.set(name=latest_key, value=new_version_key)
         _LOGGER.debug("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
-        serialized_metadata = ""
-        if metadata:
-            serialized_metadata = orjson.dumps(metadata)
+        serialized_metadata = orjson.dumps(metadata) if metadata else b""
         serialized_artifact = dumps(deserialized_object=artifact)
+        _cur_ts = int(time.time())
         pipe.hset(
             name=new_version_key,
             mapping={
                 "artifact": serialized_artifact,
-                "version": str(version),
-                "timestamp": time.time(),
+                "version": version,
+                "timestamp": _apply_jitter(_cur_ts, self.jitter_sec, self.jitter_steps_sec),
                 "metadata": serialized_metadata,
             },
         )
@@ -403,7 +414,7 @@ class RedisRegistry(ArtifactManager):
         """
         dict_model_ver = {}
         try:
-            for key, value in dict_artifacts.items():
+            for value in dict_artifacts.values():
                 dict_model_ver[":".join(value.dkeys)] = self.save(
                     skeys=skeys,
                     dkeys=value.dkeys,

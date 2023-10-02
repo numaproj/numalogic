@@ -12,7 +12,6 @@
 from copy import deepcopy
 from threading import Lock
 from typing import Optional
-
 from cachetools import TTLCache
 
 from numalogic.registry.artifact import ArtifactCache, ArtifactData
@@ -24,15 +23,23 @@ class LocalLRUCache(ArtifactCache, metaclass=Singleton):
 
     Args:
     ----
-        cachesize: Size of the cache,
-                   i.e. number of elements the cache can hold
-        ttl: Time to live for each item in seconds
+    cachesize: Size of the cache, i.e. number of elements the cache can hold
+    ttl: Time to live for each item in seconds
+    jitter_sec: Jitter in seconds to add to the ttl (to solve Thundering Herd problem)
+                (default = 120 secs)
+    jitter_steps_sec: Step interval value (in secs) for jitter_sec value (default = 60 secs)
     """
 
     __cache: Optional[TTLCache] = None
 
-    def __init__(self, cachesize: int = 512, ttl: int = 300):
-        super().__init__(cachesize, ttl)
+    def __init__(
+        self,
+        cachesize: int = 512,
+        ttl: int = 300,
+        jitter_sec: int = 120,
+        jitter_steps_sec: int = 60,
+    ):
+        super().__init__(cachesize, ttl, jitter_sec, jitter_steps_sec)
         if not self.__cache:
             self.__cache = TTLCache(maxsize=cachesize, ttl=ttl)
         self.__lock = Lock()

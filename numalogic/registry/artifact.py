@@ -8,11 +8,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-
+import random
 from dataclasses import dataclass
 from typing import Any, Generic, TypeVar, Union, Optional
 
+from numalogic.tools.exceptions import ConfigError
 from numalogic.tools.types import artifact_t, KEYS, META_T, META_VT, EXTRA_T, state_dict_t
 
 
@@ -129,6 +129,21 @@ class ArtifactManager(Generic[KEYS, A_D]):
         return "::".join([_static_key, _dynamic_key])
 
 
+def _apply_jitter(ts: int, jitter_sec: int, jitter_steps_sec: int):
+    """
+        Applies jitter to the ttl value to solve Thundering Herd problem.
+    z
+        Note: Jitter izs not applied if jitter_sec and jitter_steps_sec are both 0.
+    """
+    if jitter_sec == jitter_steps_sec == 0:
+        return ts
+    if jitter_sec < jitter_steps_sec:
+        raise ConfigError("jitter_sec should be at least 60*jitter_steps_sec")
+    begin = ts if ts - jitter_sec < 0 else ts - jitter_sec
+    end = ts + jitter_sec + 1
+    return random.randrange(begin, end, jitter_steps_sec)
+
+
 class ArtifactCache(Generic[M_K, A_D]):
     r"""Base class for all artifact caches.
     Caches support saving, loading and deletion, but not artifact versioning.
@@ -137,15 +152,17 @@ class ArtifactCache(Generic[M_K, A_D]):
     ----
         cachesize: size of the cache
         ttl: time to live for each item in the cache
+        jitter_sec: jitter in seconds to add to the ttl (to solve Thundering Herd problem)
+        jitter_steps_sec: Step interval value (in mins) for jitter_sec value
     """
 
     _STORETYPE = "cache"
 
-    __slots__ = ("_cachesize", "_ttl")
+    __slots__ = ("_cachesize", "_ttl", "jitter_sec", "jitter_steps_sec")
 
-    def __init__(self, cachesize: int, ttl: int):
+    def __init__(self, cachesize: int, ttl: int, jitter_sec: int, jitter_steps_sec: int):
         self._cachesize = cachesize
-        self._ttl = ttl
+        self._ttl = _apply_jitter(ts=ttl, jitter_sec=jitter_sec, jitter_steps_sec=jitter_steps_sec)
 
     @property
     def cachesize(self):

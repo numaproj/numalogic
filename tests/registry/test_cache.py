@@ -3,13 +3,17 @@ import unittest
 from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
 
+from freezegun import freeze_time
+
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import LocalLRUCache, ArtifactData, ArtifactCache
+from numalogic.registry.artifact import _apply_jitter
+from numalogic.tools.exceptions import ConfigError
 
 
 class TestArtifactCache(unittest.TestCase):
     def test_cache(self):
-        cache_reg = ArtifactCache(cachesize=2, ttl=2)
+        cache_reg = ArtifactCache(cachesize=2, ttl=2, jitter_sec=180, jitter_steps_sec=2)
         with self.assertRaises(NotImplementedError):
             cache_reg.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         with self.assertRaises(NotImplementedError):
@@ -21,15 +25,19 @@ class TestArtifactCache(unittest.TestCase):
 
 
 class TestLocalLRUCache(unittest.TestCase):
+    def setUp(self):
+        cache = LocalLRUCache(cachesize=4, ttl=1, jitter_sec=0, jitter_steps_sec=0)
+        cache.clear()
+
     def test_cache_size(self):
-        cache_registry = LocalLRUCache(cachesize=2, ttl=1)
+        cache_registry = LocalLRUCache(cachesize=2, ttl=1, jitter_sec=0, jitter_steps_sec=0)
         cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
+        time.sleep(1)
         cache_registry.save("m2", ArtifactData(VanillaAE(12, 1), metadata={}, extras={}))
         cache_registry.save("m3", ArtifactData(VanillaAE(14, 1), metadata={}, extras={}))
-
         self.assertIsNone(cache_registry.load("m1"))
         self.assertIsInstance(cache_registry.load("m2"), ArtifactData)
-        self.assertEqual(2, cache_registry.cachesize)
+        self.assertEqual(4, cache_registry.cachesize)
         self.assertEqual(1, cache_registry.ttl)
         self.assertTrue("m2" in cache_registry)
         self.assertTrue("m3" in cache_registry)
@@ -48,12 +56,13 @@ class TestLocalLRUCache(unittest.TestCase):
         self.assertDictEqual({"version": "2", "source": "cache"}, loaded_artifact.extras)
 
     def test_cache_ttl(self):
-        cache_registry = LocalLRUCache(cachesize=2, ttl=1)
-        cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
-        self.assertIsInstance(cache_registry.load("m1"), ArtifactData)
-
-        time.sleep(1)
-        self.assertIsNone(cache_registry.load("m1"))
+        ts = "2021-01-01 00:00:00"
+        with freeze_time(ts):
+            cache_registry = LocalLRUCache(cachesize=2, ttl=1, jitter_sec=0, jitter_steps_sec=0)
+            cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
+            self.assertIsInstance(cache_registry.load("m1"), ArtifactData)
+            time.sleep(1)
+            self.assertIsNone(cache_registry.load("m1"))
 
     def test_singleton(self):
         cache_registry_1 = LocalLRUCache(cachesize=2, ttl=1)
@@ -74,6 +83,10 @@ class TestLocalLRUCache(unittest.TestCase):
         cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         cache_registry.clear()
         self.assertIsNone(cache_registry.load("m1"))
+
+    def test_apply_jitter(self):
+        with self.assertRaises(ConfigError):
+            _apply_jitter(1, jitter_sec=30, jitter_steps_sec=60)
 
     def test_multithread(self):
         def load_cache(idx):

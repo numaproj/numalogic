@@ -35,6 +35,21 @@ class ModelInfo:
 
 # TODO add this in the right config
 @dataclass
+class JitterConf:
+    """
+    Schema for defining the jitter config to solve the Thundering Herd problem.
+
+    Args:
+    ----
+        jitter_sec: Jitter in seconds
+        jitter_steps_sec: Step interval value (in secs) for jitter_sec value (default = 120 sec)
+    """
+
+    jitter_sec: int = 30 * 60
+    jitter_steps_sec: int = 2 * 60
+
+
+@dataclass
 class RegistryInfo:
     """Registry config base class.
 
@@ -44,8 +59,10 @@ class RegistryInfo:
         conf: kwargs for instantiating the model class
     """
 
-    name: str = MISSING
-    conf: dict[str, Any] = field(default_factory=dict)
+    name: str
+    model_expiry_sec: int
+    jitter_conf: JitterConf = field(default_factory=JitterConf)
+    extra_param: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -73,8 +90,7 @@ class TrainerConf:
     train_hours: int = 24 * 8  # 8 days worth of data
     min_train_size: int = 2000
     retrain_freq_hr: int = 24
-    model_expiry_sec: int = 172800  # 48 hrs  # TODO: revisit this
-    retry_secs: int = 600  # 10 min  # TODO: revisit this
+    retry_sec: int = 600  # 10 min
     batch_size: int = 64
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
