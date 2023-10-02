@@ -208,7 +208,7 @@ class RedisRegistry(ArtifactManager):
         latest_key = self.__construct_latest_key(key)
         pipe.set(name=latest_key, value=new_version_key)
         _LOGGER.debug("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
-        serialized_metadata = orjson.dumps(metadata) if metadata else ""
+        serialized_metadata = orjson.dumps(metadata) if metadata else b""
         serialized_artifact = dumps(deserialized_object=artifact)
         _cur_ts = int(time.time())
         pipe.hset(
