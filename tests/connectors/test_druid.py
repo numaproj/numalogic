@@ -123,16 +123,21 @@ class TestDruid(unittest.TestCase):
         self.assertEqual((2, 5), _out.shape)
 
     def test_build_param(self):
+        filter_pairs = make_filter_pairs(["ciStatus"], ["false"])
         expected = {
             "datasource": "foo",
             "dimensions": map(lambda d: DimensionSpec(dimension=d, output_name=d), ["bar"]),
-            "filter": [Filter(type="selector", dimension="ciStatus", value="false")],
+            "filter": Filter(
+                type="and",
+                fields=[Filter(type="selector", dimension="ciStatus", value="false")],
+            ),
             "granularity": "all",
-            "aggregations": "",
+            "aggregations": dict(),
+            "post_aggregations": dict(),
             "intervals": "",
+            "context": {"timeout": 10000, "configIds": list(filter_pairs), "source": "numalogic"},
         }
 
-        filter_pairs = make_filter_pairs(["ciStatus"], ["false"])
         actual = build_params(
             datasource="foo",
             dimensions=["bar"],
@@ -141,7 +146,8 @@ class TestDruid(unittest.TestCase):
             hours=24.0,
             delay=3,
         )
-        diff = DeepDiff(expected, actual).get("values_changed", {})
+        actual["intervals"] = ""
+        diff = DeepDiff(expected, actual, ignore_order=True)
         self.assertDictEqual({}, diff)
 
     @patch.object(PyDruid, "groupby", Mock(side_effect=OSError))

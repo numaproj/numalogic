@@ -78,7 +78,7 @@ def build_params(
         "post_aggregations": post_aggregations or dict(),
         "filter": _filter,
         "dimensions": dimension_specs,
-        "context": {"timeout": TIMEOUT},
+        "context": {"timeout": TIMEOUT, "configIds": list(filter_pairs), "source": "numalogic"},
     }
 
 
