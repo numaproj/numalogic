@@ -17,13 +17,11 @@ from torch import Tensor
 from numalogic.base import TorchModel, BaseThresholdModel, BaseTransformer
 
 try:
-    from redis.client import AbstractRedis, Redis, StrictRedis
+    from redis.client import Redis
 except ImportError:
     redis_client_t = TypeVar("redis_client_t")
 else:
-    redis_client_t = TypeVar(
-        "redis_client_t", bound=Union[Redis, StrictRedis, AbstractRedis], covariant=True
-    )
+    redis_client_t = TypeVar("redis_client_t", bound=Redis, covariant=True)
 
 artifact_t = TypeVar(
     "artifact_t",
