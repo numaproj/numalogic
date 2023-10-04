@@ -16,7 +16,7 @@ from redis import RedisError
 from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
-from numalogic.connectors import RedisConf
+from numalogic.connectors import RedisConf, DruidConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.udfs import StreamConf, PipelineConf
@@ -53,18 +53,23 @@ class TrainTrainerUDF(unittest.TestCase):
             event_time=datetime.now(),
             watermark=datetime.now(),
         )
-        conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
+        conf_1 = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
         schema = OmegaConf.structured(PipelineConf)
-        conf = OmegaConf.merge(schema, conf)
+        conf_2 = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml"))
+        conf_1 = OmegaConf.merge(schema, conf_1)
+        conf_2 = OmegaConf.merge(schema, conf_2)
+        self.pl_conf_1 = PipelineConf(**OmegaConf.merge(schema, conf_1))
+        self.pl_conf_2 = PipelineConf(**OmegaConf.merge(schema, conf_2))
 
-        self.udf = TrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf))
+        self.udf1 = TrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf_1))
+        self.udf2 = TrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf_2))
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_01(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -76,7 +81,7 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
 
         self.assertEqual(
             2,
@@ -88,7 +93,7 @@ class TrainTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_02(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -98,7 +103,7 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
@@ -110,7 +115,7 @@ class TrainTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_03(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -120,7 +125,7 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
@@ -132,7 +137,7 @@ class TrainTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_do_train(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -143,9 +148,9 @@ class TrainTrainerUDF(unittest.TestCase):
             ),
         )
         time.time()
-        self.udf(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
         with freeze_time(datetime.now() + timedelta(days=2)):
-            self.udf(self.keys, self.datum)
+            self.udf1(self.keys, self.datum)
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
@@ -165,7 +170,7 @@ class TrainTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_do_not_train_1(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -175,8 +180,8 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(self.keys, self.datum)
-        self.udf(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
@@ -196,7 +201,7 @@ class TrainTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_do_not_train_2(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -206,12 +211,12 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
         ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
         with freeze_time(ts + timedelta(hours=25)):
             TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
         with freeze_time(ts + timedelta(hours=25) + timedelta(minutes=15)):
-            self.udf(self.keys, self.datum)
+            self.udf1(self.keys, self.datum)
         self.assertEqual(
             0,
             REDIS_CLIENT.exists(
@@ -223,7 +228,7 @@ class TrainTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_do_not_train_3(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -236,7 +241,7 @@ class TrainTrainerUDF(unittest.TestCase):
         TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
         ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
         with freeze_time(ts + timedelta(minutes=15)):
-            self.udf(self.keys, self.datum)
+            self.udf1(self.keys, self.datum)
             self.assertEqual(
                 0,
                 REDIS_CLIENT.exists(
@@ -247,16 +252,16 @@ class TrainTrainerUDF(unittest.TestCase):
             )
 
     def test_trainer_conf_err(self):
-        self.udf = TrainerUDF(
+        self.udf1 = TrainerUDF(
             REDIS_CLIENT,
             pl_conf=PipelineConf(redis_conf=RedisConf(url="redis://localhost:6379", port=0)),
         )
         with self.assertRaises(ConfigNotFoundError):
-            self.udf(self.keys, self.datum)
+            self.udf1(self.keys, self.datum)
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data(nrows=10)))
     def test_trainer_data_insufficient(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -266,7 +271,7 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
         self.assertFalse(
             REDIS_CLIENT.exists(
                 b"5984175597303660107::VanillaAE::LATEST",
@@ -277,7 +282,7 @@ class TrainTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(side_effect=RuntimeError))
     def test_trainer_datafetcher_err(self):
-        self.udf.register_conf(
+        self.udf1.register_conf(
             "druid-config",
             StreamConf(
                 numalogic_conf=NumalogicConf(
@@ -287,7 +292,7 @@ class TrainTrainerUDF(unittest.TestCase):
                 )
             ),
         )
-        self.udf(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
         self.assertFalse(
             REDIS_CLIENT.exists(
                 b"5984175597303660107::VanillaAE::LATEST",
@@ -309,6 +314,33 @@ class TrainTrainerUDF(unittest.TestCase):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
         train_dedup.ack_read(self.keys, "some-uuid")
         self.assertLogs("RedisError")
+
+    def test_druid_from_config_1(self):
+        self.udf1(self.keys, self.datum)
+
+    def test_druid_from_config_2(self):
+        self.udf2(self.keys, self.datum)
+
+    def test_druid_from_config_missing(self):
+        pl_conf = PipelineConf(
+            stream_confs={
+                "druid-config": StreamConf(
+                    numalogic_conf=NumalogicConf(
+                        model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                        preprocess=[
+                            ModelInfo(name="LogTransformer"),
+                        ],
+                        trainer=TrainerConf(
+                            pltrainer_conf=LightningTrainerConf(max_epochs=1),
+                        ),
+                    )
+                )
+            },
+            druid_conf=DruidConf(url="some-url", endpoint="druid/v2", delay_hrs=3),
+        )
+        self.udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
+
+        self.assertRaises(ConfigNotFoundError, self.udf3, self.keys, self.datum)
 
 
 if __name__ == "__main__":

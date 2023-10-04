@@ -15,6 +15,7 @@ from numalogic.base import StatelessTransformer
 from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
 from numalogic.config._config import NumalogicConf
 from numalogic.config.factory import ConnectorFactory
+from numalogic.connectors import DruidFetcherConf
 from numalogic.models.autoencoder import AutoencoderTrainer
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
@@ -98,6 +99,36 @@ class TrainerUDF(NumalogicUDF):
         """
         try:
             return self.pl_conf.stream_confs[config_id]
+        except KeyError as err:
+            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
+
+    def register_druid_fetcher_conf(self, config_id: str, conf: DruidFetcherConf) -> None:
+        """
+        Register DruidFetcherConf with the UDF.
+
+        Args:
+            config_id: Config ID
+            conf: DruidFetcherConf object
+        """
+        self.pl_conf.druid_conf.id_fetcher[config_id] = conf
+
+    def get_druid_fetcher_conf(self, config_id: str) -> DruidFetcherConf:
+        """
+        Get DruidFetcherConf with the given ID.
+
+        Args:
+            config_id: Config ID
+
+        Returns
+        -------
+            DruidFetcherConf object
+
+        Raises
+        ------
+            ConfigNotFoundError: If config with the given ID is not found
+        """
+        try:
+            return self.pl_conf.druid_conf.id_fetcher[config_id]
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
@@ -316,18 +347,25 @@ class TrainerUDF(NumalogicUDF):
         """
         _start_time = time.perf_counter()
         _conf = self.get_conf(payload.config_id)
+        _fetcher_conf = self.druid_conf.fetcher or (
+            self.get_druid_fetcher_conf(payload.config_id) if self.druid_conf.id_fetcher else None
+        )
+        if not _fetcher_conf:
+            raise ConfigNotFoundError(
+                f"Druid fetcher config not found for config_id: {payload.config_id}!"
+            )
 
         try:
             _df = self.data_fetcher.fetch(
-                datasource=self.druid_conf.fetcher.datasource,
+                datasource=_fetcher_conf.datasource,
                 filter_keys=_conf.composite_keys,
                 filter_values=payload.composite_keys,
-                dimensions=list(self.druid_conf.fetcher.dimensions),
+                dimensions=list(_fetcher_conf.dimensions),
                 delay=self.druid_conf.delay_hrs,
-                granularity=self.druid_conf.fetcher.granularity,
-                aggregations=dict(self.druid_conf.fetcher.aggregations),
-                group_by=list(self.druid_conf.fetcher.group_by),
-                pivot=self.druid_conf.fetcher.pivot,
+                granularity=_fetcher_conf.granularity,
+                aggregations=dict(_fetcher_conf.aggregations),
+                group_by=list(_fetcher_conf.group_by),
+                pivot=_fetcher_conf.pivot,
                 hours=_conf.numalogic_conf.trainer.train_hours,
             )
         except Exception:

@@ -31,9 +31,10 @@ redis_conf:
 druid_conf:
   url: "druid-endpoint"
   endpoint: "endpoint"
-  fetcher:
-    dimensions: [ "col1" ]
-    datasource: "table-name"
-    group_by: [ "timestamp", "col1" ]
-    pivot:
-      columns: [ "col2" ]
+  id_fetcher:
+    druid-config:
+      dimensions: [ "col1" ]
+      datasource: "table-name"
+      group_by: [ "timestamp", "col1" ]
+      pivot:
+        columns: [ "col2" ]
