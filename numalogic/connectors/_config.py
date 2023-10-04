@@ -1,7 +1,6 @@
 from dataclasses import dataclass, field
 from enum import IntEnum
-
-from omegaconf import MISSING
+from typing import Optional
 
 
 class ConnectorType(IntEnum):
@@ -60,8 +59,12 @@ class DruidConf(ConnectorConf):
         endpoint: Druid endpoint
         delay_hrs: Delay in hours for fetching data from Druid
         fetcher: DruidFetcherConf
+        id_fetcher: dict of DruidFetcherConf for fetching ids
+
+    Note: Either one of the fetcher or id_fetcher should be provided.
     """
 
     endpoint: str
     delay_hrs: float = 3.0
-    fetcher: DruidFetcherConf = MISSING
+    fetcher: Optional[DruidFetcherConf] = None
+    id_fetcher: Optional[dict[str, DruidFetcherConf]] = None
