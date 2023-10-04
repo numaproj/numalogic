@@ -16,7 +16,7 @@ from redis import RedisError
 from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
-from numalogic.connectors import RedisConf, DruidConf
+from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.udfs import StreamConf, PipelineConf
@@ -312,14 +312,31 @@ class TrainTrainerUDF(unittest.TestCase):
     @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_2(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
-        train_dedup.ack_read(self.keys, "some-uuid")
-        self.assertLogs("RedisError")
+        with self.assertLogs(level="INFO") as log:
+            train_dedup.ack_read(self.keys, "some-uuid")
+            self.assertEqual(
+                "INFO:numalogic.udfs.tools:some-uuid - "
+                "Acknowledging request for Training for key : ['5984175597303660107']",
+                log.output[-1],
+            )
 
     def test_druid_from_config_1(self):
-        self.udf1(self.keys, self.datum)
+        with self.assertLogs(level="INFO") as log:
+            self.udf1(self.keys, self.datum)
+            self.assertEqual(
+                "WARNING:numalogic.udfs.trainer:some-uuid -"
+                " Insufficient data found for keys ['5984175597303660107'], shape: (0, 0)",
+                log.output[-1],
+            )
 
     def test_druid_from_config_2(self):
-        self.udf2(self.keys, self.datum)
+        with self.assertLogs(level="INFO") as log:
+            self.udf2(self.keys, self.datum)
+            self.assertEqual(
+                "WARNING:numalogic.udfs.trainer:some-uuid - Insufficient data found for keys "
+                "['5984175597303660107'], shape: (0, 0)",
+                log.output[-1],
+            )
 
     def test_druid_from_config_missing(self):
         pl_conf = PipelineConf(
@@ -338,9 +355,41 @@ class TrainTrainerUDF(unittest.TestCase):
             },
             druid_conf=DruidConf(url="some-url", endpoint="druid/v2", delay_hrs=3),
         )
-        self.udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
+        udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
 
-        self.assertRaises(ConfigNotFoundError, self.udf3, self.keys, self.datum)
+        self.assertRaises(ConfigNotFoundError, udf3, self.keys, self.datum)
+
+    def test_druid_get_config_error(self):
+        pl_conf = PipelineConf(
+            stream_confs={
+                "druid-config": StreamConf(
+                    numalogic_conf=NumalogicConf(
+                        model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                        preprocess=[
+                            ModelInfo(name="LogTransformer"),
+                        ],
+                        trainer=TrainerConf(
+                            pltrainer_conf=LightningTrainerConf(max_epochs=1),
+                        ),
+                    )
+                )
+            },
+            druid_conf=DruidConf(
+                url="some-url",
+                endpoint="druid/v2",
+                delay_hrs=3,
+                id_fetcher={
+                    "some-id": DruidFetcherConf(
+                        datasource="some-datasource", dimensions=["some-dimension"]
+                    )
+                },
+            ),
+        )
+        udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
+        udf3.register_conf("druid-config", pl_conf.stream_confs["druid-config"])
+        udf3.register_druid_fetcher_conf("some-id", pl_conf.druid_conf.id_fetcher["some-id"])
+        self.assertRaises(ConfigNotFoundError, udf3.get_druid_fetcher_conf("druid-config"))
+        self.assertRaises(ConfigNotFoundError, udf3, self.keys, self.datum)
 
 
 if __name__ == "__main__":
