@@ -388,8 +388,10 @@ class TrainTrainerUDF(unittest.TestCase):
         udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
         udf3.register_conf("druid-config", pl_conf.stream_confs["druid-config"])
         udf3.register_druid_fetcher_conf("some-id", pl_conf.druid_conf.id_fetcher["some-id"])
-        self.assertRaises(ConfigNotFoundError, udf3.get_druid_fetcher_conf("druid-config"))
-        self.assertRaises(ConfigNotFoundError, udf3, self.keys, self.datum)
+        with self.assertRaises(ConfigNotFoundError):
+            udf3.get_druid_fetcher_conf("different-config")
+        with self.assertRaises(ConfigNotFoundError):
+            udf3(self.keys, self.datum)
 
 
 if __name__ == "__main__":
