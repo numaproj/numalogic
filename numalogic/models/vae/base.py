@@ -13,6 +13,12 @@ def _init_criterion(loss_fn: str) -> Callable:
         return F.l1_loss
     if loss_fn == "mse":
         return F.mse_loss
+    if loss_fn == "poisson":
+        return F.poisson_nll_loss
+    if loss_fn == "Gaussian":
+        return F.gaussian_nll_loss
+    if loss_fn == "smooth":
+        return F.smooth_l1_loss
     raise ValueError(f"Unsupported loss function provided: {loss_fn}")
 
 
