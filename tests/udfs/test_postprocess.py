@@ -12,7 +12,7 @@ from orjson import orjson
 from pynumaflow.mapper import Datum
 
 from numalogic._constants import TESTS_DIR
-from numalogic.models.threshold import StdDevThreshold
+from numalogic.models.threshold import StdDevThreshold, MahalanobisThreshold
 from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import ModelKeyNotFound
 from numalogic.udfs import PipelineConf
@@ -118,7 +118,7 @@ class TestPostProcessUDF(unittest.TestCase):
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
         self.assertEqual(2, len(msg))
 
-    def test_postprocess_all_model_present(self):
+    def test_postprocess_all_model_present_01(self):
         data = deepcopy(DATA)
         data["status"] = Status.ARTIFACT_FOUND
         data["header"] = Header.MODEL_INFERENCE
@@ -127,6 +127,28 @@ class TestPostProcessUDF(unittest.TestCase):
         )
 
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
+        self.assertEqual(1, len(msg))
+
+    def test_postprocess_all_model_present_02(self):
+        _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml"))
+        schema = OmegaConf.structured(PipelineConf)
+        pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
+        udf = PostprocessUDF(REDIS_CLIENT, pl_conf=pl_conf)
+
+        data = deepcopy(DATA)
+        data["status"] = Status.ARTIFACT_FOUND
+        data["header"] = Header.MODEL_INFERENCE
+        # noinspection PyTypedDict
+        data["metadata"] = {
+            "artifact_versions": {"MahalanobisThreshold": "0"},
+            "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
+        }
+        self.registry.save(
+            KEYS, ["MahalanobisThreshold"], MahalanobisThreshold().fit(np.asarray([[0, 1], [1, 2]]))
+        )
+
+        msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
+        print(msg)
         self.assertEqual(1, len(msg))
 
     @patch("numalogic.udfs.postprocess.PostprocessUDF.compute", Mock(side_effect=RuntimeError))

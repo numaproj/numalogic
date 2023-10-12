@@ -19,9 +19,9 @@ stream_confs:
         - name: "StandardScaler"
           stateful: true
       threshold:
-        name: "StdDevThreshold"
+        name: "MahalanobisThreshold"
         conf:
-          min_threshold: 0.1
+          max_outlier_prob: 0.08
 redis_conf:
   url: "isbsvc-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-e2e.svc"
   port: 26379
