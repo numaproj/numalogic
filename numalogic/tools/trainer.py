@@ -42,7 +42,7 @@ class TimeseriesTrainer(Trainer):
 
     def __init__(
         self,
-        max_epochs: int = 100,
+        max_epochs: int = 50,
         logger: bool = True,
         log_freq: int = 5,
         check_val_every_n_epoch: int = 5,
