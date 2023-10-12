@@ -156,8 +156,6 @@ class VanillaAE(BaseAE):
         self.dropout_prob = dropout_p
         self.n_features = n_features
 
-        self.save_hyperparameters()
-
         if encoder_layersizes[-1] != decoder_layersizes[0]:
             raise LayerSizeMismatchError(
                 f"Last layersize of encoder: {encoder_layersizes[-1]} "
@@ -252,5 +250,5 @@ class SparseVanillaAE(VanillaAE):
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         recon = self.reconstruction(batch)
         loss = self.criterion(batch, recon)
-        self._total_val_loss += loss.detach().item()
+        self.log("val_loss", loss)
         return loss

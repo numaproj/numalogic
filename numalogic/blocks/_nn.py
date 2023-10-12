@@ -14,7 +14,7 @@ from torch.utils.data import DataLoader
 import numpy.typing as npt
 
 from numalogic.blocks import Block
-from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.types import nn_model_t, state_dict_t
 
@@ -64,7 +64,7 @@ class NNBlock(Block):
         -------
             The error of the model on the input data.
         """
-        trainer = AutoencoderTrainer(**trainer_kwargs)
+        trainer = TimeseriesTrainer(**trainer_kwargs)
         ds = StreamingDataset(input_, self.seq_len)
         trainer.fit(self._artifact, train_dataloaders=DataLoader(ds, batch_size=batch_size))
         reconerr = trainer.predict(

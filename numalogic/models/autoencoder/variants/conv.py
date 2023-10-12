@@ -342,5 +342,5 @@ class SparseConv1dAE(Conv1dAE):
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         recon = self.reconstruction(batch)
         loss = self.criterion(batch, recon)
-        self._total_val_loss += loss.detach().item()
+        self.log("val_loss", loss)
         return loss

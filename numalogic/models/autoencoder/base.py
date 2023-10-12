@@ -44,23 +44,6 @@ class BaseAE(TorchModel):
         self.criterion = self.init_criterion(loss_fn)
         self.weight_decay = weight_decay
 
-        self._total_train_loss = 0.0
-        self._total_val_loss = 0.0
-
-    @property
-    def total_train_loss(self):
-        return self._total_train_loss
-
-    @property
-    def total_val_loss(self):
-        return self._total_val_loss
-
-    def reset_train_loss(self):
-        self._total_train_loss = 0.0
-
-    def reset_val_loss(self):
-        self._total_val_loss = 0.0
-
     @staticmethod
     def init_criterion(loss_fn: str):
         if loss_fn == "huber":
@@ -97,11 +80,11 @@ class BaseAE(TorchModel):
         return {"optimizer": optimizer}
 
     def training_step(self, batch: Tensor, batch_idx: int) -> Tensor:
-        loss = self._get_reconstruction_loss(batch)
-        self._total_train_loss += loss.detach().item()
-        return loss
+        recon_loss = self._get_reconstruction_loss(batch)
+        self.log("train_loss", recon_loss, on_epoch=True, on_step=False)
+        return recon_loss
 
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
-        loss = self._get_reconstruction_loss(batch)
-        self._total_val_loss += loss.detach().item()
-        return loss
+        recon_loss = self._get_reconstruction_loss(batch)
+        self.log("val_loss", recon_loss)
+        return recon_loss

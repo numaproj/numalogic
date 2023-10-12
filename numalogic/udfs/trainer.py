@@ -16,7 +16,7 @@ from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, 
 from numalogic.config._config import NumalogicConf
 from numalogic.config.factory import ConnectorFactory
 from numalogic.connectors import DruidFetcherConf
-from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
@@ -170,7 +170,7 @@ class TrainerUDF(NumalogicUDF):
             )
 
         train_ds = StreamingDataset(input_, model.seq_len)
-        trainer = AutoencoderTrainer(**asdict(trainer_cfg.pltrainer_conf))
+        trainer = TimeseriesTrainer(**asdict(trainer_cfg.pltrainer_conf))
         trainer.fit(
             model, train_dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
         )

@@ -1,3 +1,4 @@
+import logging
 import math
 import os
 import unittest
@@ -8,7 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.tools.trainer import TimeseriesTrainer
 from numalogic.models.autoencoder.variants import (
     Conv1dAE,
     LSTMAE,
@@ -26,6 +27,8 @@ SEQ_LEN = 12
 LR = 0.001
 ACCELERATOR = "cuda" if torch.cuda.is_available() else "cpu"
 torch.manual_seed(42)
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 class TestAutoencoderTrainer(unittest.TestCase):
@@ -48,7 +51,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
     def test_trainer_01(self):
         model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.x_train.shape[1], enc_channels=(4, 8))
         datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(
+        trainer = TimeseriesTrainer(
             accelerator=ACCELERATOR,
             max_epochs=EPOCHS,
             enable_progress_bar=True,
@@ -65,9 +68,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
         datamodule = TimeseriesDataModule(
             SEQ_LEN, self.x_train, val_split_ratio=0.1, batch_size=BATCH_SIZE
         )
-        trainer = AutoencoderTrainer(
-            accelerator=ACCELERATOR, max_epochs=EPOCHS, enable_progress_bar=True
-        )
+        trainer = TimeseriesTrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS, log_freq=1)
         trainer.fit(model, datamodule=datamodule)
         y_train = trainer.predict(model, dataloaders=datamodule.train_dataloader())
         val_size = math.floor(0.1 * len(self.x_train))
@@ -82,7 +83,9 @@ class TestAutoencoderTrainer(unittest.TestCase):
         datamodule = TimeseriesDataModule(
             SEQ_LEN, self.x_train, val_split_ratio=0.3, batch_size=BATCH_SIZE
         )
-        trainer = AutoencoderTrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS, barebones=True)
+        trainer = TimeseriesTrainer(
+            accelerator=ACCELERATOR, max_epochs=EPOCHS, barebones=True, logger=False
+        )
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN), batch_size=16)
@@ -92,7 +95,9 @@ class TestAutoencoderTrainer(unittest.TestCase):
     def test_trainer_04(self):
         model = SparseVanillaAE(seq_len=SEQ_LEN, n_features=self.x_train.shape[1])
         datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS, barebones=True)
+        trainer = TimeseriesTrainer(
+            accelerator=ACCELERATOR, max_epochs=EPOCHS, barebones=True, logger=False
+        )
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.x_test, SEQ_LEN))
@@ -104,8 +109,12 @@ class TestAutoencoderTrainer(unittest.TestCase):
         datamodule = TimeseriesDataModule(
             SEQ_LEN, self.x_train, val_split_ratio=0.25, batch_size=BATCH_SIZE
         )
-        trainer = AutoencoderTrainer(
-            accelerator=ACCELERATOR, max_epochs=EPOCHS, barebones=True, limit_val_batches=1
+        trainer = TimeseriesTrainer(
+            accelerator=ACCELERATOR,
+            max_epochs=EPOCHS,
+            barebones=True,
+            limit_val_batches=1,
+            logger=False,
         )
         trainer.fit(model, datamodule=datamodule)
 
@@ -119,7 +128,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
         val_dataset = StreamingDataset(self.x_val, SEQ_LEN)
         test_dataset = StreamingDataset(self.x_test, SEQ_LEN)
 
-        trainer = AutoencoderTrainer(
+        trainer = TimeseriesTrainer(
             accelerator=ACCELERATOR, max_epochs=EPOCHS, enable_progress_bar=True
         )
         trainer.fit(
@@ -145,7 +154,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
 
         test_dataset = StreamingDataset(self.x_test, SEQ_LEN)
 
-        trainer = AutoencoderTrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS)
+        trainer = TimeseriesTrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS)
         trainer.fit(model, train_dataloaders=DataLoader(train_dataset, batch_size=BATCH_SIZE))
 
         y_train = trainer.predict(

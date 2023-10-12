@@ -11,7 +11,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import Optional, Any
+from typing import Any
 
 from omegaconf import MISSING
 
@@ -75,14 +75,12 @@ class LightningTrainerConf:
 
     accelerator: str = "auto"
     max_epochs: int = 50
-    logger: bool = False
+    logger: bool = True
+    log_freq: int = 5
     check_val_every_n_epoch: int = 5
-    log_every_n_steps: int = 20
     enable_checkpointing: bool = False
-    enable_progress_bar: bool = True
+    enable_progress_bar: bool = False
     enable_model_summary: bool = True
-    limit_val_batches: bool = 0
-    callbacks: Optional[Any] = None
 
 
 @dataclass

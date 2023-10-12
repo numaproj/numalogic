@@ -4,7 +4,7 @@ import os
 import cachetools
 import numpy.typing as npt
 import pandas as pd
-from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.udfs import NumalogicUDF
@@ -34,7 +34,7 @@ class Trainer(NumalogicUDF):
         self.model_key = "ae::model"
 
     def _save_artifact(
-        self, model, skeys: list[str], dkeys: list[str], _: Optional[AutoencoderTrainer] = None
+        self, model, skeys: list[str], dkeys: list[str], _: Optional[TimeseriesTrainer] = None
     ) -> None:
         """Saves the model in the registry."""
         self.registry.save(skeys=skeys, dkeys=dkeys, artifact=model)
@@ -81,7 +81,7 @@ class Trainer(NumalogicUDF):
         # Train the autoencoder model
         datamodule = TimeseriesDataModule(WIN_SIZE, train_data, batch_size=BATCH_SIZE)
         model = Conv1dAE(seq_len=WIN_SIZE, in_channels=train_data.shape[1])
-        trainer = AutoencoderTrainer(max_epochs=MAX_EPOCHS, enable_progress_bar=True)
+        trainer = TimeseriesTrainer(max_epochs=MAX_EPOCHS, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
 
         # Get reconstruction error of the training set

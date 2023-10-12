@@ -106,6 +106,7 @@ class ModelFactory(_ObjectFactory):
         TransformerAE,
         SparseTransformerAE,
     )
+    from numalogic.models.vae.variants import Conv1dVAE
 
     _CLS_MAP: ClassVar[dict] = {
         "VanillaAE": VanillaAE,
@@ -116,13 +117,16 @@ class ModelFactory(_ObjectFactory):
         "SparseLSTMAE": SparseLSTMAE,
         "TransformerAE": TransformerAE,
         "SparseTransformerAE": SparseTransformerAE,
+        "Conv1dVAE": Conv1dVAE,
     }
 
 
 class RegistryFactory(_ObjectFactory):
     """Factory class to create registry instances."""
 
-    _CLS_SET: ClassVar[frozenset] = frozenset({"RedisRegistry", "MLflowRegistry"})
+    _CLS_SET: ClassVar[frozenset] = frozenset(
+        {"RedisRegistry", "MLflowRegistry", "DynamoDBRegistry"}
+    )
 
     def get_instance(self, object_info: Union[ModelInfo, RegistryInfo]):
         import numalogic.registry as reg

@@ -1,3 +1,3 @@
-from numalogic.models.vae.trainer import VAETrainer
+from numalogic.models.vae.variants import Conv1dVAE
 
-__all__ = ["VAETrainer"]
+__all__ = ["Conv1dVAE"]
