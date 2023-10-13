@@ -16,7 +16,7 @@ from numalogic.models.threshold import StdDevThreshold, MahalanobisThreshold
 from numalogic.registry import RedisRegistry, LocalLRUCache
 from numalogic.tools.exceptions import ModelKeyNotFound
 from numalogic.udfs import PipelineConf
-from numalogic.udfs.entities import Header, TrainerPayload, Status
+from numalogic.udfs.entities import Header, TrainerPayload, Status, OutputPayload
 from numalogic.udfs.postprocess import PostprocessUDF
 
 logging.basicConfig(level=logging.DEBUG)
@@ -127,6 +127,8 @@ class TestPostProcessUDF(unittest.TestCase):
         )
 
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
+        payload = OutputPayload(**orjson.loads(msg[0].value))
+        self.assertListEqual(data["metrics"], list(payload.data))
         self.assertEqual(1, len(msg))
 
     def test_postprocess_all_model_present_02(self):
@@ -148,7 +150,8 @@ class TestPostProcessUDF(unittest.TestCase):
         )
 
         msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
-        print(msg)
+        payload = OutputPayload(**orjson.loads(msg[0].value))
+        self.assertListEqual(data["metrics"], list(payload.data))
         self.assertEqual(1, len(msg))
 
     @patch("numalogic.udfs.postprocess.PostprocessUDF.compute", Mock(side_effect=RuntimeError))

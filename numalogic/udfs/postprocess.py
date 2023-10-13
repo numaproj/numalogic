@@ -138,9 +138,7 @@ class PostprocessUDF(NumalogicUDF):
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
                     unified_anomaly=np.max(anomaly_scores),
-                    data={
-                        _metric: _score for _metric, _score in zip(payload.metrics, anomaly_scores)
-                    },
+                    data=self._per_feature_score(payload.metrics, anomaly_scores),
                     # TODO: add model version, & emit as ML metrics
                     metadata=payload.metadata,
                 )
@@ -148,7 +146,7 @@ class PostprocessUDF(NumalogicUDF):
                     "%s - Successfully post-processed, Keys: %s, Scores: %s",
                     out_payload.uuid,
                     out_payload.composite_keys,
-                    out_payload.data,
+                    out_payload.unified_anomaly,
                 )
                 messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 
@@ -167,6 +165,13 @@ class PostprocessUDF(NumalogicUDF):
             time.perf_counter() - _start_time,
         )
         return messages
+
+    @staticmethod
+    def _per_feature_score(feat_names: list[str], scores: NDArray[float]) -> dict[str, float]:
+        if scores.shape[0] == 1:
+            # TODO improve this to incorporate per feature anomaly insights
+            return {_name: scores.item() for _name in feat_names}
+        return dict(zip(feat_names, scores))
 
     @classmethod
     def compute(
@@ -198,4 +203,4 @@ class PostprocessUDF(NumalogicUDF):
         _LOGGER.debug(
             "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
         )
-        return score
+        return score.reshape(-1)
