@@ -12,10 +12,9 @@ from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import RegistryFactory
 from numalogic.registry import LocalLRUCache, ArtifactData
-from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
-from numalogic.udfs._config import StreamConf, PipelineConf
+from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
 from numalogic.udfs.tools import _load_artifact
 
@@ -36,9 +35,10 @@ class InferenceUDF(NumalogicUDF):
         pl_conf: Stream configuration per config ID
     """
 
+    __slots__ = ("registry_conf", "model_registry")
+
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
-        super().__init__(is_async=False)
-        self.pl_conf = pl_conf or PipelineConf()
+        super().__init__(is_async=False, pl_conf=pl_conf)
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
@@ -50,23 +50,6 @@ class InferenceUDF(NumalogicUDF):
                 jitter_steps_sec=self.registry_conf.jitter_conf.jitter_steps_sec,
             ),
         )
-
-    # TODO: remove, and have an update config method
-    def register_conf(self, config_id: str, conf: StreamConf) -> None:
-        """
-        Register config with the UDF.
-
-        Args:
-            config_id: Config ID
-            conf: StreamConf object
-        """
-        self.pl_conf.stream_confs[config_id] = conf
-
-    def get_conf(self, config_id: str) -> StreamConf:
-        try:
-            return self.pl_conf.stream_confs[config_id]
-        except KeyError as err:
-            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
     @classmethod
     def compute(cls, model: artifact_t, input_: npt.NDArray[float], **_) -> npt.NDArray[float]:

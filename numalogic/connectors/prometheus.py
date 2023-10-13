@@ -192,7 +192,7 @@ class PrometheusFetcher(DataFetcher):
             metric_names = df["metric.__name__"].unique()
             if len(metric_names) > 1:
                 raise PrometheusInvalidResponseError(
-                    f"More than 1 metric names " f"were extracted in the query: {metric_names}"
+                    f"More than 1 metric names were extracted in the query: {metric_names}"
                 ) from err
             return metric_names[0]
         except KeyError:
@@ -201,7 +201,7 @@ class PrometheusFetcher(DataFetcher):
         return metric_name
 
     def _api_query_range(self, query: str, start_ts: int, end_ts: int) -> list[dict]:
-        """Queries Prometheus API for data.""" ""
+        """Queries Prometheus API for data."""
         try:
             response = requests.get(
                 self._endpoint,

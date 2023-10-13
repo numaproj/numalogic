@@ -8,13 +8,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 from abc import ABCMeta, abstractmethod
-from typing import Union
+from typing import Union, Optional
 from collections.abc import Coroutine
 import numpy.typing as npt
 from pynumaflow.mapper import Datum, Messages
 
+from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import artifact_t
+from numalogic.udfs._config import PipelineConf, StreamConf
+
+
+_DEFAULT_CONF_ID = "default"
 
 
 class NumalogicUDF(metaclass=ABCMeta):
@@ -23,12 +29,14 @@ class NumalogicUDF(metaclass=ABCMeta):
 
     Args:
         is_async: If True, the UDF is executed in an asynchronous manner.
+        pl_conf: PipelineConf object
     """
 
-    __slots__ = ("is_async",)
+    __slots__ = ("is_async", "pl_conf")
 
-    def __init__(self, is_async: bool = False):
+    def __init__(self, is_async: bool = False, pl_conf: Optional[PipelineConf] = None):
         self.is_async = is_async
+        self.pl_conf = pl_conf or PipelineConf()
 
     def __call__(
         self, keys: list[str], datum: Datum
@@ -36,6 +44,46 @@ class NumalogicUDF(metaclass=ABCMeta):
         if self.is_async:
             return self.aexec(keys, datum)
         return self.exec(keys, datum)
+
+    # TODO: remove, and have an update config method
+    def register_conf(self, config_id: str, conf: StreamConf) -> None:
+        """
+        Register config with the UDF.
+
+        Args:
+            config_id: Config ID
+            conf: StreamConf object
+        """
+        self.pl_conf.stream_confs[config_id] = conf
+
+    def _get_default_conf(self, config_id) -> StreamConf:
+        """Get the default config."""
+        try:
+            return self.pl_conf.stream_confs[_DEFAULT_CONF_ID]
+        except KeyError:
+            err_msg = f"Config with ID {config_id} or {_DEFAULT_CONF_ID} not found!"
+            raise ConfigNotFoundError(err_msg) from None
+
+    def get_conf(self, config_id: str) -> StreamConf:
+        """
+        Get config with the given ID.
+        If not found, return the default config.
+
+        Args:
+            config_id: Config ID
+
+        Returns
+        -------
+            StreamConf object
+
+        Raises
+        ------
+            ConfigNotFoundError: If config with the given ID is not found
+        """
+        try:
+            return self.pl_conf.stream_confs[config_id]
+        except KeyError:
+            return self._get_default_conf(config_id)
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """

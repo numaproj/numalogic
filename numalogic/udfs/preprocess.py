@@ -11,10 +11,9 @@ from sklearn.pipeline import make_pipeline
 
 from numalogic.config import PreprocessFactory, RegistryFactory
 from numalogic.registry import LocalLRUCache
-from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf, PipelineConf
+from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import Status, Header
 from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact
 
@@ -35,9 +34,10 @@ class PreprocessUDF(NumalogicUDF):
         pl_conf: PipelineConf instance
     """
 
+    __slots__ = ("registry_conf", "model_registry", "preproc_factory")
+
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
-        super().__init__()
-        self.pl_conf = pl_conf or PipelineConf()
+        super().__init__(pl_conf=pl_conf)
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
@@ -50,22 +50,6 @@ class PreprocessUDF(NumalogicUDF):
             ),
         )
         self.preproc_factory = PreprocessFactory()
-
-    def register_conf(self, config_id: str, conf: StreamConf) -> None:
-        """
-        Register config with the UDF.
-
-        Args:
-            config_id: Config ID
-            conf: StreamConf object
-        """
-        self.pl_conf.stream_confs[config_id] = conf
-
-    def get_conf(self, config_id: str) -> StreamConf:
-        try:
-            return self.pl_conf.stream_confs[config_id]
-        except KeyError as err:
-            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
     def _load_model_from_config(self, preprocess_cfg):
         preproc_clfs = []
