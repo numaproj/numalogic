@@ -14,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from functools import reduce
 from operator import iconcat
+from pprint import pprint
 from typing import Optional, Final
 
 import orjson
@@ -142,18 +143,22 @@ class PrometheusFetcher(DataFetcher):
         end_ts, start_ts = self._init_startend_ts(end, start)
         results = self.query_range(query, start_ts, end_ts)
 
+        pprint(results, indent=2)
+
         df = pd.json_normalize(results)
         if df.empty:
             LOGGER.warning("Query returned no results")
             return df
 
+        print(df[["values", "metric.__name__"]])
         return_labels = [f"metric.{label}" for label in return_labels or []]
-        metric_name = self._extract_metric_name(df) or "metric"
+        metric_names = self._extract_metric_names(df)
 
-        df = self._consolidate_df(df, metric_name, return_labels)
+        df = self._consolidate_df_2(df, metric_names, return_labels)
 
         if aggregate and return_labels:
-            df = self._agg_df(df, metric_name)
+            # df = self._agg_df(df, metric_name)
+            pass
 
         df.sort_values(by=["timestamp"], inplace=True)
         return df
@@ -175,6 +180,17 @@ class PrometheusFetcher(DataFetcher):
         return df
 
     @staticmethod
+    def _consolidate_df_2(df: pd.DataFrame, metric_names: list[str], return_labels: list[str]):
+        df = df[["values", *return_labels]]
+        df = df.explode("values", ignore_index=True)
+        print(df)
+        df[["timestamp", *metric_names]] = df["values"].to_list()
+        df.drop(columns=["values"], inplace=True)
+        df = df.astype({_m: float for _m in metric_names})
+        df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
+        return df
+
+    @staticmethod
     def _init_startend_ts(end: datetime, start: datetime) -> tuple[int, int]:
         if not end:
             end = datetime.now()
@@ -188,13 +204,25 @@ class PrometheusFetcher(DataFetcher):
     def _extract_metric_name(df: pd.DataFrame) -> Optional[str]:
         try:
             metric_name = df["metric.__name__"].item()
-        except ValueError as err:
+        except ValueError:
             metric_names = df["metric.__name__"].unique()
+            print(metric_names)
             if len(metric_names) > 1:
                 raise PrometheusInvalidResponseError(
                     f"More than 1 metric names were extracted in the query: {metric_names}"
-                ) from err
+                ) from None
             return metric_names[0]
+        except KeyError:
+            LOGGER.warning("Could not infer metric name from results")
+            return None
+        return metric_name
+
+    @staticmethod
+    def _extract_metric_names(df: pd.DataFrame) -> Optional[list[str]]:
+        try:
+            metric_name = df["metric.__name__"].item()
+        except ValueError:
+            return df["metric.__name__"].unique()
         except KeyError:
             LOGGER.warning("Could not infer metric name from results")
             return None
