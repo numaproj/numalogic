@@ -907,10 +907,10 @@ Numalogic provides <code>TimeseriesDataModule</code> to help set up and load dat
 This trainer provides a mechanism to train, validate and infer on data, with all the parameters supported by Lightning Trainer.</p>
 <p>Here we are using <code>VanillaAE</code>, a Vanilla Autoencoder model.</p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span> <span class="nn">numalogic.models.autoencoder.variants</span> <span class="kn">import</span> <span class="n">VanillaAE</span>
-<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder</span> <span class="kn">import</span> <span class="n">AutoencoderTrainer</span>
+<span class="kn">from</span> <span class="nn">numalogic.models.autoencoder</span> <span class="kn">import</span> <span class="n">TimeseriesTrainer</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">VanillaAE</span><span class="p">(</span><span class="n">seq_len</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">n_features</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">trainer</span> <span class="o">=</span> <span class="n">AutoencoderTrainer</span><span class="p">(</span><span class="n">max_epochs</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">enable_progress_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">TimeseriesTrainer</span><span class="p">(</span><span class="n">max_epochs</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">enable_progress_bar</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">trainer</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">datamodule</span><span class="o">=</span><span class="n">datamodule</span><span class="p">)</span>
 </code></pre></div>
 <h2 id="autoencoder-variants">Autoencoder Variants<a class="headerlink" href="#autoencoder-variants" title="Permanent link">&para;</a></h2>
