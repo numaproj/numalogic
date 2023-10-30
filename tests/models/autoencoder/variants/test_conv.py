@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
 from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
-from numalogic.models.autoencoder.trainer import AutoencoderTrainer
+from numalogic.tools.trainer import TimeseriesTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.models.autoencoder.variants.conv import SparseConv1dAE
 
@@ -38,11 +38,11 @@ class TestConvAE(unittest.TestCase):
     def test_conv1d_1(self):
         model = Conv1dAE(seq_len=SEQ_LEN, in_channels=self.X_train.shape[1], enc_channels=[8])
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(max_epochs=2, enable_progress_bar=True, fast_dev_run=True)
+        trainer = TimeseriesTrainer(max_epochs=2, enable_progress_bar=True, fast_dev_run=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
-        stream_trainer = AutoencoderTrainer()
+        stream_trainer = TimeseriesTrainer()
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
         self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
@@ -57,13 +57,13 @@ class TestConvAE(unittest.TestCase):
             optim_algo="rmsprop",
         )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(
+        trainer = TimeseriesTrainer(
             accelerator=ACCELERATOR, enable_progress_bar=True, fast_dev_run=True
         )
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
-        stream_trainer = AutoencoderTrainer(accelerator=ACCELERATOR)
+        stream_trainer = TimeseriesTrainer(accelerator=ACCELERATOR)
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
         self.assertTupleEqual(self.X_val.shape, test_reconerr.shape)
 
@@ -76,7 +76,7 @@ class TestConvAE(unittest.TestCase):
             dec_activation="sigmoid",
         )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(accelerator=ACCELERATOR, fast_dev_run=True)
+        trainer = TimeseriesTrainer(accelerator=ACCELERATOR, fast_dev_run=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=256)
@@ -122,13 +122,13 @@ class TestConvAE(unittest.TestCase):
             dec_activation="relu",
         )
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = AutoencoderTrainer(
+        trainer = TimeseriesTrainer(
             accelerator=ACCELERATOR, enable_progress_bar=True, fast_dev_run=True
         )
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
-        stream_trainer = AutoencoderTrainer(accelerator=ACCELERATOR)
+        stream_trainer = TimeseriesTrainer(accelerator=ACCELERATOR)
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
         self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
 

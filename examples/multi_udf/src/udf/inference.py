@@ -2,7 +2,7 @@ import logging
 import os
 
 import numpy.typing as npt
-from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.udfs import NumalogicUDF
 from numalogic.registry import MLflowRegistry, ArtifactData
 from numalogic.tools.data import StreamingDataset
@@ -36,7 +36,7 @@ class Inference(NumalogicUDF):
         main_model = artifact_data.artifact
         streamloader = DataLoader(StreamingDataset(stream_data, WIN_SIZE))
 
-        trainer = AutoencoderTrainer()
+        trainer = TimeseriesTrainer()
         reconerr = trainer.predict(main_model, dataloaders=streamloader)
         return reconerr.tolist()
 

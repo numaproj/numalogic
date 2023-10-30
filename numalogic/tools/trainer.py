@@ -1,17 +1,32 @@
+# Copyright 2022 The Numaproj Authors.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#     http://www.apache.org/licenses/LICENSE-2.0
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+
+import logging
 import sys
 import warnings
-from typing import Optional
 
 import torch
-from torch import Tensor
 from pytorch_lightning import Trainer, LightningModule
+from torch import Tensor
 
 from numalogic.tools.callbacks import ConsoleLogger
 from numalogic.tools.data import inverse_window
+from typing import Optional
+
+_LOGGER = logging.getLogger(__name__)
 
 
-class VAETrainer(Trainer):
-    """A PyTorch Lightning Trainer for VAE models.
+class TimeseriesTrainer(Trainer):
+    """A PyTorch Lightning Trainer for timeseries NN models in numalogic.
 
     Args:
     ----
@@ -27,7 +42,7 @@ class VAETrainer(Trainer):
 
     def __init__(
         self,
-        max_epochs: int = 100,
+        max_epochs: int = 50,
         logger: bool = True,
         log_freq: int = 5,
         check_val_every_n_epoch: int = 5,

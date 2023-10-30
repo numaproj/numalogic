@@ -10,6 +10,6 @@
 # limitations under the License.
 
 
-from numalogic.models.autoencoder.trainer import AutoencoderTrainer
+from numalogic.tools.trainer import TimeseriesTrainer
 
-__all__ = ["AutoencoderTrainer"]
+__all__ = ["TimeseriesTrainer"]

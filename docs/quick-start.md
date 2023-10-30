@@ -20,7 +20,7 @@ pip install numalogic
 
 ## Numalogic as a Library
 
-Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using the `AutoencoderTrainer`. Refer to [training section](autoencoders.md) for other available options.
+Numalogic can be used as an independent library, and it provides various ML models and tools. Here, we are using the `TimeseriesTrainer`. Refer to [training section](autoencoders.md) for other available options.
 
 In this example, the train data set has numbers ranging from 1-10. Whereas in the test data set, there are data points that go out of this range, which the algorithm should be able to detect as anomalies.
 
@@ -28,7 +28,7 @@ In this example, the train data set has numbers ranging from 1-10. Whereas in th
 import numpy as np
 from sklearn.preprocessing import StandardScaler
 from torch.utils.data import DataLoader
-from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.transforms import TanhNorm
@@ -57,7 +57,7 @@ model = VanillaAE(seq_len=SEQ_LEN, n_features=1)
 train_dataset = StreamingDataset(train_data, seq_len=SEQ_LEN)
 
 # Define the trainer, and fit the model.
-trainer = AutoencoderTrainer(max_epochs=30, enable_progress_bar=True)
+trainer = TimeseriesTrainer(max_epochs=30, enable_progress_bar=True)
 trainer.fit(model, train_dataloaders=DataLoader(train_dataset))
 
 # Get the training reconstruction error from the model.

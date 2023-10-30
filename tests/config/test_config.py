@@ -26,9 +26,10 @@ from numalogic.config import (
     NumalogicConf,
     ModelInfo,
 )
-from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.models.autoencoder.variants import SparseVanillaAE, SparseConv1dAE, LSTMAE
 from numalogic.models.threshold import StdDevThreshold
+from numalogic.models.vae.variants import Conv1dVAE
 from numalogic.transforms import LogTransformer, TanhNorm
 from numalogic.tools.exceptions import UnknownConfigArgsError
 
@@ -72,13 +73,13 @@ class TestNumalogicConfig(unittest.TestCase):
 
     def test_trainer(self):
         trainer_cfg = self.conf.trainer
-        trainer = AutoencoderTrainer(**trainer_cfg.pltrainer_conf)
-        self.assertIsInstance(trainer, AutoencoderTrainer)
+        trainer = TimeseriesTrainer(**trainer_cfg.pltrainer_conf)
+        self.assertIsInstance(trainer, TimeseriesTrainer)
         self.assertEqual(trainer.max_epochs, 40)
 
 
 class TestFactory(unittest.TestCase):
-    def test_instance(self):
+    def test_instance_01(self):
         factory = ModelFactory()
         model = factory.get_instance(
             ModelInfo(
@@ -87,6 +88,16 @@ class TestFactory(unittest.TestCase):
             )
         )
         self.assertIsInstance(model, SparseConv1dAE)
+
+    def test_instance_02(self):
+        factory = ModelFactory()
+        model = factory.get_instance(
+            ModelInfo(
+                name="Conv1dVAE",
+                conf={"seq_len": 12, "n_features": 3, "latent_dim": 1},
+            )
+        )
+        self.assertIsInstance(model, Conv1dVAE)
 
     def test_cls(self):
         factory = ModelFactory()

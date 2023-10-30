@@ -25,10 +25,10 @@ Here we are using `VanillaAE`, a Vanilla Autoencoder model.
 
 ```python
 from numalogic.models.autoencoder.variants import VanillaAE
-from numalogic.models.autoencoder import AutoencoderTrainer
+from numalogic.models.autoencoder import TimeseriesTrainer
 
 model = VanillaAE(seq_len=12, n_features=3)
-trainer = AutoencoderTrainer(max_epochs=50, enable_progress_bar=True)
+trainer = TimeseriesTrainer(max_epochs=50, enable_progress_bar=True)
 trainer.fit(model, datamodule=datamodule)
 ```
 

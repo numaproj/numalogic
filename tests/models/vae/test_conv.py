@@ -9,7 +9,7 @@ from torch import nn, Tensor
 from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
-from numalogic.models.vae import VAETrainer
+from numalogic.tools.trainer import TimeseriesTrainer
 from numalogic.models.vae.variants import Conv1dVAE
 from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 from numalogic.tools.exceptions import ModelInitializationError
@@ -42,11 +42,11 @@ class TestConv1dVAE(unittest.TestCase):
     def test_model_01(self):
         model = Conv1dVAE(seq_len=SEQ_LEN, n_features=2, latent_dim=1, loss_fn="l1")
         datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
-        trainer = VAETrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS, fast_dev_run=True)
+        trainer = TimeseriesTrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS, fast_dev_run=True)
         trainer.fit(model, datamodule=datamodule)
 
         streamloader = DataLoader(StreamingDataset(self.x_val, SEQ_LEN), batch_size=BATCH_SIZE)
-        stream_trainer = VAETrainer(accelerator=ACCELERATOR)
+        stream_trainer = TimeseriesTrainer(accelerator=ACCELERATOR)
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader)
         test_reconerr_w_seq = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
 
@@ -55,7 +55,7 @@ class TestConv1dVAE(unittest.TestCase):
 
     def test_model_02(self):
         model = Conv1dVAE(seq_len=SEQ_LEN, n_features=2, latent_dim=1, conv_channels=(8, 4))
-        trainer = VAETrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS, log_freq=1)
+        trainer = TimeseriesTrainer(accelerator=ACCELERATOR, max_epochs=EPOCHS, log_freq=1)
         trainer.fit(
             model,
             train_dataloaders=DataLoader(
