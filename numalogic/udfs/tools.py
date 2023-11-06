@@ -164,27 +164,64 @@ class TrainMsgDeduplicator:
     def __construct_key(keys: KEYS) -> str:
         return f"TRAIN::{':'.join(keys)}"
 
-    def __fetch_ts(self, key: str) -> tuple[Optional[str], Optional[str]]:
+    def __fetch_ts(self, key: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
         try:
             data = self.client.hgetall(key)
         except RedisError:
             _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
-            return None, None
+            return None, None, None
         else:
             # decode the key:value pair and update the values
             data = {key.decode(): data.get(key).decode() for key in data}
             _msg_read_ts = str(data["_msg_read_ts"]) if data and "_msg_read_ts" in data else None
             _msg_train_ts = str(data["_msg_train_ts"]) if data and "_msg_train_ts" in data else None
-            return _msg_read_ts, _msg_train_ts
+            _msg_train_records = (
+                str(data["_msg_train_records"]) if data and "_msg_train_records" in data else None
+            )
+            return _msg_read_ts, _msg_train_ts, _msg_train_records
 
-    def ack_read(self, key: KEYS, uuid: str, retrain_freq: int = 24, retry: int = 600) -> bool:
+    def ack_insufficient_data(self, key: KEYS, uuid: str, train_records: int) -> bool:
         """
-        Acknowledge the read message. Return True wh`en the msg has to be trained.
+        Acknowledge the insufficient data message. Retry training after certain period of a time.
+        Args:
+            key: key
+            uuid: uuid
+            train_records: number of train records found.
+
+        Returns
+        -------
+            bool.
+        """
+        _key = self.__construct_key(key)
+        try:
+            self.client.hset(name=_key, key="_msg_train_records", value=str(train_records))
+        except RedisError:
+            _LOGGER.exception(
+                " %s - Problem while updating _msg_train_records information for the key: %s",
+                uuid,
+                key,
+            )
+            return False
+        else:
+            _LOGGER.info("%s - Acknowledging insufficient data for the key: %s", uuid, key)
+            return True
+
+    def ack_read(
+        self,
+        key: KEYS,
+        uuid: str,
+        retrain_freq: int = 24,
+        retry: int = 600,
+        min_train_records: int = 180,
+    ) -> bool:
+        """
+        Acknowledge the read message. Return True when the msg has to be trained.
         Args:
             key: key
             uuid: uuid.
             retrain_freq: retrain frequency for the model in hrs
             retry: Time difference(in secs) between triggering retraining and msg read_ack.
+            min_train_records: minimum number of records required for training.
 
         Returns
         -------
@@ -192,15 +229,27 @@ class TrainMsgDeduplicator:
 
         """
         _key = self.__construct_key(key)
-        _msg_read_ts, _msg_train_ts = self.__fetch_ts(key=_key)
+        _msg_read_ts, _msg_train_ts, _msg_train_records = self.__fetch_ts(key=_key)
+
+        # If insufficient data: retry after k*(min_train_records-train_records)
+        if time.time() - float(_msg_read_ts) < (min_train_records - int(_msg_train_records)) * 60:
+            _LOGGER.info("%s - There was insufficient data for the key : %s.", uuid, key)
+            _LOGGER.debug(
+                "%s - Retrying training after %s secs",
+                uuid,
+                (min_train_records - int(_msg_train_records)) * 60,
+            )
+            return False
+
+        # Check if the model is being trained by another process
         if _msg_read_ts and time.time() - float(_msg_read_ts) < retry:
             _LOGGER.info("%s - Model with key : %s is being trained by another process", uuid, key)
             return False
 
-        # This check is needed if there is backpressure in the pl.
+        # This check is needed if there is backpressure in the pipeline
         if _msg_train_ts and time.time() - float(_msg_train_ts) < retrain_freq * 60 * 60:
             _LOGGER.info(
-                "%s - Model was saved for the key: %s in less than %s secs, skipping training",
+                "%s - Model was saved for the key: %s in less than %s hrs, skipping training",
                 uuid,
                 key,
                 retrain_freq,
@@ -241,5 +290,5 @@ class TrainMsgDeduplicator:
             )
             return False
         else:
-            _LOGGER.info("%s - Acknowledging model saving complete for for the key: %s", uuid, key)
+            _LOGGER.info("%s - Acknowledging model saving complete for the key: %s", uuid, key)
             return True

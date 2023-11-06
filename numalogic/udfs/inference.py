@@ -130,7 +130,6 @@ class InferenceUDF(NumalogicUDF):
             load_latest=LOAD_LATEST,
         )
 
-        # TODO: revisit retraining logic
         # Send training request if artifact loading is not successful
         if not artifact_data:
             payload = replace(
