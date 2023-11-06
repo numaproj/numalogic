@@ -215,6 +215,7 @@ class TrainerUDF(NumalogicUDF):
             uuid=payload.uuid,
             retrain_freq=retrain_freq_ts,
             retry=retry_ts,
+            min_train_records=_conf.numalogic_conf.trainer.min_train_size,
         ):
             return Messages(Message.to_drop())
 
