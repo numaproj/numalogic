@@ -233,9 +233,10 @@ class TrainMsgDeduplicator:
         _key = self.__construct_key(key)
         _msg_read_ts, _msg_train_ts, _msg_train_records = self.__fetch_ts(key=_key)
 
-        # If insufficient data: retry after (min_train_records-train_records)
+        # If insufficient data: retry after (min_train_records-train_records)* data_granularity
         if (
             _msg_train_records
+            and _msg_read_ts
             and time.time() - float(_msg_read_ts)
             < (min_train_records - int(_msg_train_records)) * data_granularity
         ):
