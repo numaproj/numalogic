@@ -90,6 +90,7 @@ class TrainerConf:
     retrain_freq_hr: int = 24
     retry_sec: int = 600  # 10 min
     batch_size: int = 64
+    data_granularity_sec: int = 60
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
 

@@ -213,6 +213,7 @@ class TrainMsgDeduplicator:
         retrain_freq: int = 24,
         retry: int = 600,
         min_train_records: int = 180,
+        data_granularity: int = 60,
     ) -> bool:
         """
         Acknowledge the read message. Return True when the msg has to be trained.
@@ -222,6 +223,7 @@ class TrainMsgDeduplicator:
             retrain_freq: retrain frequency for the model in hrs
             retry: Time difference(in secs) between triggering retraining and msg read_ack.
             min_train_records: minimum number of records required for training.
+            data_granularity: data granularity in secs.
 
         Returns
         -------
@@ -231,8 +233,12 @@ class TrainMsgDeduplicator:
         _key = self.__construct_key(key)
         _msg_read_ts, _msg_train_ts, _msg_train_records = self.__fetch_ts(key=_key)
 
-        # If insufficient data: retry after k*(min_train_records-train_records)
-        if time.time() - float(_msg_read_ts) < (min_train_records - int(_msg_train_records)) * 60:
+        # If insufficient data: retry after (min_train_records-train_records)
+        if (
+            _msg_train_records
+            and time.time() - float(_msg_read_ts)
+            < (min_train_records - int(_msg_train_records)) * data_granularity
+        ):
             _LOGGER.info("%s - There was insufficient data for the key : %s.", uuid, key)
             _LOGGER.debug(
                 "%s - Retrying training after %s secs",
