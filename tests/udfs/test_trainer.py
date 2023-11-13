@@ -323,6 +323,8 @@ class TrainTrainerUDF(unittest.TestCase):
         self.assertLogs("RedisError")
         train_dedup.ack_train(self.keys, "some-uuid")
         self.assertLogs("RedisError")
+        train_dedup.ack_insufficient_data(self.keys, "some-uuid", train_records=180)
+        self.assertLogs("RedisError")
 
     @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_2(self):
