@@ -216,7 +216,7 @@ class TrainerUDF(NumalogicUDF):
             retrain_freq=retrain_freq_ts,
             retry=retry_ts,
             min_train_records=_conf.numalogic_conf.trainer.min_train_size,
-            data_granularity=_conf.numalogic_conf.trainer.data_granularity_sec,
+            data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
             return Messages(Message.to_drop())
 

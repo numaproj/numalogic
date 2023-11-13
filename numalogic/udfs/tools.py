@@ -1,7 +1,7 @@
 import logging
 from dataclasses import replace
 import time
-from typing import Optional
+from typing import Optional, NamedTuple
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,14 @@ from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import StreamPayload
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class _DedupMetadata(NamedTuple):
+    """namedtuple for Dedup Metadata."""
+
+    msg_read_ts: Optional[str]
+    msg_train_ts: Optional[str]
+    msg_train_records: Optional[str]
 
 
 def get_df(
@@ -164,12 +172,12 @@ class TrainMsgDeduplicator:
     def __construct_key(keys: KEYS) -> str:
         return f"TRAIN::{':'.join(keys)}"
 
-    def __fetch_ts(self, key: str) -> tuple[Optional[str], Optional[str], Optional[str]]:
+    def __fetch_ts(self, key: str) -> _DedupMetadata:
         try:
             data = self.client.hgetall(key)
         except RedisError:
             _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
-            return None, None, None
+            return _DedupMetadata(msg_read_ts=None, msg_train_ts=None, msg_train_records=None)
         else:
             # decode the key:value pair and update the values
             data = {key.decode(): data.get(key).decode() for key in data}
@@ -178,7 +186,11 @@ class TrainMsgDeduplicator:
             _msg_train_records = (
                 str(data["_msg_train_records"]) if data and "_msg_train_records" in data else None
             )
-            return _msg_read_ts, _msg_train_ts, _msg_train_records
+            return _DedupMetadata(
+                msg_read_ts=_msg_read_ts,
+                msg_train_ts=_msg_train_ts,
+                msg_train_records=_msg_train_records,
+            )
 
     def ack_insufficient_data(self, key: KEYS, uuid: str, train_records: int) -> bool:
         """
@@ -213,7 +225,7 @@ class TrainMsgDeduplicator:
         retrain_freq: int = 24,
         retry: int = 600,
         min_train_records: int = 180,
-        data_granularity: int = 60,
+        data_freq: int = 60,
     ) -> bool:
         """
         Acknowledge the read message. Return True when the msg has to be trained.
@@ -223,7 +235,7 @@ class TrainMsgDeduplicator:
             retrain_freq: retrain frequency for the model in hrs
             retry: Time difference(in secs) between triggering retraining and msg read_ack.
             min_train_records: minimum number of records required for training.
-            data_granularity: data granularity in secs.
+            data_freq: data granularity/frequency in secs.
 
         Returns
         -------
@@ -231,21 +243,25 @@ class TrainMsgDeduplicator:
 
         """
         _key = self.__construct_key(key)
-        _msg_read_ts, _msg_train_ts, _msg_train_records = self.__fetch_ts(key=_key)
-
-        # If insufficient data: retry after (min_train_records-train_records)* data_granularity
+        metadata = self.__fetch_ts(key=_key)
+        _msg_read_ts, _msg_train_ts, _msg_train_records = (
+            metadata.msg_read_ts,
+            metadata.msg_train_ts,
+            metadata.msg_train_records,
+        )
+        # If insufficient data: retry after (min_train_records-train_records) * data_granularity
         if (
             _msg_train_records
             and _msg_read_ts
             and time.time() - float(_msg_read_ts)
-            < (min_train_records - int(_msg_train_records)) * data_granularity
+            < (min_train_records - int(_msg_train_records)) * data_freq
         ):
             _LOGGER.info(
                 "%s - There was insufficient data for the key in the past: %s. Retrying fetching"
                 " and training after %s secs",
                 uuid,
                 key,
-                (min_train_records - int(_msg_train_records)) * data_granularity,
+                (min_train_records - int(_msg_train_records)) * data_freq,
             )
 
             return False
