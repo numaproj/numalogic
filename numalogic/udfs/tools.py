@@ -240,12 +240,14 @@ class TrainMsgDeduplicator:
             and time.time() - float(_msg_read_ts)
             < (min_train_records - int(_msg_train_records)) * data_granularity
         ):
-            _LOGGER.info("%s - There was insufficient data for the key : %s.", uuid, key)
-            _LOGGER.debug(
-                "%s - Retrying training after %s secs",
+            _LOGGER.info(
+                "%s - There was insufficient data for the key in the past: %s. Retrying fetching"
+                " and training after %s secs",
                 uuid,
-                (min_train_records - int(_msg_train_records)) * 60,
+                key,
+                (min_train_records - int(_msg_train_records)) * data_granularity,
             )
+
             return False
 
         # Check if the model is being trained by another process
