@@ -18,7 +18,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class _DedupMetadata(NamedTuple):
-    """namedtuple for Dedup Metadata."""
+    """Data Structure for Dedup Metadata."""
 
     msg_read_ts: Optional[str]
     msg_train_ts: Optional[str]

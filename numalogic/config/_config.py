@@ -85,6 +85,8 @@ class LightningTrainerConf:
 
 @dataclass
 class TrainerConf:
+    """Schema for defining the trainer config."""
+
     train_hours: int = 24 * 8  # 8 days worth of data
     min_train_size: int = 2000
     retrain_freq_hr: int = 24
