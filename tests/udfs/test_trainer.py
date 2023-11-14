@@ -251,6 +251,21 @@ class TrainTrainerUDF(unittest.TestCase):
                 ),
             )
 
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data(50)))
+    def test_trainer_do_not_train_4(self):
+        self.udf1.register_conf(
+            "druid-config",
+            StreamConf(
+                numalogic_conf=NumalogicConf(
+                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
+                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                )
+            ),
+        )
+        self.udf1(self.keys, self.datum)
+        self.udf1(self.keys, self.datum)
+
     def test_trainer_conf_err(self):
         self.udf1 = TrainerUDF(
             REDIS_CLIENT,
@@ -307,6 +322,8 @@ class TrainTrainerUDF(unittest.TestCase):
         train_dedup.ack_read(self.keys, "some-uuid")
         self.assertLogs("RedisError")
         train_dedup.ack_train(self.keys, "some-uuid")
+        self.assertLogs("RedisError")
+        train_dedup.ack_insufficient_data(self.keys, "some-uuid", train_records=180)
         self.assertLogs("RedisError")
 
     @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))

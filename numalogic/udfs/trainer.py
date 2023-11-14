@@ -215,6 +215,8 @@ class TrainerUDF(NumalogicUDF):
             uuid=payload.uuid,
             retrain_freq=retrain_freq_ts,
             retry=retry_ts,
+            min_train_records=_conf.numalogic_conf.trainer.min_train_size,
+            data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
             return Messages(Message.to_drop())
 
@@ -320,7 +322,12 @@ class TrainerUDF(NumalogicUDF):
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
         _conf = self.get_conf(payload.config_id)
-        return len(df) > _conf.numalogic_conf.trainer.min_train_size
+        if len(df) < _conf.numalogic_conf.trainer.min_train_size:
+            _ = self.train_msg_deduplicator.ack_insufficient_data(
+                key=payload.composite_keys, uuid=payload.uuid, train_records=len(df)
+            )
+            return False
+        return True
 
     @staticmethod
     def get_feature_arr(
