@@ -209,7 +209,6 @@ class PrometheusFetcher(DataFetcher):
         except ValueError:
             return df["metric.__name__"].unique()
         except KeyError:
-            LOGGER.warning("Could not infer metric name from results")
             return None
         return [metric_name]
 

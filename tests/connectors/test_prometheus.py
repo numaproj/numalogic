@@ -195,6 +195,26 @@ def _mock_uv():
     ]
 
 
+def _mock_no_metric():
+    return [
+        {
+            "metric": {
+                "app": "odl-graphql",
+                "assetId": "723971233226699519",
+                "intuit_alert": "true",
+                "namespace": "odl-odlgraphql-usw2-e2e",
+                "numalogic": "true",
+                "prometheus": "addon-metricset-ns/k8s-prometheus",
+                "role": "stable",
+                "rollouts_pod_template_hash": "79cd8c7fb7",
+            },
+            "values": [
+                [1700089988, "14.647327769886363"],
+            ],
+        }
+    ]
+
+
 class TestPrometheusFetcher(unittest.TestCase):
     def setUp(self) -> None:
         self.fetcher = PrometheusFetcher(prometheus_server="http://localhost:9090")
@@ -401,6 +421,16 @@ class TestPrometheusFetcher(unittest.TestCase):
                 metric_name="namespace_asset_pod_cpu_utilization",
                 start=datetime.now() - timedelta(hours=1),
                 end=datetime.now() - timedelta(hours=2),
+            )
+
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_no_metric()))
+    def test_no_metric_name_err(self):
+        with self.assertRaises(PrometheusInvalidResponseError):
+            self.fetcher.raw_fetch(
+                query="namespace_app_rollouts_memory_utilization"
+                '{namespace="odl-odlgraphql-usw2-e2e", numalogic="true"}',
+                start=datetime.now() - timedelta(minutes=3),
+                aggregate=True,
             )
 
 
