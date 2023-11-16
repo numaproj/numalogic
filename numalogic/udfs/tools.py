@@ -250,10 +250,11 @@ class TrainMsgDeduplicator:
             metadata.msg_train_records,
         )
         # If insufficient data: retry after (min_train_records-train_records) * data_granularity
+        _curr_time = time.time()
         if (
             _msg_train_records
             and _msg_read_ts
-            and time.time() - float(_msg_read_ts)
+            and _curr_time - float(_msg_read_ts)
             < (min_train_records - int(_msg_train_records)) * data_freq
         ):
             _LOGGER.info(
@@ -261,7 +262,9 @@ class TrainMsgDeduplicator:
                 " and training after %s secs",
                 uuid,
                 key,
-                (min_train_records - int(_msg_train_records)) * data_freq,
+                _curr_time
+                - float(_msg_read_ts)
+                - ((min_train_records - int(_msg_train_records)) * data_freq),
             )
 
             return False
