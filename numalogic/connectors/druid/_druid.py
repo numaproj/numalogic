@@ -13,7 +13,7 @@ from numalogic.connectors._config import Pivot
 from typing import Optional
 
 _LOGGER = logging.getLogger(__name__)
-TIMEOUT = 10000
+TIMEOUT = 25000
 
 
 # TODO: pass dictionary of keys and values as dict

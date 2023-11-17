@@ -42,6 +42,4 @@ def start_server():
 
 
 if __name__ == "__main__":
-    print("main in udfs")
-    print("sys.argv", sys.argv)
     start_server()

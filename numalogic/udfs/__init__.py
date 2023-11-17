@@ -11,7 +11,6 @@ from numalogic.udfs.postprocess import PostprocessUDF
 from numalogic.udfs.preprocess import PreprocessUDF
 from numalogic.udfs.trainer import TrainerUDF
 
-print("__init__ in udfs")
 
 def set_logger() -> None:
     """Sets the logger for the UDFs."""
@@ -21,7 +20,6 @@ def set_logger() -> None:
     )
     if os.getenv("DEBUG", "false").lower() == "true":
         logging.getLogger("root").setLevel(logging.DEBUG)
-
 
 
 __all__ = [
