@@ -469,6 +469,13 @@ class TestPrometheusFetcher(unittest.TestCase):
                 aggregate=True,
             )
 
+    def test_query_comparision(self):
+        q1 = "{namespace='odl-odlgraphql-usw2-e2e',numalogic='true'}"
+        q2 = self.fetcher.build_query(
+            "", {"namespace": "odl-odlgraphql-usw2-e2e", "numalogic": "true"}
+        )
+        self.assertEqual(q1, q2)
+
 
 if __name__ == "__main__":
     unittest.main()
