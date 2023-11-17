@@ -42,9 +42,8 @@ class TrainerUDF(NumalogicUDF):
         r_client: redis_client_t,
         pl_conf: Optional[PipelineConf] = None,
     ):
-        super().__init__(is_async=False)
+        super().__init__(is_async=False, pl_conf=pl_conf)
         self.r_client = r_client
-        self.pl_conf = pl_conf or PipelineConf()
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         model_expiry_sec = self.pl_conf.registry_conf.model_expiry_sec
@@ -71,36 +70,6 @@ class TrainerUDF(NumalogicUDF):
         self._preproc_factory = PreprocessFactory()
         self._thresh_factory = ThresholdFactory()
         self.train_msg_deduplicator = TrainMsgDeduplicator(r_client)
-
-    def register_conf(self, config_id: str, conf: StreamConf) -> None:
-        """
-        Register config with the UDF.
-
-        Args:
-            config_id: Config ID
-            conf: StreamConf object
-        """
-        self.pl_conf.stream_confs[config_id] = conf
-
-    def get_conf(self, config_id: str) -> StreamConf:
-        """
-        Get config with the given ID.
-
-        Args:
-            config_id: Config ID
-
-        Returns
-        -------
-            StreamConf object
-
-        Raises
-        ------
-            ConfigNotFoundError: If config with the given ID is not found
-        """
-        try:
-            return self.pl_conf.stream_confs[config_id]
-        except KeyError as err:
-            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
     def register_druid_fetcher_conf(self, config_id: str, conf: DruidFetcherConf) -> None:
         """

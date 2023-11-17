@@ -28,6 +28,7 @@ LOGGER = logging.getLogger(__name__)
 MAX_DATA_POINTS: Final[int] = 11000
 _MAX_RECURSION_DEPTH: Final[int] = 10
 _API_ENDPOINT: Final[str] = "/api/v1/query_range"
+_METRIC_KEY: Final[str] = "metric.__name__"
 
 
 class PrometheusFetcher(DataFetcher):
@@ -101,11 +102,14 @@ class PrometheusFetcher(DataFetcher):
             return df
 
         df = self._consolidate_df(df, metric_name, return_labels)
-
         if aggregate and return_labels:
-            df = self._agg_df(df, metric_name)
+            df = self._agg_df(df, [metric_name])
 
-        df.sort_values(by=["timestamp"], inplace=True)
+        try:
+            df.set_index("timestamp", inplace=True)
+        except KeyError:
+            pass
+        df.sort_values(by="timestamp", inplace=True)
 
         return df
 
@@ -126,7 +130,7 @@ class PrometheusFetcher(DataFetcher):
             start: Start time
             end: End time
             return_labels: Prometheus label names as columns to return
-            aggregate: Whether to aggregate the data
+            aggregate: Whether to aggregate the data over each timestamp
 
         Returns
         -------
@@ -147,22 +151,36 @@ class PrometheusFetcher(DataFetcher):
             LOGGER.warning("Query returned no results")
             return df
 
-        return_labels = [f"metric.{label}" for label in return_labels or []]
-        metric_name = self._extract_metric_name(df) or "metric"
+        extra_labels = [f"metric.{label}" for label in return_labels or []]
+        metric_names = self._extract_metric_names(df)
 
-        df = self._consolidate_df(df, metric_name, return_labels)
+        if metric_names is None:
+            raise PrometheusInvalidResponseError("No metric names were extracted from the query")
 
-        if aggregate and return_labels:
-            df = self._agg_df(df, metric_name)
+        df.set_index(_METRIC_KEY, inplace=True)
+
+        dfs = []
+        for metric_name in metric_names:
+            _df = self._consolidate_df(df.loc[[metric_name]], metric_name, extra_labels)
+            _df.set_index(["timestamp", *extra_labels], inplace=True)
+            dfs.append(_df)
+
+        df = dfs[0].join(dfs[1:])
+        df.reset_index(inplace=True)
+        df.set_index("timestamp", inplace=True)
+
+        if return_labels:
+            df.rename(columns=dict(zip(extra_labels, return_labels)), inplace=True)
+
+        if aggregate:
+            df = self._agg_df(df, metric_names)
 
         df.sort_values(by=["timestamp"], inplace=True)
         return df
 
     @staticmethod
-    def _agg_df(df, metric_name: str):
-        df = df.groupby(by=["timestamp"]).apply(lambda x: x[[metric_name]].mean())
-        df.reset_index(inplace=True)
-        return df
+    def _agg_df(df, metric_names: list[str]) -> pd.DataFrame:
+        return df.groupby(by=["timestamp"]).apply(lambda x: x[metric_names].mean())
 
     @staticmethod
     def _consolidate_df(df: pd.DataFrame, metric_name: str, return_labels: list[str]):
@@ -185,23 +203,17 @@ class PrometheusFetcher(DataFetcher):
         return end_ts, start_ts
 
     @staticmethod
-    def _extract_metric_name(df: pd.DataFrame) -> Optional[str]:
+    def _extract_metric_names(df: pd.DataFrame) -> Optional[list[str]]:
         try:
             metric_name = df["metric.__name__"].item()
-        except ValueError as err:
-            metric_names = df["metric.__name__"].unique()
-            if len(metric_names) > 1:
-                raise PrometheusInvalidResponseError(
-                    f"More than 1 metric names " f"were extracted in the query: {metric_names}"
-                ) from err
-            return metric_names[0]
+        except ValueError:
+            return df["metric.__name__"].unique()
         except KeyError:
-            LOGGER.warning("Could not infer metric name from results")
             return None
-        return metric_name
+        return [metric_name]
 
     def _api_query_range(self, query: str, start_ts: int, end_ts: int) -> list[dict]:
-        """Queries Prometheus API for data.""" ""
+        """Queries Prometheus API for data."""
         try:
             response = requests.get(
                 self._endpoint,

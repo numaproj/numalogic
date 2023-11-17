@@ -78,6 +78,143 @@ def _mock_w_return_labels():
     ]
 
 
+def _mock_mv():
+    return [
+        {
+            "metric": {
+                "__name__": "namespace_app_rollouts_cpu_utilization",
+                "app": "odl-graphql",
+                "assetId": "723971233226699519",
+                "intuit_alert": "true",
+                "namespace": "odl-odlgraphql-usw2-e2e",
+                "numalogic": "true",
+                "prometheus": "addon-metricset-ns/k8s-prometheus",
+                "role": "stable",
+                "rollouts_pod_template_hash": "79cd8c7fb7",
+            },
+            "values": [
+                [1700074605, "1.3404451281798757"],
+                [1700074635, "1.58785690280504"],
+                [1700074665, "2.0855656835916365"],
+                [1700074695, "0.9484743464920472"],
+                [1700074725, "1.2003565820676902"],
+                [1700074755, "2.812905753652541"],
+                [1700074785, "1.676252312582089"],
+            ],
+        },
+        {
+            "metric": {
+                "__name__": "namespace_app_rollouts_cpu_utilization",
+                "app": "odl-graphql",
+                "assetId": "723971233226699519",
+                "intuit_alert": "true",
+                "namespace": "odl-odlgraphql-usw2-e2e",
+                "numalogic": "true",
+                "prometheus": "addon-metricset-ns/k8s-prometheus",
+                "role": "canary",
+                "rollouts_pod_template_hash": "79cd8c7f00",
+            },
+            "values": [
+                [1700074725, "5.2003565820676902"],
+                [1700074755, "8.812905753652541"],
+                [1700074785, "7.676252312582089"],
+            ],
+        },
+        {
+            "metric": {
+                "__name__": "namespace_app_rollouts_http_request_error_rate",
+                "aiops_argorollouts": "true",
+                "app": "odl-graphql",
+                "assetId": "723971233226699519",
+                "intuit_alert": "true",
+                "namespace": "odl-odlgraphql-usw2-e2e",
+                "numalogic": "true",
+                "prometheus": "addon-metricset-ns/k8s-prometheus",
+                "role": "stable",
+                "rollouts_pod_template_hash": "79cd8c7fb7",
+            },
+            "values": [
+                [1700074605, "0"],
+                [1700074635, "0"],
+                [1700074665, "0"],
+                [1700074695, "0"],
+                [1700074725, "0"],
+                [1700074755, "0"],
+                [1700074785, "0"],
+            ],
+        },
+        {
+            "metric": {
+                "__name__": "namespace_app_rollouts_memory_utilization",
+                "app": "odl-graphql",
+                "assetId": "723971233226699519",
+                "intuit_alert": "true",
+                "namespace": "odl-odlgraphql-usw2-e2e",
+                "numalogic": "true",
+                "prometheus": "addon-metricset-ns/k8s-prometheus",
+                "role": "stable",
+                "rollouts_pod_template_hash": "79cd8c7fb7",
+            },
+            "values": [
+                [1700074605, "14.431392785274621"],
+                [1700074635, "14.312004320549242"],
+                [1700074665, "14.309229995265152"],
+                [1700074695, "14.311449455492424"],
+                [1700074725, "14.312096798058713"],
+                [1700074755, "14.436201615767045"],
+                [1700074785, "14.329112659801137"],
+            ],
+        },
+    ]
+
+
+def _mock_uv():
+    return [
+        {
+            "metric": {
+                "__name__": "namespace_app_rollouts_memory_utilization",
+                "app": "odl-graphql",
+                "assetId": "723971233226699519",
+                "intuit_alert": "true",
+                "namespace": "odl-odlgraphql-usw2-e2e",
+                "numalogic": "true",
+                "prometheus": "addon-metricset-ns/k8s-prometheus",
+                "role": "stable",
+                "rollouts_pod_template_hash": "79cd8c7fb7",
+            },
+            "values": [
+                [1700089988, "14.647327769886363"],
+                [1700090018, "14.507409298058713"],
+                [1700090048, "14.507779208096592"],
+                [1700090078, "14.632253935842803"],
+                [1700090108, "14.51129335345644"],
+                [1700090138, "14.514437588778408"],
+                [1700090168, "14.504357540246213"],
+            ],
+        }
+    ]
+
+
+def _mock_no_metric():
+    return [
+        {
+            "metric": {
+                "app": "odl-graphql",
+                "assetId": "723971233226699519",
+                "intuit_alert": "true",
+                "namespace": "odl-odlgraphql-usw2-e2e",
+                "numalogic": "true",
+                "prometheus": "addon-metricset-ns/k8s-prometheus",
+                "role": "stable",
+                "rollouts_pod_template_hash": "79cd8c7fb7",
+            },
+            "values": [
+                [1700089988, "14.647327769886363"],
+            ],
+        }
+    ]
+
+
 class TestPrometheusFetcher(unittest.TestCase):
     def setUp(self) -> None:
         self.fetcher = PrometheusFetcher(prometheus_server="http://localhost:9090")
@@ -89,10 +226,9 @@ class TestPrometheusFetcher(unittest.TestCase):
             start=datetime.now() - timedelta(hours=1),
             filters={"namespace": "sandbox-numalogic-demo"},
         )
-        self.assertEqual(df.shape, (2, 2))
-        self.assertListEqual(
-            df.columns.to_list(), ["timestamp", "namespace_asset_pod_cpu_utilization"]
-        )
+        self.assertEqual(df.shape, (2, 1))
+        self.assertListEqual(df.columns.to_list(), ["namespace_asset_pod_cpu_utilization"])
+        self.assertEqual(df.index.name, "timestamp")
 
     @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_w_return_labels()))
     def test_fetch_return_labels(self):
@@ -104,8 +240,9 @@ class TestPrometheusFetcher(unittest.TestCase):
             return_labels=["rollouts_pod_template_hash"],
             aggregate=True,
         )
-        self.assertEqual(df.shape, (2, 2))
-        self.assertListEqual(df.columns.to_list(), ["timestamp", metric])
+        self.assertEqual(df.shape, (2, 1))
+        self.assertListEqual(df.columns.to_list(), [metric])
+        self.assertEqual(df.index.name, "timestamp")
         self.assertListEqual([10.5, 12.5], df[metric].to_list())
 
     @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=[]))
@@ -141,10 +278,9 @@ class TestPrometheusFetcher(unittest.TestCase):
             query='namespace_asset_pod_cpu_utilization{namespace="sandbox-numalogic-demo"}',
             start=datetime.now() - timedelta(hours=1),
         )
-        self.assertEqual(df.shape, (2, 2))
-        self.assertListEqual(
-            df.columns.to_list(), ["timestamp", "namespace_asset_pod_cpu_utilization"]
-        )
+        self.assertEqual(df.shape, (2, 1))
+        self.assertListEqual(df.columns.to_list(), ["namespace_asset_pod_cpu_utilization"])
+        self.assertEqual(df.index.name, "timestamp")
 
     @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_w_return_labels()))
     def test_fetch_raw_return_labels(self):
@@ -155,8 +291,9 @@ class TestPrometheusFetcher(unittest.TestCase):
             return_labels=["rollouts_pod_template_hash"],
             aggregate=True,
         )
-        self.assertEqual(df.shape, (2, 2))
-        self.assertListEqual(df.columns.to_list(), ["timestamp", metric])
+        self.assertTupleEqual((2, 1), df.shape)
+        self.assertListEqual(df.columns.to_list(), [metric])
+        self.assertEqual(df.index.name, "timestamp")
         self.assertListEqual([10.5, 12.5], df[metric].to_list())
 
     @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=[]))
@@ -167,12 +304,133 @@ class TestPrometheusFetcher(unittest.TestCase):
         )
         self.assertTrue(df.empty)
 
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_mv()))
+    def test_fetch_raw_mv_01(self):
+        df = self.fetcher.raw_fetch(
+            query='{namespace="odl-odlgraphql-usw2-e2e", numalogic="true"}',
+            start=datetime.now() - timedelta(minutes=3),
+            aggregate=True,
+        )
+        self.assertEqual(df.shape, (7, 3))
+        self.assertListEqual(
+            df.columns.to_list(),
+            [
+                "namespace_app_rollouts_cpu_utilization",
+                "namespace_app_rollouts_http_request_error_rate",
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        )
+        self.assertEqual(df.index.name, "timestamp")
+
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_mv()))
+    def test_fetch_raw_mv_02(self):
+        df = self.fetcher.raw_fetch(
+            query='{namespace="odl-odlgraphql-usw2-e2e", numalogic="true"}',
+            start=datetime.now() - timedelta(minutes=3),
+            aggregate=False,
+        )
+        self.assertEqual(df.shape, (10, 3))
+        self.assertListEqual(
+            df.columns.to_list(),
+            [
+                "namespace_app_rollouts_cpu_utilization",
+                "namespace_app_rollouts_http_request_error_rate",
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        )
+        self.assertEqual(df.index.name, "timestamp")
+
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_mv()))
+    def test_fetch_raw_mv_03(self):
+        df = self.fetcher.raw_fetch(
+            query='{namespace="odl-odlgraphql-usw2-e2e", numalogic="true"}',
+            start=datetime.now() - timedelta(minutes=3),
+            return_labels=["rollouts_pod_template_hash"],
+            aggregate=True,
+        )
+        self.assertEqual(df.shape, (7, 3))
+        self.assertListEqual(
+            df.columns.to_list(),
+            [
+                "namespace_app_rollouts_cpu_utilization",
+                "namespace_app_rollouts_http_request_error_rate",
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        )
+        self.assertEqual(df.index.name, "timestamp")
+
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_mv()))
+    def test_fetch_raw_mv_04(self):
+        df = self.fetcher.raw_fetch(
+            query='{namespace="odl-odlgraphql-usw2-e2e", numalogic="true"}',
+            start=datetime.now() - timedelta(minutes=3),
+            return_labels=["rollouts_pod_template_hash"],
+            aggregate=False,
+        )
+        self.assertEqual(df.shape, (10, 4))
+        self.assertListEqual(
+            df.columns.to_list(),
+            [
+                "rollouts_pod_template_hash",
+                "namespace_app_rollouts_cpu_utilization",
+                "namespace_app_rollouts_http_request_error_rate",
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        )
+        self.assertEqual(df.index.name, "timestamp")
+
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_mv()))
+    def test_fetch_raw_mv_05(self):
+        df = self.fetcher.raw_fetch(
+            query="namespace_app_rollouts_memory_utilization"
+            '{namespace="odl-odlgraphql-usw2-e2e", numalogic="true"}',
+            start=datetime.now() - timedelta(minutes=3),
+            aggregate=True,
+        )
+        self.assertEqual(df.shape, (7, 3))
+        self.assertListEqual(
+            df.columns.to_list(),
+            [
+                "namespace_app_rollouts_cpu_utilization",
+                "namespace_app_rollouts_http_request_error_rate",
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        )
+        self.assertEqual(df.index.name, "timestamp")
+
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_uv()))
+    def test_fetch_raw_mv_06(self):
+        df = self.fetcher.raw_fetch(
+            query="namespace_app_rollouts_memory_utilization"
+            '{namespace="odl-odlgraphql-usw2-e2e", numalogic="true"}',
+            start=datetime.now() - timedelta(minutes=3),
+            aggregate=True,
+        )
+        self.assertEqual(df.shape, (7, 1))
+        self.assertListEqual(
+            df.columns.to_list(),
+            [
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        )
+        self.assertEqual(df.index.name, "timestamp")
+
     def test_start_end_err(self):
         with self.assertRaises(ValueError):
             self.fetcher.fetch(
                 metric_name="namespace_asset_pod_cpu_utilization",
                 start=datetime.now() - timedelta(hours=1),
                 end=datetime.now() - timedelta(hours=2),
+            )
+
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_no_metric()))
+    def test_no_metric_name_err(self):
+        with self.assertRaises(PrometheusInvalidResponseError):
+            self.fetcher.raw_fetch(
+                query="namespace_app_rollouts_memory_utilization"
+                '{namespace="odl-odlgraphql-usw2-e2e", numalogic="true"}',
+                start=datetime.now() - timedelta(minutes=3),
+                aggregate=True,
             )
 
 
