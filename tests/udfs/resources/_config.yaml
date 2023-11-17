@@ -1,16 +1,16 @@
 stream_confs:
-  druid-config:
-    config_id: "druid-config"
+  perf-p90:
+    config_id: "perf-p90"
     source: "druid"
-    composite_keys: [ 'service-mesh', '1', '2' ]
-    metrics: [ "col1" , "col2" ]
+    composite_keys: [ "pluginAssetAlias" ]
+    metrics: [ "p90" ]
     window_size: 10
     numalogic_conf:
       model:
         name: "VanillaAE"
         conf:
           seq_len: 10
-          n_features: 2
+          n_features: 1
       preprocess:
         - name: "LogTransformer"
           stateful: false
@@ -20,18 +20,29 @@ stream_confs:
         name: "StdDevThreshold"
         conf:
           min_threshold: 0.1
+      trainer:
+        min_train_size: 180
+        retrain_freq_hr: 8
+        train_hours: 240
+        retry_sec: 900
+
 redis_conf:
-  url: "isbsvc-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-e2e.svc"
+  url: "isbsvc-fci-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-prd.svc"
   port: 26379
   expiry: 360
   master_name: "mymaster"
 
+registry_conf:
+  name: "RedisRegistry"
+  model_expiry_sec: 172800
+  jitter_conf:
+    jitter_sec: 900
+    jitter_steps_sec: 120
+
 druid_conf:
-  url: "druid-endpoint"
-  endpoint: "endpoint"
+  url: "https://obelix-qal.odldruid-ppd.a.intuit.com/1"
+  endpoint: "druid/v2"
   fetcher:
-    dimensions: [ "col1" ]
-    datasource: "table-name"
-    group_by: [ "timestamp", "col1" ]
-    pivot:
-      columns: [ "col2" ]
+    dimensions: [ "pluginAssetAlias" ]
+    datasource: "tech-ip-customer-interaction-metrics"
+    group_by: [ "timestamp", "pluginAssetAlias" ]

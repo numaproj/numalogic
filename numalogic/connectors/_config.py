@@ -39,16 +39,26 @@ class DruidFetcherConf:
     datasource: str
     dimensions: list[str] = field(default_factory=list)
     aggregations: dict = field(default_factory=dict)
+    post_aggregations: dict = field(default_factory=dict)
     group_by: list[str] = field(default_factory=list)
     pivot: Pivot = field(default_factory=lambda: Pivot())
     granularity: str = "minute"
 
     def __post_init__(self):
-        from pydruid.utils.aggregators import doublesum
+        from pydruid.utils import postaggregator, aggregators
+        from numalogic.connectors.druid import postaggregator as _post_agg
+        from numalogic.connectors.druid import aggregators as _agg
 
         if not self.aggregations:
-            self.aggregations = {"count": doublesum("count")}
-
+            self.aggregations={
+                "agg_out": _agg.quantiles_doubles_sketch("valuesDoublesSketch", "agg0", 64)
+            }
+        if  not self.post_aggregations:
+            self.post_aggregations={
+                "p90": _post_agg.QuantilesDoublesSketchToQuantile(
+                    output_name="agg_out", field=postaggregator.Field("agg_out"), fraction=0.90
+                )
+            }
 
 @dataclass
 class DruidConf(ConnectorConf):

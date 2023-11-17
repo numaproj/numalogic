@@ -364,6 +364,7 @@ class TrainerUDF(NumalogicUDF):
                 delay=self.druid_conf.delay_hrs,
                 granularity=_fetcher_conf.granularity,
                 aggregations=dict(_fetcher_conf.aggregations),
+                post_aggregations=dict(_fetcher_conf.post_aggregations),
                 group_by=list(_fetcher_conf.group_by),
                 pivot=_fetcher_conf.pivot,
                 hours=_conf.numalogic_conf.trainer.train_hours,

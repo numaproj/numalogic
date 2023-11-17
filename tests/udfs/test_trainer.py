@@ -42,9 +42,9 @@ class TrainTrainerUDF(unittest.TestCase):
         REDIS_CLIENT.flushall()
         payload = {
             "uuid": "some-uuid",
-            "config_id": "druid-config",
-            "composite_keys": ["5984175597303660107"],
-            "metrics": ["failed", "degraded"],
+            "config_id": "perf-p90",
+            "composite_keys": ["Intuit.sales.core.salesformsui"],
+            "metrics": ["p90"],
         }
         self.keys = payload["composite_keys"]
         self.datum = Datum(
@@ -67,20 +67,20 @@ class TrainTrainerUDF(unittest.TestCase):
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
 
-    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
+    # @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_01(self):
-        self.udf1.register_conf(
-            "druid-config",
-            StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(
-                        name="VanillaAE", stateful=True, conf={"seq_len": 12, "n_features": 2}
-                    ),
-                    preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
-            ),
-        )
+        # self.udf1.register_conf(
+        #     "druid-config",
+        #     StreamConf(
+        #         numalogic_conf=NumalogicConf(
+        #             model=ModelInfo(
+        #                 name="VanillaAE", stateful=True, conf={"seq_len": 12, "n_features": 2}
+        #             ),
+        #             preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
+        #             trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+        #         )
+        #     ),
+        # )
         self.udf1(self.keys, self.datum)
 
         self.assertEqual(

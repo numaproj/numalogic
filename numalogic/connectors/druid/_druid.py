@@ -148,6 +148,7 @@ class DruidFetcher(DataFetcher):
 
             _end_time = time.perf_counter() - _start_time
             _LOGGER.debug("params: %s latency: %.6fs", query_params, _end_time)
+            print("df ", df)
             return df
 
     def raw_fetch(self, *args, **kwargs) -> pd.DataFrame:
