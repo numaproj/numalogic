@@ -136,9 +136,10 @@ class PostprocessUDF(NumalogicUDF):
 
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST or payload.status == Status.ARTIFACT_STALE:
+            _conf = self.get_conf(payload.config_id)
             train_payload = TrainerPayload(
                 uuid=payload.uuid,
-                composite_keys=keys,
+                composite_keys=_conf.composite_keys,
                 metrics=payload.metrics,
                 config_id=payload.config_id,
             )

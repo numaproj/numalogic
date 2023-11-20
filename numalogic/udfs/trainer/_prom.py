@@ -80,5 +80,4 @@ class PromTrainerUDF(TrainerUDF):
             time.perf_counter() - _start_time,
             _df.shape,
         )
-        _df.to_csv(f"{payload.config_id}.csv")
         return _df
