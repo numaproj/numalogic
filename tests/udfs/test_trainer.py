@@ -410,6 +410,20 @@ class TestDruidTrainerUDF(unittest.TestCase):
             udf3(self.keys, self.datum)
 
 
+def _mock_mv_fetch_data():
+    return pd.read_csv(
+        os.path.join(TESTS_DIR, "resources", "data", "prom_mv.csv"),
+        index_col="timestamp",
+    )
+
+
+def _mock_default_fetch_data():
+    return pd.read_csv(
+        os.path.join(TESTS_DIR, "resources", "data", "prom_default.csv"),
+        index_col="timestamp",
+    )
+
+
 class TestPrometheusTrainerUDF(unittest.TestCase):
     def setUp(self):
         REDIS_CLIENT.flushall()
@@ -433,21 +447,7 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
         conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config3.yaml"))
         self.conf = OmegaConf.merge(OmegaConf.structured(PipelineConf), conf)
 
-    @staticmethod
-    def mock_mv_fetch_data():
-        return pd.read_csv(
-            os.path.join(TESTS_DIR, "resources", "data", "prom_mv.csv"),
-            index_col="timestamp",
-        )
-
-    @staticmethod
-    def mock_default_fetch_data():
-        return pd.read_csv(
-            os.path.join(TESTS_DIR, "resources", "data", "prom_default.csv"),
-            index_col="timestamp",
-        )
-
-    @patch.object(PromTrainerUDF, "fetch_data", Mock(return_value=mock_mv_fetch_data()))
+    @patch.object(PromTrainerUDF, "fetch_data", Mock(return_value=_mock_mv_fetch_data()))
     def test_trainer_01(self):
         udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
         udf(self.keys, self.datum)
@@ -460,7 +460,7 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
             ),
         )
 
-    @patch.object(PromTrainerUDF, "fetch_data", Mock(return_value=mock_default_fetch_data()))
+    @patch.object(PromTrainerUDF, "fetch_data", Mock(return_value=_mock_default_fetch_data()))
     def test_trainer_02(self):
         udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
         datum = Datum(
