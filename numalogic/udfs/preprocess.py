@@ -5,7 +5,7 @@ from dataclasses import replace
 from typing import Optional
 
 import orjson
-from numpy._typing import NDArray
+from numpy.typing import NDArray
 from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
@@ -97,15 +97,12 @@ class PreprocessUDF(NumalogicUDF):
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
 
         # Check if model will be present in registry
-        if any(
-            [_conf.stateful for _conf in self.get_conf(payload.config_id).numalogic_conf.preprocess]
-        ):
+
+        _conf = self.get_conf(payload.config_id)
+        if any(_cfg.stateful for _cfg in _conf.numalogic_conf.preprocess):
             preproc_artifact, payload = _load_artifact(
-                skeys=keys,
-                dkeys=[
-                    _conf.name
-                    for _conf in self.get_conf(payload.config_id).numalogic_conf.preprocess
-                ],
+                skeys=[_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)],
+                dkeys=[_cfg.name for _cfg in _conf.numalogic_conf.preprocess],
                 payload=payload,
                 model_registry=self.model_registry,
                 load_latest=LOAD_LATEST,
@@ -123,13 +120,13 @@ class PreprocessUDF(NumalogicUDF):
                     payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
                 )
                 return Messages(Message(keys=keys, value=payload.to_json()))
+
         # Model will not be in registry
         else:
             # Load configuration for the config_id
             _LOGGER.info("%s - Initializing model from config: %s", payload.uuid, payload)
-            preproc_clf = self._load_model_from_config(
-                self.get_conf(payload.config_id).numalogic_conf.preprocess
-            )
+            preproc_clf = self._load_model_from_config(_conf.numalogic_conf.preprocess)
+
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
             payload = replace(

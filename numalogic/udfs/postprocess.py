@@ -76,12 +76,13 @@ class PostprocessUDF(NumalogicUDF):
         payload = StreamPayload(**orjson.loads(datum.value))
 
         # load configs
-        thresh_cfg = self.get_conf(payload.config_id).numalogic_conf.threshold
-        postprocess_cfg = self.get_conf(payload.config_id).numalogic_conf.postprocess
+        _conf = self.get_conf(payload.config_id)
+        thresh_cfg = _conf.numalogic_conf.threshold
+        postprocess_cfg = _conf.numalogic_conf.postprocess
 
         # load artifact
         thresh_artifact, payload = _load_artifact(
-            skeys=keys,
+            skeys=[_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)],
             dkeys=[thresh_cfg.name],
             payload=payload,
             model_registry=self.model_registry,
@@ -137,7 +138,7 @@ class PostprocessUDF(NumalogicUDF):
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST or payload.status == Status.ARTIFACT_STALE:
             _conf = self.get_conf(payload.config_id)
-            ckeys = [_item[1] for _item in zip(_conf.composite_keys, payload.composite_keys)]
+            ckeys = [_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)]
             train_payload = TrainerPayload(
                 uuid=payload.uuid,
                 composite_keys=ckeys,

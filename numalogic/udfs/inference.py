@@ -105,9 +105,12 @@ class InferenceUDF(NumalogicUDF):
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST:
             return Messages(Message(keys=keys, value=payload.to_json()))
+
+        _conf = self.get_conf(payload.config_id)
+
         artifact_data, payload = _load_artifact(
-            skeys=keys,
-            dkeys=[self.get_conf(payload.config_id).numalogic_conf.model.name],
+            skeys=[_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)],
+            dkeys=[_conf.numalogic_conf.model.name],
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,

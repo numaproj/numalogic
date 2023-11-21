@@ -178,7 +178,7 @@ class TrainerUDF(NumalogicUDF):
             numalogic_cfg=_conf.numalogic_conf,
         )
 
-        # Save artifacts`
+        # Save artifacts
         skeys = payload.composite_keys
 
         self.artifacts_to_save(
