@@ -256,6 +256,7 @@ class TrainerUDF(NumalogicUDF):
             return False
         return True
 
+    # TODO: Use a custom imputer in transforms module
     @staticmethod
     def get_feature_arr(
         raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
@@ -265,7 +266,7 @@ class TrainerUDF(NumalogicUDF):
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
         feat_df = raw_df[metrics]
-        feat_df = feat_df.fillna(fill_value)
+        feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
         return feat_df.to_numpy(dtype=np.float32)
 
     def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
