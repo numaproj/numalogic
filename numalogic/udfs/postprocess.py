@@ -31,7 +31,7 @@ class PostprocessUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        spl_conf: StreamPipelineConf object
+        stream_pl_conf: StreamPipelineConf object
     """
 
     __slots__ = ("registry_conf", "model_registry", "postproc_factory")
@@ -76,9 +76,9 @@ class PostprocessUDF(NumalogicUDF):
         payload = StreamPayload(**orjson.loads(datum.value))
 
         # load configs
-        pipeline_conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
-        thresh_cfg = pipeline_conf.numalogic_conf.threshold
-        postprocess_cfg = pipeline_conf.numalogic_conf.postprocess
+        ml_pipeline_conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
+        thresh_cfg = ml_pipeline_conf.numalogic_conf.threshold
+        postprocess_cfg = ml_pipeline_conf.numalogic_conf.postprocess
 
         # load artifact
         thresh_artifact, payload = _load_artifact(

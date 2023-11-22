@@ -54,6 +54,7 @@ class TrainerPayload(_BasePayload):
 @dataclass(repr=False)
 class StreamPayload(_BasePayload):
     """Payload that gets propagated along the numalogic UDFs."""
+
     data: Matrix
     raw_data: Matrix
     metrics: list[str]

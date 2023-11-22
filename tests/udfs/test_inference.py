@@ -13,6 +13,7 @@ from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.udfs import StreamConf, InferenceUDF
+from numalogic.udfs._config import MLPipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
 
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
@@ -86,10 +87,17 @@ class TestInferenceUDF(unittest.TestCase):
         self.udf.register_conf(
             "conf1",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
 

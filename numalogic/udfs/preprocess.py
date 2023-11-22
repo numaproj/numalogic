@@ -13,7 +13,7 @@ from numalogic.config import PreprocessFactory, RegistryFactory
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._config import StreamPipelineConf
 from numalogic.udfs.entities import Status, Header
 from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact
 
@@ -31,14 +31,16 @@ class PreprocessUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        pl_conf: PipelineConf instance
+        stream_pl_conf: PipelineConf instance
     """
 
     __slots__ = ("registry_conf", "model_registry", "preproc_factory")
 
-    def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
-        super().__init__(pl_conf=pl_conf)
-        self.registry_conf = self.pl_conf.registry_conf
+    def __init__(
+        self, r_client: redis_client_t, stream_pl_conf: Optional[StreamPipelineConf] = None
+    ):
+        super().__init__(stream_pl_conf=stream_pl_conf)
+        self.registry_conf = self.stream_pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
             client=r_client,
@@ -85,32 +87,23 @@ class PreprocessUDF(NumalogicUDF):
             return Messages(Message.to_drop())
 
         stream_conf = self.get_stream_conf(data_payload["config_id"])
-        pipeline_conf = stream_conf.ml_pipelines[data_payload["pipeline_id"]]
-
-        raw_df, timestamps = get_df(
-            data_payload=data_payload,
-            stream_conf=stream_conf,
-        )
+        ml_pipeline_conf = stream_conf.ml_pipelines[data_payload["pipeline_id"]]
+        raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=stream_conf)
 
         # Drop message if dataframe shape conditions are not met
-        if raw_df.shape[0] < stream_conf.window_size or raw_df.shape[
-            1
-        ] != len(pipeline_conf.metrics):
+        if raw_df.shape[0] < stream_conf.window_size or raw_df.shape[1] != len(
+            ml_pipeline_conf.metrics
+        ):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
             return Messages(Message.to_drop())
         # Make StreamPayload object
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
 
         # Check if model will be present in registry
-        if any(
-            [_conf.stateful for _conf in pipeline_conf.numalogic_conf.preprocess]
-        ):
+        if any([_conf.stateful for _conf in ml_pipeline_conf.numalogic_conf.preprocess]):
             preproc_artifact, payload = _load_artifact(
                 skeys=keys,
-                dkeys=[
-                    _conf.name
-                    for _conf in pipeline_conf.numalogic_conf.preprocess
-                ],
+                dkeys=[_conf.name for _conf in ml_pipeline_conf.numalogic_conf.preprocess],
                 payload=payload,
                 model_registry=self.model_registry,
                 load_latest=LOAD_LATEST,
@@ -132,9 +125,7 @@ class PreprocessUDF(NumalogicUDF):
         else:
             # Load configuration for the config_id
             _LOGGER.info("%s - Initializing model from config: %s", payload.uuid, payload)
-            preproc_clf = self._load_model_from_config(
-                pipeline_conf.numalogic_conf.preprocess
-            )
+            preproc_clf = self._load_model_from_config(ml_pipeline_conf.numalogic_conf.preprocess)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
             payload = replace(

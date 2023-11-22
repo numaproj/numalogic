@@ -88,8 +88,8 @@ class TestPostProcessUDF(unittest.TestCase):
         self.cache = LocalLRUCache()
         _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
         schema = OmegaConf.structured(PipelineConf)
-        pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
-        self.udf = PostprocessUDF(REDIS_CLIENT, pl_conf=pl_conf)
+        stream_pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
+        self.udf = PostprocessUDF(REDIS_CLIENT, stream_pl_conf=stream_pl_conf)
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
@@ -134,8 +134,8 @@ class TestPostProcessUDF(unittest.TestCase):
     def test_postprocess_all_model_present_02(self):
         _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml"))
         schema = OmegaConf.structured(PipelineConf)
-        pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
-        udf = PostprocessUDF(REDIS_CLIENT, pl_conf=pl_conf)
+        stream_pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
+        udf = PostprocessUDF(REDIS_CLIENT, stream_pl_conf=stream_pl_conf)
 
         data = deepcopy(DATA)
         data["status"] = Status.ARTIFACT_FOUND

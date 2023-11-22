@@ -20,6 +20,7 @@ from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.udfs import StreamConf, PipelineConf
+from numalogic.udfs._config import MLPipelineConf
 from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer import TrainerUDF
 
@@ -61,8 +62,8 @@ class TrainTrainerUDF(unittest.TestCase):
         self.pl_conf_1 = PipelineConf(**OmegaConf.merge(schema, conf_1))
         self.pl_conf_2 = PipelineConf(**OmegaConf.merge(schema, conf_2))
 
-        self.udf1 = TrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf_1))
-        self.udf2 = TrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf_2))
+        self.udf1 = TrainerUDF(REDIS_CLIENT, stream_pl_conf=OmegaConf.to_object(conf_1))
+        self.udf2 = TrainerUDF(REDIS_CLIENT, stream_pl_conf=OmegaConf.to_object(conf_2))
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
@@ -72,13 +73,20 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(
-                        name="VanillaAE", stateful=True, conf={"seq_len": 12, "n_features": 2}
-                    ),
-                    preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE",
+                                stateful=True,
+                                conf={"seq_len": 12, "n_features": 2},
+                            ),
+                            preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -96,11 +104,18 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="StandardScaler", conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[ModelInfo(name="StandardScaler", conf={})],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -118,11 +133,21 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -140,11 +165,21 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         time.time()
@@ -173,11 +208,21 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -204,11 +249,21 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -231,11 +286,21 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
@@ -256,11 +321,21 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -269,7 +344,7 @@ class TrainTrainerUDF(unittest.TestCase):
     def test_trainer_conf_err(self):
         self.udf1 = TrainerUDF(
             REDIS_CLIENT,
-            pl_conf=PipelineConf(redis_conf=RedisConf(url="redis://localhost:6379", port=0)),
+            stream_pl_conf=PipelineConf(redis_conf=RedisConf(url="redis://localhost:6379", port=0)),
         )
         with self.assertRaises(ConfigNotFoundError):
             self.udf1(self.keys, self.datum)
@@ -279,11 +354,18 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="StandardScaler", conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[ModelInfo(name="StandardScaler", conf={})],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -300,11 +382,18 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="StandardScaler", conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipline1": MLPipelineConf(
+                        pipeline_id="pipline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[ModelInfo(name="StandardScaler", conf={})],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -356,39 +445,53 @@ class TrainTrainerUDF(unittest.TestCase):
             )
 
     def test_druid_from_config_missing(self):
-        pl_conf = PipelineConf(
+        stream_pl_conf = PipelineConf(
             stream_confs={
                 "druid-config": StreamConf(
-                    numalogic_conf=NumalogicConf(
-                        model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                        preprocess=[
-                            ModelInfo(name="LogTransformer"),
-                        ],
-                        trainer=TrainerConf(
-                            pltrainer_conf=LightningTrainerConf(max_epochs=1),
-                        ),
-                    )
+                    ml_pipelines={
+                        "pipline1": MLPipelineConf(
+                            pipeline_id="pipline1",
+                            numalogic_conf=NumalogicConf(
+                                model=ModelInfo(
+                                    name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                                ),
+                                preprocess=[
+                                    ModelInfo(name="LogTransformer"),
+                                ],
+                                trainer=TrainerConf(
+                                    pltrainer_conf=LightningTrainerConf(max_epochs=1),
+                                ),
+                            ),
+                        )
+                    }
                 )
             },
             druid_conf=DruidConf(url="some-url", endpoint="druid/v2", delay_hrs=3),
         )
-        udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
+        udf3 = TrainerUDF(REDIS_CLIENT, stream_pl_conf=stream_pl_conf)
 
         self.assertRaises(ConfigNotFoundError, udf3, self.keys, self.datum)
 
     def test_druid_get_config_error(self):
-        pl_conf = PipelineConf(
+        stream_pl_conf = PipelineConf(
             stream_confs={
                 "druid-config": StreamConf(
-                    numalogic_conf=NumalogicConf(
-                        model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                        preprocess=[
-                            ModelInfo(name="LogTransformer"),
-                        ],
-                        trainer=TrainerConf(
-                            pltrainer_conf=LightningTrainerConf(max_epochs=1),
-                        ),
-                    )
+                    ml_pipelines={
+                        "pipline1": MLPipelineConf(
+                            pipeline_id="pipline1",
+                            numalogic_conf=NumalogicConf(
+                                model=ModelInfo(
+                                    name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                                ),
+                                preprocess=[
+                                    ModelInfo(name="LogTransformer"),
+                                ],
+                                trainer=TrainerConf(
+                                    pltrainer_conf=LightningTrainerConf(max_epochs=1),
+                                ),
+                            ),
+                        )
+                    }
                 )
             },
             druid_conf=DruidConf(
@@ -396,17 +499,21 @@ class TrainTrainerUDF(unittest.TestCase):
                 endpoint="druid/v2",
                 delay_hrs=3,
                 id_fetcher={
-                    "some-id": DruidFetcherConf(
+                    "druid-config-pipline1": DruidFetcherConf(
                         datasource="some-datasource", dimensions=["some-dimension"]
                     )
                 },
             ),
         )
-        udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
-        udf3.register_conf("druid-config", pl_conf.stream_confs["druid-config"])
-        udf3.register_druid_fetcher_conf("some-id", pl_conf.druid_conf.id_fetcher["some-id"])
+        udf3 = TrainerUDF(REDIS_CLIENT, stream_pl_conf=stream_pl_conf)
+        udf3.register_conf("druid-config", stream_pl_conf.stream_confs["druid-config"])
+        udf3.register_druid_fetcher_conf(
+            "druid-config",
+            "pipeline1",
+            stream_pl_conf.druid_conf.id_fetcher["druid-config-pipline1"],
+        )
         with self.assertRaises(ConfigNotFoundError):
-            udf3.get_druid_fetcher_conf("different-config")
+            udf3.get_druid_fetcher_conf("different-config", "pipeline1")
         with self.assertRaises(ConfigNotFoundError):
             udf3(self.keys, self.datum)
 

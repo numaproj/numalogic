@@ -21,7 +21,7 @@ from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf, PipelineConf
+from numalogic.udfs._config import StreamPipelineConf, MLPipelineConf
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
@@ -49,19 +49,19 @@ class TrainerUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        pl_conf: Pipeline config
+        stream_pl_conf: Pipeline config
     """
 
     def __init__(
-            self,
-            r_client: redis_client_t,
-            pl_conf: Optional[PipelineConf] = None,
+        self,
+        r_client: redis_client_t,
+        stream_pl_conf: Optional[StreamPipelineConf] = None,
     ):
-        super().__init__(is_async=False, pl_conf=pl_conf)
+        super().__init__(is_async=False, stream_pl_conf=stream_pl_conf)
         self.r_client = r_client
-        self.registry_conf = self.pl_conf.registry_conf
+        self.registry_conf = self.stream_pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
-        model_expiry_sec = self.pl_conf.registry_conf.model_expiry_sec
+        model_expiry_sec = self.stream_pl_conf.registry_conf.model_expiry_sec
         jitter_sec = self.registry_conf.jitter_conf.jitter_sec
         jitter_steps_sec = self.registry_conf.jitter_conf.jitter_steps_sec
         self.model_registry = model_registry_cls(
@@ -70,7 +70,7 @@ class TrainerUDF(NumalogicUDF):
             jitter_sec=jitter_sec,
             jitter_steps_sec=jitter_steps_sec,
         )
-        self.druid_conf = self.pl_conf.druid_conf
+        self.druid_conf = self.stream_pl_conf.druid_conf
 
         data_fetcher_cls = ConnectorFactory.get_cls("DruidFetcher")
         try:
@@ -86,7 +86,9 @@ class TrainerUDF(NumalogicUDF):
         self._thresh_factory = ThresholdFactory()
         self.train_msg_deduplicator = TrainMsgDeduplicator(r_client)
 
-    def register_druid_fetcher_conf(self, config_id: str, pipeline_id: str, conf: DruidFetcherConf) -> None:
+    def register_druid_fetcher_conf(
+        self, config_id: str, pipeline_id: str, conf: DruidFetcherConf
+    ) -> None:
         """
         Register DruidFetcherConf with the UDF.
 
@@ -95,7 +97,7 @@ class TrainerUDF(NumalogicUDF):
             pipeline_id: Pipeline ID
             conf: DruidFetcherConf object
         """
-        self.pl_conf.druid_conf.id_fetcher[f'{config_id}-{pipeline_id}'] = conf
+        self.stream_pl_conf.druid_conf.id_fetcher[f"{config_id}-{pipeline_id}"] = conf
 
     def get_druid_fetcher_conf(self, config_id: str, pipeline_id: str) -> DruidFetcherConf:
         """
@@ -113,18 +115,20 @@ class TrainerUDF(NumalogicUDF):
             ConfigNotFoundError: If config with the given ID is not found
         """
         try:
-            return self.pl_conf.druid_conf.id_fetcher[f'{config_id}-{pipeline_id}']
+            return self.stream_pl_conf.druid_conf.id_fetcher[f"{config_id}-{pipeline_id}"]
         except KeyError as err:
-            raise ConfigNotFoundError(f"Druid fetcher with ID {f'{config_id}-{pipeline_id}'} not found!") from err
+            raise ConfigNotFoundError(
+                f"Druid fetcher with ID {f'{config_id}-{pipeline_id}'} not found!"
+            ) from err
 
     @classmethod
     def compute(
-            cls,
-            model: artifact_t,
-            input_: npt.NDArray[float],
-            preproc_clf: Optional[artifact_t] = None,
-            threshold_clf: Optional[artifact_t] = None,
-            numalogic_cfg: Optional[NumalogicConf] = None,
+        cls,
+        model: artifact_t,
+        input_: npt.NDArray[float],
+        preproc_clf: Optional[artifact_t] = None,
+        threshold_clf: Optional[artifact_t] = None,
+        numalogic_cfg: Optional[NumalogicConf] = None,
     ) -> dict[str, KeyedArtifact]:
         """
         Train the model on the given input data.
@@ -190,18 +194,18 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
-        _conf = self.get_conf(payload.config_id)
+        ml_pipeline_conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
 
         # set the retry and retrain_freq
-        retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
-        retry_ts = _conf.numalogic_conf.trainer.retry_sec
+        retrain_freq_ts = ml_pipeline_conf.numalogic_conf.trainer.retrain_freq_hr
+        retry_ts = ml_pipeline_conf.numalogic_conf.trainer.retry_sec
         if not self.train_msg_deduplicator.ack_read(
-                key=payload.composite_keys,
-                uuid=payload.uuid,
-                retrain_freq=retrain_freq_ts,
-                retry=retry_ts,
-                min_train_records=_conf.numalogic_conf.trainer.min_train_size,
-                data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
+            key=payload.composite_keys,
+            uuid=payload.uuid,
+            retrain_freq=retrain_freq_ts,
+            retry=retry_ts,
+            min_train_records=ml_pipeline_conf.numalogic_conf.trainer.min_train_size,
+            data_freq=ml_pipeline_conf.numalogic_conf.trainer.data_freq_sec,
         ):
             return Messages(Message.to_drop())
 
@@ -223,9 +227,9 @@ class TrainerUDF(NumalogicUDF):
         x_train = self.get_feature_arr(df, payload.metrics)
 
         # Initialize artifacts
-        preproc_clf = self._construct_preproc_clf(_conf)
-        model = self._model_factory.get_instance(_conf.numalogic_conf.model)
-        thresh_clf = self._thresh_factory.get_instance(_conf.numalogic_conf.threshold)
+        preproc_clf = self._construct_preproc_clf(ml_pipeline_conf)
+        model = self._model_factory.get_instance(ml_pipeline_conf.numalogic_conf.model)
+        thresh_clf = self._thresh_factory.get_instance(ml_pipeline_conf.numalogic_conf.threshold)
 
         # Train artifacts
         dict_artifacts = self.compute(
@@ -233,7 +237,7 @@ class TrainerUDF(NumalogicUDF):
             x_train,
             preproc_clf=preproc_clf,
             threshold_clf=thresh_clf,
-            numalogic_cfg=_conf.numalogic_conf,
+            numalogic_cfg=ml_pipeline_conf.numalogic_conf,
         )
 
         # Save artifacts`
@@ -256,7 +260,7 @@ class TrainerUDF(NumalogicUDF):
         )
         return Messages(Message.to_drop())
 
-    def _construct_preproc_clf(self, _conf: StreamConf) -> Optional[artifact_t]:
+    def _construct_preproc_clf(self, _conf: MLPipelineConf) -> Optional[artifact_t]:
         preproc_clfs = []
         for _cfg in _conf.numalogic_conf.preprocess:
             _clf = self._preproc_factory.get_instance(_cfg)
@@ -269,10 +273,10 @@ class TrainerUDF(NumalogicUDF):
 
     @staticmethod
     def artifacts_to_save(
-            skeys: KEYS,
-            dict_artifacts: dict[str, KeyedArtifact],
-            model_registry,
-            payload: TrainerPayload,
+        skeys: KEYS,
+        dict_artifacts: dict[str, KeyedArtifact],
+        model_registry,
+        payload: TrainerPayload,
     ) -> None:
         """
         Save artifacts.
@@ -306,8 +310,8 @@ class TrainerUDF(NumalogicUDF):
             _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
-        _conf = self.get_conf(payload.config_id)
-        if len(df) < _conf.numalogic_conf.trainer.min_train_size:
+        ml_pipeline_conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
+        if len(df) < ml_pipeline_conf.numalogic_conf.trainer.min_train_size:
             _ = self.train_msg_deduplicator.ack_insufficient_data(
                 key=payload.composite_keys, uuid=payload.uuid, train_records=len(df)
             )
@@ -316,7 +320,7 @@ class TrainerUDF(NumalogicUDF):
 
     @staticmethod
     def get_feature_arr(
-            raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
+        raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
     ) -> npt.NDArray[float]:
         """Get feature array from the raw dataframe."""
         for col in metrics:
@@ -338,9 +342,13 @@ class TrainerUDF(NumalogicUDF):
             Dataframe
         """
         _start_time = time.perf_counter()
-        _conf = self.get_conf(payload.config_id)
+        stream_conf = self.get_stream_conf(payload.config_id)
+        ml_pipeline_conf = stream_conf.ml_pipelines[payload.pipeline_id]
+
         _fetcher_conf = self.druid_conf.fetcher or (
-            self.get_druid_fetcher_conf(payload.config_id) if self.druid_conf.id_fetcher else None
+            self.get_druid_fetcher_conf(payload.config_id, payload.pipeline_id)
+            if self.druid_conf.id_fetcher
+            else None
         )
         if not _fetcher_conf:
             raise ConfigNotFoundError(
@@ -350,7 +358,7 @@ class TrainerUDF(NumalogicUDF):
         try:
             _df = self.data_fetcher.fetch(
                 datasource=_fetcher_conf.datasource,
-                filter_keys=_conf.composite_keys,
+                filter_keys=stream_conf.composite_keys,
                 filter_values=payload.composite_keys,
                 dimensions=list(_fetcher_conf.dimensions),
                 delay=self.druid_conf.delay_hrs,
@@ -358,7 +366,7 @@ class TrainerUDF(NumalogicUDF):
                 aggregations=dict(_fetcher_conf.aggregations),
                 group_by=list(_fetcher_conf.group_by),
                 pivot=_fetcher_conf.pivot,
-                hours=_conf.numalogic_conf.trainer.train_hours,
+                hours=ml_pipeline_conf.numalogic_conf.trainer.train_hours,
             )
         except Exception:
             _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)

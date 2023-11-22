@@ -68,7 +68,10 @@ class NumalogicUDF(metaclass=ABCMeta):
         try:
             return self.stream_pl_conf.stream_confs[_DEFAULT_ID].ml_pipelines[_DEFAULT_ID]
         except KeyError:
-            err_msg = f"Pipeline with ID {pipeline_id} or {_DEFAULT_ID} not found for config ID {config_id}!"
+            err_msg = (
+                f"Pipeline with ID {pipeline_id} or {_DEFAULT_ID} "
+                f"not found for config ID {config_id}!"
+            )
             raise ConfigNotFoundError(err_msg) from None
 
     def get_stream_conf(self, config_id: str) -> StreamConf:
