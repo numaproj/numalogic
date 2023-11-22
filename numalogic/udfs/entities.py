@@ -33,6 +33,7 @@ class Header(str, Enum):
 class _BasePayload:
     uuid: str
     config_id: str
+    pipeline_id: str
     composite_keys: list[str]
 
 
@@ -53,7 +54,6 @@ class TrainerPayload(_BasePayload):
 @dataclass(repr=False)
 class StreamPayload(_BasePayload):
     """Payload that gets propagated along the numalogic UDFs."""
-
     data: Matrix
     raw_data: Matrix
     metrics: list[str]

@@ -17,10 +17,9 @@ from pynumaflow.mapper import Datum, Messages
 
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import artifact_t
-from numalogic.udfs._config import PipelineConf, StreamConf
+from numalogic.udfs._config import StreamConf, StreamPipelineConf, MLPipelineConf
 
-
-_DEFAULT_CONF_ID = "default"
+_DEFAULT_ID = "default"
 
 
 class NumalogicUDF(metaclass=ABCMeta):
@@ -29,14 +28,14 @@ class NumalogicUDF(metaclass=ABCMeta):
 
     Args:
         is_async: If True, the UDF is executed in an asynchronous manner.
-        pl_conf: PipelineConf object
+        stream_pl_conf: StreamPipelineConf object
     """
 
-    __slots__ = ("is_async", "pl_conf")
+    __slots__ = ("is_async", "stream_pl_conf")
 
-    def __init__(self, is_async: bool = False, pl_conf: Optional[PipelineConf] = None):
+    def __init__(self, is_async: bool = False, stream_pl_conf: Optional[StreamPipelineConf] = None):
         self.is_async = is_async
-        self.pl_conf = pl_conf or PipelineConf()
+        self.stream_pl_conf = stream_pl_conf or StreamPipelineConf()
 
     def __call__(
         self, keys: list[str], datum: Datum
@@ -54,19 +53,27 @@ class NumalogicUDF(metaclass=ABCMeta):
             config_id: Config ID
             conf: StreamConf object
         """
-        self.pl_conf.stream_confs[config_id] = conf
+        self.stream_pl_conf.stream_confs[config_id] = conf
 
-    def _get_default_conf(self, config_id) -> StreamConf:
+    def _get_default_stream_conf(self, config_id) -> StreamConf:
         """Get the default config."""
         try:
-            return self.pl_conf.stream_confs[_DEFAULT_CONF_ID]
+            return self.stream_pl_conf.stream_confs[_DEFAULT_ID]
         except KeyError:
-            err_msg = f"Config with ID {config_id} or {_DEFAULT_CONF_ID} not found!"
+            err_msg = f"Config with ID {config_id} or {_DEFAULT_ID} not found!"
             raise ConfigNotFoundError(err_msg) from None
 
-    def get_conf(self, config_id: str) -> StreamConf:
+    def _get_default_ml_pipeline_conf(self, config_id, pipeline_id) -> MLPipelineConf:
+        """Get the default pipeline config."""
+        try:
+            return self.stream_pl_conf.stream_confs[_DEFAULT_ID].ml_pipelines[_DEFAULT_ID]
+        except KeyError:
+            err_msg = f"Pipeline with ID {pipeline_id} or {_DEFAULT_ID} not found for config ID {config_id}!"
+            raise ConfigNotFoundError(err_msg) from None
+
+    def get_stream_conf(self, config_id: str) -> StreamConf:
         """
-        Get config with the given ID.
+        Get stream config with the given ID.
         If not found, return the default config.
 
         Args:
@@ -81,9 +88,30 @@ class NumalogicUDF(metaclass=ABCMeta):
             ConfigNotFoundError: If config with the given ID is not found
         """
         try:
-            return self.pl_conf.stream_confs[config_id]
+            return self.stream_pl_conf.stream_confs[config_id]
         except KeyError:
-            return self._get_default_conf(config_id)
+            return self._get_default_stream_conf(config_id)
+
+    def get_ml_pipeline_conf(self, config_id: str, pipeline_id: str) -> MLPipelineConf:
+        """
+        Get stream's pipeline config with the given ID.
+        If not found, return the default config.
+
+        Args:
+            config_id: Config ID
+
+        Returns
+        -------
+            StreamConf object
+
+        Raises
+        ------
+            ConfigNotFoundError: If config with the given ID is not found
+        """
+        try:
+            return self.stream_pl_conf.stream_confs[config_id].ml_pipelines[pipeline_id]
+        except KeyError:
+            return self._get_default_ml_pipeline_conf(config_id, pipeline_id)
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """

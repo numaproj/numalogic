@@ -28,6 +28,21 @@ from numalogic.udfs.tools import TrainMsgDeduplicator
 _LOGGER = logging.getLogger(__name__)
 
 
+def construct_fetcher_id(config_id: str, pipeline_id: str) -> str:
+    """
+    Construct fetcher ID.
+
+    Args:
+        config_id: Config ID
+        pipeline_id: Pipeline ID
+
+    Returns
+    -------
+        Fetcher ID
+    """
+    return f"{config_id}-{pipeline_id}"
+
+
 class TrainerUDF(NumalogicUDF):
     """
     Trainer UDF for Numalogic.
@@ -38,9 +53,9 @@ class TrainerUDF(NumalogicUDF):
     """
 
     def __init__(
-        self,
-        r_client: redis_client_t,
-        pl_conf: Optional[PipelineConf] = None,
+            self,
+            r_client: redis_client_t,
+            pl_conf: Optional[PipelineConf] = None,
     ):
         super().__init__(is_async=False, pl_conf=pl_conf)
         self.r_client = r_client
@@ -71,17 +86,18 @@ class TrainerUDF(NumalogicUDF):
         self._thresh_factory = ThresholdFactory()
         self.train_msg_deduplicator = TrainMsgDeduplicator(r_client)
 
-    def register_druid_fetcher_conf(self, config_id: str, conf: DruidFetcherConf) -> None:
+    def register_druid_fetcher_conf(self, config_id: str, pipeline_id: str, conf: DruidFetcherConf) -> None:
         """
         Register DruidFetcherConf with the UDF.
 
         Args:
             config_id: Config ID
+            pipeline_id: Pipeline ID
             conf: DruidFetcherConf object
         """
-        self.pl_conf.druid_conf.id_fetcher[config_id] = conf
+        self.pl_conf.druid_conf.id_fetcher[f'{config_id}-{pipeline_id}'] = conf
 
-    def get_druid_fetcher_conf(self, config_id: str) -> DruidFetcherConf:
+    def get_druid_fetcher_conf(self, config_id: str, pipeline_id: str) -> DruidFetcherConf:
         """
         Get DruidFetcherConf with the given ID.
 
@@ -97,18 +113,18 @@ class TrainerUDF(NumalogicUDF):
             ConfigNotFoundError: If config with the given ID is not found
         """
         try:
-            return self.pl_conf.druid_conf.id_fetcher[config_id]
+            return self.pl_conf.druid_conf.id_fetcher[f'{config_id}-{pipeline_id}']
         except KeyError as err:
-            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
+            raise ConfigNotFoundError(f"Druid fetcher with ID {f'{config_id}-{pipeline_id}'} not found!") from err
 
     @classmethod
     def compute(
-        cls,
-        model: artifact_t,
-        input_: npt.NDArray[float],
-        preproc_clf: Optional[artifact_t] = None,
-        threshold_clf: Optional[artifact_t] = None,
-        numalogic_cfg: Optional[NumalogicConf] = None,
+            cls,
+            model: artifact_t,
+            input_: npt.NDArray[float],
+            preproc_clf: Optional[artifact_t] = None,
+            threshold_clf: Optional[artifact_t] = None,
+            numalogic_cfg: Optional[NumalogicConf] = None,
     ) -> dict[str, KeyedArtifact]:
         """
         Train the model on the given input data.
@@ -180,12 +196,12 @@ class TrainerUDF(NumalogicUDF):
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
         retry_ts = _conf.numalogic_conf.trainer.retry_sec
         if not self.train_msg_deduplicator.ack_read(
-            key=payload.composite_keys,
-            uuid=payload.uuid,
-            retrain_freq=retrain_freq_ts,
-            retry=retry_ts,
-            min_train_records=_conf.numalogic_conf.trainer.min_train_size,
-            data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
+                key=payload.composite_keys,
+                uuid=payload.uuid,
+                retrain_freq=retrain_freq_ts,
+                retry=retry_ts,
+                min_train_records=_conf.numalogic_conf.trainer.min_train_size,
+                data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
             return Messages(Message.to_drop())
 
@@ -253,10 +269,10 @@ class TrainerUDF(NumalogicUDF):
 
     @staticmethod
     def artifacts_to_save(
-        skeys: KEYS,
-        dict_artifacts: dict[str, KeyedArtifact],
-        model_registry,
-        payload: TrainerPayload,
+            skeys: KEYS,
+            dict_artifacts: dict[str, KeyedArtifact],
+            model_registry,
+            payload: TrainerPayload,
     ) -> None:
         """
         Save artifacts.
@@ -300,7 +316,7 @@ class TrainerUDF(NumalogicUDF):
 
     @staticmethod
     def get_feature_arr(
-        raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
+            raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
     ) -> npt.NDArray[float]:
         """Get feature array from the raw dataframe."""
         for col in metrics:

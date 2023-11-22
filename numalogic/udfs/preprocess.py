@@ -83,14 +83,19 @@ class PreprocessUDF(NumalogicUDF):
         except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
             _LOGGER.exception("Error while decoding input json")
             return Messages(Message.to_drop())
+
+        stream_conf = self.get_stream_conf(data_payload["config_id"])
+        pipeline_conf = stream_conf.ml_pipelines[data_payload["pipeline_id"]]
+
         raw_df, timestamps = get_df(
-            data_payload=data_payload, stream_conf=self.get_conf(data_payload["config_id"])
+            data_payload=data_payload,
+            stream_conf=stream_conf,
         )
 
         # Drop message if dataframe shape conditions are not met
-        if raw_df.shape[0] < self.get_conf(data_payload["config_id"]).window_size or raw_df.shape[
+        if raw_df.shape[0] < stream_conf.window_size or raw_df.shape[
             1
-        ] != len(self.get_conf(data_payload["config_id"]).metrics):
+        ] != len(pipeline_conf.metrics):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
             return Messages(Message.to_drop())
         # Make StreamPayload object
@@ -98,13 +103,13 @@ class PreprocessUDF(NumalogicUDF):
 
         # Check if model will be present in registry
         if any(
-            [_conf.stateful for _conf in self.get_conf(payload.config_id).numalogic_conf.preprocess]
+            [_conf.stateful for _conf in pipeline_conf.numalogic_conf.preprocess]
         ):
             preproc_artifact, payload = _load_artifact(
                 skeys=keys,
                 dkeys=[
                     _conf.name
-                    for _conf in self.get_conf(payload.config_id).numalogic_conf.preprocess
+                    for _conf in pipeline_conf.numalogic_conf.preprocess
                 ],
                 payload=payload,
                 model_registry=self.model_registry,
@@ -128,7 +133,7 @@ class PreprocessUDF(NumalogicUDF):
             # Load configuration for the config_id
             _LOGGER.info("%s - Initializing model from config: %s", payload.uuid, payload)
             preproc_clf = self._load_model_from_config(
-                self.get_conf(payload.config_id).numalogic_conf.preprocess
+                pipeline_conf.numalogic_conf.preprocess
             )
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())

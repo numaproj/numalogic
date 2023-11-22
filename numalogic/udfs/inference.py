@@ -14,7 +14,7 @@ from numalogic.config import RegistryFactory
 from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
-from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._config import StreamPipelineConf, MLPipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
 from numalogic.udfs.tools import _load_artifact
 
@@ -32,14 +32,14 @@ class InferenceUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        pl_conf: Stream configuration per config ID
+        stream_pl_conf: Stream configuration per config ID
     """
 
     __slots__ = ("registry_conf", "model_registry")
 
-    def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
-        super().__init__(is_async=False, pl_conf=pl_conf)
-        self.registry_conf = self.pl_conf.registry_conf
+    def __init__(self, r_client: redis_client_t, stream_pl_conf: Optional[StreamPipelineConf] = None):
+        super().__init__(is_async=False, stream_pl_conf=stream_pl_conf)
+        self.registry_conf = self.stream_pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
             client=r_client,
@@ -107,7 +107,7 @@ class InferenceUDF(NumalogicUDF):
             return Messages(Message(keys=keys, value=payload.to_json()))
         artifact_data, payload = _load_artifact(
             skeys=keys,
-            dkeys=[self.get_conf(payload.config_id).numalogic_conf.model.name],
+            dkeys=[self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id).numalogic_conf.model.name],
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
@@ -172,7 +172,7 @@ class InferenceUDF(NumalogicUDF):
         -------
             True if artifact is stale, False otherwise
         """
-        _conf = self.get_conf(payload.config_id)
+        _conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
         if (
             self.model_registry.is_artifact_stale(
                 artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr

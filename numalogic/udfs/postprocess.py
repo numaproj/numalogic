@@ -13,7 +13,7 @@ from numalogic.config import PostprocessFactory, RegistryFactory
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._config import StreamPipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
 from numalogic.udfs.tools import _load_artifact
 
@@ -31,7 +31,7 @@ class PostprocessUDF(NumalogicUDF):
 
     Args:
         r_client: Redis client
-        pl_conf: PipelineConf object
+        spl_conf: StreamPipelineConf object
     """
 
     __slots__ = ("registry_conf", "model_registry", "postproc_factory")
@@ -39,10 +39,10 @@ class PostprocessUDF(NumalogicUDF):
     def __init__(
         self,
         r_client: redis_client_t,
-        pl_conf: Optional[PipelineConf] = None,
+        stream_pl_conf: Optional[StreamPipelineConf] = None,
     ):
-        super().__init__(pl_conf=pl_conf)
-        self.registry_conf = self.pl_conf.registry_conf
+        super().__init__(stream_pl_conf=stream_pl_conf)
+        self.registry_conf = self.stream_pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
             client=r_client,
@@ -76,8 +76,9 @@ class PostprocessUDF(NumalogicUDF):
         payload = StreamPayload(**orjson.loads(datum.value))
 
         # load configs
-        thresh_cfg = self.get_conf(payload.config_id).numalogic_conf.threshold
-        postprocess_cfg = self.get_conf(payload.config_id).numalogic_conf.postprocess
+        pipeline_conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
+        thresh_cfg = pipeline_conf.numalogic_conf.threshold
+        postprocess_cfg = pipeline_conf.numalogic_conf.postprocess
 
         # load artifact
         thresh_artifact, payload = _load_artifact(
@@ -119,6 +120,7 @@ class PostprocessUDF(NumalogicUDF):
                 out_payload = OutputPayload(
                     uuid=payload.uuid,
                     config_id=payload.config_id,
+                    pipeline_id=payload.pipeline_id,
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
                     unified_anomaly=np.max(anomaly_scores),
@@ -141,6 +143,7 @@ class PostprocessUDF(NumalogicUDF):
                 composite_keys=keys,
                 metrics=payload.metrics,
                 config_id=payload.config_id,
+                pipeline_id=payload.pipeline_id,
             )
             messages.append(Message(keys=keys, value=train_payload.to_json(), tags=["train"]))
         _LOGGER.debug(

@@ -14,17 +14,23 @@ from numalogic.connectors import (
 
 
 @dataclass
-class StreamConf:
-    config_id: str = "default"
-    source: ConnectorType = ConnectorType.druid  # TODO: do not allow redis connector here
-    window_size: int = 12
-    composite_keys: list[str] = field(default_factory=list)
+class MLPipelineConf:
+    pipeline_id: str = "default"
     metrics: list[str] = field(default_factory=list)
     numalogic_conf: NumalogicConf = field(default_factory=lambda: NumalogicConf())
 
 
 @dataclass
-class PipelineConf:
+class StreamConf:
+    config_id: str = "default"
+    source: ConnectorType = ConnectorType.druid  # TODO: do not allow redis connector here
+    window_size: int = 12
+    composite_keys: list[str] = field(default_factory=list)
+    ml_pipelines: dict[str, MLPipelineConf] = field(default_factory=dict)
+
+
+@dataclass
+class StreamPipelineConf:
     stream_confs: dict[str, StreamConf] = field(default_factory=dict)
     redis_conf: Optional[RedisConf] = None
     registry_conf: Optional[RegistryInfo] = field(
@@ -34,8 +40,8 @@ class PipelineConf:
     druid_conf: Optional[DruidConf] = None
 
 
-def load_pipeline_conf(path: str) -> PipelineConf:
+def load_pipeline_conf(path: str) -> StreamPipelineConf:
     conf = OmegaConf.load(path)
-    schema = OmegaConf.structured(PipelineConf)
+    schema = OmegaConf.structured(StreamPipelineConf)
     conf = OmegaConf.merge(schema, conf)
     return OmegaConf.to_object(conf)

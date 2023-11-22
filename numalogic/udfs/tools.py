@@ -26,7 +26,7 @@ class _DedupMetadata(NamedTuple):
 
 
 def get_df(
-    data_payload: dict, stream_conf: StreamConf, fill_value: float = 0.0
+        data_payload: dict, stream_conf: StreamConf, fill_value: float = 0.0
 ) -> tuple[DataFrame, list[int]]:
     """
     Function is used to create a dataframe from the data payload.
@@ -39,7 +39,7 @@ def get_df(
     -------
         dataframe and timestamps
     """
-    features = stream_conf.metrics
+    features = stream_conf.pipelines[data_payload["pipeline_id"]].metrics
     df = (
         pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
         .fillna(fill_value)
@@ -48,8 +48,23 @@ def get_df(
     return df[features].astype(np.float32), df["timestamp"].astype(int).tolist()
 
 
+def _construct_skeys(keys: list[str], payload: StreamPayload) -> list[str]:
+    """
+    Construct skeys
+    Args:
+        keys: keys
+        payload: StreamPayload
+    Returns
+    -------
+        list of static keys
+    """
+    skeys = keys.copy()
+    skeys.append(payload.pipeline_id)
+    return skeys
+
+
 def make_stream_payload(
-    data_payload: dict, raw_df: DataFrame, timestamps: list[int], keys: list[str]
+        data_payload: dict, raw_df: DataFrame, timestamps: list[int], keys: list[str]
 ) -> StreamPayload:
     """
     Make StreamPayload object
@@ -66,6 +81,7 @@ def make_stream_payload(
     return StreamPayload(
         uuid=data_payload["uuid"],
         config_id=data_payload["config_id"],
+        pipeline_id=data_payload["pipeline_id"],
         composite_keys=keys,
         data=np.ascontiguousarray(raw_df, dtype=np.float32),
         raw_data=np.ascontiguousarray(raw_df, dtype=np.float32),
@@ -77,11 +93,11 @@ def make_stream_payload(
 
 # TODO: move to base NumalogicUDF class and look into payload mutation
 def _load_artifact(
-    skeys: KEYS,
-    dkeys: KEYS,
-    payload: StreamPayload,
-    model_registry: ArtifactManager,
-    load_latest: bool,
+        skeys: KEYS,
+        dkeys: KEYS,
+        payload: StreamPayload,
+        model_registry: ArtifactManager,
+        load_latest: bool,
 ) -> tuple[Optional[ArtifactData], StreamPayload]:
     """
     Load artifact from redis
@@ -142,9 +158,9 @@ def _load_artifact(
             dkeys,
         )
         if (
-            artifact.metadata
-            and "artifact_versions" in artifact.metadata
-            and "artifact_versions" not in payload.metadata
+                artifact.metadata
+                and "artifact_versions" in artifact.metadata
+                and "artifact_versions" not in payload.metadata
         ):
             payload = replace(
                 payload,
@@ -219,13 +235,13 @@ class TrainMsgDeduplicator:
             return True
 
     def ack_read(
-        self,
-        key: KEYS,
-        uuid: str,
-        retrain_freq: int = 24,
-        retry: int = 600,
-        min_train_records: int = 180,
-        data_freq: int = 60,
+            self,
+            key: KEYS,
+            uuid: str,
+            retrain_freq: int = 24,
+            retry: int = 600,
+            min_train_records: int = 180,
+            data_freq: int = 60,
     ) -> bool:
         """
         Acknowledge the read message. Return True when the msg has to be trained.
@@ -251,10 +267,10 @@ class TrainMsgDeduplicator:
         )
         # If insufficient data: retry after (min_train_records-train_records) * data_granularity
         if (
-            _msg_train_records
-            and _msg_read_ts
-            and time.time() - float(_msg_read_ts)
-            < (min_train_records - int(_msg_train_records)) * data_freq
+                _msg_train_records
+                and _msg_read_ts
+                and time.time() - float(_msg_read_ts)
+                < (min_train_records - int(_msg_train_records)) * data_freq
         ):
             _LOGGER.info(
                 "%s - There was insufficient data for the key in the past: %s. Retrying fetching"
