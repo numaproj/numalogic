@@ -16,8 +16,9 @@ class ConnectorConf:
 
 @dataclass
 class PrometheusConf(ConnectorConf):
-    pushgateway: str
+    pushgateway: str = ""
     scrape_interval: int = 30
+    return_labels: list[str] = field(default_factory=list)
 
 
 @dataclass

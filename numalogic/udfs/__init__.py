@@ -9,7 +9,7 @@ from numalogic.udfs.factory import UDFFactory, ServerFactory
 from numalogic.udfs.inference import InferenceUDF
 from numalogic.udfs.postprocess import PostprocessUDF
 from numalogic.udfs.preprocess import PreprocessUDF
-from numalogic.udfs.trainer import TrainerUDF
+from numalogic.udfs.trainer import TrainerUDF, PromTrainerUDF, DruidTrainerUDF
 
 
 def set_logger() -> None:
@@ -27,6 +27,8 @@ __all__ = [
     "PreprocessUDF",
     "InferenceUDF",
     "TrainerUDF",
+    "PromTrainerUDF",
+    "DruidTrainerUDF",
     "PostprocessUDF",
     "UDFFactory",
     "StreamConf",

@@ -14,8 +14,6 @@ from torch.utils.data import DataLoader
 from numalogic.base import StatelessTransformer
 from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
 from numalogic.config._config import NumalogicConf
-from numalogic.config.factory import ConnectorFactory
-from numalogic.connectors import DruidFetcherConf
 from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
@@ -55,51 +53,11 @@ class TrainerUDF(NumalogicUDF):
             jitter_sec=jitter_sec,
             jitter_steps_sec=jitter_steps_sec,
         )
-        self.druid_conf = self.pl_conf.druid_conf
-
-        data_fetcher_cls = ConnectorFactory.get_cls("DruidFetcher")
-        try:
-            self.data_fetcher = data_fetcher_cls(
-                url=self.druid_conf.url, endpoint=self.druid_conf.endpoint
-            )
-        except AttributeError:
-            _LOGGER.warning("Druid config not found, data fetcher will not be initialized!")
-            self.data_fetcher = None
 
         self._model_factory = ModelFactory()
         self._preproc_factory = PreprocessFactory()
         self._thresh_factory = ThresholdFactory()
         self.train_msg_deduplicator = TrainMsgDeduplicator(r_client)
-
-    def register_druid_fetcher_conf(self, config_id: str, conf: DruidFetcherConf) -> None:
-        """
-        Register DruidFetcherConf with the UDF.
-
-        Args:
-            config_id: Config ID
-            conf: DruidFetcherConf object
-        """
-        self.pl_conf.druid_conf.id_fetcher[config_id] = conf
-
-    def get_druid_fetcher_conf(self, config_id: str) -> DruidFetcherConf:
-        """
-        Get DruidFetcherConf with the given ID.
-
-        Args:
-            config_id: Config ID
-
-        Returns
-        -------
-            DruidFetcherConf object
-
-        Raises
-        ------
-            ConfigNotFoundError: If config with the given ID is not found
-        """
-        try:
-            return self.pl_conf.druid_conf.id_fetcher[config_id]
-        except KeyError as err:
-            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
     @classmethod
     def compute(
@@ -220,7 +178,7 @@ class TrainerUDF(NumalogicUDF):
             numalogic_cfg=_conf.numalogic_conf,
         )
 
-        # Save artifacts`
+        # Save artifacts
         skeys = payload.composite_keys
 
         self.artifacts_to_save(
@@ -298,6 +256,7 @@ class TrainerUDF(NumalogicUDF):
             return False
         return True
 
+    # TODO: Use a custom imputer in transforms module
     @staticmethod
     def get_feature_arr(
         raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
@@ -307,12 +266,12 @@ class TrainerUDF(NumalogicUDF):
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
         feat_df = raw_df[metrics]
-        feat_df = feat_df.fillna(fill_value)
+        feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
         return feat_df.to_numpy(dtype=np.float32)
 
     def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
         """
-        Fetch data from druid.
+        Fetch data from a data connector.
 
         Args:
             payload: TrainerPayload object
@@ -321,37 +280,4 @@ class TrainerUDF(NumalogicUDF):
         -------
             Dataframe
         """
-        _start_time = time.perf_counter()
-        _conf = self.get_conf(payload.config_id)
-        _fetcher_conf = self.druid_conf.fetcher or (
-            self.get_druid_fetcher_conf(payload.config_id) if self.druid_conf.id_fetcher else None
-        )
-        if not _fetcher_conf:
-            raise ConfigNotFoundError(
-                f"Druid fetcher config not found for config_id: {payload.config_id}!"
-            )
-
-        try:
-            _df = self.data_fetcher.fetch(
-                datasource=_fetcher_conf.datasource,
-                filter_keys=_conf.composite_keys,
-                filter_values=payload.composite_keys,
-                dimensions=list(_fetcher_conf.dimensions),
-                delay=self.druid_conf.delay_hrs,
-                granularity=_fetcher_conf.granularity,
-                aggregations=dict(_fetcher_conf.aggregations),
-                group_by=list(_fetcher_conf.group_by),
-                pivot=_fetcher_conf.pivot,
-                hours=_conf.numalogic_conf.trainer.train_hours,
-            )
-        except Exception:
-            _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
-            return pd.DataFrame()
-
-        _LOGGER.debug(
-            "%s - Time taken to fetch data: %.3f sec, df shape: %s",
-            payload.uuid,
-            time.perf_counter() - _start_time,
-            _df.shape,
-        )
-        return _df
+        raise NotImplementedError("fetch_data method not implemented")
