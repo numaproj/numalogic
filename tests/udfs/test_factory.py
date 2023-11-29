@@ -6,9 +6,13 @@ from numalogic.udfs import UDFFactory, ServerFactory
 
 
 class TestUDFFactory(unittest.TestCase):
-    def test_get_cls(self):
+    def test_get_cls_01(self):
         udf_cls = UDFFactory.get_udf_cls("inference")
         self.assertEqual(udf_cls.__name__, "InferenceUDF")
+
+    def test_get_cls_02(self):
+        udf_cls = UDFFactory.get_udf_cls("trainer")
+        self.assertEqual(udf_cls.__name__, "DruidTrainerUDF")
 
     def test_get_cls_err(self):
         with self.assertRaises(ValueError):

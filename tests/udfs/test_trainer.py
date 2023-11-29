@@ -21,7 +21,7 @@ from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.udfs import StreamConf, PipelineConf
 from numalogic.udfs.tools import TrainMsgDeduplicator
-from numalogic.udfs.trainer import TrainerUDF
+from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
 
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
 
@@ -37,7 +37,7 @@ def mock_druid_fetch_data(nrows=5000):
     )
 
 
-class TrainTrainerUDF(unittest.TestCase):
+class TestDruidTrainerUDF(unittest.TestCase):
     def setUp(self):
         REDIS_CLIENT.flushall()
         payload = {
@@ -61,8 +61,8 @@ class TrainTrainerUDF(unittest.TestCase):
         self.pl_conf_1 = PipelineConf(**OmegaConf.merge(schema, conf_1))
         self.pl_conf_2 = PipelineConf(**OmegaConf.merge(schema, conf_2))
 
-        self.udf1 = TrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf_1))
-        self.udf2 = TrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf_2))
+        self.udf1 = DruidTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf_1))
+        self.udf2 = DruidTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(conf_2))
 
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
@@ -267,12 +267,11 @@ class TrainTrainerUDF(unittest.TestCase):
         self.udf1(self.keys, self.datum)
 
     def test_trainer_conf_err(self):
-        self.udf1 = TrainerUDF(
-            REDIS_CLIENT,
-            pl_conf=PipelineConf(redis_conf=RedisConf(url="redis://localhost:6379", port=0)),
-        )
         with self.assertRaises(ConfigNotFoundError):
-            self.udf1(self.keys, self.datum)
+            DruidTrainerUDF(
+                REDIS_CLIENT,
+                pl_conf=PipelineConf(redis_conf=RedisConf(url="redis://localhost:6379", port=0)),
+            )
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data(nrows=10)))
     def test_trainer_data_insufficient(self):
@@ -341,7 +340,7 @@ class TrainTrainerUDF(unittest.TestCase):
         with self.assertLogs(level="INFO") as log:
             self.udf1(self.keys, self.datum)
             self.assertEqual(
-                "WARNING:numalogic.udfs.trainer:some-uuid -"
+                "WARNING:numalogic.udfs.trainer._base:some-uuid -"
                 " Insufficient data found for keys ['5984175597303660107'], shape: (0, 0)",
                 log.output[-1],
             )
@@ -350,7 +349,7 @@ class TrainTrainerUDF(unittest.TestCase):
         with self.assertLogs(level="INFO") as log:
             self.udf2(self.keys, self.datum)
             self.assertEqual(
-                "WARNING:numalogic.udfs.trainer:some-uuid - Insufficient data found for keys "
+                "WARNING:numalogic.udfs.trainer._base:some-uuid - Insufficient data found for keys "
                 "['5984175597303660107'], shape: (0, 0)",
                 log.output[-1],
             )
@@ -372,7 +371,7 @@ class TrainTrainerUDF(unittest.TestCase):
             },
             druid_conf=DruidConf(url="some-url", endpoint="druid/v2", delay_hrs=3),
         )
-        udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
+        udf3 = DruidTrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
 
         self.assertRaises(ConfigNotFoundError, udf3, self.keys, self.datum)
 
@@ -402,13 +401,95 @@ class TrainTrainerUDF(unittest.TestCase):
                 },
             ),
         )
-        udf3 = TrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
+        udf3 = DruidTrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
         udf3.register_conf("druid-config", pl_conf.stream_confs["druid-config"])
         udf3.register_druid_fetcher_conf("some-id", pl_conf.druid_conf.id_fetcher["some-id"])
         with self.assertRaises(ConfigNotFoundError):
             udf3.get_druid_fetcher_conf("different-config")
         with self.assertRaises(ConfigNotFoundError):
             udf3(self.keys, self.datum)
+
+
+def _mock_mv_fetch_data():
+    return pd.read_csv(
+        os.path.join(TESTS_DIR, "resources", "data", "prom_mv.csv"),
+        index_col="timestamp",
+    )
+
+
+def _mock_default_fetch_data():
+    return pd.read_csv(
+        os.path.join(TESTS_DIR, "resources", "data", "prom_default.csv"),
+        index_col="timestamp",
+    )
+
+
+class TestPrometheusTrainerUDF(unittest.TestCase):
+    def setUp(self):
+        REDIS_CLIENT.flushall()
+        payload = {
+            "uuid": "some-uuid",
+            "config_id": "odl-graphql",
+            "composite_keys": ["odl-odlgraphql-usw2-e2e", "odl-graphql"],
+            "metrics": [
+                "namespace_app_rollouts_cpu_utilization",
+                "namespace_app_rollouts_http_request_error_rate",
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        }
+        self.keys = payload["composite_keys"]
+        self.datum = Datum(
+            keys=self.keys,
+            value=orjson.dumps(payload),
+            event_time=datetime.now(),
+            watermark=datetime.now(),
+        )
+        conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config3.yaml"))
+        self.conf = OmegaConf.merge(OmegaConf.structured(PipelineConf), conf)
+
+    @patch.object(PromTrainerUDF, "fetch_data", Mock(return_value=_mock_mv_fetch_data()))
+    def test_trainer_01(self):
+        udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
+        udf(self.keys, self.datum)
+        self.assertEqual(
+            3,
+            REDIS_CLIENT.exists(
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::StandardScaler::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::Conv1dVAE::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::MahalanobisThreshold::LATEST",
+            ),
+        )
+
+    @patch.object(PromTrainerUDF, "fetch_data", Mock(return_value=_mock_default_fetch_data()))
+    def test_trainer_02(self):
+        udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
+        datum = Datum(
+            keys=self.keys,
+            value=orjson.dumps(
+                {
+                    "uuid": "some-uuid",
+                    "config_id": "myconf",
+                    "composite_keys": [
+                        "dev-devx-druidreverseproxy-usw2-qal",
+                        "druid-reverse-proxy",
+                    ],
+                    "metrics": [
+                        "namespace_app_rollouts_http_request_error_rate",
+                    ],
+                }
+            ),
+            event_time=datetime.now(),
+            watermark=datetime.now(),
+        )
+        udf(["myns", "myapp"], datum)
+        self.assertEqual(
+            3,
+            REDIS_CLIENT.exists(
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::StandardScaler::LATEST",
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::SparseVanillaAE::LATEST",
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::StdDevThreshold::LATEST",
+            ),
+        )
 
 
 if __name__ == "__main__":

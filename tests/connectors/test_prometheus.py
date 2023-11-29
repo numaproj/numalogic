@@ -245,6 +245,42 @@ class TestPrometheusFetcher(unittest.TestCase):
         self.assertEqual(df.index.name, "timestamp")
         self.assertListEqual([10.5, 12.5], df[metric].to_list())
 
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_mv()))
+    def test_fetch_mv_01(self):
+        df = self.fetcher.fetch(
+            filters={"namespace": "odl-odlgraphql-usw2-e2e", "numalogic": "true"},
+            start=datetime.now() - timedelta(minutes=3),
+            aggregate=True,
+        )
+        self.assertEqual(df.shape, (7, 3))
+        self.assertListEqual(
+            df.columns.to_list(),
+            [
+                "namespace_app_rollouts_cpu_utilization",
+                "namespace_app_rollouts_http_request_error_rate",
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        )
+        self.assertEqual(df.index.name, "timestamp")
+
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_mv()))
+    def test_fetch_mv_02(self):
+        df = self.fetcher.fetch(
+            filters={"namespace": "odl-odlgraphql-usw2-e2e", "numalogic": "true"},
+            start=datetime.now() - timedelta(minutes=3),
+            aggregate=False,
+        )
+        self.assertEqual(df.shape, (10, 3))
+        self.assertListEqual(
+            df.columns.to_list(),
+            [
+                "namespace_app_rollouts_cpu_utilization",
+                "namespace_app_rollouts_http_request_error_rate",
+                "namespace_app_rollouts_memory_utilization",
+            ],
+        )
+        self.assertEqual(df.index.name, "timestamp")
+
     @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=[]))
     def test_fetch_no_data(self):
         df = self.fetcher.fetch(
@@ -432,6 +468,13 @@ class TestPrometheusFetcher(unittest.TestCase):
                 start=datetime.now() - timedelta(minutes=3),
                 aggregate=True,
             )
+
+    def test_query_comparision(self):
+        q1 = "{namespace='odl-odlgraphql-usw2-e2e',numalogic='true'}"
+        q2 = self.fetcher.build_query(
+            "", {"namespace": "odl-odlgraphql-usw2-e2e", "numalogic": "true"}
+        )
+        self.assertEqual(q1, q2)
 
 
 if __name__ == "__main__":

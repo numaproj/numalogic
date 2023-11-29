@@ -10,15 +10,9 @@
 # limitations under the License.
 
 import logging
+import warnings
 from typing import ClassVar
 
-from pynumaflow.mapper import Mapper, MultiProcMapper, AsyncMapper
-
-from numalogic.udfs import NumalogicUDF
-from numalogic.udfs.inference import InferenceUDF
-from numalogic.udfs.postprocess import PostprocessUDF
-from numalogic.udfs.preprocess import PreprocessUDF
-from numalogic.udfs.trainer import TrainerUDF
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,11 +20,18 @@ _LOGGER = logging.getLogger(__name__)
 class UDFFactory:
     """Factory class to fetch the right UDF."""
 
+    from numalogic.udfs import NumalogicUDF
+    from numalogic.udfs.inference import InferenceUDF
+    from numalogic.udfs.postprocess import PostprocessUDF
+    from numalogic.udfs.preprocess import PreprocessUDF
+    from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
+
     _UDF_MAP: ClassVar[dict[str, type[NumalogicUDF]]] = {
         "preprocess": PreprocessUDF,
         "inference": InferenceUDF,
         "postprocess": PostprocessUDF,
-        "trainer": TrainerUDF,
+        "druidtrainer": DruidTrainerUDF,
+        "promtrainer": PromTrainerUDF,
     }
 
     @classmethod
@@ -50,6 +51,12 @@ class UDFFactory:
         ------
             ValueError: If the UDF name is invalid
         """
+        if udf_name == "trainer":
+            warnings.warn(
+                "UDF name 'trainer' is deprecated. Use 'druidtrainer' or 'promtrainer' instead."
+            )
+            udf_name = "druidtrainer"
+
         try:
             return cls._UDF_MAP[udf_name]
         except KeyError as err:
@@ -80,6 +87,8 @@ class UDFFactory:
 
 class ServerFactory:
     """Factory class to fetch the right pynumaflow function server/mapper."""
+
+    from pynumaflow.mapper import Mapper, MultiProcMapper, AsyncMapper
 
     _SERVER_MAP: ClassVar[dict] = {
         "sync": Mapper,
