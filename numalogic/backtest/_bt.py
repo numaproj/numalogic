@@ -46,5 +46,5 @@ def univariate(
 
 @app.command()
 def multivariate():
-    """CLI entry point for backtest run for multiple metrics in a multivariate fashion."""
+    """CLI entry point for backtest run for multiple monitoring in a multivariate fashion."""
     multivar_backtest()

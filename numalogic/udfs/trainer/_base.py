@@ -21,6 +21,7 @@ from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifac
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload
+from numalogic.udfs.metrics import TRAIN_TIME, REDIS_ERROR_COUNTER
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
 _LOGGER = logging.getLogger(__name__)
@@ -116,6 +117,7 @@ class TrainerUDF(NumalogicUDF):
 
         return dict_artifacts
 
+    @TRAIN_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         Main run function for the UDF.
@@ -186,6 +188,7 @@ class TrainerUDF(NumalogicUDF):
             dict_artifacts=dict_artifacts,
             model_registry=self.model_registry,
             payload=payload,
+            vertex_name=self.__class__.__name__,
         )
         if self.train_msg_deduplicator.ack_train(key=payload.composite_keys, uuid=payload.uuid):
             _LOGGER.info(
@@ -215,6 +218,7 @@ class TrainerUDF(NumalogicUDF):
         dict_artifacts: dict[str, KeyedArtifact],
         model_registry,
         payload: TrainerPayload,
+        vertex_name: str,
     ) -> None:
         """
         Save artifacts.
@@ -243,6 +247,9 @@ class TrainerUDF(NumalogicUDF):
                 uuid=payload.uuid,
             )
         except RedisRegistryError:
+            REDIS_ERROR_COUNTER.increment_counter(
+                vertex_name, payload.composite_keys, payload.config_id
+            )
             _LOGGER.exception("%s - Error while saving Model with skeys: %s", payload.uuid, skeys)
         else:
             _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)

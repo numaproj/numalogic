@@ -117,7 +117,7 @@ class TestInferenceUDF(unittest.TestCase):
         self.assertEqual(1, len(msgs))
         payload = StreamPayload(**orjson.loads(msgs[0].value))
         self.assertEqual(Header.MODEL_INFERENCE, payload.header)
-        self.assertIsNone(payload.status)
+        self.assertIsNotNone(payload.status)
         self.assertTupleEqual((12, 2), payload.get_data().shape)
 
     @patch.object(

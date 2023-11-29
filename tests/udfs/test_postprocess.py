@@ -73,8 +73,8 @@ DATA = {
         1691623740000.0,
         1691623800000.0,
     ],
-    "status": "artifact_found",
-    "header": "model_inference",
+    "status": Status.ARTIFACT_STALE,
+    "header": Header.MODEL_INFERENCE,
     "metadata": {
         "artifact_versions": {"StdDevThreshold": "0"},
         "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},

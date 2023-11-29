@@ -4,6 +4,7 @@ import sys
 
 from numalogic._constants import BASE_CONF_DIR
 from numalogic.connectors.redis import get_redis_client_from_conf
+from numalogic.monitoring import start_metrics_server
 from numalogic.udfs import load_pipeline_conf, UDFFactory, ServerFactory, set_logger
 
 LOGGER = logging.getLogger(__name__)
@@ -36,7 +37,7 @@ def start_server():
         server_type = "sync"
 
     LOGGER.info("Running %s on %s server with config path %s", step, server_type, CONF_FILE_PATH)
-
+    start_metrics_server(8779)
     server = init_server(step, server_type)
     server.start()
 

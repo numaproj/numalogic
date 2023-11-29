@@ -57,7 +57,7 @@ class ProgressDetails(ProgressBar):
 
 class ConsoleLogger(Logger):
     """
-    A lightweight console logger for training metrics.
+    A lightweight console logger for training monitoring.
 
     Args:
     ----

@@ -41,9 +41,7 @@ class NumalogicUDF(metaclass=ABCMeta):
     def __call__(
         self, keys: list[str], datum: Datum
     ) -> Union[Coroutine[None, None, Messages], Messages]:
-        if self.is_async:
-            return self.aexec(keys, datum)
-        return self.exec(keys, datum)
+        return self.aexec(keys, datum) if self.is_async else self.exec(keys, datum)
 
     # TODO: remove, and have an update config method
     def register_conf(self, config_id: str, conf: StreamConf) -> None:

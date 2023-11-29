@@ -16,6 +16,13 @@ from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
+from numalogic.udfs.metrics import (
+    MODEL_STATUS_COUNTER,
+    RUNTIME_ERROR_COUNTER,
+    MSG_PROCESSED_COUNTER,
+    MSG_IN_COUNTER,
+    INFER_TIME,
+)
 from numalogic.udfs.tools import _load_artifact
 
 _LOGGER = logging.getLogger(__name__)
@@ -78,6 +85,7 @@ class InferenceUDF(NumalogicUDF):
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)
 
+    @INFER_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         Perform inference on the input data.
@@ -95,6 +103,10 @@ class InferenceUDF(NumalogicUDF):
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
 
+        MSG_IN_COUNTER.increment_counter(
+            self.__class__.__name__, payload.composite_keys, payload.config_id
+        )
+
         _LOGGER.debug(
             "%s - Received Msg: { CompositeKeys: %s, Metrics: %s }",
             payload.uuid,
@@ -104,6 +116,12 @@ class InferenceUDF(NumalogicUDF):
 
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST:
+            _LOGGER.info(
+                "%s - Forwarding the message with the key: %s to next vertex because header is: %s",
+                payload.uuid,
+                payload.composite_keys,
+                payload.header,
+            )
             return Messages(Message(keys=keys, value=payload.to_json()))
 
         _conf = self.get_conf(payload.config_id)
@@ -114,6 +132,7 @@ class InferenceUDF(NumalogicUDF):
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
+            vertex=self.__class__.__name__,
         )
 
         # Send training request if artifact loading is not successful
@@ -121,12 +140,21 @@ class InferenceUDF(NumalogicUDF):
             payload = replace(
                 payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
             )
+            MODEL_STATUS_COUNTER.increment_counter(
+                payload.status.value,
+                self.__class__.__name__,
+                payload.composite_keys,
+                payload.config_id,
+            )
             return Messages(Message(keys=keys, value=payload.to_json()))
 
         # Perform inference
         try:
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
         except RuntimeError:
+            RUNTIME_ERROR_COUNTER.increment_counter(
+                self.__class__.__name__, keys, payload.config_id
+            )
             _LOGGER.exception(
                 "%s - Runtime inference error! Keys: %s, Metric: %s",
                 payload.uuid,
@@ -134,11 +162,19 @@ class InferenceUDF(NumalogicUDF):
                 payload.metrics,
             )
             payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
+            MODEL_STATUS_COUNTER.increment_counter(
+                payload.status.value,
+                self.__class__.__name__,
+                payload.composite_keys,
+                payload.config_id,
+            )
+            return Messages(Message(keys=keys, value=payload.to_json()))
         else:
+            print(payload.status)
             status = (
                 Status.ARTIFACT_STALE
                 if self.is_model_stale(artifact_data, payload)
-                else payload.status
+                else Status.ARTIFACT_FOUND
             )
             payload = replace(
                 payload,
@@ -149,6 +185,7 @@ class InferenceUDF(NumalogicUDF):
                     **payload.metadata,
                 },
             )
+            print(payload.status)
 
         _LOGGER.info(
             "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s }",
@@ -160,6 +197,12 @@ class InferenceUDF(NumalogicUDF):
             "%s - Time taken in inference: %.4f sec",
             payload.uuid,
             time.perf_counter() - _start_time,
+        )
+        MODEL_STATUS_COUNTER.increment_counter(
+            payload.status.value, self.__class__.__name__, payload.composite_keys, payload.config_id
+        )
+        MSG_PROCESSED_COUNTER.increment_counter(
+            self.__class__.__name__, payload.composite_keys, payload.config_id
         )
         return Messages(Message(keys=keys, value=payload.to_json()))
 

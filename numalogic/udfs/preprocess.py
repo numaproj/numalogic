@@ -10,6 +10,16 @@ from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
 from numalogic.config import PreprocessFactory, RegistryFactory
+from numalogic.udfs.metrics import (
+    DATASHAPE_ERROR_COUNTER,
+    MSG_DROPPED_COUNTER,
+    SOURCE_COUNTER,
+    MSG_PROCESSED_COUNTER,
+    MSG_IN_COUNTER,
+    RUNTIME_ERROR_COUNTER,
+    MODEL_STATUS_COUNTER,
+    PREPROC_TIME,
+)
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
@@ -58,6 +68,7 @@ class PreprocessUDF(NumalogicUDF):
             preproc_clfs.append(_clf)
         return make_pipeline(*preproc_clfs)
 
+    @PREPROC_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         The preprocess function here receives data from the data source.
@@ -86,12 +97,16 @@ class PreprocessUDF(NumalogicUDF):
         raw_df, timestamps = get_df(
             data_payload=data_payload, stream_conf=self.get_conf(data_payload["config_id"])
         )
-
+        MSG_IN_COUNTER.increment_counter(self.__class__.__name__, keys, data_payload["config_id"])
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < self.get_conf(data_payload["config_id"]).window_size or raw_df.shape[
             1
         ] != len(self.get_conf(data_payload["config_id"]).metrics):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
+            DATASHAPE_ERROR_COUNTER.increment_counter(keys, data_payload["config_id"])
+            MSG_DROPPED_COUNTER.increment_counter(
+                self.__class__.__name__, keys, data_payload["config_id"]
+            )
             return Messages(Message.to_drop())
         # Make StreamPayload object
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
@@ -106,6 +121,7 @@ class PreprocessUDF(NumalogicUDF):
                 payload=payload,
                 model_registry=self.model_registry,
                 load_latest=LOAD_LATEST,
+                vertex=self.__class__.__name__,
             )
             if preproc_artifact:
                 preproc_clf = preproc_artifact.artifact
@@ -114,19 +130,25 @@ class PreprocessUDF(NumalogicUDF):
                     payload.uuid,
                     preproc_artifact.extras.get("source"),
                 )
+                payload = replace(payload, status=Status.ARTIFACT_FOUND)
             else:
-                # TODO check again what error is causing this and if retraining is required
                 payload = replace(
                     payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
                 )
+                MODEL_STATUS_COUNTER.increment_counter(
+                    payload.status.value,
+                    self.__class__.__name__,
+                    payload.composite_keys,
+                    payload.config_id,
+                )
                 return Messages(Message(keys=keys, value=payload.to_json()))
-
         # Model will not be in registry
         else:
             # Load configuration for the config_id
             _LOGGER.info("%s - Initializing model from config: %s", payload.uuid, payload)
+            SOURCE_COUNTER.increment_counter("config", keys, payload.config_id)
             preproc_clf = self._load_model_from_config(_conf.numalogic_conf.preprocess)
-
+            payload = replace(payload, status=Status.ARTIFACT_FOUND)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
             payload = replace(
@@ -143,6 +165,9 @@ class PreprocessUDF(NumalogicUDF):
                 x_scaled,
             )
         except RuntimeError:
+            RUNTIME_ERROR_COUNTER.increment_counter(
+                self.__class__.__name__, keys, payload.config_id
+            )
             _LOGGER.exception(
                 "%s - Runtime inference error! Keys: %s, Metric: %s",
                 payload.uuid,
@@ -151,12 +176,25 @@ class PreprocessUDF(NumalogicUDF):
             )
             # TODO check again what error is causing this and if retraining is required
             payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
+            MODEL_STATUS_COUNTER.increment_counter(
+                payload.status.value,
+                self.__class__.__name__,
+                payload.composite_keys,
+                payload.config_id,
+            )
             return Messages(Message(keys=keys, value=payload.to_json()))
         _LOGGER.debug(
             "%s - Time taken to execute Preprocess: %.4f sec",
             payload.uuid,
             time.perf_counter() - _start_time,
         )
+        MODEL_STATUS_COUNTER.increment_counter(
+            payload.status.value, self.__class__.__name__, payload.composite_keys, payload.config_id
+        )
+        MSG_PROCESSED_COUNTER.increment_counter(
+            self.__class__.__name__, payload.composite_keys, payload.config_id
+        )
+        print(payload)
         return Messages(Message(keys=keys, value=payload.to_json()))
 
     @classmethod

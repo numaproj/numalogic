@@ -13,6 +13,12 @@ from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import KEYS, redis_client_t
 from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import StreamPayload
+from numalogic.udfs.metrics import (
+    SOURCE_COUNTER,
+    MODEL_INFO,
+    REDIS_ERROR_COUNTER,
+    EXCEPTION_COUNTER,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -76,12 +82,20 @@ def make_stream_payload(
 
 
 # TODO: move to base NumalogicUDF class and look into payload mutation
+def _get_artifact_stats(artifact_data):
+    return {
+        "source": None or artifact_data.extras.get("source"),
+        "version": None or artifact_data.extras.get("version"),
+    }
+
+
 def _load_artifact(
     skeys: KEYS,
     dkeys: KEYS,
     payload: StreamPayload,
     model_registry: ArtifactManager,
     load_latest: bool,
+    vertex: str,
 ) -> tuple[Optional[ArtifactData], StreamPayload]:
     """
     Load artifact from redis
@@ -110,12 +124,13 @@ def _load_artifact(
         load_latest = True
     try:
         if load_latest:
-            artifact = model_registry.load(skeys=skeys, dkeys=dkeys)
+            artifact_data = model_registry.load(skeys=skeys, dkeys=dkeys)
         else:
-            artifact = model_registry.load(
+            artifact_data = model_registry.load(
                 skeys=skeys, dkeys=dkeys, latest=False, version=version_to_load
             )
     except RedisRegistryError:
+        REDIS_ERROR_COUNTER.increment_counter(vertex, skeys, payload.config_id)
         _LOGGER.warning(
             "%s - Error while fetching artifact, Keys: %s, Metrics: %s",
             payload.uuid,
@@ -125,6 +140,7 @@ def _load_artifact(
         return None, payload
 
     except Exception:
+        EXCEPTION_COUNTER.increment_counter(vertex, skeys, payload.config_id)
         _LOGGER.exception(
             "%s - Unhandled exception while fetching preproc artifact, Keys: %s, Metric: %s,",
             payload.uuid,
@@ -136,24 +152,34 @@ def _load_artifact(
         _LOGGER.info(
             "%s - Loaded Model. Source: %s , version: %s, Keys: %s, %s",
             payload.uuid,
-            artifact.extras.get("source"),
-            artifact.extras.get("version"),
+            artifact_data.extras.get("source"),
+            artifact_data.extras.get("version"),
             skeys,
             dkeys,
         )
+        SOURCE_COUNTER.increment_counter(
+            artifact_data.extras.get("source"),
+            ":".join(skeys) + "::".join(dkeys),
+            payload.config_id,
+        )
+        MODEL_INFO.add_info(
+            ":".join(skeys) + "::".join(dkeys),
+            payload.config_id,
+            data=_get_artifact_stats(artifact_data),
+        )
         if (
-            artifact.metadata
-            and "artifact_versions" in artifact.metadata
+            artifact_data.metadata
+            and "artifact_versions" in artifact_data.metadata
             and "artifact_versions" not in payload.metadata
         ):
             payload = replace(
                 payload,
                 metadata={
-                    "artifact_versions": artifact.metadata["artifact_versions"],
+                    "artifact_versions": artifact_data.metadata["artifact_versions"],
                     **payload.metadata,
                 },
             )
-        return artifact, payload
+        return artifact_data, payload
 
 
 class TrainMsgDeduplicator:

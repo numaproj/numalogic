@@ -42,7 +42,7 @@ def store_in_redis(pl_conf, registry):
         _clf = preproc_factory.get_instance(_cfg)
         preproc_clfs.append(_clf)
     if any(
-        [_conf.stateful for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess]
+        _conf.stateful for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess
     ):
         preproc_clf = make_pipeline(*preproc_clfs)
         preproc_clf.fit(np.asarray([[1, 3], [4, 6]]))

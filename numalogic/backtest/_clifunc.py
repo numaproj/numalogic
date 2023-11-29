@@ -37,7 +37,7 @@ def univar_backtest(
 
 
 def multivar_backtest(*_, **__):
-    """Run backtest for multiple metrics in a multivariate fashion."""
+    """Run backtest for multiple monitoring in a multivariate fashion."""
     raise NotImplementedError
 
 

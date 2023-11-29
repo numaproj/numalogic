@@ -91,7 +91,7 @@ class TestDruid(unittest.TestCase):
             filter_keys=["assetId"],
             filter_values=["5984175597303660107"],
             dimensions=["ciStatus"],
-            datasource="tech-ip-customer-interaction-metrics",
+            datasource="tech-ip-customer-interaction-monitoring",
             aggregations={"count": aggregators.doublesum("count")},
             group_by=["timestamp", "ciStatus"],
             hours=2,
@@ -109,7 +109,7 @@ class TestDruid(unittest.TestCase):
             filter_keys=["assetAlias"],
             filter_values=["Intuit.accounting.core.qbowebapp"],
             dimensions=["assetAlias", "env"],
-            datasource="coredevx-rum-perf-metrics",
+            datasource="coredevx-rum-perf-monitoring",
             aggregations={
                 "agg0": _agg.quantiles_doubles_sketch("valuesDoublesSketch", "agg0", 256)
             },
@@ -156,7 +156,7 @@ class TestDruid(unittest.TestCase):
             filter_keys=["assetId"],
             filter_values=["5984175597303660107"],
             dimensions=["ciStatus"],
-            datasource="customer-interaction-metrics",
+            datasource="customer-interaction-monitoring",
             aggregations={"count": aggregators.doublesum("count")},
             group_by=["timestamp", "ciStatus"],
             hours=36,
