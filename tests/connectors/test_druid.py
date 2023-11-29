@@ -91,7 +91,7 @@ class TestDruid(unittest.TestCase):
             filter_keys=["assetId"],
             filter_values=["5984175597303660107"],
             dimensions=["ciStatus"],
-            datasource="tech-ip-customer-interaction-monitoring",
+            datasource="tech-ip-customer-interaction-metrics",
             aggregations={"count": aggregators.doublesum("count")},
             group_by=["timestamp", "ciStatus"],
             hours=2,
@@ -109,7 +109,7 @@ class TestDruid(unittest.TestCase):
             filter_keys=["assetAlias"],
             filter_values=["Intuit.accounting.core.qbowebapp"],
             dimensions=["assetAlias", "env"],
-            datasource="coredevx-rum-perf-monitoring",
+            datasource="coredevx-rum-perf-metrics",
             aggregations={
                 "agg0": _agg.quantiles_doubles_sketch("valuesDoublesSketch", "agg0", 256)
             },
@@ -132,10 +132,14 @@ class TestDruid(unittest.TestCase):
                 fields=[Filter(type="selector", dimension="ciStatus", value="false")],
             ),
             "granularity": "all",
-            "aggregations": dict(),
-            "post_aggregations": dict(),
+            "aggregations": {},
+            "post_aggregations": {},
             "intervals": "",
-            "context": {"timeout": 10000, "configIds": list(filter_pairs), "source": "numalogic"},
+            "context": {
+                "timeout": 10000,
+                "configIds": list(filter_pairs),
+                "source": "numalogic",
+            },
         }
 
         actual = build_params(
@@ -156,7 +160,7 @@ class TestDruid(unittest.TestCase):
             filter_keys=["assetId"],
             filter_values=["5984175597303660107"],
             dimensions=["ciStatus"],
-            datasource="customer-interaction-monitoring",
+            datasource="customer-interaction-metrics",
             aggregations={"count": aggregators.doublesum("count")},
             group_by=["timestamp", "ciStatus"],
             hours=36,
