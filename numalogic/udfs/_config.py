@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -11,6 +12,9 @@ from numalogic.connectors import (
     PrometheusConf,
     DruidConf,
 )
+from numalogic.tools.exceptions import ConfigNotFoundError
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -34,8 +38,20 @@ class PipelineConf:
     druid_conf: Optional[DruidConf] = None
 
 
-def load_pipeline_conf(path: str) -> PipelineConf:
-    conf = OmegaConf.load(path)
+def load_pipeline_conf(*paths: str) -> PipelineConf:
+    confs = []
+    for _path in paths:
+        try:
+            conf = OmegaConf.load(_path)
+        except FileNotFoundError:
+            _logger.warning("Config file path: %s not found. Skipping...", _path)
+            continue
+        confs.append(conf)
+
+    if not confs:
+        _err_msg = f"None of the given conf paths exist: {paths}"
+        raise ConfigNotFoundError(_err_msg)
+
     schema = OmegaConf.structured(PipelineConf)
-    conf = OmegaConf.merge(schema, conf)
+    conf = OmegaConf.merge(schema, *confs)
     return OmegaConf.to_object(conf)
