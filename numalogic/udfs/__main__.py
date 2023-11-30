@@ -1,22 +1,22 @@
 import logging
 import os
 import sys
+from typing import Final
 
-from numalogic._constants import BASE_CONF_DIR
+from numalogic._constants import DEFAULT_BASE_CONF_PATH, DEFAULT_APP_CONF_PATH
 from numalogic.connectors.redis import get_redis_client_from_conf
 from numalogic.udfs import load_pipeline_conf, UDFFactory, ServerFactory, set_logger
 
 LOGGER = logging.getLogger(__name__)
 
-# TODO support user config paths
-CONF_FILE_PATH = os.getenv(
-    "CONF_PATH", default=os.path.join(BASE_CONF_DIR, "default-configs", "config.yaml")
-)
+BASE_CONF_FILE_PATH: Final[str] = os.getenv("BASE_CONF_PATH", default=DEFAULT_BASE_CONF_PATH)
+APP_CONF_FILE_PATH: Final[str] = os.getenv("APP_CONF_PATH", default=DEFAULT_APP_CONF_PATH)
 
 
 def init_server(step: str, server_type: str):
     """Initializes and returns the server."""
-    pipeline_conf = load_pipeline_conf(CONF_FILE_PATH)
+    LOGGER.info("Merging config with file paths: %s, %s", BASE_CONF_FILE_PATH, APP_CONF_FILE_PATH)
+    pipeline_conf = load_pipeline_conf(BASE_CONF_FILE_PATH, APP_CONF_FILE_PATH)
     LOGGER.info("Pipeline config: %s", pipeline_conf)
 
     redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
@@ -25,7 +25,7 @@ def init_server(step: str, server_type: str):
     return ServerFactory.get_server_instance(server_type, handler=udf)
 
 
-def start_server():
+def start_server() -> None:
     """Starts the pynumaflow server."""
     set_logger()
     step = sys.argv[1]
@@ -35,7 +35,7 @@ def start_server():
     except (IndexError, TypeError):
         server_type = "sync"
 
-    LOGGER.info("Running %s on %s server with config path %s", step, server_type, CONF_FILE_PATH)
+    LOGGER.info("Running %s on %s server", step, server_type)
 
     server = init_server(step, server_type)
     server.start()
