@@ -13,7 +13,7 @@ from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import KEYS, redis_client_t
 from numalogic.udfs._config import StreamConf
 from numalogic.udfs.entities import StreamPayload
-from numalogic.udfs.metrics import (
+from numalogic.udfs._metrics import (
     SOURCE_COUNTER,
     MODEL_INFO,
     REDIS_ERROR_COUNTER,

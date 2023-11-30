@@ -1,11 +1,11 @@
 from prometheus_client import Histogram
-from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric
+from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, PromSummaryMetric
 
 __all__ = [
     "SOURCE_COUNTER",
     "INSUFFICIENT_DATA_COUNTER",
     "MODEL_STATUS_COUNTER",
-    "NAN_COUNTER",
+    "NAN_SUMMARY",
     "DATASHAPE_ERROR_COUNTER",
     "MSG_DROPPED_COUNTER",
     "REDIS_ERROR_COUNTER",
@@ -17,6 +17,11 @@ __all__ = [
     "INFER_TIME",
     "PREPROC_TIME",
     "POSTPROC_TIME",
+    "DATAFRAME_SHAPE_SUMMARY",
+    "FETCH_TIME",
+    "FETCH_EXCEPTION_COUNTER",
+    "TRAIN_TIME",
+    "INF_SUMMARY",
 ]
 
 SOURCE_COUNTER = PromCounterMetric(
@@ -36,9 +41,6 @@ MODEL_STATUS_COUNTER = PromCounterMetric(
 )
 
 # Data Counters
-NAN_COUNTER = PromCounterMetric(
-    "numalogic_nan_count", "Count nan's in data", ["composite_key", "config_id"]
-)
 DATASHAPE_ERROR_COUNTER = PromCounterMetric(
     "numalogic_datashape_error_count", "Count datashape errors", ["composite_key", "config_id"]
 )
@@ -59,7 +61,24 @@ RUNTIME_ERROR_COUNTER = PromCounterMetric(
     ["vertex", "composite_key", "config_id"],
 )
 
-#
+# TRAIN COUNTERS
+FETCH_EXCEPTION_COUNTER = PromCounterMetric(
+    "numalogic_fetch_exception_count",
+    "count exceptions during fetch call",
+    ["composite_key", "config_id"],
+)
+
+# TRAIN SUMMARY
+DATAFRAME_SHAPE_SUMMARY = PromSummaryMetric(
+    "numalogic_dataframe_shape", "shape of dataframe", ["composite_key", "config_id"]
+)
+NAN_SUMMARY = PromSummaryMetric(
+    "numalogic_nan_count", "Count nan's in data", ["composite_key", "config_id"]
+)
+INF_SUMMARY = PromSummaryMetric(
+    "numalogic_inf_count", "Count inf's in data", ["composite_key", "config_id"]
+)
+
 MSG_IN_COUNTER = PromCounterMetric(
     "numalogic_msg_in_counter", "Count msgs in", ["vertex", "composite_key", "config_id"]
 )
@@ -106,6 +125,12 @@ POSTPROC_TIME = Histogram(
 )
 TRAIN_TIME = Histogram(
     "numalogic_histogram_train",
+    "Histogram",
+    buckets=buckets,
+)
+
+FETCH_TIME = Histogram(
+    "numalogic_histogram_train_fetch",
     "Histogram",
     buckets=buckets,
 )

@@ -16,7 +16,7 @@ from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
-from numalogic.udfs.metrics import (
+from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,

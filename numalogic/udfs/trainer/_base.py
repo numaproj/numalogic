@@ -21,7 +21,16 @@ from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifac
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload
-from numalogic.udfs.metrics import TRAIN_TIME, REDIS_ERROR_COUNTER
+from numalogic.udfs._metrics import (
+    TRAIN_TIME,
+    REDIS_ERROR_COUNTER,
+    INSUFFICIENT_DATA_COUNTER,
+    NAN_SUMMARY,
+    INF_SUMMARY,
+    MSG_IN_COUNTER,
+    MSG_DROPPED_COUNTER,
+    MSG_PROCESSED_COUNTER,
+)
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
 _LOGGER = logging.getLogger(__name__)
@@ -135,6 +144,9 @@ class TrainerUDF(NumalogicUDF):
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
         _conf = self.get_conf(payload.config_id)
+        MSG_IN_COUNTER.increment_counter(
+            self.__class__.__name__, payload.composite_keys, payload.config_id
+        )
 
         # set the retry and retrain_freq
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
@@ -147,6 +159,9 @@ class TrainerUDF(NumalogicUDF):
             min_train_records=_conf.numalogic_conf.trainer.min_train_size,
             data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
+            MSG_DROPPED_COUNTER.increment_counter(
+                self.__class__.__name__, payload.composite_keys, payload.config_id
+            )
             return Messages(Message.to_drop())
 
         # Fetch data
@@ -160,11 +175,17 @@ class TrainerUDF(NumalogicUDF):
                 payload.composite_keys,
                 df.shape,
             )
+            INSUFFICIENT_DATA_COUNTER.increment_counter(payload.composite_keys, payload.config_id)
             return Messages(Message.to_drop())
+        MSG_DROPPED_COUNTER.increment_counter(
+            self.__class__.__name__, payload.composite_keys, payload.config_id
+        )
         _LOGGER.info("%s - Data fetched, shape: %s", payload.uuid, df.shape)
 
         # Construct feature array
-        x_train = self.get_feature_arr(df, payload.metrics)
+        x_train, nan_counter, inf_counter = self.get_feature_arr(df, payload.metrics)
+        NAN_SUMMARY.add_observation(payload.composite_keys, payload.config_id, value=nan_counter)
+        INF_SUMMARY.add_observation(payload.composite_keys, payload.config_id, value=inf_counter)
 
         # Initialize artifacts
         preproc_clf = self._construct_preproc_clf(_conf)
@@ -198,6 +219,9 @@ class TrainerUDF(NumalogicUDF):
 
         _LOGGER.debug(
             "%s - Time taken in trainer: %.4f sec", payload.uuid, time.perf_counter() - _start_time
+        )
+        MSG_PROCESSED_COUNTER.increment_counter(
+            self.__class__.__name__, payload.composite_keys, payload.config_id
         )
         return Messages(Message.to_drop())
 
@@ -250,7 +274,9 @@ class TrainerUDF(NumalogicUDF):
             REDIS_ERROR_COUNTER.increment_counter(
                 vertex_name, payload.composite_keys, payload.config_id
             )
-            _LOGGER.exception("%s - Error while saving Model with skeys: %s", payload.uuid, skeys)
+            _LOGGER.exception(
+                "%s - Error while saving artifact with skeys: %s", payload.uuid, skeys
+            )
         else:
             _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)
 
@@ -263,18 +289,35 @@ class TrainerUDF(NumalogicUDF):
             return False
         return True
 
-    # TODO: Use a custom imputer in transforms module
+    # TODO: Use a custom impute in transforms module
     @staticmethod
     def get_feature_arr(
         raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
-    ) -> npt.NDArray[float]:
-        """Get feature array from the raw dataframe."""
+    ) -> tuple[npt.NDArray[float], float, float]:
+        """
+        Get feature array from the raw dataframe.
+
+        Args:
+            raw_df: Raw dataframe
+            metrics: List of metrics
+            fill_value: Value to fill missing values with
+
+        Returns
+        -------
+            Numpy array
+            nan_counter: Number of nan values
+            inf_counter: Number of inf values
+        """
+        nan_counter = 0
         for col in metrics:
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
+                nan_counter += len(raw_df)
         feat_df = raw_df[metrics]
+        nan_counter += raw_df.isna().sum().all()
+        inf_counter = np.isinf(feat_df).sum().all()
         feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
-        return feat_df.to_numpy(dtype=np.float32)
+        return feat_df.to_numpy(dtype=np.float32), nan_counter, inf_counter
 
     def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
         """

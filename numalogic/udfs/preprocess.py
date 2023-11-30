@@ -10,7 +10,7 @@ from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
 from numalogic.config import PreprocessFactory, RegistryFactory
-from numalogic.udfs.metrics import (
+from numalogic.udfs._metrics import (
     DATASHAPE_ERROR_COUNTER,
     MSG_DROPPED_COUNTER,
     SOURCE_COUNTER,

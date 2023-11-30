@@ -10,7 +10,7 @@ from orjson import orjson
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
-from numalogic.udfs.metrics import (
+from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,

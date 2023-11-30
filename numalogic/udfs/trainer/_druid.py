@@ -10,6 +10,7 @@ from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import TrainerPayload
+from numalogic.udfs._metrics import FETCH_TIME, FETCH_EXCEPTION_COUNTER, DATAFRAME_SHAPE_SUMMARY
 from numalogic.udfs.trainer._base import TrainerUDF
 
 _LOGGER = logging.getLogger(__name__)
@@ -69,6 +70,7 @@ class DruidTrainerUDF(TrainerUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
+    @FETCH_TIME.time()
     def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
         """
         Fetch data from druid.
@@ -106,6 +108,7 @@ class DruidTrainerUDF(TrainerUDF):
                 hours=_conf.numalogic_conf.trainer.train_hours,
             )
         except Exception:
+            FETCH_EXCEPTION_COUNTER.increment_counter(payload.composite_keys, payload.config_id)
             _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
             return pd.DataFrame()
 
@@ -115,4 +118,8 @@ class DruidTrainerUDF(TrainerUDF):
             time.perf_counter() - _start_time,
             _df.shape,
         )
+        DATAFRAME_SHAPE_SUMMARY.add_observation(
+            payload.composite_keys, payload.config_id, value=_df.shape[0]
+        )
+
         return _df
