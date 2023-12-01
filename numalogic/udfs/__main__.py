@@ -37,8 +37,11 @@ def start_server() -> None:
         server_type = "sync"
 
     LOGGER.info("Running %s on %s server", step, server_type)
+
+    # TODO: Add metrics server port to config
+    # Start the metrics server at port 8779
     start_metrics_server(8779)
-    
+
     server = init_server(step, server_type)
     server.start()
 
