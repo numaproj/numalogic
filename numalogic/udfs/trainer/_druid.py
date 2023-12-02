@@ -3,7 +3,6 @@ import time
 from typing import Optional
 
 import pandas as pd
-from prometheus_client import Histogram
 
 from numalogic.config.factory import ConnectorFactory
 from numalogic.connectors import DruidFetcherConf
@@ -11,14 +10,13 @@ from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import TrainerPayload
-from numalogic.udfs._metrics import FETCH_EXCEPTION_COUNTER, DATAFRAME_SHAPE_SUMMARY, buckets
+from numalogic.udfs._metrics import (
+    FETCH_EXCEPTION_COUNTER,
+    DATAFRAME_SHAPE_SUMMARY,
+    FETCH_TIME_SUMMARY,
+)
 from numalogic.udfs.trainer._base import TrainerUDF
 
-FETCH_TIME = Histogram(
-    "numalogic_histogram_train_fetch",
-    "Histogram",
-    buckets=buckets,
-)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -76,7 +74,6 @@ class DruidTrainerUDF(TrainerUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
 
-    @FETCH_TIME.time()
     def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
         """
         Fetch data from druid.
@@ -119,11 +116,14 @@ class DruidTrainerUDF(TrainerUDF):
             )
             _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
             return pd.DataFrame()
-
+        _end_time = time.perf_counter() - _start_time
+        FETCH_TIME_SUMMARY.add_observation(
+            ":".join(payload.composite_keys), payload.config_id, value=_end_time
+        )
         _LOGGER.debug(
             "%s - Time taken to fetch data: %.3f sec, df shape: %s",
             payload.uuid,
-            time.perf_counter() - _start_time,
+            _end_time,
             _df.shape,
         )
         DATAFRAME_SHAPE_SUMMARY.add_observation(

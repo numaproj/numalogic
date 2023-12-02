@@ -7,7 +7,6 @@ from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 from orjson import orjson
-from prometheus_client import Histogram
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
@@ -16,7 +15,7 @@ from numalogic.udfs._metrics import (
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
-    buckets,
+    UDF_TIME,
 )
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
@@ -30,11 +29,6 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
-POSTPROC_TIME = Histogram(
-    "numalogic_histogram_postproc",
-    "Histogram",
-    buckets=buckets,
-)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -68,7 +62,7 @@ class PostprocessUDF(NumalogicUDF):
         )
         self.postproc_factory = PostprocessFactory()
 
-    @POSTPROC_TIME.time()
+    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         The postprocess function here receives data from the previous udf.

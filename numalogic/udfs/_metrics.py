@@ -1,3 +1,5 @@
+from prometheus_client import Histogram
+
 from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, PromSummaryMetric
 
 __all__ = [
@@ -13,7 +15,8 @@ __all__ = [
     "MSG_IN_COUNTER",
     "MSG_PROCESSED_COUNTER",
     "MODEL_INFO",
-    "buckets",
+    "UDF_TIME",
+    "FETCH_TIME_SUMMARY",
     "DATAFRAME_SHAPE_SUMMARY",
     "FETCH_EXCEPTION_COUNTER",
     "INF_SUMMARY",
@@ -73,6 +76,7 @@ NAN_SUMMARY = PromSummaryMetric(
 INF_SUMMARY = PromSummaryMetric(
     "numalogic_inf_count", "Count inf's in data", ["composite_key", "config_id"]
 )
+FETCH_TIME_SUMMARY = PromSummaryMetric("fetch_time", "Fetch time", ["composite_key", "config_id"])
 
 MSG_IN_COUNTER = PromCounterMetric(
     "numalogic_msg_in_counter", "Count msgs in", ["vertex", "composite_key", "config_id"]
@@ -101,4 +105,10 @@ buckets = (
     0.075,
     0.1,
     0.25,
+)
+
+UDF_TIME = Histogram(
+    "numalogic_histogram_udf_time",
+    "Histogram",
+    buckets=buckets,
 )

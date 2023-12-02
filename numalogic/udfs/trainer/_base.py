@@ -7,7 +7,6 @@ import numpy as np
 import numpy.typing as npt
 import orjson
 import pandas as pd
-from prometheus_client import Histogram
 from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
@@ -30,15 +29,10 @@ from numalogic.udfs._metrics import (
     MSG_IN_COUNTER,
     MSG_DROPPED_COUNTER,
     MSG_PROCESSED_COUNTER,
-    buckets,
+    UDF_TIME,
 )
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
-TRAIN_TIME = Histogram(
-    "numalogic_histogram_train",
-    "Histogram",
-    buckets=buckets,
-)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -132,7 +126,7 @@ class TrainerUDF(NumalogicUDF):
 
         return dict_artifacts
 
-    @TRAIN_TIME.time()
+    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         Main run function for the UDF.

@@ -8,7 +8,6 @@ import numpy as np
 import torch
 from numpy import typing as npt
 from orjson import orjson
-from prometheus_client import Histogram
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import RegistryFactory
@@ -22,15 +21,10 @@ from numalogic.udfs._metrics import (
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
-    buckets,
+    UDF_TIME,
 )
 from numalogic.udfs.tools import _load_artifact
 
-INFER_TIME = Histogram(
-    "numalogic_histogram_infer",
-    "Histogram",
-    buckets=buckets,
-)
 _LOGGER = logging.getLogger(__name__)
 
 # TODO: move to config
@@ -91,7 +85,7 @@ class InferenceUDF(NumalogicUDF):
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)
 
-    @INFER_TIME.time()
+    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         Perform inference on the input data.

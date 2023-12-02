@@ -6,7 +6,6 @@ from typing import Optional
 
 import orjson
 from numpy.typing import NDArray
-from prometheus_client import Histogram
 from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
@@ -19,7 +18,7 @@ from numalogic.udfs._metrics import (
     MSG_IN_COUNTER,
     RUNTIME_ERROR_COUNTER,
     MODEL_STATUS_COUNTER,
-    buckets,
+    UDF_TIME,
 )
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
@@ -33,11 +32,6 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
-PREPROC_TIME = Histogram(
-    "numalogic_histogram_preproc",
-    "Histogram",
-    buckets=buckets,
-)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -74,7 +68,7 @@ class PreprocessUDF(NumalogicUDF):
             preproc_clfs.append(_clf)
         return make_pipeline(*preproc_clfs)
 
-    @PREPROC_TIME.time()
+    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         The preprocess function here receives data from the data source.
