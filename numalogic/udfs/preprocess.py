@@ -6,6 +6,7 @@ from typing import Optional
 
 import orjson
 from numpy.typing import NDArray
+from prometheus_client import Histogram
 from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
@@ -18,7 +19,7 @@ from numalogic.udfs._metrics import (
     MSG_IN_COUNTER,
     RUNTIME_ERROR_COUNTER,
     MODEL_STATUS_COUNTER,
-    PREPROC_TIME,
+    buckets,
 )
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
@@ -32,6 +33,11 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
+PREPROC_TIME = Histogram(
+    "numalogic_histogram_preproc",
+    "Histogram",
+    buckets=buckets,
+)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -97,15 +103,17 @@ class PreprocessUDF(NumalogicUDF):
         raw_df, timestamps = get_df(
             data_payload=data_payload, stream_conf=self.get_conf(data_payload["config_id"])
         )
-        MSG_IN_COUNTER.increment_counter(self.__class__.__name__, keys, data_payload["config_id"])
+        MSG_IN_COUNTER.increment_counter(
+            self.__class__.__name__, ":".join(keys), data_payload["config_id"]
+        )
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < self.get_conf(data_payload["config_id"]).window_size or raw_df.shape[
             1
         ] != len(self.get_conf(data_payload["config_id"]).metrics):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
-            DATASHAPE_ERROR_COUNTER.increment_counter(keys, data_payload["config_id"])
+            DATASHAPE_ERROR_COUNTER.increment_counter(":".join(keys), data_payload["config_id"])
             MSG_DROPPED_COUNTER.increment_counter(
-                self.__class__.__name__, keys, data_payload["config_id"]
+                self.__class__.__name__, ":".join(keys), data_payload["config_id"]
             )
             return Messages(Message.to_drop())
         # Make StreamPayload object
@@ -138,7 +146,7 @@ class PreprocessUDF(NumalogicUDF):
                 MODEL_STATUS_COUNTER.increment_counter(
                     payload.status.value,
                     self.__class__.__name__,
-                    payload.composite_keys,
+                    ":".join(payload.composite_keys),
                     payload.config_id,
                 )
                 return Messages(Message(keys=keys, value=payload.to_json()))
@@ -146,7 +154,9 @@ class PreprocessUDF(NumalogicUDF):
         else:
             # Load configuration for the config_id
             _LOGGER.info("%s - Initializing model from config: %s", payload.uuid, payload)
-            SOURCE_COUNTER.increment_counter("config", keys, payload.config_id)
+            SOURCE_COUNTER.increment_counter(
+                "config", ":".join(payload.composite_keys), payload.config_id
+            )
             preproc_clf = self._load_model_from_config(_conf.numalogic_conf.preprocess)
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
         try:
@@ -166,7 +176,7 @@ class PreprocessUDF(NumalogicUDF):
             )
         except RuntimeError:
             RUNTIME_ERROR_COUNTER.increment_counter(
-                self.__class__.__name__, keys, payload.config_id
+                self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
             )
             _LOGGER.exception(
                 "%s - Runtime inference error! Keys: %s, Metric: %s",
@@ -179,7 +189,7 @@ class PreprocessUDF(NumalogicUDF):
             MODEL_STATUS_COUNTER.increment_counter(
                 payload.status.value,
                 self.__class__.__name__,
-                payload.composite_keys,
+                ":".join(payload.composite_keys),
                 payload.config_id,
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
@@ -189,10 +199,13 @@ class PreprocessUDF(NumalogicUDF):
             time.perf_counter() - _start_time,
         )
         MODEL_STATUS_COUNTER.increment_counter(
-            payload.status.value, self.__class__.__name__, payload.composite_keys, payload.config_id
+            payload.status.value,
+            self.__class__.__name__,
+            ":".join(payload.composite_keys),
+            payload.config_id,
         )
         MSG_PROCESSED_COUNTER.increment_counter(
-            self.__class__.__name__, payload.composite_keys, payload.config_id
+            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
         )
         print(payload)
         return Messages(Message(keys=keys, value=payload.to_json()))

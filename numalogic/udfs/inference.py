@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from numpy import typing as npt
 from orjson import orjson
+from prometheus_client import Histogram
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import RegistryFactory
@@ -21,10 +22,15 @@ from numalogic.udfs._metrics import (
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
-    INFER_TIME,
+    buckets,
 )
 from numalogic.udfs.tools import _load_artifact
 
+INFER_TIME = Histogram(
+    "numalogic_histogram_infer",
+    "Histogram",
+    buckets=buckets,
+)
 _LOGGER = logging.getLogger(__name__)
 
 # TODO: move to config
@@ -104,7 +110,7 @@ class InferenceUDF(NumalogicUDF):
         payload = StreamPayload(**orjson.loads(datum.value))
 
         MSG_IN_COUNTER.increment_counter(
-            self.__class__.__name__, payload.composite_keys, payload.config_id
+            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
         )
 
         _LOGGER.debug(
@@ -143,7 +149,7 @@ class InferenceUDF(NumalogicUDF):
             MODEL_STATUS_COUNTER.increment_counter(
                 payload.status.value,
                 self.__class__.__name__,
-                payload.composite_keys,
+                ":".join(payload.composite_keys),
                 payload.config_id,
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
@@ -153,7 +159,7 @@ class InferenceUDF(NumalogicUDF):
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
         except RuntimeError:
             RUNTIME_ERROR_COUNTER.increment_counter(
-                self.__class__.__name__, keys, payload.config_id
+                self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
             )
             _LOGGER.exception(
                 "%s - Runtime inference error! Keys: %s, Metric: %s",
@@ -165,12 +171,11 @@ class InferenceUDF(NumalogicUDF):
             MODEL_STATUS_COUNTER.increment_counter(
                 payload.status.value,
                 self.__class__.__name__,
-                payload.composite_keys,
+                ":".join(payload.composite_keys),
                 payload.config_id,
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
         else:
-            print(payload.status)
             status = (
                 Status.ARTIFACT_STALE
                 if self.is_model_stale(artifact_data, payload)
@@ -185,7 +190,6 @@ class InferenceUDF(NumalogicUDF):
                     **payload.metadata,
                 },
             )
-            print(payload.status)
 
         _LOGGER.info(
             "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s }",
@@ -199,10 +203,13 @@ class InferenceUDF(NumalogicUDF):
             time.perf_counter() - _start_time,
         )
         MODEL_STATUS_COUNTER.increment_counter(
-            payload.status.value, self.__class__.__name__, payload.composite_keys, payload.config_id
+            payload.status.value,
+            self.__class__.__name__,
+            ":".join(payload.composite_keys),
+            payload.config_id,
         )
         MSG_PROCESSED_COUNTER.increment_counter(
-            self.__class__.__name__, payload.composite_keys, payload.config_id
+            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
         )
         return Messages(Message(keys=keys, value=payload.to_json()))
 

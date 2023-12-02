@@ -5,15 +5,21 @@ from typing import Optional
 
 import pandas as pd
 import pytz
+from prometheus_client import Histogram
 
 from numalogic.config.factory import ConnectorFactory
 from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import TrainerPayload
-from numalogic.udfs._metrics import DATAFRAME_SHAPE_SUMMARY, FETCH_TIME, FETCH_EXCEPTION_COUNTER
+from numalogic.udfs._metrics import DATAFRAME_SHAPE_SUMMARY, FETCH_EXCEPTION_COUNTER, buckets
 from numalogic.udfs.trainer._base import TrainerUDF
 
+FETCH_TIME = Histogram(
+    "numalogic_histogram_train_fetch",
+    "Histogram",
+    buckets=buckets,
+)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -73,7 +79,9 @@ class PromTrainerUDF(TrainerUDF):
                 },
             )
         except Exception:
-            FETCH_EXCEPTION_COUNTER.increment_counter(payload.composite_keys, payload.config_id)
+            FETCH_EXCEPTION_COUNTER.increment_counter(
+                ":".join(payload.composite_keys), payload.config_id
+            )
             _LOGGER.exception("%s - Error while fetching data from Prometheus", payload.uuid)
             return pd.DataFrame()
 
@@ -84,6 +92,6 @@ class PromTrainerUDF(TrainerUDF):
             _df.shape,
         )
         DATAFRAME_SHAPE_SUMMARY.add_observation(
-            payload.composite_keys, payload.config_id, value=_df.shape
+            ":".join(payload.composite_keys), payload.config_id, value=_df.shape[0]
         )
         return _df

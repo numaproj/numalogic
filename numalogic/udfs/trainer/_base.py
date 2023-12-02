@@ -7,6 +7,7 @@ import numpy as np
 import numpy.typing as npt
 import orjson
 import pandas as pd
+from prometheus_client import Histogram
 from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
@@ -22,7 +23,6 @@ from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs._metrics import (
-    TRAIN_TIME,
     REDIS_ERROR_COUNTER,
     INSUFFICIENT_DATA_COUNTER,
     NAN_SUMMARY,
@@ -30,9 +30,15 @@ from numalogic.udfs._metrics import (
     MSG_IN_COUNTER,
     MSG_DROPPED_COUNTER,
     MSG_PROCESSED_COUNTER,
+    buckets,
 )
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
+TRAIN_TIME = Histogram(
+    "numalogic_histogram_train",
+    "Histogram",
+    buckets=buckets,
+)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -145,7 +151,7 @@ class TrainerUDF(NumalogicUDF):
         payload = TrainerPayload(**orjson.loads(datum.value))
         _conf = self.get_conf(payload.config_id)
         MSG_IN_COUNTER.increment_counter(
-            self.__class__.__name__, payload.composite_keys, payload.config_id
+            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
         )
 
         # set the retry and retrain_freq
@@ -160,7 +166,7 @@ class TrainerUDF(NumalogicUDF):
             data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
             MSG_DROPPED_COUNTER.increment_counter(
-                self.__class__.__name__, payload.composite_keys, payload.config_id
+                self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
             )
             return Messages(Message.to_drop())
 
@@ -175,7 +181,9 @@ class TrainerUDF(NumalogicUDF):
                 payload.composite_keys,
                 df.shape,
             )
-            INSUFFICIENT_DATA_COUNTER.increment_counter(payload.composite_keys, payload.config_id)
+            INSUFFICIENT_DATA_COUNTER.increment_counter(
+                ":".join(payload.composite_keys), payload.config_id
+            )
             return Messages(Message.to_drop())
         MSG_DROPPED_COUNTER.increment_counter(
             self.__class__.__name__, payload.composite_keys, payload.config_id
@@ -184,8 +192,12 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct feature array
         x_train, nan_counter, inf_counter = self.get_feature_arr(df, payload.metrics)
-        NAN_SUMMARY.add_observation(payload.composite_keys, payload.config_id, value=nan_counter)
-        INF_SUMMARY.add_observation(payload.composite_keys, payload.config_id, value=inf_counter)
+        NAN_SUMMARY.add_observation(
+            ":".join(payload.composite_keys), payload.config_id, value=nan_counter
+        )
+        INF_SUMMARY.add_observation(
+            ":".join(payload.composite_keys), payload.config_id, value=inf_counter
+        )
 
         # Initialize artifacts
         preproc_clf = self._construct_preproc_clf(_conf)
@@ -221,7 +233,7 @@ class TrainerUDF(NumalogicUDF):
             "%s - Time taken in trainer: %.4f sec", payload.uuid, time.perf_counter() - _start_time
         )
         MSG_PROCESSED_COUNTER.increment_counter(
-            self.__class__.__name__, payload.composite_keys, payload.config_id
+            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
         )
         return Messages(Message.to_drop())
 
@@ -272,7 +284,7 @@ class TrainerUDF(NumalogicUDF):
             )
         except RedisRegistryError:
             REDIS_ERROR_COUNTER.increment_counter(
-                vertex_name, payload.composite_keys, payload.config_id
+                vertex_name, ":".join(payload.composite_keys), payload.config_id
             )
             _LOGGER.exception(
                 "%s - Error while saving artifact with skeys: %s", payload.uuid, skeys

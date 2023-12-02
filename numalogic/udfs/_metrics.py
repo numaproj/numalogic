@@ -1,4 +1,3 @@
-from prometheus_client import Histogram
 from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, PromSummaryMetric
 
 __all__ = [
@@ -14,13 +13,9 @@ __all__ = [
     "MSG_IN_COUNTER",
     "MSG_PROCESSED_COUNTER",
     "MODEL_INFO",
-    "INFER_TIME",
-    "PREPROC_TIME",
-    "POSTPROC_TIME",
+    "buckets",
     "DATAFRAME_SHAPE_SUMMARY",
-    "FETCH_TIME",
     "FETCH_EXCEPTION_COUNTER",
-    "TRAIN_TIME",
     "INF_SUMMARY",
 ]
 
@@ -106,31 +101,4 @@ buckets = (
     0.075,
     0.1,
     0.25,
-)
-
-INFER_TIME = Histogram(
-    "numalogic_histogram_infer",
-    "Histogram",
-    buckets=buckets,
-)
-PREPROC_TIME = Histogram(
-    "numalogic_histogram_preproc",
-    "Histogram",
-    buckets=buckets,
-)
-POSTPROC_TIME = Histogram(
-    "numalogic_histogram_postproc",
-    "Histogram",
-    buckets=buckets,
-)
-TRAIN_TIME = Histogram(
-    "numalogic_histogram_train",
-    "Histogram",
-    buckets=buckets,
-)
-
-FETCH_TIME = Histogram(
-    "numalogic_histogram_train_fetch",
-    "Histogram",
-    buckets=buckets,
 )

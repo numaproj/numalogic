@@ -7,6 +7,7 @@ from typing import Optional
 import numpy as np
 from numpy.typing import NDArray
 from orjson import orjson
+from prometheus_client import Histogram
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
@@ -15,7 +16,7 @@ from numalogic.udfs._metrics import (
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
-    POSTPROC_TIME,
+    buckets,
 )
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
@@ -29,6 +30,11 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
+POSTPROC_TIME = Histogram(
+    "numalogic_histogram_postproc",
+    "Histogram",
+    buckets=buckets,
+)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -83,7 +89,7 @@ class PostprocessUDF(NumalogicUDF):
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
         MSG_IN_COUNTER.increment_counter(
-            self.__class__.__name__, payload.composite_keys, payload.config_id
+            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
         )
 
         # load configs
@@ -109,7 +115,7 @@ class PostprocessUDF(NumalogicUDF):
             MODEL_STATUS_COUNTER.increment_counter(
                 payload.status.value,
                 self.__class__.__name__,
-                payload.composite_keys,
+                ":".join(payload.composite_keys),
                 payload.config_id,
             )
 
@@ -123,7 +129,7 @@ class PostprocessUDF(NumalogicUDF):
                 )
             except RuntimeError:
                 RUNTIME_ERROR_COUNTER.increment_counter(
-                    self.__class__.__name__, keys, payload.config_id
+                    self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
                 )
                 _LOGGER.exception(
                     "%s - Runtime postprocess error! Keys: %s, Metric: %s",
@@ -172,7 +178,7 @@ class PostprocessUDF(NumalogicUDF):
             time.perf_counter() - _start_time,
         )
         MSG_PROCESSED_COUNTER.increment_counter(
-            self.__class__.__name__, payload.composite_keys, payload.config_id
+            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
         )
         return messages
 
