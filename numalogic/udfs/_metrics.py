@@ -30,17 +30,21 @@ SOURCE_COUNTER = PromCounterMetric(
 
 # Trainer Counters
 INSUFFICIENT_DATA_COUNTER = PromCounterMetric(
-    "numalogic_insufficient_data_count", "Count insufficient data", ["composite_key", "config_id"]
+    "numalogic_insufficient_data_count",
+    "Count insufficient data while Training",
+    ["composite_key", "config_id"],
 )
 MODEL_STATUS_COUNTER = PromCounterMetric(
     "numalogic_new_model_count",
-    "Count new models",
+    "Count status of the model",
     ["status", "vertex", "composite_key", "config_id"],
 )
 
 # Data Counters
 DATASHAPE_ERROR_COUNTER = PromCounterMetric(
-    "numalogic_datashape_error_count", "Count datashape errors", ["composite_key", "config_id"]
+    "numalogic_datashape_error_count",
+    "Count datashape errors in preprocess",
+    ["composite_key", "config_id"],
 )
 MSG_DROPPED_COUNTER = PromCounterMetric(
     "numalogic_msg_dropped_count", "Count dropped msgs", ["vertex", "composite_key", "config_id"]
@@ -68,21 +72,25 @@ FETCH_EXCEPTION_COUNTER = PromCounterMetric(
 
 # TRAIN SUMMARY
 DATAFRAME_SHAPE_SUMMARY = PromSummaryMetric(
-    "numalogic_dataframe_shape", "shape of dataframe", ["composite_key", "config_id"]
+    "numalogic_dataframe_shape", "len of dataframe for training", ["composite_key", "config_id"]
 )
 NAN_SUMMARY = PromSummaryMetric(
-    "numalogic_nan_count", "Count nan's in data", ["composite_key", "config_id"]
+    "numalogic_nan_count", "Count nan's in train data", ["composite_key", "config_id"]
 )
 INF_SUMMARY = PromSummaryMetric(
-    "numalogic_inf_count", "Count inf's in data", ["composite_key", "config_id"]
+    "numalogic_inf_count", "Count inf's in train data", ["composite_key", "config_id"]
 )
-FETCH_TIME_SUMMARY = PromSummaryMetric("fetch_time", "Fetch time", ["composite_key", "config_id"])
+FETCH_TIME_SUMMARY = PromSummaryMetric(
+    "Train data fetch_time", "Fetch time", ["composite_key", "config_id"]
+)
 
 MSG_IN_COUNTER = PromCounterMetric(
-    "numalogic_msg_in_counter", "Count msgs in", ["vertex", "composite_key", "config_id"]
+    "numalogic_msg_in_counter", "Count msgs flowing in", ["vertex", "composite_key", "config_id"]
 )
 MSG_PROCESSED_COUNTER = PromCounterMetric(
-    "numalogic_msg_processed_counter", "Count msgs ", ["vertex", "composite_key", "config_id"]
+    "numalogic_msg_processed_counter",
+    "Count msgs processed",
+    ["vertex", "composite_key", "config_id"],
 )
 
 # Info
@@ -109,6 +117,6 @@ buckets = (
 
 UDF_TIME = Histogram(
     "numalogic_histogram_udf_time",
-    "Histogram",
+    "Histogram for udf processing time",
     buckets=buckets,
 )

@@ -45,6 +45,8 @@ class PromInfoMetric:
         labels: List of labels
     """
 
+    __slots__ = ("name", "description", "labels", "info")
+
     def __init__(self, name: str, description: str, labels: Optional[list[str]]) -> None:
         self.name = name
         self.description = description
@@ -75,6 +77,8 @@ class PromSummaryMetric:
         description: Description of the metric
         labels: List of labels
     """
+
+    __slots__ = ("name", "description", "labels", "summary")
 
     def __init__(self, name: str, description: str, labels: Optional[list[str]]) -> None:
         self.name = name
