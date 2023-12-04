@@ -22,6 +22,7 @@ from numalogic.udfs._metrics import (
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
     UDF_TIME,
+    _increment_counter,
 )
 from numalogic.udfs.tools import _load_artifact
 
@@ -45,7 +46,7 @@ class InferenceUDF(NumalogicUDF):
     __slots__ = ("registry_conf", "model_registry")
 
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
-        super().__init__(is_async=False, pl_conf=pl_conf)
+        super().__init__(is_async=False, pl_conf=pl_conf, _vtx="inference")
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
@@ -103,8 +104,13 @@ class InferenceUDF(NumalogicUDF):
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
 
-        MSG_IN_COUNTER.increment_counter(
-            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
+        _increment_counter(
+            counter=MSG_IN_COUNTER,
+            labels=(
+                self._vtx,
+                ":".join(payload.composite_keys),
+                payload.config_id,
+            ),
         )
 
         _LOGGER.debug(
@@ -132,7 +138,7 @@ class InferenceUDF(NumalogicUDF):
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
-            vertex=self.__class__.__name__,
+            vertex=self._vtx,
         )
 
         # Send training request if artifact loading is not successful
@@ -140,11 +146,14 @@ class InferenceUDF(NumalogicUDF):
             payload = replace(
                 payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
             )
-            MODEL_STATUS_COUNTER.increment_counter(
-                payload.status.value,
-                self.__class__.__name__,
-                ":".join(payload.composite_keys),
-                payload.config_id,
+            _increment_counter(
+                counter=MODEL_STATUS_COUNTER,
+                labels=(
+                    payload.status.value,
+                    self._vtx,
+                    ":".join(payload.composite_keys),
+                    payload.config_id,
+                ),
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
 
@@ -152,8 +161,13 @@ class InferenceUDF(NumalogicUDF):
         try:
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
         except RuntimeError:
-            RUNTIME_ERROR_COUNTER.increment_counter(
-                self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
+            _increment_counter(
+                counter=RUNTIME_ERROR_COUNTER,
+                labels=(
+                    self._vtx,
+                    ":".join(payload.composite_keys),
+                    payload.config_id,
+                ),
             )
             _LOGGER.exception(
                 "%s - Runtime inference error! Keys: %s, Metric: %s",
@@ -162,11 +176,14 @@ class InferenceUDF(NumalogicUDF):
                 payload.metrics,
             )
             payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
-            MODEL_STATUS_COUNTER.increment_counter(
-                payload.status.value,
-                self.__class__.__name__,
-                ":".join(payload.composite_keys),
-                payload.config_id,
+            _increment_counter(
+                counter=MODEL_STATUS_COUNTER,
+                labels=(
+                    payload.status.value,
+                    self._vtx,
+                    ":".join(payload.composite_keys),
+                    payload.config_id,
+                ),
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
         else:
@@ -196,14 +213,22 @@ class InferenceUDF(NumalogicUDF):
             payload.uuid,
             time.perf_counter() - _start_time,
         )
-        MODEL_STATUS_COUNTER.increment_counter(
-            payload.status.value,
-            self.__class__.__name__,
-            ":".join(payload.composite_keys),
-            payload.config_id,
+        _increment_counter(
+            counter=MODEL_STATUS_COUNTER,
+            labels=(
+                payload.status.value,
+                self._vtx,
+                ":".join(payload.composite_keys),
+                payload.config_id,
+            ),
         )
-        MSG_PROCESSED_COUNTER.increment_counter(
-            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
+        _increment_counter(
+            counter=MSG_PROCESSED_COUNTER,
+            labels=(
+                self._vtx,
+                ":".join(payload.composite_keys),
+                payload.config_id,
+            ),
         )
         return Messages(Message(keys=keys, value=payload.to_json()))
 

@@ -18,6 +18,8 @@ from numalogic.udfs._metrics import (
     MODEL_INFO,
     REDIS_ERROR_COUNTER,
     EXCEPTION_COUNTER,
+    _increment_counter,
+    _add_info,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -130,7 +132,7 @@ def _load_artifact(
                 skeys=skeys, dkeys=dkeys, latest=False, version=version_to_load
             )
     except RedisRegistryError:
-        REDIS_ERROR_COUNTER.increment_counter(vertex, ":".join(skeys), payload.config_id)
+        _increment_counter(REDIS_ERROR_COUNTER, labels=(vertex, ":".join(skeys), payload.config_id))
         _LOGGER.warning(
             "%s - Error while fetching artifact, Keys: %s, Metrics: %s",
             payload.uuid,
@@ -140,7 +142,7 @@ def _load_artifact(
         return None, payload
 
     except Exception:
-        EXCEPTION_COUNTER.increment_counter(vertex, ":".join(skeys), payload.config_id)
+        _increment_counter(EXCEPTION_COUNTER, labels=(vertex, ":".join(skeys), payload.config_id))
         _LOGGER.exception(
             "%s - Unhandled exception while fetching preproc artifact, Keys: %s, Metric: %s,",
             payload.uuid,
@@ -157,14 +159,13 @@ def _load_artifact(
             skeys,
             dkeys,
         )
-        SOURCE_COUNTER.increment_counter(
-            artifact_data.extras.get("source"),
-            ":".join(skeys) + "::" + ":".join(dkeys),
-            payload.config_id,
+        _increment_counter(
+            counter=SOURCE_COUNTER,
+            labels=(artifact_data.extras.get("source"), ":".join(skeys), payload.config_id),
         )
-        MODEL_INFO.add_info(
-            ":".join(skeys) + "::" + ":".join(dkeys),
-            payload.config_id,
+        _add_info(
+            info=MODEL_INFO,
+            labels=(":".join(skeys), payload.config_id),
             data=_get_artifact_stats(artifact_data),
         )
         if (

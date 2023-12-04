@@ -14,6 +14,8 @@ from numalogic.udfs._metrics import (
     FETCH_EXCEPTION_COUNTER,
     DATAFRAME_SHAPE_SUMMARY,
     FETCH_TIME_SUMMARY,
+    _increment_counter,
+    _add_summary,
 )
 from numalogic.udfs.trainer._base import TrainerUDF
 
@@ -111,14 +113,17 @@ class DruidTrainerUDF(TrainerUDF):
                 hours=_conf.numalogic_conf.trainer.train_hours,
             )
         except Exception:
-            FETCH_EXCEPTION_COUNTER.increment_counter(
-                ":".join(payload.composite_keys), payload.config_id
+            _increment_counter(
+                counter=FETCH_EXCEPTION_COUNTER,
+                labels=(":".join(payload.composite_keys), payload.config_id),
             )
             _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
             return pd.DataFrame()
         _end_time = time.perf_counter() - _start_time
-        FETCH_TIME_SUMMARY.add_observation(
-            ":".join(payload.composite_keys), payload.config_id, value=_end_time
+        _add_summary(
+            FETCH_TIME_SUMMARY,
+            labels=(":".join(payload.composite_keys), payload.config_id),
+            data=_end_time,
         )
         _LOGGER.debug(
             "%s - Time taken to fetch data: %.3f sec, df shape: %s",
@@ -126,8 +131,10 @@ class DruidTrainerUDF(TrainerUDF):
             _end_time,
             _df.shape,
         )
-        DATAFRAME_SHAPE_SUMMARY.add_observation(
-            ":".join(payload.composite_keys), payload.config_id, value=_df.shape[0]
+        _add_summary(
+            DATAFRAME_SHAPE_SUMMARY,
+            labels=(":".join(payload.composite_keys), payload.config_id),
+            data=_df.shape[0],
         )
 
         return _df

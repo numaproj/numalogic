@@ -19,6 +19,7 @@ from numalogic.udfs._metrics import (
     RUNTIME_ERROR_COUNTER,
     MODEL_STATUS_COUNTER,
     UDF_TIME,
+    _increment_counter,
 )
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
@@ -47,7 +48,7 @@ class PreprocessUDF(NumalogicUDF):
     __slots__ = ("registry_conf", "model_registry", "preproc_factory")
 
     def __init__(self, r_client: redis_client_t, pl_conf: Optional[PipelineConf] = None):
-        super().__init__(pl_conf=pl_conf)
+        super().__init__(pl_conf=pl_conf, _vtx="preprocess")
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
@@ -97,17 +98,21 @@ class PreprocessUDF(NumalogicUDF):
         raw_df, timestamps = get_df(
             data_payload=data_payload, stream_conf=self.get_conf(data_payload["config_id"])
         )
-        MSG_IN_COUNTER.increment_counter(
-            self.__class__.__name__, ":".join(keys), data_payload["config_id"]
+        _increment_counter(
+            counter=MSG_IN_COUNTER, labels=(self._vtx, ":".join(keys), data_payload["config_id"])
         )
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < self.get_conf(data_payload["config_id"]).window_size or raw_df.shape[
             1
         ] != len(self.get_conf(data_payload["config_id"]).metrics):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
-            DATASHAPE_ERROR_COUNTER.increment_counter(":".join(keys), data_payload["config_id"])
-            MSG_DROPPED_COUNTER.increment_counter(
-                self.__class__.__name__, ":".join(keys), data_payload["config_id"]
+            _increment_counter(
+                counter=DATASHAPE_ERROR_COUNTER,
+                labels=(self._vtx, ":".join(keys), data_payload["config_id"]),
+            )
+            _increment_counter(
+                counter=MSG_DROPPED_COUNTER,
+                labels=(self._vtx, ":".join(keys), data_payload["config_id"]),
             )
             return Messages(Message.to_drop())
         # Make StreamPayload object
@@ -123,7 +128,7 @@ class PreprocessUDF(NumalogicUDF):
                 payload=payload,
                 model_registry=self.model_registry,
                 load_latest=LOAD_LATEST,
-                vertex=self.__class__.__name__,
+                vertex=self._vtx,
             )
             if preproc_artifact:
                 preproc_clf = preproc_artifact.artifact
@@ -137,11 +142,14 @@ class PreprocessUDF(NumalogicUDF):
                 payload = replace(
                     payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
                 )
-                MODEL_STATUS_COUNTER.increment_counter(
-                    payload.status.value,
-                    self.__class__.__name__,
-                    ":".join(payload.composite_keys),
-                    payload.config_id,
+                _increment_counter(
+                    counter=MODEL_STATUS_COUNTER,
+                    labels=(
+                        payload.status.value,
+                        self._vtx,
+                        ":".join(payload.composite_keys),
+                        payload.config_id,
+                    ),
                 )
                 return Messages(Message(keys=keys, value=payload.to_json()))
         # Model will not be in registry
@@ -169,8 +177,9 @@ class PreprocessUDF(NumalogicUDF):
                 x_scaled,
             )
         except RuntimeError:
-            RUNTIME_ERROR_COUNTER.increment_counter(
-                self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
+            _increment_counter(
+                counter=RUNTIME_ERROR_COUNTER,
+                labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
             )
             _LOGGER.exception(
                 "%s - Runtime inference error! Keys: %s, Metric: %s",
@@ -180,11 +189,14 @@ class PreprocessUDF(NumalogicUDF):
             )
             # TODO check again what error is causing this and if retraining is required
             payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
-            MODEL_STATUS_COUNTER.increment_counter(
-                payload.status.value,
-                self.__class__.__name__,
-                ":".join(payload.composite_keys),
-                payload.config_id,
+            _increment_counter(
+                counter=MODEL_STATUS_COUNTER,
+                labels=(
+                    payload.status.value,
+                    self._vtx,
+                    ":".join(payload.composite_keys),
+                    payload.config_id,
+                ),
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
         _LOGGER.debug(
@@ -192,16 +204,19 @@ class PreprocessUDF(NumalogicUDF):
             payload.uuid,
             time.perf_counter() - _start_time,
         )
-        MODEL_STATUS_COUNTER.increment_counter(
-            payload.status.value,
-            self.__class__.__name__,
-            ":".join(payload.composite_keys),
-            payload.config_id,
+        _increment_counter(
+            counter=MODEL_STATUS_COUNTER,
+            labels=(
+                payload.status.value,
+                self._vtx,
+                ":".join(payload.composite_keys),
+                payload.config_id,
+            ),
         )
-        MSG_PROCESSED_COUNTER.increment_counter(
-            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
+        _increment_counter(
+            counter=MSG_PROCESSED_COUNTER,
+            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
         )
-        print(payload)
         return Messages(Message(keys=keys, value=payload.to_json()))
 
     @classmethod

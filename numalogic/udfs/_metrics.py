@@ -3,6 +3,9 @@ from prometheus_client import Histogram
 from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, PromSummaryMetric
 
 __all__ = [
+    "_add_info",
+    "_add_summary",
+    "_increment_counter",
     "SOURCE_COUNTER",
     "INSUFFICIENT_DATA_COUNTER",
     "MODEL_STATUS_COUNTER",
@@ -21,14 +24,15 @@ __all__ = [
     "FETCH_EXCEPTION_COUNTER",
     "INF_SUMMARY",
 ]
+# Define metrics
 
+# COUNTERS
 SOURCE_COUNTER = PromCounterMetric(
     "numalogic_artifact_source_counter",
     "Count artifact source calls",
     ["source", "composite_key", "config_id"],
 )
 
-# Trainer Counters
 INSUFFICIENT_DATA_COUNTER = PromCounterMetric(
     "numalogic_insufficient_data_counter",
     "Count insufficient data while Training",
@@ -40,7 +44,6 @@ MODEL_STATUS_COUNTER = PromCounterMetric(
     ["status", "vertex", "composite_key", "config_id"],
 )
 
-# Data Counters
 DATASHAPE_ERROR_COUNTER = PromCounterMetric(
     "numalogic_datashape_error_counter",
     "Count datashape errors in preprocess",
@@ -50,7 +53,6 @@ MSG_DROPPED_COUNTER = PromCounterMetric(
     "numalogic_msg_dropped_counter", "Count dropped msgs", ["vertex", "composite_key", "config_id"]
 )
 
-# ERROR Counters
 REDIS_ERROR_COUNTER = PromCounterMetric(
     "numalogic_redis_error_counter", "Count redis errors", ["vertex", "composite_key", "config_id"]
 )
@@ -63,14 +65,22 @@ RUNTIME_ERROR_COUNTER = PromCounterMetric(
     ["vertex", "composite_key", "config_id"],
 )
 
-# TRAIN COUNTERS
 FETCH_EXCEPTION_COUNTER = PromCounterMetric(
     "numalogic_fetch_exception_counter",
     "count exceptions during fetch call",
     ["composite_key", "config_id"],
 )
 
-# TRAIN SUMMARY
+MSG_IN_COUNTER = PromCounterMetric(
+    "numalogic_msg_in_counter", "Count msgs flowing in", ["vertex", "composite_key", "config_id"]
+)
+MSG_PROCESSED_COUNTER = PromCounterMetric(
+    "numalogic_msg_processed_counter",
+    "Count msgs processed",
+    ["vertex", "composite_key", "config_id"],
+)
+
+# SUMMARY
 DATAFRAME_SHAPE_SUMMARY = PromSummaryMetric(
     "numalogic_dataframe_shape_summary",
     "len of dataframe for training",
@@ -84,15 +94,6 @@ INF_SUMMARY = PromSummaryMetric(
 )
 FETCH_TIME_SUMMARY = PromSummaryMetric(
     "numalogic_fetch_time_summary", "Train data fetch time", ["composite_key", "config_id"]
-)
-
-MSG_IN_COUNTER = PromCounterMetric(
-    "numalogic_msg_in_counter", "Count msgs flowing in", ["vertex", "composite_key", "config_id"]
-)
-MSG_PROCESSED_COUNTER = PromCounterMetric(
-    "numalogic_msg_processed_counter",
-    "Count msgs processed",
-    ["vertex", "composite_key", "config_id"],
 )
 
 # Info
@@ -122,3 +123,42 @@ UDF_TIME = Histogram(
     "Histogram for udf processing time",
     buckets=buckets,
 )
+
+
+# helper functions
+
+
+def _increment_counter(counter: PromCounterMetric, labels: tuple, amount: int = 1) -> None:
+    """
+    Utility function is used to increment the counter.
+
+    Args:
+        counter: Counter object
+        *args: List of labels
+        amount: Amount to increment the counter by
+    """
+    counter.increment_counter(*labels, amount=amount)
+
+
+def _add_info(info: PromInfoMetric, labels: tuple, data: dict) -> None:
+    """
+    Utility function is used to add the info.
+
+    Args:
+        info: Info object
+        *args: List of labels
+        data: Dictionary of data
+    """
+    info.add_info(*labels, data=data)
+
+
+def _add_summary(summary: PromSummaryMetric, labels: tuple, data: float) -> None:
+    """
+    Utility function is used to add the summary.
+
+    Args:
+        summary: Summary object
+        *args: List of labels
+        data: Summary value
+    """
+    summary.add_observation(*labels, value=data)

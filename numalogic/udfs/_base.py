@@ -30,11 +30,18 @@ class NumalogicUDF(metaclass=ABCMeta):
     Args:
         is_async: If True, the UDF is executed in an asynchronous manner.
         pl_conf: PipelineConf object
+        _vtx: Vertex/UDF name
     """
 
-    __slots__ = ("is_async", "pl_conf")
+    __slots__ = ("is_async", "pl_conf", "_vtx")
 
-    def __init__(self, is_async: bool = False, pl_conf: Optional[PipelineConf] = None):
+    def __init__(
+        self,
+        is_async: bool = False,
+        pl_conf: Optional[PipelineConf] = None,
+        _vtx: Optional[str] = "numalogic-udf",
+    ):
+        self._vtx = _vtx
         self.is_async = is_async
         self.pl_conf = pl_conf or PipelineConf()
 

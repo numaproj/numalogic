@@ -3,7 +3,7 @@ import os
 import sys
 from typing import Final
 
-from numalogic._constants import DEFAULT_BASE_CONF_PATH, DEFAULT_APP_CONF_PATH
+from numalogic._constants import DEFAULT_BASE_CONF_PATH, DEFAULT_APP_CONF_PATH, DEFAULT_METRICS_PORT
 from numalogic.connectors.redis import get_redis_client_from_conf
 from numalogic.monitoring import start_metrics_server
 from numalogic.udfs import load_pipeline_conf, UDFFactory, ServerFactory, set_logger
@@ -12,6 +12,7 @@ LOGGER = logging.getLogger(__name__)
 
 BASE_CONF_FILE_PATH: Final[str] = os.getenv("BASE_CONF_PATH", default=DEFAULT_BASE_CONF_PATH)
 APP_CONF_FILE_PATH: Final[str] = os.getenv("APP_CONF_PATH", default=DEFAULT_APP_CONF_PATH)
+METRICS_PORT: Final[int] = int(os.getenv("METRICS_PORT", default=DEFAULT_METRICS_PORT))
 
 
 def init_server(step: str, server_type: str):
@@ -38,9 +39,8 @@ def start_server() -> None:
 
     LOGGER.info("Running %s on %s server", step, server_type)
 
-    # TODO: Add metrics server port to config
-    # Start the metrics server at port 8490
-    start_metrics_server(8490)
+    # Start the metrics server at port METRICS_PORT = 8490
+    start_metrics_server(METRICS_PORT)
 
     server = init_server(step, server_type)
     server.start()

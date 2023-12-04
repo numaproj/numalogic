@@ -30,6 +30,8 @@ from numalogic.udfs._metrics import (
     MSG_DROPPED_COUNTER,
     MSG_PROCESSED_COUNTER,
     UDF_TIME,
+    _increment_counter,
+    _add_summary,
 )
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
@@ -50,7 +52,7 @@ class TrainerUDF(NumalogicUDF):
         r_client: redis_client_t,
         pl_conf: Optional[PipelineConf] = None,
     ):
-        super().__init__(is_async=False, pl_conf=pl_conf)
+        super().__init__(pl_conf=pl_conf, _vtx="trainer")
         self.r_client = r_client
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
@@ -144,8 +146,9 @@ class TrainerUDF(NumalogicUDF):
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
         _conf = self.get_conf(payload.config_id)
-        MSG_IN_COUNTER.increment_counter(
-            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
+        _increment_counter(
+            counter=MSG_IN_COUNTER,
+            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
         )
 
         # set the retry and retrain_freq
@@ -159,8 +162,9 @@ class TrainerUDF(NumalogicUDF):
             min_train_records=_conf.numalogic_conf.trainer.min_train_size,
             data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
-            MSG_DROPPED_COUNTER.increment_counter(
-                self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
+            _increment_counter(
+                counter=MSG_DROPPED_COUNTER,
+                labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
             )
             return Messages(Message.to_drop())
 
@@ -175,22 +179,29 @@ class TrainerUDF(NumalogicUDF):
                 payload.composite_keys,
                 df.shape,
             )
-            INSUFFICIENT_DATA_COUNTER.increment_counter(
-                ":".join(payload.composite_keys), payload.config_id
+            _increment_counter(
+                counter=INSUFFICIENT_DATA_COUNTER,
+                labels=(":".join(payload.composite_keys), payload.config_id),
+            )
+            _increment_counter(
+                counter=MSG_DROPPED_COUNTER,
+                labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
             )
             return Messages(Message.to_drop())
-        MSG_DROPPED_COUNTER.increment_counter(
-            self.__class__.__name__, payload.composite_keys, payload.config_id
-        )
+
         _LOGGER.info("%s - Data fetched, shape: %s", payload.uuid, df.shape)
 
         # Construct feature array
         x_train, nan_counter, inf_counter = self.get_feature_arr(df, payload.metrics)
-        NAN_SUMMARY.add_observation(
-            ":".join(payload.composite_keys), payload.config_id, value=nan_counter
+        _add_summary(
+            summary=NAN_SUMMARY,
+            labels=(":".join(payload.composite_keys), payload.config_id),
+            data=nan_counter,
         )
-        INF_SUMMARY.add_observation(
-            ":".join(payload.composite_keys), payload.config_id, value=inf_counter
+        _add_summary(
+            summary=INF_SUMMARY,
+            labels=(":".join(payload.composite_keys), payload.config_id),
+            data=inf_counter,
         )
 
         # Initialize artifacts
@@ -215,7 +226,7 @@ class TrainerUDF(NumalogicUDF):
             dict_artifacts=dict_artifacts,
             model_registry=self.model_registry,
             payload=payload,
-            vertex_name=self.__class__.__name__,
+            vertex_name=self._vtx,
         )
         if self.train_msg_deduplicator.ack_train(key=payload.composite_keys, uuid=payload.uuid):
             _LOGGER.info(
@@ -226,8 +237,9 @@ class TrainerUDF(NumalogicUDF):
         _LOGGER.debug(
             "%s - Time taken in trainer: %.4f sec", payload.uuid, time.perf_counter() - _start_time
         )
-        MSG_PROCESSED_COUNTER.increment_counter(
-            self.__class__.__name__, ":".join(payload.composite_keys), payload.config_id
+        _increment_counter(
+            counter=MSG_PROCESSED_COUNTER,
+            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
         )
         return Messages(Message.to_drop())
 
@@ -277,8 +289,9 @@ class TrainerUDF(NumalogicUDF):
                 uuid=payload.uuid,
             )
         except RedisRegistryError:
-            REDIS_ERROR_COUNTER.increment_counter(
-                vertex_name, ":".join(payload.composite_keys), payload.config_id
+            _increment_counter(
+                counter=REDIS_ERROR_COUNTER,
+                labels=(vertex_name, ":".join(payload.composite_keys), payload.config_id),
             )
             _LOGGER.exception(
                 "%s - Error while saving artifact with skeys: %s", payload.uuid, skeys
