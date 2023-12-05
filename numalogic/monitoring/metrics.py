@@ -7,7 +7,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class _BaseMetric:
-    __slots__ = "name", "description", "label_keys"
+    __slots__ = ("name", "description", "label_keys")
 
     """
     Base class for metrics.

@@ -1,3 +1,5 @@
+from collections.abc import Sequence
+
 from prometheus_client import Histogram
 
 from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, PromSummaryMetric
@@ -106,37 +108,37 @@ UDF_TIME = Histogram(
 # helper functions
 
 
-def _increment_counter(counter: PromCounterMetric, labels: tuple, amount: int = 1) -> None:
+def _increment_counter(counter: PromCounterMetric, labels: Sequence[str], amount: int = 1) -> None:
     """
     Utility function is used to increment the counter.
 
     Args:
         counter: Counter object
-        *args: List of labels
+        labels: Sequence of labels
         amount: Amount to increment the counter by
     """
     counter.increment_counter(*labels, amount=amount)
 
 
-def _add_info(info: PromInfoMetric, labels: tuple, data: dict) -> None:
+def _add_info(info: PromInfoMetric, labels: Sequence[str], data: dict) -> None:
     """
     Utility function is used to add the info.
 
     Args:
         info: Info object
-        *args: List of labels
+        labels: Sequence of labels
         data: Dictionary of data
     """
     info.add_info(*labels, data=data)
 
 
-def _add_summary(summary: PromSummaryMetric, labels: tuple, data: float) -> None:
+def _add_summary(summary: PromSummaryMetric, labels: Sequence[str], data: float) -> None:
     """
     Utility function is used to add the summary.
 
     Args:
         summary: Summary object
-        *args: List of labels
+        labels: Sequence of labels
         data: Summary value
     """
     summary.add_observation(*labels, value=data)
