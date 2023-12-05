@@ -2,35 +2,13 @@ from prometheus_client import Histogram
 
 from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, PromSummaryMetric
 
-__all__ = [
-    "_add_info",
-    "_add_summary",
-    "_increment_counter",
-    "SOURCE_COUNTER",
-    "INSUFFICIENT_DATA_COUNTER",
-    "MODEL_STATUS_COUNTER",
-    "NAN_SUMMARY",
-    "DATASHAPE_ERROR_COUNTER",
-    "MSG_DROPPED_COUNTER",
-    "REDIS_ERROR_COUNTER",
-    "EXCEPTION_COUNTER",
-    "RUNTIME_ERROR_COUNTER",
-    "MSG_IN_COUNTER",
-    "MSG_PROCESSED_COUNTER",
-    "MODEL_INFO",
-    "UDF_TIME",
-    "FETCH_TIME_SUMMARY",
-    "DATAFRAME_SHAPE_SUMMARY",
-    "FETCH_EXCEPTION_COUNTER",
-    "INF_SUMMARY",
-]
 # Define metrics
 
 # COUNTERS
 SOURCE_COUNTER = PromCounterMetric(
     "numalogic_artifact_source_counter",
     "Count artifact source calls",
-    ["source", "composite_key", "config_id"],
+    ["source", "vertex", "composite_key", "config_id"],
 )
 
 INSUFFICIENT_DATA_COUNTER = PromCounterMetric(

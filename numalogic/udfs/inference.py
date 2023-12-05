@@ -103,15 +103,9 @@ class InferenceUDF(NumalogicUDF):
 
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
+        _metric_label_values = (self._vtx, ":".join(payload.composite_keys), payload.config_id)
 
-        _increment_counter(
-            counter=MSG_IN_COUNTER,
-            labels=(
-                self._vtx,
-                ":".join(payload.composite_keys),
-                payload.config_id,
-            ),
-        )
+        _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
 
         _LOGGER.debug(
             "%s - Received Msg: { CompositeKeys: %s, Metrics: %s }",
@@ -150,9 +144,7 @@ class InferenceUDF(NumalogicUDF):
                 counter=MODEL_STATUS_COUNTER,
                 labels=(
                     payload.status.value,
-                    self._vtx,
-                    ":".join(payload.composite_keys),
-                    payload.config_id,
+                    *_metric_label_values,
                 ),
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
@@ -161,14 +153,7 @@ class InferenceUDF(NumalogicUDF):
         try:
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
         except RuntimeError:
-            _increment_counter(
-                counter=RUNTIME_ERROR_COUNTER,
-                labels=(
-                    self._vtx,
-                    ":".join(payload.composite_keys),
-                    payload.config_id,
-                ),
-            )
+            _increment_counter(counter=RUNTIME_ERROR_COUNTER, labels=_metric_label_values)
             _LOGGER.exception(
                 "%s - Runtime inference error! Keys: %s, Metric: %s",
                 payload.uuid,
@@ -177,13 +162,7 @@ class InferenceUDF(NumalogicUDF):
             )
             payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
             _increment_counter(
-                counter=MODEL_STATUS_COUNTER,
-                labels=(
-                    payload.status.value,
-                    self._vtx,
-                    ":".join(payload.composite_keys),
-                    payload.config_id,
-                ),
+                counter=MODEL_STATUS_COUNTER, labels=(payload.status.value, *_metric_label_values)
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
         else:
@@ -214,22 +193,9 @@ class InferenceUDF(NumalogicUDF):
             time.perf_counter() - _start_time,
         )
         _increment_counter(
-            counter=MODEL_STATUS_COUNTER,
-            labels=(
-                payload.status.value,
-                self._vtx,
-                ":".join(payload.composite_keys),
-                payload.config_id,
-            ),
+            counter=MODEL_STATUS_COUNTER, labels=(payload.status.value, *_metric_label_values)
         )
-        _increment_counter(
-            counter=MSG_PROCESSED_COUNTER,
-            labels=(
-                self._vtx,
-                ":".join(payload.composite_keys),
-                payload.config_id,
-            ),
-        )
+        _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
         return Messages(Message(keys=keys, value=payload.to_json()))
 
     def is_model_stale(self, artifact_data: ArtifactData, payload: StreamPayload) -> bool:

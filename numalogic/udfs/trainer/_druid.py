@@ -88,6 +88,7 @@ class DruidTrainerUDF(TrainerUDF):
             Dataframe
         """
         _start_time = time.perf_counter()
+        _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
         _conf = self.get_conf(payload.config_id)
         _fetcher_conf = self.dataconn_conf.fetcher or (
             self.get_druid_fetcher_conf(payload.config_id)
@@ -115,14 +116,14 @@ class DruidTrainerUDF(TrainerUDF):
         except Exception:
             _increment_counter(
                 counter=FETCH_EXCEPTION_COUNTER,
-                labels=(":".join(payload.composite_keys), payload.config_id),
+                labels=_metric_label_values,
             )
             _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
             return pd.DataFrame()
         _end_time = time.perf_counter() - _start_time
         _add_summary(
             FETCH_TIME_SUMMARY,
-            labels=(":".join(payload.composite_keys), payload.config_id),
+            labels=_metric_label_values,
             data=_end_time,
         )
         _LOGGER.debug(
@@ -133,7 +134,7 @@ class DruidTrainerUDF(TrainerUDF):
         )
         _add_summary(
             DATAFRAME_SHAPE_SUMMARY,
-            labels=(":".join(payload.composite_keys), payload.config_id),
+            labels=_metric_label_values,
             data=_df.shape[0],
         )
 

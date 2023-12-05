@@ -145,6 +145,7 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
+        _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
         _conf = self.get_conf(payload.config_id)
         _increment_counter(
             counter=MSG_IN_COUNTER,
@@ -164,7 +165,7 @@ class TrainerUDF(NumalogicUDF):
         ):
             _increment_counter(
                 counter=MSG_DROPPED_COUNTER,
-                labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+                labels=(self._vtx, *_metric_label_values),
             )
             return Messages(Message.to_drop())
 
@@ -181,11 +182,11 @@ class TrainerUDF(NumalogicUDF):
             )
             _increment_counter(
                 counter=INSUFFICIENT_DATA_COUNTER,
-                labels=(":".join(payload.composite_keys), payload.config_id),
+                labels=_metric_label_values,
             )
             _increment_counter(
                 counter=MSG_DROPPED_COUNTER,
-                labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+                labels=(self._vtx, *_metric_label_values),
             )
             return Messages(Message.to_drop())
 
@@ -195,12 +196,12 @@ class TrainerUDF(NumalogicUDF):
         x_train, nan_counter, inf_counter = self.get_feature_arr(df, payload.metrics)
         _add_summary(
             summary=NAN_SUMMARY,
-            labels=(":".join(payload.composite_keys), payload.config_id),
+            labels=_metric_label_values,
             data=nan_counter,
         )
         _add_summary(
             summary=INF_SUMMARY,
-            labels=(":".join(payload.composite_keys), payload.config_id),
+            labels=_metric_label_values,
             data=inf_counter,
         )
 
@@ -239,7 +240,10 @@ class TrainerUDF(NumalogicUDF):
         )
         _increment_counter(
             counter=MSG_PROCESSED_COUNTER,
-            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+            labels=(
+                self._vtx,
+                *_metric_label_values,
+            ),
         )
         return Messages(Message.to_drop())
 

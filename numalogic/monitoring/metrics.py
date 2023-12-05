@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 from typing import Optional
 
 from prometheus_client import Counter, Info, Summary
@@ -6,89 +7,89 @@ from prometheus_client import Counter, Info, Summary
 _LOGGER = logging.getLogger(__name__)
 
 
-class BaseMetricClass:
+@dataclass(slots=True)
+class _BaseMetric:
     """
     Base class for metrics.
 
     Args:
         name: Name of the metric
         description: Description of the metric
-        labels: List of labels
+        label_keys: List of labels
     """
 
-    __slots__ = ("name", "description", "labels")
-
-    def __init__(self, name: str, description: str, labels: Optional[list[str]]) -> None:
-        self.name = name
-        self.description = description
-        self.labels = labels
+    name: str
+    description: str
+    label_keys: Optional[list[str]]
 
 
-class PromCounterMetric(BaseMetricClass):
+class PromCounterMetric(_BaseMetric):
     """Class is used to create a counter object and increment it."""
 
     __slots__ = "counter"
 
-    def __init__(self, name: str, description: str, labels: list[str]) -> None:
-        super().__init__(name, description, labels)
-        self.counter = Counter(name, description, labels)
+    def __init__(self, name: str, description: str, label_keys: list[str]) -> None:
+        super().__init__(name, description, label_keys)
+        self.counter = Counter(name, description, label_keys)
 
-    def increment_counter(self, *args, amount: int = 1) -> None:
+    def increment_counter(self, *label_values, amount: int = 1) -> None:
         """
         Utility function is used to increment the counter.
 
         Args:
-            *args: List of labels
+            *label_values: List of labels
             amount: Amount to increment the counter by
         """
-        if len(args) != len(self.labels):
-            raise ValueError(f"Labels mismatch with the definition: {self.labels}")
-        self.counter.labels(*args).inc(amount=amount)
+        if len(label_values) != len(self.label_keys):
+            raise ValueError(f"Labels mismatch with the definition: {self.label_keys}")
+        self.counter.labels(*label_values).inc(amount=amount)
 
 
-class PromInfoMetric(BaseMetricClass):
+@dataclass
+class PromInfoMetric(_BaseMetric):
     """Class is used to create an info object and increment it."""
 
-    __slots__ = ("name", "description", "labels", "info")
+    __slots__ = "info"
 
-    def __init__(self, name: str, description: str, labels: Optional[list[str]]) -> None:
-        super().__init__(name, description, labels)
-        self.info = Info(name, description, labels)
+    def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
+        super().__init__(name, description, label_keys)
+        self.info = Info(name, description, label_keys)
 
     def add_info(
         self,
-        *args,
+        *label_values,
         data: dict,
     ) -> None:
         """
         Utility function is used to increment the info.
 
         Args:
-            *args: List of labels
+            *label_values: List of labels
             data: Dictionary of data
         """
-        if len(args) != len(self.labels):
-            raise ValueError(f"Labels mismatch with the definition: {self.labels}")
-        self.info.labels(*args).info(data)
+        if len(label_values) != len(self.label_keys):
+            raise ValueError(f"Labels mismatch with the definition: {self.label_keys}")
+        self.info.labels(*label_values).info(data)
 
 
-class PromSummaryMetric(BaseMetricClass):
+@dataclass
+class PromSummaryMetric(_BaseMetric):
     """Class is used to create a histogram object and increment it."""
 
-    __slots__ = ("name", "description", "labels", "summary")
+    __slots__ = "summary"
 
-    def __init__(self, name: str, description: str, labels: Optional[list[str]]) -> None:
-        super().__init__(name, description, labels)
-        self.summary = Summary(name, description, labels)
+    def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
+        super().__init__(name, description, label_keys)
+        self.summary = Summary(name, description, label_keys)
 
-    def add_observation(self, *args, value: float) -> None:
+    def add_observation(self, *label_values, value: float) -> None:
         """
         Utility function is to update the summary value with the given value.
 
         Args:
-            *args: List of labels
+            *label_values: List of labels
             value: Value to be updated
         """
-        if len(args) != len(self.labels):
-            raise ValueError(f"Labels mismatch with the definition: {self.labels}")
-        self.summary.labels(*args).observe(amount=value)
+        if len(label_values) != len(self.label_keys):
+            raise ValueError(f"Labels mismatch with the definition: {self.label_keys}")
+        self.summary.labels(*label_values).observe(amount=value)

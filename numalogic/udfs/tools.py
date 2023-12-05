@@ -113,6 +113,7 @@ def _load_artifact(
     StreamPayload object
 
     """
+    _metric_label_values = (vertex, ":".join(skeys), payload.config_id)
     version_to_load = "-1"
     if payload.metadata and "artifact_versions" in payload.metadata:
         version_to_load = payload.metadata["artifact_versions"][":".join(dkeys)]
@@ -132,7 +133,7 @@ def _load_artifact(
                 skeys=skeys, dkeys=dkeys, latest=False, version=version_to_load
             )
     except RedisRegistryError:
-        _increment_counter(REDIS_ERROR_COUNTER, labels=(vertex, ":".join(skeys), payload.config_id))
+        _increment_counter(REDIS_ERROR_COUNTER, labels=_metric_label_values)
         _LOGGER.warning(
             "%s - Error while fetching artifact, Keys: %s, Metrics: %s",
             payload.uuid,
@@ -142,7 +143,7 @@ def _load_artifact(
         return None, payload
 
     except Exception:
-        _increment_counter(EXCEPTION_COUNTER, labels=(vertex, ":".join(skeys), payload.config_id))
+        _increment_counter(EXCEPTION_COUNTER, labels=_metric_label_values)
         _LOGGER.exception(
             "%s - Unhandled exception while fetching preproc artifact, Keys: %s, Metric: %s,",
             payload.uuid,
@@ -161,7 +162,7 @@ def _load_artifact(
         )
         _increment_counter(
             counter=SOURCE_COUNTER,
-            labels=(artifact_data.extras.get("source"), ":".join(skeys), payload.config_id),
+            labels=(artifact_data.extras.get("source"), *_metric_label_values),
         )
         _add_info(
             info=MODEL_INFO,

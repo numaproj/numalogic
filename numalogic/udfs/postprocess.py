@@ -83,9 +83,11 @@ class PostprocessUDF(NumalogicUDF):
 
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
+        _metric_label_values = (self._vtx, ":".join(payload.composite_keys), payload.config_id)
+
         _increment_counter(
             counter=MSG_IN_COUNTER,
-            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+            labels=_metric_label_values,
         )
 
         # load configs
@@ -110,12 +112,7 @@ class PostprocessUDF(NumalogicUDF):
             )
             _increment_counter(
                 MODEL_STATUS_COUNTER,
-                labels=(
-                    payload.status.value,
-                    self._vtx,
-                    ":".join(payload.composite_keys),
-                    payload.config_id,
-                ),
+                labels=(payload.status.value, *_metric_label_values),
             )
 
         #  Postprocess payload
@@ -127,10 +124,7 @@ class PostprocessUDF(NumalogicUDF):
                     postproc_clf=postproc_clf,
                 )
             except RuntimeError:
-                _increment_counter(
-                    RUNTIME_ERROR_COUNTER,
-                    labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
-                )
+                _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
                     "%s - Runtime postprocess error! Keys: %s, Metric: %s",
                     payload.uuid,
@@ -179,7 +173,7 @@ class PostprocessUDF(NumalogicUDF):
         )
         _increment_counter(
             MSG_PROCESSED_COUNTER,
-            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+            labels=_metric_label_values,
         )
         return messages
 

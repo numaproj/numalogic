@@ -98,9 +98,10 @@ class PreprocessUDF(NumalogicUDF):
         raw_df, timestamps = get_df(
             data_payload=data_payload, stream_conf=self.get_conf(data_payload["config_id"])
         )
-        _increment_counter(
-            counter=MSG_IN_COUNTER, labels=(self._vtx, ":".join(keys), data_payload["config_id"])
-        )
+
+        _metric_label_values = (self._vtx, ":".join(keys), data_payload["config_id"])
+
+        _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < self.get_conf(data_payload["config_id"]).window_size or raw_df.shape[
             1
@@ -108,13 +109,14 @@ class PreprocessUDF(NumalogicUDF):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
             _increment_counter(
                 counter=DATASHAPE_ERROR_COUNTER,
-                labels=(self._vtx, ":".join(keys), data_payload["config_id"]),
+                labels=_metric_label_values,
             )
             _increment_counter(
                 counter=MSG_DROPPED_COUNTER,
-                labels=(self._vtx, ":".join(keys), data_payload["config_id"]),
+                labels=_metric_label_values,
             )
             return Messages(Message.to_drop())
+
         # Make StreamPayload object
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
 
@@ -144,21 +146,14 @@ class PreprocessUDF(NumalogicUDF):
                 )
                 _increment_counter(
                     counter=MODEL_STATUS_COUNTER,
-                    labels=(
-                        payload.status.value,
-                        self._vtx,
-                        ":".join(payload.composite_keys),
-                        payload.config_id,
-                    ),
+                    labels=(payload.status.value, *_metric_label_values),
                 )
                 return Messages(Message(keys=keys, value=payload.to_json()))
         # Model will not be in registry
         else:
             # Load configuration for the config_id
             _LOGGER.info("%s - Initializing model from config: %s", payload.uuid, payload)
-            SOURCE_COUNTER.increment_counter(
-                "config", ":".join(payload.composite_keys), payload.config_id
-            )
+            _increment_counter(SOURCE_COUNTER, labels=("config", *_metric_label_values))
             preproc_clf = self._load_model_from_config(_conf.numalogic_conf.preprocess)
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
         try:
@@ -179,7 +174,7 @@ class PreprocessUDF(NumalogicUDF):
         except RuntimeError:
             _increment_counter(
                 counter=RUNTIME_ERROR_COUNTER,
-                labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+                labels=_metric_label_values,
             )
             _LOGGER.exception(
                 "%s - Runtime inference error! Keys: %s, Metric: %s",
@@ -193,9 +188,7 @@ class PreprocessUDF(NumalogicUDF):
                 counter=MODEL_STATUS_COUNTER,
                 labels=(
                     payload.status.value,
-                    self._vtx,
-                    ":".join(payload.composite_keys),
-                    payload.config_id,
+                    *_metric_label_values,
                 ),
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
@@ -208,14 +201,12 @@ class PreprocessUDF(NumalogicUDF):
             counter=MODEL_STATUS_COUNTER,
             labels=(
                 payload.status.value,
-                self._vtx,
-                ":".join(payload.composite_keys),
-                payload.config_id,
+                *_metric_label_values,
             ),
         )
         _increment_counter(
             counter=MSG_PROCESSED_COUNTER,
-            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+            labels=_metric_label_values,
         )
         return Messages(Message(keys=keys, value=payload.to_json()))
 
