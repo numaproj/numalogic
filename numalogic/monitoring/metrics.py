@@ -1,5 +1,4 @@
 import logging
-from dataclasses import dataclass
 from typing import Optional
 
 from prometheus_client import Counter, Info, Summary
@@ -7,8 +6,9 @@ from prometheus_client import Counter, Info, Summary
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass(slots=True)
 class _BaseMetric:
+    __slots__ = "name", "description", "label_keys"
+
     """
     Base class for metrics.
 
@@ -18,9 +18,10 @@ class _BaseMetric:
         label_keys: List of labels
     """
 
-    name: str
-    description: str
-    label_keys: Optional[list[str]]
+    def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
+        self.name = name
+        self.description = description
+        self.label_keys = label_keys
 
 
 class PromCounterMetric(_BaseMetric):
@@ -45,7 +46,6 @@ class PromCounterMetric(_BaseMetric):
         self.counter.labels(*label_values).inc(amount=amount)
 
 
-@dataclass
 class PromInfoMetric(_BaseMetric):
     """Class is used to create an info object and increment it."""
 
@@ -72,7 +72,6 @@ class PromInfoMetric(_BaseMetric):
         self.info.labels(*label_values).info(data)
 
 
-@dataclass
 class PromSummaryMetric(_BaseMetric):
     """Class is used to create a histogram object and increment it."""
 
