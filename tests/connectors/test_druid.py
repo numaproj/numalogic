@@ -132,10 +132,14 @@ class TestDruid(unittest.TestCase):
                 fields=[Filter(type="selector", dimension="ciStatus", value="false")],
             ),
             "granularity": "all",
-            "aggregations": dict(),
-            "post_aggregations": dict(),
+            "aggregations": {},
+            "post_aggregations": {},
             "intervals": "",
-            "context": {"timeout": 10000, "configIds": list(filter_pairs), "source": "numalogic"},
+            "context": {
+                "timeout": 10000,
+                "configIds": list(filter_pairs),
+                "source": "numalogic",
+            },
         }
 
         actual = build_params(

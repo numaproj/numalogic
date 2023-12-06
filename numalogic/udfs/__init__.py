@@ -2,6 +2,7 @@ import logging
 from logging import config as logconf
 import os
 
+
 from numalogic._constants import BASE_DIR
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf, load_pipeline_conf

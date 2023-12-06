@@ -10,6 +10,14 @@ from orjson import orjson
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
+from numalogic.udfs._metrics import (
+    MODEL_STATUS_COUNTER,
+    RUNTIME_ERROR_COUNTER,
+    MSG_PROCESSED_COUNTER,
+    MSG_IN_COUNTER,
+    UDF_TIME,
+    _increment_counter,
+)
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
@@ -41,7 +49,7 @@ class PostprocessUDF(NumalogicUDF):
         r_client: redis_client_t,
         pl_conf: Optional[PipelineConf] = None,
     ):
-        super().__init__(pl_conf=pl_conf)
+        super().__init__(pl_conf=pl_conf, _vtx="postprocess")
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
@@ -55,6 +63,7 @@ class PostprocessUDF(NumalogicUDF):
         )
         self.postproc_factory = PostprocessFactory()
 
+    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         The postprocess function here receives data from the previous udf.
@@ -74,6 +83,12 @@ class PostprocessUDF(NumalogicUDF):
 
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
+        _metric_label_values = (self._vtx, ":".join(payload.composite_keys), payload.config_id)
+
+        _increment_counter(
+            counter=MSG_IN_COUNTER,
+            labels=_metric_label_values,
+        )
 
         # load configs
         _conf = self.get_conf(payload.config_id)
@@ -87,12 +102,17 @@ class PostprocessUDF(NumalogicUDF):
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
+            vertex=self._vtx,
         )
         postproc_clf = self.postproc_factory.get_instance(postprocess_cfg)
 
         if thresh_artifact is None:
             payload = replace(
                 payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
+            )
+            _increment_counter(
+                MODEL_STATUS_COUNTER,
+                labels=(payload.status.value, *_metric_label_values),
             )
 
         #  Postprocess payload
@@ -104,6 +124,7 @@ class PostprocessUDF(NumalogicUDF):
                     postproc_clf=postproc_clf,
                 )
             except RuntimeError:
+                _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
                     "%s - Runtime postprocess error! Keys: %s, Metric: %s",
                     payload.uuid,
@@ -124,7 +145,6 @@ class PostprocessUDF(NumalogicUDF):
                     timestamp=payload.end_ts,
                     unified_anomaly=np.max(anomaly_scores),
                     data=self._per_feature_score(payload.metrics, anomaly_scores),
-                    # TODO: add model version, & emit as ML metrics
                     metadata=payload.metadata,
                 )
                 _LOGGER.info(
@@ -150,6 +170,10 @@ class PostprocessUDF(NumalogicUDF):
             "%s -  Time taken in postprocess: %.4f sec",
             payload.uuid,
             time.perf_counter() - _start_time,
+        )
+        _increment_counter(
+            MSG_PROCESSED_COUNTER,
+            labels=_metric_label_values,
         )
         return messages
 

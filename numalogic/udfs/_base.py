@@ -30,20 +30,25 @@ class NumalogicUDF(metaclass=ABCMeta):
     Args:
         is_async: If True, the UDF is executed in an asynchronous manner.
         pl_conf: PipelineConf object
+        _vtx: Vertex/UDF name
     """
 
-    __slots__ = ("is_async", "pl_conf")
+    __slots__ = ("is_async", "pl_conf", "_vtx")
 
-    def __init__(self, is_async: bool = False, pl_conf: Optional[PipelineConf] = None):
+    def __init__(
+        self,
+        is_async: bool = False,
+        pl_conf: Optional[PipelineConf] = None,
+        _vtx: Optional[str] = "numalogic-udf",
+    ):
+        self._vtx = _vtx
         self.is_async = is_async
         self.pl_conf = pl_conf or PipelineConf()
 
     def __call__(
         self, keys: list[str], datum: Datum
     ) -> Union[Coroutine[None, None, Messages], Messages]:
-        if self.is_async:
-            return self.aexec(keys, datum)
-        return self.exec(keys, datum)
+        return self.aexec(keys, datum) if self.is_async else self.exec(keys, datum)
 
     # TODO: remove, and have an update config method
     def register_conf(self, config_id: str, conf: StreamConf) -> None:

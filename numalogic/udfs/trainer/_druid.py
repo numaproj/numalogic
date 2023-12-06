@@ -10,6 +10,13 @@ from numalogic.tools.exceptions import ConfigNotFoundError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import TrainerPayload
+from numalogic.udfs._metrics import (
+    FETCH_EXCEPTION_COUNTER,
+    DATAFRAME_SHAPE_SUMMARY,
+    FETCH_TIME_SUMMARY,
+    _increment_counter,
+    _add_summary,
+)
 from numalogic.udfs.trainer._base import TrainerUDF
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,6 +88,7 @@ class DruidTrainerUDF(TrainerUDF):
             Dataframe
         """
         _start_time = time.perf_counter()
+        _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
         _conf = self.get_conf(payload.config_id)
         _fetcher_conf = self.dataconn_conf.fetcher or (
             self.get_druid_fetcher_conf(payload.config_id)
@@ -106,13 +114,28 @@ class DruidTrainerUDF(TrainerUDF):
                 hours=_conf.numalogic_conf.trainer.train_hours,
             )
         except Exception:
+            _increment_counter(
+                counter=FETCH_EXCEPTION_COUNTER,
+                labels=_metric_label_values,
+            )
             _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
             return pd.DataFrame()
-
+        _end_time = time.perf_counter() - _start_time
+        _add_summary(
+            FETCH_TIME_SUMMARY,
+            labels=_metric_label_values,
+            data=_end_time,
+        )
         _LOGGER.debug(
             "%s - Time taken to fetch data: %.3f sec, df shape: %s",
             payload.uuid,
-            time.perf_counter() - _start_time,
+            _end_time,
             _df.shape,
         )
+        _add_summary(
+            DATAFRAME_SHAPE_SUMMARY,
+            labels=_metric_label_values,
+            data=_df.shape[0],
+        )
+
         return _df
