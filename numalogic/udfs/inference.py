@@ -24,7 +24,7 @@ from numalogic.udfs._metrics import (
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.udfs.tools import _load_artifact
+from numalogic.udfs.tools import _load_artifact, _update_info_metric
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -152,6 +152,7 @@ class InferenceUDF(NumalogicUDF):
         # Perform inference
         try:
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
+            _update_info_metric(x_inferred, payload.metrics, _metric_label_values)
         except RuntimeError:
             _increment_counter(counter=RUNTIME_ERROR_COUNTER, labels=_metric_label_values)
             _LOGGER.exception(

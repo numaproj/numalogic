@@ -2,6 +2,7 @@ import logging
 from dataclasses import replace
 import time
 from typing import Optional, NamedTuple
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
@@ -20,6 +21,7 @@ from numalogic.udfs._metrics import (
     EXCEPTION_COUNTER,
     _increment_counter,
     _add_info,
+    RECORDED_DATA_INFO,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -89,6 +91,30 @@ def _get_artifact_stats(artifact_data):
         "source": None or artifact_data.extras.get("source"),
         "version": None or artifact_data.extras.get("version"),
     }
+
+
+def _update_info_metric(
+    data: np.ndarray, metric_name: Sequence[str], labels: Sequence[str]
+) -> None:
+    """
+    Utility function is used to update the gauge metric.
+    Args:
+        data: data
+        metric_name: metric name in the payload
+        labels: labels.
+
+    """
+    for _data, _metric_name in zip(data.T, metric_name):
+        _add_info(
+            info=RECORDED_DATA_INFO,
+            labels=(*labels, _metric_name),
+            data={
+                "min": str(np.min(_data)),
+                "max": str(np.max(_data)),
+                "mean": str(np.mean(_data)),
+                "std": str(np.std(_data)),
+            },
+        )
 
 
 def _load_artifact(

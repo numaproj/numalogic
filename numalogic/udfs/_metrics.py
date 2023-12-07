@@ -2,7 +2,11 @@ from collections.abc import Sequence
 
 from prometheus_client import Histogram
 
-from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, PromSummaryMetric
+from numalogic.monitoring.metrics import (
+    PromCounterMetric,
+    PromInfoMetric,
+    PromSummaryMetric,
+)
 
 # Define metrics
 
@@ -67,10 +71,10 @@ DATAFRAME_SHAPE_SUMMARY = PromSummaryMetric(
     ["composite_key", "config_id"],
 )
 NAN_SUMMARY = PromSummaryMetric(
-    "numalogic_nan_counter", "Count nan's in train data", ["composite_key", "config_id"]
+    "numalogic_nan_summary", "Count nan's in train data", ["composite_key", "config_id"]
 )
 INF_SUMMARY = PromSummaryMetric(
-    "numalogic_inf_counter", "Count inf's in train data", ["composite_key", "config_id"]
+    "numalogic_inf_summary", "Count inf's in train data", ["composite_key", "config_id"]
 )
 FETCH_TIME_SUMMARY = PromSummaryMetric(
     "numalogic_fetch_time_summary", "Train data fetch time", ["composite_key", "config_id"]
@@ -78,6 +82,11 @@ FETCH_TIME_SUMMARY = PromSummaryMetric(
 
 # Info
 MODEL_INFO = PromInfoMetric("numalogic_model_info", "Model info", ["composite_key", "config_id"])
+RECORDED_DATA_INFO = PromInfoMetric(
+    "numalogic_recorded_value_info",
+    "Info metric to observe the mean value of the window",
+    ["vertex", "composite_key", "config_id", "metric_name"],
+)
 
 # HISTOGRAM
 buckets = (

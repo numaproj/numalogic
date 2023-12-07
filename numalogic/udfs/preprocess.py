@@ -26,7 +26,7 @@ from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import Status, Header
-from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact
+from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact, _update_info_metric
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -158,6 +158,7 @@ class PreprocessUDF(NumalogicUDF):
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
+            _update_info_metric(x_scaled, payload.metrics, _metric_label_values)
             payload = replace(
                 payload,
                 data=x_scaled,
