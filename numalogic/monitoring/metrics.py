@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from prometheus_client import Counter, Info, Summary, Gauge
+from prometheus_client import Counter, Info, Summary
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -92,25 +92,3 @@ class PromSummaryMetric(_BaseMetric):
         if len(label_values) != len(self.label_keys):
             raise ValueError(f"Labels mismatch with the definition: {self.label_keys}")
         self.summary.labels(*label_values).observe(amount=value)
-
-
-class PromGaugeMetric(_BaseMetric):
-    """Class is used to create a gauge object and   increment it."""
-
-    __slots__ = "gauge"
-
-    def __init__(self, name: str, description: str, label_keys: list[str]) -> None:
-        super().__init__(name, description, label_keys)
-        self.gauge = Gauge(name, description, label_keys)
-
-    def increment_gauge(self, *label_values, amount: int = 1) -> None:
-        """
-        Utility function is used to increment the counter.
-
-        Args:
-            *label_values: List of labels
-            amount: Amount to increment the counter by
-        """
-        if len(label_values) != len(self.label_keys):
-            raise ValueError(f"Labels mismatch with the definition: {self.label_keys}")
-        self.gauge.labels(*label_values).inc(amount=amount)
