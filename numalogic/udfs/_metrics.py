@@ -6,6 +6,7 @@ from numalogic.monitoring.metrics import (
     PromCounterMetric,
     PromInfoMetric,
     PromSummaryMetric,
+    PromGaugeMetric,
 )
 
 # Define metrics
@@ -80,13 +81,15 @@ FETCH_TIME_SUMMARY = PromSummaryMetric(
     "numalogic_fetch_time_summary", "Train data fetch time", ["composite_key", "config_id"]
 )
 
-# Info
-MODEL_INFO = PromInfoMetric("numalogic_model_info", "Model info", ["composite_key", "config_id"])
-RECORDED_DATA_INFO = PromInfoMetric(
-    "numalogic_recorded_value_info",
-    "Info metric to observe the mean value of the window",
+# Gauge Metric
+RECORDED_DATA_GAUGE = PromGaugeMetric(
+    "numalogic_recorded_value_gauge",
+    "Gauge metric to observe the mean value of the window",
     ["vertex", "composite_key", "config_id", "metric_name"],
 )
+
+# Info
+MODEL_INFO = PromInfoMetric("numalogic_model_info", "Model info", ["composite_key", "config_id"])
 
 # HISTOGRAM
 buckets = (
@@ -139,6 +142,18 @@ def _add_info(info: PromInfoMetric, labels: Sequence[str], data: dict) -> None:
         data: Dictionary of data
     """
     info.add_info(*labels, data=data)
+
+
+def _set_gauge(gauge: PromGaugeMetric, labels: Sequence[str], data: float) -> None:
+    """
+    Utility function is used to add the info.
+
+    Args:
+        gauge: Gauge object
+        labels: Sequence of labels
+        data: data
+    """
+    gauge.set_gauge(*labels, data=data)
 
 
 def _add_summary(summary: PromSummaryMetric, labels: Sequence[str], data: float) -> None:

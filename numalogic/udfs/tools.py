@@ -21,7 +21,8 @@ from numalogic.udfs._metrics import (
     EXCEPTION_COUNTER,
     _increment_counter,
     _add_info,
-    RECORDED_DATA_INFO,
+    RECORDED_DATA_GAUGE,
+    _set_gauge,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -105,15 +106,10 @@ def _update_info_metric(
 
     """
     for _data, _metric_name in zip(data.T, metric_name):
-        _add_info(
-            info=RECORDED_DATA_INFO,
+        _set_gauge(
+            gauge=RECORDED_DATA_GAUGE,
             labels=(*labels, _metric_name),
-            data={
-                "min": str(np.min(_data)),
-                "max": str(np.max(_data)),
-                "mean": str(np.mean(_data)),
-                "std": str(np.std(_data)),
-            },
+            data=np.mean(_data).squeeze(),
         )
 
 
