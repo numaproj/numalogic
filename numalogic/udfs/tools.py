@@ -33,6 +33,21 @@ class _DedupMetadata(NamedTuple):
     msg_train_records: Optional[str]
 
 
+def get_skeys(payload: StreamPayload, stream_conf: StreamConf):
+    """
+
+    Args:
+        payload: StreamPayload object
+        stream_conf: stream configuration.
+
+    Returns
+    -------
+        skeys formed with composite keys and pipeline id
+    """
+    composite_keys = [_ckey for _, _ckey in zip(stream_conf.composite_keys, payload.composite_keys)]
+    return [*composite_keys, payload.pipeline_id]
+
+
 def get_df(
     data_payload: dict, stream_conf: StreamConf, fill_value: float = 0.0
 ) -> tuple[DataFrame, list[int]]:
@@ -47,7 +62,8 @@ def get_df(
     -------
         dataframe and timestamps
     """
-    features = stream_conf.metrics
+    _conf = stream_conf.ml_pipelines[data_payload["pipeline_id"]]
+    features = _conf.metrics
     df = (
         pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
         .fillna(fill_value)
@@ -74,6 +90,7 @@ def make_stream_payload(
     return StreamPayload(
         uuid=data_payload["uuid"],
         config_id=data_payload["config_id"],
+        pipeline_id=data_payload["pipeline_id"],
         composite_keys=keys,
         data=np.ascontiguousarray(raw_df, dtype=np.float32),
         raw_data=np.ascontiguousarray(raw_df, dtype=np.float32),

@@ -24,7 +24,7 @@ from numalogic.udfs._metrics import (
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.udfs.tools import _load_artifact
+from numalogic.udfs.tools import _load_artifact, get_skeys
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -124,10 +124,11 @@ class InferenceUDF(NumalogicUDF):
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
 
-        _conf = self.get_conf(payload.config_id)
+        _stream_conf = self.get_stream_conf(payload.config_id)
+        _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
 
         artifact_data, payload = _load_artifact(
-            skeys=[_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)],
+            skeys=get_skeys(payload, _stream_conf),
             dkeys=[_conf.numalogic_conf.model.name],
             payload=payload,
             model_registry=self.model_registry,
@@ -210,7 +211,9 @@ class InferenceUDF(NumalogicUDF):
         -------
             True if artifact is stale, False otherwise
         """
-        _conf = self.get_conf(payload.config_id)
+        _conf = self.get_ml_pipeline_conf(
+            config_id=payload.config_id, pipeline_id=payload.pipeline_id
+        )
         if (
             self.model_registry.is_artifact_stale(
                 artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr

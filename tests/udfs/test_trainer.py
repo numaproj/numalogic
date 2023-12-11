@@ -19,7 +19,7 @@ from numalogic.config import TrainerConf, LightningTrainerConf
 from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import ConfigNotFoundError
-from numalogic.udfs import StreamConf, PipelineConf
+from numalogic.udfs import StreamConf, PipelineConf, MLPipelineConf
 from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
 
@@ -43,6 +43,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
         payload = {
             "uuid": "some-uuid",
             "config_id": "druid-config",
+            "pipeline_id": "pipeline1",
             "composite_keys": ["5984175597303660107"],
             "metrics": ["failed", "degraded"],
         }
@@ -72,13 +73,20 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(
-                        name="VanillaAE", stateful=True, conf={"seq_len": 12, "n_features": 2}
-                    ),
-                    preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE",
+                                stateful=True,
+                                conf={"seq_len": 12, "n_features": 2},
+                            ),
+                            preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -86,8 +94,8 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             2,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
+                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
+                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
             ),
         )
 
@@ -96,20 +104,27 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="StandardScaler", conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[ModelInfo(name="StandardScaler", conf={})],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
-                b"5984175597303660107::StandardScaler::LATEST",
+                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
+                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107:pipeline1::StandardScaler::LATEST",
             ),
         )
 
@@ -118,20 +133,30 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
-                b"5984175597303660107::LogTransformer:StandardScaler::LATEST",
+                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
+                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::LATEST",
             ),
         )
 
@@ -140,11 +165,21 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         time.time()
@@ -154,17 +189,17 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
-                b"5984175597303660107::LogTransformer:StandardScaler::LATEST",
+                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
+                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::LATEST",
             ),
         )
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::1",
-                b"5984175597303660107::StdDevThreshold::1",
-                b"5984175597303660107::LogTransformer:StandardScaler::1",
+                b"5984175597303660107:pipeline1::VanillaAE::1",
+                b"5984175597303660107:pipeline1::StdDevThreshold::1",
+                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::1",
             ),
         )
 
@@ -173,11 +208,21 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -185,17 +230,17 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
-                b"5984175597303660107::LogTransformer:StandardScaler::LATEST",
+                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
+                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::LATEST",
             ),
         )
         self.assertEqual(
             0,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::1",
-                b"5984175597303660107::StdDevThreshold::1",
-                b"5984175597303660107::LogTransformer:StandardScaler::1",
+                b"5984175597303660107:pipeline1::VanillaAE::1",
+                b"5984175597303660107:pipeline1::StdDevThreshold::1",
+                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::1",
             ),
         )
 
@@ -204,11 +249,21 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -220,9 +275,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             0,
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::1",
-                b"5984175597303660107::StdDevThreshold::1",
-                b"5984175597303660107::LogTransformer:StandardScaler::1",
+                b"5984175597303660107:pipeline1::VanillaAE::1",
+                b"5984175597303660107:pipeline1::StdDevThreshold::1",
+                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::1",
             ),
         )
 
@@ -231,11 +286,21 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
@@ -245,9 +310,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
             self.assertEqual(
                 0,
                 REDIS_CLIENT.exists(
-                    b"5984175597303660107::VanillaAE::0",
-                    b"5984175597303660107::StdDevThreshold::0",
-                    b"5984175597303660107::LogTransformer:StandardScaler::0",
+                    b"5984175597303660107:pipeline1::VanillaAE::0",
+                    b"5984175597303660107:pipeline1::StdDevThreshold::0",
+                    b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::0",
                 ),
             )
 
@@ -256,11 +321,21 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="LogTransformer"), ModelInfo(name="StandardScaler")],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
+                            ],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
@@ -278,19 +353,26 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="StandardScaler", conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[ModelInfo(name="StandardScaler", conf={})],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
         self.assertFalse(
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
-                b"5984175597303660107::StandardScaler::LATEST",
+                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
+                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107:pipeline1::StandardScaler::LATEST",
             )
         )
 
@@ -299,19 +381,26 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    preprocess=[ModelInfo(name="StandardScaler", conf={})],
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            preprocess=[ModelInfo(name="StandardScaler", conf={})],
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
         self.udf1(self.keys, self.datum)
         self.assertFalse(
             REDIS_CLIENT.exists(
-                b"5984175597303660107::VanillaAE::LATEST",
-                b"5984175597303660107::StdDevThreshold::LATEST",
-                b"5984175597303660107::StandardScaler::LATEST",
+                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
+                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107:pipeline1::StandardScaler::LATEST",
             )
         )
 
@@ -358,15 +447,22 @@ class TestDruidTrainerUDF(unittest.TestCase):
         pl_conf = PipelineConf(
             stream_confs={
                 "druid-config": StreamConf(
-                    numalogic_conf=NumalogicConf(
-                        model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                        preprocess=[
-                            ModelInfo(name="LogTransformer"),
-                        ],
-                        trainer=TrainerConf(
-                            pltrainer_conf=LightningTrainerConf(max_epochs=1),
-                        ),
-                    )
+                    ml_pipelines={
+                        "pipeline1": MLPipelineConf(
+                            pipeline_id="pipeline1",
+                            numalogic_conf=NumalogicConf(
+                                model=ModelInfo(
+                                    name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                                ),
+                                preprocess=[
+                                    ModelInfo(name="LogTransformer"),
+                                ],
+                                trainer=TrainerConf(
+                                    pltrainer_conf=LightningTrainerConf(max_epochs=1),
+                                ),
+                            ),
+                        )
+                    }
                 )
             },
             druid_conf=DruidConf(url="some-url", endpoint="druid/v2", delay_hrs=3),
@@ -379,15 +475,22 @@ class TestDruidTrainerUDF(unittest.TestCase):
         pl_conf = PipelineConf(
             stream_confs={
                 "druid-config": StreamConf(
-                    numalogic_conf=NumalogicConf(
-                        model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                        preprocess=[
-                            ModelInfo(name="LogTransformer"),
-                        ],
-                        trainer=TrainerConf(
-                            pltrainer_conf=LightningTrainerConf(max_epochs=1),
-                        ),
-                    )
+                    ml_pipelines={
+                        "pipeline1": MLPipelineConf(
+                            pipeline_id="pipeline1",
+                            numalogic_conf=NumalogicConf(
+                                model=ModelInfo(
+                                    name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                                ),
+                                preprocess=[
+                                    ModelInfo(name="LogTransformer"),
+                                ],
+                                trainer=TrainerConf(
+                                    pltrainer_conf=LightningTrainerConf(max_epochs=1),
+                                ),
+                            ),
+                        )
+                    }
                 )
             },
             druid_conf=DruidConf(
@@ -395,7 +498,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                 endpoint="druid/v2",
                 delay_hrs=3,
                 id_fetcher={
-                    "some-id": DruidFetcherConf(
+                    "some-id-pipeline1": DruidFetcherConf(
                         datasource="some-datasource", dimensions=["some-dimension"]
                     )
                 },
@@ -403,9 +506,11 @@ class TestDruidTrainerUDF(unittest.TestCase):
         )
         udf3 = DruidTrainerUDF(REDIS_CLIENT, pl_conf=pl_conf)
         udf3.register_conf("druid-config", pl_conf.stream_confs["druid-config"])
-        udf3.register_druid_fetcher_conf("some-id", pl_conf.druid_conf.id_fetcher["some-id"])
+        udf3.register_druid_fetcher_conf(
+            "some-id", "pipeline1", pl_conf.druid_conf.id_fetcher["some-id-pipeline1"]
+        )
         with self.assertRaises(ConfigNotFoundError):
-            udf3.get_druid_fetcher_conf("different-config")
+            udf3.get_druid_fetcher_conf("different-config", "pipeline1")
         with self.assertRaises(ConfigNotFoundError):
             udf3(self.keys, self.datum)
 
@@ -430,6 +535,7 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
         payload = {
             "uuid": "some-uuid",
             "config_id": "odl-graphql",
+            "pipeline_id": "pipeline1",
             "composite_keys": ["odl-odlgraphql-usw2-e2e", "odl-graphql"],
             "metrics": [
                 "namespace_app_rollouts_cpu_utilization",
@@ -454,9 +560,9 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"odl-odlgraphql-usw2-e2e:odl-graphql::StandardScaler::LATEST",
-                b"odl-odlgraphql-usw2-e2e:odl-graphql::Conv1dVAE::LATEST",
-                b"odl-odlgraphql-usw2-e2e:odl-graphql::MahalanobisThreshold::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql:pipeline1::StandardScaler::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql:pipeline1::Conv1dVAE::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql:pipeline1::MahalanobisThreshold::LATEST",
             ),
         )
 
@@ -469,6 +575,7 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
                 {
                     "uuid": "some-uuid",
                     "config_id": "myconf",
+                    "pipeline_id": "pipeline1",
                     "composite_keys": [
                         "dev-devx-druidreverseproxy-usw2-qal",
                         "druid-reverse-proxy",
@@ -485,9 +592,9 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::StandardScaler::LATEST",
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::SparseVanillaAE::LATEST",
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::StdDevThreshold::LATEST",
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy:pipeline1::StandardScaler::LATEST",
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy:pipeline1::SparseVanillaAE::LATEST",
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy:pipeline1::StdDevThreshold::LATEST",
             ),
         )
 

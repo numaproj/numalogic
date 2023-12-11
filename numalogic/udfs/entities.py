@@ -33,6 +33,7 @@ class Header(str, Enum):
 class _BasePayload:
     uuid: str
     config_id: str
+    pipeline_id: str
     composite_keys: list[str]
 
 

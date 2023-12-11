@@ -19,7 +19,7 @@ from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf, PipelineConf
+from numalogic.udfs._config import PipelineConf, MLPipelineConf
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs._metrics import (
     REDIS_ERROR_COUNTER,
@@ -146,7 +146,10 @@ class TrainerUDF(NumalogicUDF):
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
         _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
-        _conf = self.get_conf(payload.config_id)
+
+        _conf = self.get_ml_pipeline_conf(
+            config_id=payload.config_id, pipeline_id=payload.pipeline_id
+        )
         _increment_counter(
             counter=MSG_IN_COUNTER,
             labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
@@ -220,7 +223,7 @@ class TrainerUDF(NumalogicUDF):
         )
 
         # Save artifacts
-        skeys = payload.composite_keys
+        skeys = [*payload.composite_keys, payload.pipeline_id]
 
         self.artifacts_to_save(
             skeys=skeys,
@@ -247,7 +250,7 @@ class TrainerUDF(NumalogicUDF):
         )
         return Messages(Message.to_drop())
 
-    def _construct_preproc_clf(self, _conf: StreamConf) -> Optional[artifact_t]:
+    def _construct_preproc_clf(self, _conf: MLPipelineConf) -> Optional[artifact_t]:
         preproc_clfs = []
         for _cfg in _conf.numalogic_conf.preprocess:
             _clf = self._preproc_factory.get_instance(_cfg)
@@ -304,7 +307,9 @@ class TrainerUDF(NumalogicUDF):
             _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
-        _conf = self.get_conf(payload.config_id)
+        _conf = self.get_ml_pipeline_conf(
+            config_id=payload.config_id, pipeline_id=payload.pipeline_id
+        )
         if len(df) < _conf.numalogic_conf.trainer.min_train_size:
             _ = self.train_msg_deduplicator.ack_insufficient_data(
                 key=payload.composite_keys, uuid=payload.uuid, train_records=len(df)

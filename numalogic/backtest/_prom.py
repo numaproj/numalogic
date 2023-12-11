@@ -37,7 +37,7 @@ from numalogic.connectors import ConnectorType
 from numalogic.connectors.prometheus import PrometheusFetcher
 from numalogic.tools.data import StreamingDataset, inverse_window
 from numalogic.tools.types import artifact_t
-from numalogic.udfs import UDFFactory, StreamConf
+from numalogic.udfs import UDFFactory, StreamConf, MLPipelineConf
 
 DEFAULT_OUTPUT_DIR = os.path.join(BASE_DIR, ".btoutput")
 LOGGER = logging.getLogger(__name__)
@@ -54,8 +54,12 @@ def _init_default_streamconf(metrics: list[str]) -> StreamConf:
     return StreamConf(
         source=ConnectorType.prometheus,
         window_size=DEFAULT_SEQUENCE_LEN,
-        metrics=metrics,
-        numalogic_conf=numalogic_cfg,
+        ml_pipelines={
+            "default": MLPipelineConf(
+                metrics=metrics,
+                numalogic_conf=numalogic_cfg,
+            )
+        },
     )
 
 
@@ -73,6 +77,7 @@ class PromUnivarBacktester:
         output_dir: Output directory
         test_ratio: Ratio of test data to total data
         stream_conf: Stream configuration
+        pipeline_id: ml pipeline id from stream_conf
     """
 
     def __init__(
@@ -86,18 +91,20 @@ class PromUnivarBacktester:
         output_dir: Union[str, Path] = DEFAULT_OUTPUT_DIR,
         test_ratio: float = 0.25,
         stream_conf: Optional[StreamConf] = None,
+        pipeline_id: Optional[str] = "default",
     ):
         self._url = url
         self.namespace = namespace
         self.appname = appname
         self.metric = metric
         self.conf = stream_conf or _init_default_streamconf([metric])
+        self.ml_pl_conf = self.conf.ml_pipelines[pipeline_id]
         self.test_ratio = test_ratio
         self.lookback_days = lookback_days
         self.return_labels = return_labels
 
         self._seq_len = self.conf.window_size
-        self._n_features = len(self.conf.metrics)
+        self._n_features = len(self.ml_pl_conf.metrics)
 
         self.out_dir = self.get_outdir(appname, metric, outdir=output_dir)
         self._datapath = os.path.join(self.out_dir, "data.csv")
@@ -170,13 +177,13 @@ class PromUnivarBacktester:
         LOGGER.info("Training data shape: %s", x_train.shape)
 
         artifacts = UDFFactory.get_udf_cls("trainer").compute(
-            model=ModelFactory().get_instance(self.conf.numalogic_conf.model),
+            model=ModelFactory().get_instance(self.ml_pl_conf.numalogic_conf.model),
             input_=x_train,
             preproc_clf=PreprocessFactory().get_pipeline_instance(
-                self.conf.numalogic_conf.preprocess
+                self.ml_pl_conf.numalogic_conf.preprocess
             ),
-            threshold_clf=ThresholdFactory().get_instance(self.conf.numalogic_conf.threshold),
-            numalogic_cfg=self.conf.numalogic_conf,
+            threshold_clf=ThresholdFactory().get_instance(self.ml_pl_conf.numalogic_conf.threshold),
+            numalogic_cfg=self.ml_pl_conf.numalogic_conf,
         )
         artifacts_dict = {
             "model": artifacts["inference"].artifact,
@@ -233,10 +240,12 @@ class PromUnivarBacktester:
 
         ds = StreamingDataset(x_scaled, seq_len=self.conf.window_size)
         anomaly_scores = np.zeros(
-            (len(ds), self.conf.window_size, len(self.conf.metrics)), dtype=np.float32
+            (len(ds), self.conf.window_size, len(self.ml_pl_conf.metrics)), dtype=np.float32
         )
         x_recon = np.zeros_like(anomaly_scores, dtype=np.float32)
-        postproc_func = PostprocessFactory().get_instance(self.conf.numalogic_conf.postprocess)
+        postproc_func = PostprocessFactory().get_instance(
+            self.ml_pl_conf.numalogic_conf.postprocess
+        )
 
         for idx, arr in enumerate(ds):
             x_recon[idx] = nn_udf.compute(model=artifacts["model"], input_=arr)

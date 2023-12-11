@@ -61,7 +61,8 @@ class PromTrainerUDF(TrainerUDF):
         """
         _start_time = time.perf_counter()
         _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
-        _conf = self.get_conf(payload.config_id)
+        _stream_conf = self.get_stream_conf(payload.config_id)
+        _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
 
         end_dt = datetime.now(pytz.utc)
         start_dt = end_dt - timedelta(hours=_conf.numalogic_conf.trainer.train_hours)
@@ -75,7 +76,7 @@ class PromTrainerUDF(TrainerUDF):
                 return_labels=["rollouts_pod_template_hash"],
                 filters={
                     "numalogic": "true",
-                    **dict(zip(_conf.composite_keys, payload.composite_keys)),
+                    **dict(zip(_stream_conf.composite_keys, payload.composite_keys)),
                 },
             )
         except Exception:

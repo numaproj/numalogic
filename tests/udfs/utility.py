@@ -36,26 +36,22 @@ def input_json_from_file(data_path: str) -> Datum:
 
 def store_in_redis(pl_conf, registry):
     """Store preprocess artifacts in redis."""
-    preproc_clfs = []
-    preproc_factory = PreprocessFactory()
-    for _cfg in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess:
-        _clf = preproc_factory.get_instance(_cfg)
-        preproc_clfs.append(_clf)
-    if any(
-        _conf.stateful for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess
-    ):
-        preproc_clf = make_pipeline(*preproc_clfs)
-        preproc_clf.fit(np.asarray([[1, 3], [4, 6]]))
-        registry.save_multiple(
-            skeys=pl_conf.stream_confs["druid-config"].composite_keys,
-            dict_artifacts={
-                "inference": KeyedArtifact(dkeys=["AE"], artifact=VanillaAE(10)),
-                "preproc": KeyedArtifact(
-                    dkeys=[
-                        _conf.name
-                        for _conf in pl_conf.stream_confs["druid-config"].numalogic_conf.preprocess
-                    ],
-                    artifact=preproc_clf,
-                ),
-            },
-        )
+    for _pipeline_id, _ml_conf in pl_conf.stream_confs["druid-config"].ml_pipelines.items():
+        preproc_clfs = []
+        preproc_factory = PreprocessFactory()
+        for _cfg in _ml_conf.numalogic_conf.preprocess:
+            _clf = preproc_factory.get_instance(_cfg)
+            preproc_clfs.append(_clf)
+        if any(_conf.stateful for _conf in _ml_conf.numalogic_conf.preprocess):
+            preproc_clf = make_pipeline(*preproc_clfs)
+            preproc_clf.fit(np.asarray([[1, 3], [4, 6]]))
+            registry.save_multiple(
+                skeys=[*pl_conf.stream_confs["druid-config"].composite_keys, _pipeline_id],
+                dict_artifacts={
+                    "inference": KeyedArtifact(dkeys=["AE"], artifact=VanillaAE(10)),
+                    "preproc": KeyedArtifact(
+                        dkeys=[_conf.name for _conf in _ml_conf.numalogic_conf.preprocess],
+                        artifact=preproc_clf,
+                    ),
+                },
+            )
