@@ -11,6 +11,7 @@ from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
 from numalogic.registry import LocalLRUCache
+from numalogic.tools.adjust import ScoreAdjuster
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
@@ -79,6 +80,7 @@ class PostprocessUDF(NumalogicUDF):
         _conf = self.get_conf(payload.config_id)
         thresh_cfg = _conf.numalogic_conf.threshold
         postprocess_cfg = _conf.numalogic_conf.postprocess
+        adjust_cfg = _conf.numalogic_conf.adjust
 
         # load artifact
         thresh_artifact, payload = _load_artifact(
@@ -102,6 +104,8 @@ class PostprocessUDF(NumalogicUDF):
                     model=thresh_artifact.artifact,
                     input_=payload.get_data(),
                     postproc_clf=postproc_clf,
+                    score_adjust_conf=adjust_cfg,
+                    raw_input=payload.get_data(original=True),
                 )
             except RuntimeError:
                 _LOGGER.exception(
@@ -162,32 +166,63 @@ class PostprocessUDF(NumalogicUDF):
 
     @classmethod
     def compute(
-        cls, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
+        cls,
+        model: artifact_t,
+        input_: NDArray[float],
+        postproc_clf=None,
+        score_adjust_conf=None,
+        raw_input: Optional[NDArray[float]] = None,
+        **_
     ) -> NDArray[float]:
         """
         Compute the postprocess function.
 
         Args:
         -------
-        model: Model instance
-        input_: Input data
-        kwargs: Additional arguments
+        model: Threshold model instance
+        input_: Input data of shape (n_samples, n_features)
+        postproc_clf: Postprocess classifier instance
+        score_adjust_conf: Score adjuster config
 
         Returns
         -------
         Output data
         """
-        _start_time = time.perf_counter()
+        # Threshold model run
+
+        print("input", input_, input_.shape)
+
         try:
-            y_score = model.score_samples(input_).astype(np.float32)
+            scores = model.score_samples(input_).astype(np.float32)
         except Exception as err:
             raise RuntimeError("Threshold model scoring failed") from err
+
+        print("thresh", scores, scores.shape)
+
+        if not postproc_clf:
+            return np.mean(scores, axis=0, keepdims=True).reshape(-1)
+
+        # Postprocessing transform
         try:
-            win_score = np.mean(y_score, axis=0, keepdims=True)
-            score = postproc_clf.transform(win_score)
+            scores = postproc_clf.transform(scores)  # (10, 1)
         except Exception as err:
             raise RuntimeError("Postprocess failed") from err
-        _LOGGER.debug(
-            "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
-        )
-        return score.reshape(-1)
+
+        print("postproc", scores, scores.shape)
+
+        if not score_adjust_conf:
+            return np.mean(scores, axis=0, keepdims=True).reshape(-1)
+
+        # Score adjustment
+        if raw_input is None:
+            _LOGGER.warning("Raw input is None. Skipping score adjustment")
+            return np.mean(scores, axis=0, keepdims=True).reshape(-1)
+
+        print("raw_input", raw_input, raw_input.shape)
+
+        score_adjuster = ScoreAdjuster.from_conf(score_adjust_conf)
+        scores = score_adjuster.adjust(metric_in=raw_input, model_scores=scores)
+
+        print("adjusted", scores, scores.shape)
+
+        return np.mean(scores, axis=0, keepdims=True).reshape(-1)

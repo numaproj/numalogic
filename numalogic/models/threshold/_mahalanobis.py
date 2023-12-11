@@ -158,7 +158,7 @@ class MahalanobisThreshold(BaseThresholdModel):
         y_hat[md >= self._md_thresh] = _OUTLIER
         return y_hat
 
-    def score_samples(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
+    def score_samples(self, x: npt.NDArray[float], keepdims=True) -> npt.NDArray[float]:
         """
         Returns the outlier score for each sample.
 
@@ -168,6 +168,7 @@ class MahalanobisThreshold(BaseThresholdModel):
         Args:
         ----
             x: input data of shape (n_samples, n_features)
+            keepdims: if True then return as a column vector
 
         Returns
         -------
@@ -181,4 +182,7 @@ class MahalanobisThreshold(BaseThresholdModel):
         if not self._is_fitted:
             raise ModelInitializationError("Model not fitted yet.")
         self._validate_input(x)
-        return self.mahalanobis(x) / self._md_thresh
+        scores = self.mahalanobis(x) / self._md_thresh
+        if keepdims:
+            return scores.reshape(-1, 1)
+        return scores

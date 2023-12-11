@@ -11,7 +11,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from omegaconf import MISSING
 
@@ -97,6 +97,13 @@ class TrainerConf:
 
 
 @dataclass
+class ScoreAdjustConf:
+    weight: float
+    metric_weights: Optional[list[float]]
+    upper_limits: list[float]
+
+
+@dataclass
 class NumalogicConf:
     """Top level config schema for numalogic."""
 
@@ -107,6 +114,7 @@ class NumalogicConf:
     postprocess: ModelInfo = field(
         default_factory=lambda: ModelInfo(name="TanhNorm", stateful=False)
     )
+    adjust: Optional[ScoreAdjustConf] = None
 
 
 @dataclass

@@ -79,7 +79,6 @@ optional = true
 [tool.poetry.group.jupyter.dependencies]
 jupyter = "^1.0.0"
 ipykernel = "^6.15.1"
-nb-black = "^1.0.7"
 ipympl = "^0.9.1"
 ipython-autotime = "^0.3.1"
 
