@@ -1,5 +1,4 @@
 import json
-import os
 import time
 import orjson
 import logging
@@ -13,15 +12,11 @@ from numalogic.udfs._metrics import UDF_TIME
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 
-# TODO: move to config
-LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
-LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
-LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class PipelineUDF(NumalogicUDF):
+class MLPipelineUDF(NumalogicUDF):
     """
     Pipeline UDF for Numalogic.
 
@@ -39,9 +34,9 @@ class PipelineUDF(NumalogicUDF):
     @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
-        The preprocess function here receives data from the data source.
+        The pipeline function here receives data from the data source.
 
-        Perform preprocess on the input data.
+        Perform ML pipelining on the input data based on the ml_pipelines provided in config
 
         Args:
         -------

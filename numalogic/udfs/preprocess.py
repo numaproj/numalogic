@@ -100,6 +100,7 @@ class PreprocessUDF(NumalogicUDF):
         _conf = _stream_conf.ml_pipelines[data_payload["pipeline_id"]]
         raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=_stream_conf)
 
+        # TODO: Add pipeline id to the ml metrics
         _metric_label_values = (self._vtx, ":".join(keys), data_payload["config_id"])
 
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
