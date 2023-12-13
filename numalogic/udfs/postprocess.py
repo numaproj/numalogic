@@ -23,7 +23,7 @@ from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
-from numalogic.udfs.tools import _load_artifact
+from numalogic.udfs.tools import _load_artifact, _update_info_metric
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -118,11 +118,12 @@ class PostprocessUDF(NumalogicUDF):
         #  Postprocess payload
         if payload.status in (Status.ARTIFACT_FOUND, Status.ARTIFACT_STALE) and thresh_artifact:
             try:
-                anomaly_scores = self.compute(
+                x_scaled, anomaly_scores = self.compute(
                     model=thresh_artifact.artifact,
                     input_=payload.get_data(),
                     postproc_clf=postproc_clf,
                 )
+                _update_info_metric(x_scaled, payload.metrics, _metric_label_values)
             except RuntimeError:
                 _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
@@ -187,7 +188,7 @@ class PostprocessUDF(NumalogicUDF):
     @classmethod
     def compute(
         cls, model: artifact_t, input_: NDArray[float], postproc_clf=None, **_
-    ) -> NDArray[float]:
+    ) -> tuple[NDArray[float], NDArray[float]]:
         """
         Compute the postprocess function.
 
@@ -214,4 +215,4 @@ class PostprocessUDF(NumalogicUDF):
         _LOGGER.debug(
             "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
         )
-        return score.reshape(-1)
+        return y_score, score.reshape(-1)

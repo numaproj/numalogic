@@ -240,7 +240,7 @@ class PromUnivarBacktester:
 
         for idx, arr in enumerate(ds):
             x_recon[idx] = nn_udf.compute(model=artifacts["model"], input_=arr)
-            anomaly_scores[idx] = postproc_udf.compute(
+            _, anomaly_scores[idx] = postproc_udf.compute(
                 model=artifacts["threshold_clf"],
                 input_=x_recon[idx],
                 postproc_clf=postproc_func,
