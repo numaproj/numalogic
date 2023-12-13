@@ -9,8 +9,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections.abc import Sequence
+from typing import Union, Optional
+
 import numpy as np
 import numpy.typing as npt
+import pandas as pd
 
 from numalogic.base import StatelessTransformer
 
@@ -53,3 +57,68 @@ class StaticPowerTransformer(StatelessTransformer):
 
     def inverse_transform(self, X) -> npt.NDArray[float]:
         return np.power(X, 1.0 / self.n) - self.add_factor
+
+
+class DataClipper(StatelessTransformer):
+    """
+    Applies column-wise ceiling transformation.
+
+    Args:
+    ----
+        lower: lower bound for clipping.
+        upper: upper bound for clipping.
+    """
+
+    __slots__ = ("lower", "upper")
+
+    def __init__(
+        self,
+        lower: Optional[Union[float, Sequence[float]]] = None,
+        upper: Optional[Union[float, Sequence[float]]] = None,
+    ):
+        self._validate_args(lower, upper)
+        self.lower = lower
+        self.upper = upper
+
+    @staticmethod
+    def _validate_args(
+        lower: Union[float, Sequence[float]], upper: Union[float, Sequence[float]]
+    ) -> None:
+        if lower is None and upper is None:
+            raise ValueError("At least one of lower or upper should be provided.")
+
+        if isinstance(lower, Sequence) and isinstance(upper, Sequence):
+            if len(lower) != len(upper):
+                raise ValueError("lower and upper should have the same length.")
+
+    def transform(self, x: npt.NDArray[float], **__) -> npt.NDArray[float]:
+        _df = pd.DataFrame(x, dtype=np.float32)
+        if (self.lower is not None) and (self.upper is not None):
+            return _df.clip(lower=self.lower, upper=self.upper, axis=1).to_numpy(dtype=np.float32)
+        if self.upper is not None:
+            return _df.clip(upper=self.upper, axis=1).to_numpy(dtype=np.float32)
+        return _df.clip(lower=self.lower, axis=1).to_numpy(dtype=np.float32)
+
+
+class GaussianNoiseAdder(StatelessTransformer):
+    """
+    Applies Gaussian noise to data.
+
+    Args:
+    ----
+        scale: small float value to be used as the noise factor (default: 1e-8).
+        positive_only: bool value to indicate whether
+            to use absolute value of the noise (default: True).
+        seed: int value to be used as the random seed (default: 42).
+    """
+
+    def __init__(self, scale: float = 1e-8, positive_only: bool = True, seed: int = 42):
+        self._rng = np.random.default_rng(seed)
+        self._is_abs = positive_only
+        self._scale = scale
+
+    def transform(self, x: npt.NDArray[float], **__) -> npt.NDArray[float]:
+        noise = self._rng.normal(loc=0.0, scale=self._scale, size=x.shape)
+        if self._is_abs:
+            noise = np.abs(noise)
+        return x + noise

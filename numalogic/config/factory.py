@@ -43,7 +43,13 @@ class PreprocessFactory(_ObjectFactory):
     """Factory class to create preprocess instances."""
 
     from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
-    from numalogic.transforms import LogTransformer, StaticPowerTransformer, TanhScaler
+    from numalogic.transforms import (
+        LogTransformer,
+        StaticPowerTransformer,
+        TanhScaler,
+        DataClipper,
+        GaussianNoiseAdder,
+    )
 
     _CLS_MAP: ClassVar[dict] = {
         "StandardScaler": StandardScaler,
@@ -53,6 +59,8 @@ class PreprocessFactory(_ObjectFactory):
         "LogTransformer": LogTransformer,
         "StaticPowerTransformer": StaticPowerTransformer,
         "TanhScaler": TanhScaler,
+        "DataClipper": DataClipper,
+        "GaussianNoiseAdder": GaussianNoiseAdder,
     }
 
     def get_pipeline_instance(self, objs_info: list[ModelInfo]):
@@ -81,6 +89,7 @@ class ThresholdFactory(_ObjectFactory):
     from numalogic.models.threshold import (
         StdDevThreshold,
         MahalanobisThreshold,
+        RobustMahalanobisThreshold,
         StaticThreshold,
         SigmoidThreshold,
     )
@@ -90,6 +99,7 @@ class ThresholdFactory(_ObjectFactory):
         "StaticThreshold": StaticThreshold,
         "SigmoidThreshold": SigmoidThreshold,
         "MahalanobisThreshold": MahalanobisThreshold,
+        "RobustMahalanobisThreshold": RobustMahalanobisThreshold,
     }
 
 

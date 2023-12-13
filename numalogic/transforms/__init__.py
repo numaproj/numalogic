@@ -15,7 +15,12 @@ feature engineering and postprocessing.
 """
 
 from numalogic.transforms._scaler import TanhScaler
-from numalogic.transforms._stateless import LogTransformer, StaticPowerTransformer
+from numalogic.transforms._stateless import (
+    LogTransformer,
+    StaticPowerTransformer,
+    DataClipper,
+    GaussianNoiseAdder,
+)
 from numalogic.transforms._movavg import ExpMovingAverage, expmov_avg_aggregator
 from numalogic.transforms._postprocess import TanhNorm, tanh_norm
 
@@ -23,8 +28,10 @@ __all__ = [
     "TanhScaler",
     "LogTransformer",
     "StaticPowerTransformer",
+    "DataClipper",
     "ExpMovingAverage",
     "expmov_avg_aggregator",
     "TanhNorm",
     "tanh_norm",
+    "GaussianNoiseAdder",
 ]
