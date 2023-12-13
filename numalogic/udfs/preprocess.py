@@ -178,7 +178,7 @@ class PreprocessUDF(NumalogicUDF):
                 labels=_metric_label_values,
             )
             _LOGGER.exception(
-                "%s - Runtime inference error! Keys: %s, Metric: %s",
+                "%s - Runtime preprocess error! Keys: %s, Metric: %s",
                 payload.uuid,
                 payload.composite_keys,
                 payload.metrics,
