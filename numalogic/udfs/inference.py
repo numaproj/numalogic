@@ -187,6 +187,7 @@ class InferenceUDF(NumalogicUDF):
             payload.uuid,
             payload.composite_keys,
             payload.metrics,
+            x_inferred
         )
         _LOGGER.debug(
             "%s - Time taken in inference: %.4f sec",
