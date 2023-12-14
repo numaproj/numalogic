@@ -208,8 +208,8 @@ class PostprocessUDF(NumalogicUDF):
         except Exception as err:
             raise RuntimeError("Threshold model scoring failed") from err
         try:
-            win_score = np.mean(y_score, axis=0, keepdims=True)
-            score = postproc_clf.transform(win_score)
+            win_score = postproc_clf.transform(y_score)
+            score = np.mean(win_score, axis=0, keepdims=True)
         except Exception as err:
             raise RuntimeError("Postprocess failed") from err
         _LOGGER.debug(
