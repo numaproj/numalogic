@@ -10,6 +10,7 @@ from orjson import orjson
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
+from numalogic.transforms import expmov_avg_aggregator
 from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
@@ -29,6 +30,7 @@ from numalogic.udfs.tools import _load_artifact, _update_info_metric
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
+EXP_MOV_AVG_BETA = float(os.getenv("EXP_MOV_AVG_BETA", "0.6"))
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -118,12 +120,12 @@ class PostprocessUDF(NumalogicUDF):
         #  Postprocess payload
         if payload.status in (Status.ARTIFACT_FOUND, Status.ARTIFACT_STALE) and thresh_artifact:
             try:
-                x_scaled, anomaly_scores = self.compute(
+                raw_scores, anomaly_scores = self.compute(
                     model=thresh_artifact.artifact,
                     input_=payload.get_data(),
                     postproc_clf=postproc_clf,
                 )
-                _update_info_metric(x_scaled, payload.metrics, _metric_label_values)
+                _update_info_metric(raw_scores, payload.metrics, _metric_label_values)
             except RuntimeError:
                 _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
@@ -208,7 +210,9 @@ class PostprocessUDF(NumalogicUDF):
         except Exception as err:
             raise RuntimeError("Threshold model scoring failed") from err
         try:
-            win_score = np.mean(y_score, axis=0, keepdims=True)
+            win_score = np.apply_along_axis(
+                func1d=expmov_avg_aggregator, axis=0, arr=y_score, beta=EXP_MOV_AVG_BETA
+            ).reshape(-1)
             score = postproc_clf.transform(win_score)
         except Exception as err:
             raise RuntimeError("Postprocess failed") from err
