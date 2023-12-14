@@ -151,10 +151,11 @@ class PostprocessUDF(NumalogicUDF):
                     metadata=payload.metadata,
                 )
                 _LOGGER.info(
-                    "%s - Successfully post-processed, Keys: %s, Scores: %s",
+                    "%s - Successfully post-processed, Keys: %s, Scores: %s, Raw scores: %s",
                     out_payload.uuid,
                     out_payload.composite_keys,
                     out_payload.unified_anomaly,
+                    raw_scores.tolist(),
                 )
                 messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 
