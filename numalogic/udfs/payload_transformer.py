@@ -1,24 +1,21 @@
-import json
-import time
-import orjson
 import logging
+import time
 from typing import Optional
 
+import orjson
 from numpy import typing as npt
 from pynumaflow.mapper import Datum, Messages, Message
 
 from numalogic.tools.types import artifact_t
-from numalogic.udfs._metrics import UDF_TIME
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
-
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class MLPipelineUDF(NumalogicUDF):
+class PayloadTransformer(NumalogicUDF):
     """
-    Pipeline UDF for Numalogic.
+    PayloadGenerator appends pipeline_id to the payload.
 
     Args:
         pl_conf: PipelineConf instance
@@ -29,9 +26,8 @@ class MLPipelineUDF(NumalogicUDF):
         pass
 
     def __init__(self, pl_conf: Optional[PipelineConf] = None):
-        super().__init__(pl_conf=pl_conf, _vtx="pipeline")
+        super().__init__(pl_conf=pl_conf, _vtx="payload_adder")
 
-    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         The pipeline function here receives data from the data source.
@@ -64,7 +60,11 @@ class MLPipelineUDF(NumalogicUDF):
         messages = Messages()
         for pipeline in _stream_conf.ml_pipelines:
             data_payload["pipeline_id"] = pipeline
-            messages.append(Message(keys=keys, value=str.encode(json.dumps(data_payload))))
+            messages.append(
+                Message(
+                    keys=keys, value=orjson.dumps(data_payload, option=orjson.OPT_SERIALIZE_NUMPY)
+                )
+            )
 
         _LOGGER.debug(
             "Time taken to execute Pipeline: %.4f sec",

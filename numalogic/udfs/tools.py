@@ -115,7 +115,7 @@ def _load_artifact(
     StreamPayload object
 
     """
-    _metric_label_values = (vertex, ":".join(skeys), payload.config_id)
+    _metric_label_values = (vertex, ":".join(skeys), payload.config_id, payload.pipeline_id)
 
     version_to_load = "-1"
     if payload.artifact_versions:
@@ -180,7 +180,7 @@ def _load_artifact(
         )
         _add_info(
             info=MODEL_INFO,
-            labels=(":".join(skeys), payload.config_id),
+            labels=(":".join(skeys), payload.config_id, payload.pipeline_id),
             data=_get_artifact_stats(artifact_data),
         )
         if payload.pipeline_id not in payload.artifact_versions:

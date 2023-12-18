@@ -145,14 +145,18 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
-        _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
+        _metric_label_values = (
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
 
         _conf = self.get_ml_pipeline_conf(
             config_id=payload.config_id, pipeline_id=payload.pipeline_id
         )
         _increment_counter(
             counter=MSG_IN_COUNTER,
-            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+            labels=[self._vtx, *_metric_label_values],
         )
 
         # set the retry and retrain_freq

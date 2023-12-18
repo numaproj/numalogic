@@ -60,7 +60,11 @@ class PromTrainerUDF(TrainerUDF):
             Dataframe
         """
         _start_time = time.perf_counter()
-        _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
+        _metric_label_values = (
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
         _stream_conf = self.get_stream_conf(payload.config_id)
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
 

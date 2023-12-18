@@ -103,7 +103,12 @@ class InferenceUDF(NumalogicUDF):
 
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
-        _metric_label_values = (self._vtx, ":".join(payload.composite_keys), payload.config_id)
+        _metric_label_values = (
+            self._vtx,
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
 
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
 

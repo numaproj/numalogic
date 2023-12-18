@@ -61,7 +61,7 @@ class StreamPayload(_BasePayload):
     timestamps: list[int]
     status: Optional[Status] = None
     header: Header = Header.MODEL_INFERENCE
-    artifact_versions: dict[str, Any] = field(default_factory=dict)
+    artifact_versions: dict[str, int] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
     @property

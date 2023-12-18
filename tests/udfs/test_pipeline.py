@@ -8,7 +8,7 @@ from orjson import orjson
 
 from numalogic._constants import TESTS_DIR
 from numalogic.udfs._config import PipelineConf
-from numalogic.udfs.ml_pipeline import MLPipelineUDF
+from numalogic.udfs.payload_transformer import PayloadTransformer
 from tests.udfs.utility import input_json_from_file
 
 logging.basicConfig(level=logging.DEBUG)
@@ -31,8 +31,8 @@ class TestPipelineUDF(unittest.TestCase):
         schema = OmegaConf.structured(PipelineConf)
         pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
         pl_conf_2 = PipelineConf(**OmegaConf.merge(schema, _given_conf_2))
-        self.udf1 = MLPipelineUDF(pl_conf=pl_conf)
-        self.udf2 = MLPipelineUDF(pl_conf=pl_conf_2)
+        self.udf1 = PayloadTransformer(pl_conf=pl_conf)
+        self.udf2 = PayloadTransformer(pl_conf=pl_conf_2)
         self.udf1.register_conf("druid-config", pl_conf.stream_confs["druid-config"])
         self.udf2.register_conf("druid-config", pl_conf_2.stream_confs["druid-config"])
 
