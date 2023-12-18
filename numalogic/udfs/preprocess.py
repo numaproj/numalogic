@@ -26,7 +26,7 @@ from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import Status, Header
-from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact, get_skeys
+from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -123,8 +123,13 @@ class PreprocessUDF(NumalogicUDF):
         # Check if model will be present in registry
         if any(_cfg.stateful for _cfg in _conf.numalogic_conf.preprocess):
             preproc_artifact, payload = _load_artifact(
-                skeys=get_skeys(payload, _stream_conf),
-                dkeys=[_cfg.name for _cfg in _conf.numalogic_conf.preprocess],
+                skeys=[
+                    _ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)
+                ],
+                dkeys=[
+                    payload.pipeline_id,
+                    *[_cfg.name for _cfg in _conf.numalogic_conf.preprocess],
+                ],
                 payload=payload,
                 model_registry=self.model_registry,
                 load_latest=LOAD_LATEST,

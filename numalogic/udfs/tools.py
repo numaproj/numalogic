@@ -33,21 +33,6 @@ class _DedupMetadata(NamedTuple):
     msg_train_records: Optional[str]
 
 
-def get_skeys(payload: StreamPayload, stream_conf: StreamConf):
-    """
-
-    Args:
-        payload: StreamPayload object
-        stream_conf: stream configuration.
-
-    Returns
-    -------
-        skeys formed with composite keys and pipeline id
-    """
-    composite_keys = [_ckey for _, _ckey in zip(stream_conf.composite_keys, payload.composite_keys)]
-    return [*composite_keys, payload.pipeline_id]
-
-
 def get_df(
     data_payload: dict, stream_conf: StreamConf, fill_value: float = 0.0
 ) -> tuple[DataFrame, list[int]]:
@@ -131,13 +116,25 @@ def _load_artifact(
 
     """
     _metric_label_values = (vertex, ":".join(skeys), payload.config_id)
+
     version_to_load = "-1"
-    if payload.metadata and "artifact_versions" in payload.metadata:
-        version_to_load = payload.metadata["artifact_versions"][":".join(dkeys)]
-        _LOGGER.info("%s - Found version info for keys: %s, %s", payload.uuid, skeys, dkeys)
+    if payload.artifact_versions:
+        artifact_version = payload.artifact_versions
+        key = ":".join(dkeys)
+        if payload.pipeline_id in artifact_version and key in artifact_version[payload.pipeline_id]:
+            version_to_load = artifact_version[payload.pipeline_id][key]
+            _LOGGER.info("%s - Found version info for keys: %s, %s", payload.uuid, skeys, dkeys)
+        else:
+            _LOGGER.info(
+                "%s - Could not find what version of model to load: %s, %s",
+                payload.uuid,
+                skeys,
+                dkeys,
+            )
     else:
         _LOGGER.info(
-            "%s - No version info passed on! Loading latest artifact version for Keys: %s",
+            "%s - No version info passed on! Loading latest artifact version "
+            "for Keys: %s (if one present in the registry)",
             payload.uuid,
             skeys,
         )
@@ -162,7 +159,7 @@ def _load_artifact(
     except Exception:
         _increment_counter(EXCEPTION_COUNTER, labels=_metric_label_values)
         _LOGGER.exception(
-            "%s - Unhandled exception while fetching preproc artifact, Keys: %s, Metric: %s,",
+            "%s - Unhandled exception while fetching artifact, Keys: %s, Metric: %s,",
             payload.uuid,
             payload.composite_keys,
             payload.metrics,
@@ -186,17 +183,14 @@ def _load_artifact(
             labels=(":".join(skeys), payload.config_id),
             data=_get_artifact_stats(artifact_data),
         )
-        if (
-            artifact_data.metadata
-            and "artifact_versions" in artifact_data.metadata
-            and "artifact_versions" not in payload.metadata
-        ):
+        if payload.pipeline_id not in payload.artifact_versions:
+            new_artifact_versions = dict(
+                payload.artifact_versions,
+                **{payload.pipeline_id: artifact_data.metadata["artifact_versions"]},
+            )
             payload = replace(
                 payload,
-                metadata={
-                    "artifact_versions": artifact_data.metadata["artifact_versions"],
-                    **payload.metadata,
-                },
+                artifact_versions=new_artifact_versions,
             )
         return artifact_data, payload
 
@@ -214,7 +208,7 @@ class TrainMsgDeduplicator:
         self.client = r_client
 
     @staticmethod
-    def __construct_key(keys: KEYS) -> str:
+    def __construct_train_key(keys: KEYS) -> str:
         return f"TRAIN::{':'.join(keys)}"
 
     def __fetch_ts(self, key: str) -> _DedupMetadata:
@@ -249,7 +243,7 @@ class TrainMsgDeduplicator:
         -------
             bool.
         """
-        _key = self.__construct_key(key)
+        _key = self.__construct_train_key(key)
         try:
             self.client.hset(name=_key, key="_msg_train_records", value=str(train_records))
         except RedisError:
@@ -287,7 +281,7 @@ class TrainMsgDeduplicator:
             bool
 
         """
-        _key = self.__construct_key(key)
+        _key = self.__construct_train_key(key)
         metadata = self.__fetch_ts(key=_key)
         _msg_read_ts, _msg_train_ts, _msg_train_records = (
             metadata.msg_read_ts,
@@ -352,7 +346,7 @@ class TrainMsgDeduplicator:
         -------
             bool
         """
-        _key = self.__construct_key(key)
+        _key = self.__construct_train_key(key)
         try:
             self.client.hset(name=_key, key="_msg_train_ts", value=str(time.time()))
         except RedisError:

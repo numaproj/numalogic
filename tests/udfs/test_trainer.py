@@ -94,8 +94,8 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             2,
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
-                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
             ),
         )
 
@@ -122,9 +122,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
-                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
-                b"5984175597303660107:pipeline1::StandardScaler::LATEST",
+                b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
+                b"5984175597303660107::pipeline1:StandardScaler::LATEST",
             ),
         )
 
@@ -154,9 +154,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
-                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
-                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::LATEST",
+                b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
+                b"5984175597303660107::pipeline1:LogTransformer:StandardScaler::LATEST",
             ),
         )
 
@@ -189,17 +189,17 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
-                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
-                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::LATEST",
+                b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
+                b"5984175597303660107::pipeline1:LogTransformer:StandardScaler::LATEST",
             ),
         )
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::1",
-                b"5984175597303660107:pipeline1::StdDevThreshold::1",
-                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::1",
+                b"5984175597303660107::pipeline1:VanillaAE::1",
+                b"5984175597303660107::pipeline1:StdDevThreshold::1",
+                b"5984175597303660107::pipeline1:LogTransformer:StandardScaler::1",
             ),
         )
 
@@ -230,15 +230,15 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
-                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
-                b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::LATEST",
+                b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
+                b"5984175597303660107::pipeline1:LogTransformer:StandardScaler::LATEST",
             ),
         )
         self.assertEqual(
             0,
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::1",
+                b"5984175597303660107::pipeline1:VanillaAE::1",
                 b"5984175597303660107:pipeline1::StdDevThreshold::1",
                 b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::1",
             ),
@@ -275,7 +275,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.assertEqual(
             0,
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::1",
+                b"5984175597303660107::pipeline1:VanillaAE::1",
                 b"5984175597303660107:pipeline1::StdDevThreshold::1",
                 b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::1",
             ),
@@ -310,7 +310,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
             self.assertEqual(
                 0,
                 REDIS_CLIENT.exists(
-                    b"5984175597303660107:pipeline1::VanillaAE::0",
+                    b"5984175597303660107::pipeline1:VanillaAE::0",
                     b"5984175597303660107:pipeline1::StdDevThreshold::0",
                     b"5984175597303660107:pipeline1::LogTransformer:StandardScaler::0",
                 ),
@@ -370,8 +370,8 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1(self.keys, self.datum)
         self.assertFalse(
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
-                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
                 b"5984175597303660107:pipeline1::StandardScaler::LATEST",
             )
         )
@@ -398,8 +398,8 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1(self.keys, self.datum)
         self.assertFalse(
             REDIS_CLIENT.exists(
-                b"5984175597303660107:pipeline1::VanillaAE::LATEST",
-                b"5984175597303660107:pipeline1::StdDevThreshold::LATEST",
+                b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
                 b"5984175597303660107:pipeline1::StandardScaler::LATEST",
             )
         )
@@ -560,9 +560,9 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"odl-odlgraphql-usw2-e2e:odl-graphql:pipeline1::StandardScaler::LATEST",
-                b"odl-odlgraphql-usw2-e2e:odl-graphql:pipeline1::Conv1dVAE::LATEST",
-                b"odl-odlgraphql-usw2-e2e:odl-graphql:pipeline1::MahalanobisThreshold::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:StandardScaler::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:Conv1dVAE::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:MahalanobisThreshold::LATEST",
             ),
         )
 
@@ -592,9 +592,9 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
         self.assertEqual(
             3,
             REDIS_CLIENT.exists(
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy:pipeline1::StandardScaler::LATEST",
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy:pipeline1::SparseVanillaAE::LATEST",
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy:pipeline1::StdDevThreshold::LATEST",
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:StandardScaler::LATEST",
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:SparseVanillaAE::LATEST",
+                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:StdDevThreshold::LATEST",
             ),
         )
 

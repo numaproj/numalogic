@@ -114,8 +114,8 @@ class TestPostProcessUDF(unittest.TestCase):
         data["status"] = Status.ARTIFACT_STALE
         data["header"] = Header.MODEL_INFERENCE
         self.registry.save(
-            [*KEYS, "pipeline1"],
-            ["StdDevThreshold"],
+            [*KEYS],
+            ["pipeline1", "StdDevThreshold"],
             StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]])),
         )
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
@@ -126,8 +126,8 @@ class TestPostProcessUDF(unittest.TestCase):
         data["status"] = Status.ARTIFACT_FOUND
         data["header"] = Header.MODEL_INFERENCE
         self.registry.save(
-            [*KEYS, "pipeline1"],
-            ["StdDevThreshold"],
+            [*KEYS],
+            ["pipeline1", "StdDevThreshold"],
             StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]])),
         )
 
@@ -151,8 +151,8 @@ class TestPostProcessUDF(unittest.TestCase):
             "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
         }
         self.registry.save(
-            [*KEYS, "pipeline1"],
-            ["MahalanobisThreshold"],
+            [*KEYS],
+            ["pipeline1", "MahalanobisThreshold"],
             MahalanobisThreshold().fit(np.asarray([[0, 1], [1, 2]])),
         )
 

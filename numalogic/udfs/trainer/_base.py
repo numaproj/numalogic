@@ -223,10 +223,9 @@ class TrainerUDF(NumalogicUDF):
         )
 
         # Save artifacts
-        skeys = [*payload.composite_keys, payload.pipeline_id]
 
         self.artifacts_to_save(
-            skeys=skeys,
+            skeys=payload.composite_keys,
             dict_artifacts=dict_artifacts,
             model_registry=self.model_registry,
             payload=payload,
@@ -284,7 +283,7 @@ class TrainerUDF(NumalogicUDF):
 
         """
         dict_artifacts = {
-            k: v
+            k: KeyedArtifact([payload.pipeline_id, *v.dkeys], v.artifact)
             for k, v in dict_artifacts.items()
             if not isinstance(v.artifact, StatelessTransformer)
         }

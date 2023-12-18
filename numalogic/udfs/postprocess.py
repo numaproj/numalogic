@@ -10,6 +10,10 @@ from orjson import orjson
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
+from numalogic.registry import LocalLRUCache
+from numalogic.tools.types import redis_client_t, artifact_t
+from numalogic.udfs import NumalogicUDF
+from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
@@ -18,12 +22,8 @@ from numalogic.udfs._metrics import (
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.registry import LocalLRUCache
-from numalogic.tools.types import redis_client_t, artifact_t
-from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
-from numalogic.udfs.tools import _load_artifact, get_skeys
+from numalogic.udfs.tools import _load_artifact
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -98,8 +98,8 @@ class PostprocessUDF(NumalogicUDF):
 
         # load artifact
         thresh_artifact, payload = _load_artifact(
-            skeys=get_skeys(payload, _stream_conf),
-            dkeys=[thresh_cfg.name],
+            skeys=[_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)],
+            dkeys=[payload.pipeline_id, thresh_cfg.name],
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
@@ -150,10 +150,11 @@ class PostprocessUDF(NumalogicUDF):
                     metadata=payload.metadata,
                 )
                 _LOGGER.info(
-                    "%s - Successfully post-processed, Keys: %s, Scores: %s",
+                    "%s - Successfully post-processed, Keys: %s, Scores: %s, Payload: %s",
                     out_payload.uuid,
                     out_payload.composite_keys,
                     out_payload.unified_anomaly,
+                    payload,
                 )
                 messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 

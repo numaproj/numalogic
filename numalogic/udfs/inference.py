@@ -15,7 +15,6 @@ from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
-from numalogic.udfs.entities import StreamPayload, Header, Status
 from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
@@ -24,7 +23,8 @@ from numalogic.udfs._metrics import (
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.udfs.tools import _load_artifact, get_skeys
+from numalogic.udfs.entities import StreamPayload, Header, Status
+from numalogic.udfs.tools import _load_artifact
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -128,8 +128,8 @@ class InferenceUDF(NumalogicUDF):
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
 
         artifact_data, payload = _load_artifact(
-            skeys=get_skeys(payload, _stream_conf),
-            dkeys=[_conf.numalogic_conf.model.name],
+            skeys=[_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)],
+            dkeys=[payload.pipeline_id, _conf.numalogic_conf.model.name],
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
@@ -183,10 +183,11 @@ class InferenceUDF(NumalogicUDF):
             )
 
         _LOGGER.info(
-            "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s }",
+            "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s , Payload: %s }",
             payload.uuid,
             payload.composite_keys,
             payload.metrics,
+            payload,
         )
         _LOGGER.debug(
             "%s - Time taken in inference: %.4f sec",
