@@ -70,8 +70,8 @@ DATA = {
         1691623860000,
     ],
     "header": "model_inference",
+    "artifact_versions": {"pipeline1": {"pipeline1:VanillaAE": "0"}},
     "metadata": {
-        "artifact_versions": {"VanillaAE": "0"},
         "tags": {
             "asset_alias": "some-alias",
             "asset_id": "362557362191815079",
