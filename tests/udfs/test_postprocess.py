@@ -76,7 +76,7 @@ DATA = {
     ],
     "status": Status.ARTIFACT_STALE,
     "header": Header.MODEL_INFERENCE,
-    "artifact_versions": {"pipeline1": {"pipeline1:StdDevThreshold": "0"}},
+    "artifact_versions": {"pipeline1:StdDevThreshold": "0"},
     "metadata": {
         "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
     },
@@ -123,7 +123,6 @@ class TestPostProcessUDF(unittest.TestCase):
 
     def test_postprocess_all_model_present_01(self):
         data = deepcopy(DATA)
-        print(data)
         data["status"] = Status.ARTIFACT_FOUND
         data["header"] = Header.MODEL_INFERENCE
         self.registry.save(
@@ -146,7 +145,7 @@ class TestPostProcessUDF(unittest.TestCase):
         data["status"] = Status.ARTIFACT_FOUND
         data["header"] = Header.MODEL_INFERENCE
         # noinspection PyTypedDict
-        data["artifact_versions"] = {"pipeline1": {"pipeline1:MahalanobisThreshold": "0"}}
+        data["artifact_versions"] = {"pipeline1:MahalanobisThreshold": "0"}
         data["metadata"] = {
             "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
         }

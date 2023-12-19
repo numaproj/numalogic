@@ -8,7 +8,7 @@ from orjson import orjson
 
 from numalogic._constants import TESTS_DIR
 from numalogic.udfs._config import PipelineConf
-from numalogic.udfs.payload_transformer import PayloadTransformer
+from numalogic.udfs.payloadtx import PayloadTransformer
 from tests.udfs.utility import input_json_from_file
 
 logging.basicConfig(level=logging.DEBUG)

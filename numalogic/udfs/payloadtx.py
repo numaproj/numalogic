@@ -60,11 +60,7 @@ class PayloadTransformer(NumalogicUDF):
         messages = Messages()
         for pipeline in _stream_conf.ml_pipelines:
             data_payload["pipeline_id"] = pipeline
-            messages.append(
-                Message(
-                    keys=keys, value=orjson.dumps(data_payload)
-                )
-            )
+            messages.append(Message(keys=keys, value=orjson.dumps(data_payload)))
 
         _LOGGER.debug(
             "Time taken to execute Pipeline: %.4f sec",

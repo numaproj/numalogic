@@ -121,8 +121,8 @@ def _load_artifact(
     if payload.artifact_versions:
         artifact_version = payload.artifact_versions
         key = ":".join(dkeys)
-        if payload.pipeline_id in artifact_version and key in artifact_version[payload.pipeline_id]:
-            version_to_load = artifact_version[payload.pipeline_id][key]
+        if key in artifact_version:
+            version_to_load = artifact_version[key]
             _LOGGER.info("%s - Found version info for keys: %s, %s", payload.uuid, skeys, dkeys)
         else:
             _LOGGER.info(
@@ -183,14 +183,14 @@ def _load_artifact(
             labels=(":".join(skeys), payload.config_id, payload.pipeline_id),
             data=_get_artifact_stats(artifact_data),
         )
-        if payload.pipeline_id not in payload.artifact_versions:
-            new_artifact_versions = dict(
-                payload.artifact_versions,
-                **{payload.pipeline_id: artifact_data.metadata["artifact_versions"]},
-            )
+        if (
+            artifact_data.metadata
+            and "artifact_versions" in artifact_data.metadata
+            and not payload.artifact_versions
+        ):
             payload = replace(
                 payload,
-                artifact_versions=new_artifact_versions,
+                artifact_versions=artifact_data.metadata["artifact_versions"],
             )
         return artifact_data, payload
 

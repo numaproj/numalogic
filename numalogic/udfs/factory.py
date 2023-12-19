@@ -21,7 +21,7 @@ class UDFFactory:
     """Factory class to fetch the right UDF."""
 
     from numalogic.udfs import NumalogicUDF
-    from numalogic.udfs.payload_transformer import PayloadTransformer
+    from numalogic.udfs.payloadtx import PayloadTransformer
     from numalogic.udfs.inference import InferenceUDF
     from numalogic.udfs.postprocess import PostprocessUDF
     from numalogic.udfs.preprocess import PreprocessUDF

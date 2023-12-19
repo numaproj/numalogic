@@ -87,6 +87,7 @@ class StreamPayload(_BasePayload):
         return (
             f'"StreamPayload(header={self.header}, status={self.status}, '
             f'composite_keys={self.composite_keys}, data={list(self.data)})"'
+            f"artifact_versions={self.artifact_versions}"
         )
 
     def __repr__(self) -> str:

@@ -161,6 +161,7 @@ class PostprocessUDF(NumalogicUDF):
                     out_payload.unified_anomaly,
                     payload,
                 )
+                _LOGGER.info("%s-%s", payload.uuid, out_payload)
                 messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 
         # Forward payload if a training request is tagged
