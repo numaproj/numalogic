@@ -62,7 +62,7 @@ class PayloadTransformer(NumalogicUDF):
             data_payload["pipeline_id"] = pipeline
             messages.append(
                 Message(
-                    keys=keys, value=orjson.dumps(data_payload, option=orjson.OPT_SERIALIZE_NUMPY)
+                    keys=keys, value=orjson.dumps(data_payload)
                 )
             )
 

@@ -91,7 +91,7 @@ class PromUnivarBacktester:
         output_dir: Union[str, Path] = DEFAULT_OUTPUT_DIR,
         test_ratio: float = 0.25,
         stream_conf: Optional[StreamConf] = None,
-        pipeline_id: Optional[str] = "default",
+        pipeline_id: str = "default",
     ):
         self._url = url
         self.namespace = namespace
