@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.6.1.dev6"
+version = "0.6.1.a7"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -36,7 +36,7 @@ cachetools = "^5.3.0"
 orjson = "^3.9"
 typer = {version = "^0.9", extras = ["rich"]}
 matplotlib = "^3.4.2"
-pynumaflow = "~0.5"
+pynumaflow = "~0.6"
 prometheus_client = "^0.18.0"
 
 # extras

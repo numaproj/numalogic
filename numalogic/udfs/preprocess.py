@@ -95,17 +95,22 @@ class PreprocessUDF(NumalogicUDF):
         except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
             _LOGGER.exception("Error while decoding input json")
             return Messages(Message.to_drop())
-        raw_df, timestamps = get_df(
-            data_payload=data_payload, stream_conf=self.get_conf(data_payload["config_id"])
-        )
 
-        _metric_label_values = (self._vtx, ":".join(keys), data_payload["config_id"])
+        _stream_conf = self.get_stream_conf(data_payload["config_id"])
+        _conf = _stream_conf.ml_pipelines[data_payload["pipeline_id"]]
+        raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=_stream_conf)
+
+        # TODO: Add pipeline id to the ml metrics
+        _metric_label_values = (
+            self._vtx,
+            ":".join(keys),
+            data_payload["config_id"],
+            data_payload["pipeline_id"],
+        )
 
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
         # Drop message if dataframe shape conditions are not met
-        if raw_df.shape[0] < self.get_conf(data_payload["config_id"]).window_size or raw_df.shape[
-            1
-        ] != len(self.get_conf(data_payload["config_id"]).metrics):
+        if raw_df.shape[0] < _stream_conf.window_size or raw_df.shape[1] != len(_conf.metrics):
             _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
             _increment_counter(
                 counter=DATASHAPE_ERROR_COUNTER,
@@ -121,12 +126,15 @@ class PreprocessUDF(NumalogicUDF):
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
 
         # Check if model will be present in registry
-
-        _conf = self.get_conf(payload.config_id)
         if any(_cfg.stateful for _cfg in _conf.numalogic_conf.preprocess):
             preproc_artifact, payload = _load_artifact(
-                skeys=[_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)],
-                dkeys=[_cfg.name for _cfg in _conf.numalogic_conf.preprocess],
+                skeys=[
+                    _ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)
+                ],
+                dkeys=[
+                    payload.pipeline_id,
+                    *[_cfg.name for _cfg in _conf.numalogic_conf.preprocess],
+                ],
                 payload=payload,
                 model_registry=self.model_registry,
                 load_latest=LOAD_LATEST,

@@ -21,12 +21,14 @@ class UDFFactory:
     """Factory class to fetch the right UDF."""
 
     from numalogic.udfs import NumalogicUDF
+    from numalogic.udfs.payloadtx import PayloadTransformer
     from numalogic.udfs.inference import InferenceUDF
     from numalogic.udfs.postprocess import PostprocessUDF
     from numalogic.udfs.preprocess import PreprocessUDF
     from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
 
     _UDF_MAP: ClassVar[dict[str, type[NumalogicUDF]]] = {
+        "mlpipeline": PayloadTransformer,
         "preprocess": PreprocessUDF,
         "inference": InferenceUDF,
         "postprocess": PostprocessUDF,

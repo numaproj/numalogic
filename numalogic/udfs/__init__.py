@@ -5,8 +5,9 @@ import os
 
 from numalogic._constants import BASE_DIR
 from numalogic.udfs._base import NumalogicUDF
-from numalogic.udfs._config import StreamConf, PipelineConf, load_pipeline_conf
+from numalogic.udfs._config import StreamConf, PipelineConf, MLPipelineConf, load_pipeline_conf
 from numalogic.udfs.factory import UDFFactory, ServerFactory
+from numalogic.udfs.payloadtx import PayloadTransformer
 from numalogic.udfs.inference import InferenceUDF
 from numalogic.udfs.postprocess import PostprocessUDF
 from numalogic.udfs.preprocess import PreprocessUDF
@@ -25,6 +26,7 @@ def set_logger() -> None:
 
 __all__ = [
     "NumalogicUDF",
+    "PayloadTransformer",
     "PreprocessUDF",
     "InferenceUDF",
     "TrainerUDF",
@@ -34,6 +36,7 @@ __all__ = [
     "UDFFactory",
     "StreamConf",
     "PipelineConf",
+    "MLPipelineConf",
     "load_pipeline_conf",
     "ServerFactory",
     "set_logger",

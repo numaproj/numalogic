@@ -46,7 +46,9 @@ class DruidTrainerUDF(TrainerUDF):
         except AttributeError as err:
             raise ConfigNotFoundError("Druid config not found!") from err
 
-    def register_druid_fetcher_conf(self, config_id: str, conf: DruidFetcherConf) -> None:
+    def register_druid_fetcher_conf(
+        self, config_id: str, pipeline_id: str, conf: DruidFetcherConf
+    ) -> None:
         """
         Register DruidFetcherConf with the UDF.
 
@@ -54,9 +56,10 @@ class DruidTrainerUDF(TrainerUDF):
             config_id: Config ID
             conf: DruidFetcherConf object
         """
-        self.pl_conf.druid_conf.id_fetcher[config_id] = conf
+        fetcher_id = f"{config_id}-{pipeline_id}"
+        self.pl_conf.druid_conf.id_fetcher[fetcher_id] = conf
 
-    def get_druid_fetcher_conf(self, config_id: str) -> DruidFetcherConf:
+    def get_druid_fetcher_conf(self, config_id: str, pipeline_id: str) -> DruidFetcherConf:
         """
         Get DruidFetcherConf with the given ID.
 
@@ -71,10 +74,11 @@ class DruidTrainerUDF(TrainerUDF):
         ------
             ConfigNotFoundError: If config with the given ID is not found
         """
+        fetcher_id = f"{config_id}-{pipeline_id}"
         try:
-            return self.pl_conf.druid_conf.id_fetcher[config_id]
+            return self.pl_conf.druid_conf.id_fetcher[fetcher_id]
         except KeyError as err:
-            raise ConfigNotFoundError(f"Config with ID {config_id} not found!") from err
+            raise ConfigNotFoundError(f"Config with ID {fetcher_id} not found!") from err
 
     def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
         """
@@ -88,22 +92,31 @@ class DruidTrainerUDF(TrainerUDF):
             Dataframe
         """
         _start_time = time.perf_counter()
-        _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
-        _conf = self.get_conf(payload.config_id)
+
+        _metric_label_values = (
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
+        _stream_conf = self.get_stream_conf(payload.config_id)
+        _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
         _fetcher_conf = self.dataconn_conf.fetcher or (
-            self.get_druid_fetcher_conf(payload.config_id)
+            self.get_druid_fetcher_conf(
+                config_id=payload.config_id, pipeline_id=payload.pipeline_id
+            )
             if self.dataconn_conf.id_fetcher
             else None
         )
         if not _fetcher_conf:
             raise ConfigNotFoundError(
-                f"Druid fetcher config not found for config_id: {payload.config_id}!"
+                f"Druid fetcher config not found for config_id: {payload.config_id},"
+                f" pipeline_id: {payload.pipeline_id}!"
             )
 
         try:
             _df = self.data_fetcher.fetch(
                 datasource=_fetcher_conf.datasource,
-                filter_keys=_conf.composite_keys,
+                filter_keys=_stream_conf.composite_keys,
                 filter_values=payload.composite_keys,
                 dimensions=list(_fetcher_conf.dimensions),
                 delay=self.dataconn_conf.delay_hrs,
