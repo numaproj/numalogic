@@ -8,6 +8,7 @@ import numpy.typing as npt
 import orjson
 import pandas as pd
 from pynumaflow.mapper import Datum, Messages, Message
+from pytorch_lightning.callbacks import EarlyStopping
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
@@ -109,7 +110,12 @@ class TrainerUDF(NumalogicUDF):
             )
 
         train_ds = StreamingDataset(input_, model.seq_len)
-        trainer = TimeseriesTrainer(**asdict(trainer_cfg.pltrainer_conf))
+        trainer = TimeseriesTrainer(
+            **asdict(trainer_cfg.pltrainer_conf),
+            callbacks=EarlyStopping(
+                monitor="val_accuracy", patience=trainer_cfg.train_loss_patience
+            )
+        )
         trainer.fit(
             model, train_dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
         )
