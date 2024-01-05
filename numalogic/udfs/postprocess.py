@@ -220,4 +220,4 @@ class PostprocessUDF(NumalogicUDF):
         _LOGGER.debug(
             "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
         )
-        return y_score, score.reshape(-1)
+        return y_score.reshape(-1), score.reshape(-1)

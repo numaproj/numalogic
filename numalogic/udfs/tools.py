@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-from redis import RedisError
 
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
@@ -225,7 +224,7 @@ class TrainMsgDeduplicator:
     def __fetch_ts(self, key: str) -> _DedupMetadata:
         try:
             data = self.client.hgetall(key)
-        except RedisError:
+        except Exception:
             _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
             return _DedupMetadata(msg_read_ts=None, msg_train_ts=None, msg_train_records=None)
         else:
@@ -257,7 +256,7 @@ class TrainMsgDeduplicator:
         _key = self.__construct_key(key)
         try:
             self.client.hset(name=_key, key="_msg_train_records", value=str(train_records))
-        except RedisError:
+        except Exception:
             _LOGGER.exception(
                 " %s - Problem while updating _msg_train_records information for the key: %s",
                 uuid,
@@ -335,7 +334,7 @@ class TrainMsgDeduplicator:
             return False
         try:
             self.client.hset(name=_key, key="_msg_read_ts", value=str(time.time()))
-        except RedisError:
+        except Exception:
             _LOGGER.exception(
                 "%s - Problem while updating msg_read_ts information for the key: %s",
                 uuid,
@@ -360,7 +359,7 @@ class TrainMsgDeduplicator:
         _key = self.__construct_key(key)
         try:
             self.client.hset(name=_key, key="_msg_train_ts", value=str(time.time()))
-        except RedisError:
+        except Exception:
             _LOGGER.exception(
                 " %s - Problem while updating msg_train_ts information for the key: %s",
                 uuid,

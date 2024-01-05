@@ -1,5 +1,5 @@
 from importlib.util import find_spec
-from numalogic.backtest._prom import PromUnivarBacktester
+from numalogic.backtest._prom import PromBacktester
 
 
 def _validate_req_pkgs():
@@ -12,4 +12,4 @@ def _validate_req_pkgs():
 _validate_req_pkgs()
 
 
-__all__ = ["PromUnivarBacktester"]
+__all__ = ["PromBacktester"]
