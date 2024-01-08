@@ -188,7 +188,8 @@ class PromBacktester:
         x_scaled = preproc_udf.compute(model=artifacts["preproc_clf"], input_=x_test)
 
         ds = StreamingDataset(x_scaled, seq_len=self.conf.window_size)
-        anomaly_scores = np.zeros((len(ds), self.conf.window_size), dtype=np.float32)
+        raw_scores = np.zeros((len(ds), self.conf.window_size), dtype=np.float32)
+        final_scores = np.zeros_like(raw_scores, dtype=np.float32)
         postproc_func = PostprocessFactory().get_instance(self.conf.numalogic_conf.postprocess)
 
         x_recon = np.zeros(
@@ -198,22 +199,24 @@ class PromBacktester:
         # Model Inference
         for idx, arr in enumerate(ds):
             x_recon[idx] = nn_udf.compute(model=artifacts["model"], input_=arr)
-            anomaly_scores[idx], _ = postproc_udf.compute(
+            raw_scores[idx], final_scores[idx] = postproc_udf.compute(
                 model=artifacts["threshold_clf"],
                 input_=x_recon[idx],
                 postproc_clf=postproc_func,
             )
 
         x_recon = inverse_window(torch.from_numpy(x_recon)).numpy()
-        anomaly_scores = inverse_window(
-            torch.unsqueeze(torch.from_numpy(anomaly_scores), dim=2)
+        raw_scores = inverse_window(torch.unsqueeze(torch.from_numpy(raw_scores), dim=2)).numpy()
+        final_scores = inverse_window(
+            torch.unsqueeze(torch.from_numpy(final_scores), dim=2)
         ).numpy()
 
         return self._construct_output(
             df_test,
             preproc_out=x_scaled,
             nn_out=x_recon,
-            postproc_out=anomaly_scores,
+            thresh_out=raw_scores,
+            postproc_out=final_scores,
         )
 
     @classmethod
@@ -276,6 +279,7 @@ class PromBacktester:
         input_df: pd.DataFrame,
         preproc_out: NDArray[float],
         nn_out: NDArray[float],
+        thresh_out: NDArray[float],
         postproc_out: NDArray[float],
     ) -> pd.DataFrame:
         ts_idx = input_df.index
@@ -289,6 +293,11 @@ class PromBacktester:
             "model_out": pd.DataFrame(
                 nn_out,
                 columns=self.metrics,
+                index=ts_idx,
+            ),
+            "thresh_out": pd.DataFrame(
+                thresh_out,
+                columns=["unified_score"],
                 index=ts_idx,
             ),
             "postproc_out": pd.DataFrame(
