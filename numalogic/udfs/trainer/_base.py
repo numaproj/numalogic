@@ -8,7 +8,6 @@ import numpy.typing as npt
 import orjson
 import pandas as pd
 from pynumaflow.mapper import Datum, Messages, Message
-from pytorch_lightning.callbacks import EarlyStopping
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
@@ -21,7 +20,6 @@ from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf, MLPipelineConf
-from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs._metrics import (
     REDIS_ERROR_COUNTER,
     INSUFFICIENT_DATA_COUNTER,
@@ -34,6 +32,7 @@ from numalogic.udfs._metrics import (
     _increment_counter,
     _add_summary,
 )
+from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
 _LOGGER = logging.getLogger(__name__)
@@ -110,12 +109,7 @@ class TrainerUDF(NumalogicUDF):
             )
 
         train_ds = StreamingDataset(input_, model.seq_len)
-        trainer = TimeseriesTrainer(
-            **asdict(trainer_cfg.pltrainer_conf),
-            callbacks=EarlyStopping(
-                monitor="val_accuracy", patience=trainer_cfg.train_loss_patience
-            )
-        )
+        trainer = TimeseriesTrainer(**asdict(trainer_cfg.pltrainer_conf))
         trainer.fit(
             model, train_dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
         )
@@ -152,6 +146,7 @@ class TrainerUDF(NumalogicUDF):
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
         _metric_label_values = (
+            payload.composite_keys,
             ":".join(payload.composite_keys),
             payload.config_id,
             payload.pipeline_id,

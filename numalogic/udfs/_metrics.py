@@ -2,7 +2,12 @@ from collections.abc import Sequence
 
 from prometheus_client import Histogram
 
-from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, PromSummaryMetric
+from numalogic.monitoring.metrics import (
+    PromCounterMetric,
+    PromInfoMetric,
+    PromSummaryMetric,
+    PromGaugeMetric,
+)
 
 # Define metrics
 
@@ -10,89 +15,95 @@ from numalogic.monitoring.metrics import PromCounterMetric, PromInfoMetric, Prom
 SOURCE_COUNTER = PromCounterMetric(
     "numalogic_artifact_source_counter",
     "Count artifact source calls",
-    ["source", "vertex", "composite_key", "config_id", "pipeline_id"],
+    ["artifact_source", "source", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 
 INSUFFICIENT_DATA_COUNTER = PromCounterMetric(
     "numalogic_insufficient_data_counter",
     "Count insufficient data while Training",
-    ["composite_key", "config_id", "pipeline_id"],
+    ["source", "composite_key", "config_id", "pipeline_id"],
 )
 MODEL_STATUS_COUNTER = PromCounterMetric(
     "numalogic_new_model_counter",
     "Count status of the model",
-    ["status", "vertex", "composite_key", "config_id", "pipeline_id"],
+    ["source", "status", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 
 DATASHAPE_ERROR_COUNTER = PromCounterMetric(
     "numalogic_datashape_error_counter",
     "Count datashape errors in preprocess",
-    ["composite_key", "config_id", "pipeline_id"],
+    ["source", "composite_key", "config_id", "pipeline_id"],
 )
 MSG_DROPPED_COUNTER = PromCounterMetric(
     "numalogic_msg_dropped_counter",
     "Count dropped msgs",
-    ["vertex", "composite_key", "config_id", "pipeline_id"],
+    ["source", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 
 REDIS_ERROR_COUNTER = PromCounterMetric(
     "numalogic_redis_error_counter",
     "Count redis errors",
-    ["vertex", "composite_key", "config_id", "pipeline_id"],
+    ["source", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 EXCEPTION_COUNTER = PromCounterMetric(
     "numalogic_exception_counter",
     "Count exceptions",
-    ["vertex", "composite_key", "config_id", "pipeline_id"],
+    ["source", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 RUNTIME_ERROR_COUNTER = PromCounterMetric(
     "numalogic_runtime_error_counter",
     "Count runtime errors",
-    ["vertex", "composite_key", "config_id", "pipeline_id"],
+    ["source", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 
 FETCH_EXCEPTION_COUNTER = PromCounterMetric(
     "numalogic_fetch_exception_counter",
     "count exceptions during fetch call",
-    ["composite_key", "config_id", "pipeline_id"],
+    ["source", "composite_key", "config_id", "pipeline_id"],
 )
 
 MSG_IN_COUNTER = PromCounterMetric(
     "numalogic_msg_in_counter",
     "Count msgs flowing in",
-    ["vertex", "composite_key", "config_id", "pipeline_id"],
+    ["source", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 MSG_PROCESSED_COUNTER = PromCounterMetric(
     "numalogic_msg_processed_counter",
     "Count msgs processed",
-    ["vertex", "composite_key", "config_id", "pipeline_id"],
+    ["source", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 
 # SUMMARY
 DATAFRAME_SHAPE_SUMMARY = PromSummaryMetric(
     "numalogic_dataframe_shape_summary",
     "len of dataframe for training",
-    ["composite_key", "config_id", "pipeline_id"],
+    ["source", "composite_key", "config_id", "pipeline_id"],
 )
 NAN_SUMMARY = PromSummaryMetric(
     "numalogic_nan_summary",
     "Count nan's in train data",
-    ["composite_key", "config_id", "pipeline_id"],
+    ["source", "composite_key", "config_id", "pipeline_id"],
 )
 INF_SUMMARY = PromSummaryMetric(
     "numalogic_inf_summary",
     "Count inf's in train data",
-    ["composite_key", "config_id", "pipeline_id"],
+    ["source", "composite_key", "config_id", "pipeline_id"],
 )
 FETCH_TIME_SUMMARY = PromSummaryMetric(
     "numalogic_fetch_time_summary",
     "Train data fetch time",
-    ["composite_key", "config_id", "pipeline_id"],
+    ["source", "composite_key", "config_id", "pipeline_id"],
+)
+# Gauge Metrics
+RECORDED_DATA_GAUGE = PromGaugeMetric(
+    "numalogic_recorded_value_gauge",
+    "Gauge metric to observe the mean value of the window",
+    ["source", "vertex", "composite_key", "config_id", "pipeline_id", "metric_name"],
 )
 
 # Info
 MODEL_INFO = PromInfoMetric(
-    "numalogic_model_info", "Model info", ["composite_key", "config_id", "pipeline_id"]
+    "numalogic_model_info", "Model info", ["source", "composite_key", "config_id", "pipeline_id"]
 )
 
 # HISTOGRAM
@@ -158,3 +169,14 @@ def _add_summary(summary: PromSummaryMetric, labels: Sequence[str], data: float)
         data: Summary value
     """
     summary.add_observation(*labels, value=data)
+
+
+def _set_gauge(gauge: PromGaugeMetric, labels: Sequence[str], data: float) -> None:
+    """
+    Utility function is used to add the info.
+    Args:
+        gauge: Gauge object
+        labels: Sequence of labels
+        data: data.
+    """
+    gauge.set_gauge(*labels, data=data)

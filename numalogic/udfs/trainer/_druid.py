@@ -94,6 +94,7 @@ class DruidTrainerUDF(TrainerUDF):
         _start_time = time.perf_counter()
 
         _metric_label_values = (
+            payload.composite_keys,
             ":".join(payload.composite_keys),
             payload.config_id,
             payload.pipeline_id,

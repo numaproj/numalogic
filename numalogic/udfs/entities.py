@@ -64,6 +64,10 @@ class StreamPayload(_BasePayload):
     artifact_versions: dict[str, dict] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
 
+    def __post_init__(self):
+        if "numalogic_opex_tags" not in self.metadata:
+            self.metadata["numalogic_opex_tags"] = {"source": "numalogic_metrics"}
+
     @property
     def start_ts(self) -> int:
         return int(self.timestamps[0])
@@ -88,6 +92,7 @@ class StreamPayload(_BasePayload):
             f'"StreamPayload(header={self.header}, status={self.status}, '
             f'composite_keys={self.composite_keys}, data={list(self.data)})"'
             f"artifact_versions={self.artifact_versions}"
+            f"metadata={self.metadata}"
         )
 
     def __repr__(self) -> str:

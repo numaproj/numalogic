@@ -23,7 +23,7 @@ from numalogic.udfs._metrics import (
     _increment_counter,
 )
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
-from numalogic.udfs.tools import _load_artifact
+from numalogic.udfs.tools import _load_artifact, _update_info_metric
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -84,6 +84,7 @@ class PostprocessUDF(NumalogicUDF):
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
         _metric_label_values = (
+            payload.composite_keys,
             self._vtx,
             ":".join(payload.composite_keys),
             payload.config_id,
@@ -129,6 +130,7 @@ class PostprocessUDF(NumalogicUDF):
                     input_=payload.get_data(),
                     postproc_clf=postproc_clf,
                 )
+                _update_info_metric(anomaly_scores, payload.metrics, _metric_label_values)
             except RuntimeError:
                 _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
