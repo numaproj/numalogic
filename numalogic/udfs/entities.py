@@ -7,6 +7,8 @@ import numpy as np
 import numpy.typing as npt
 import orjson
 
+from numalogic._constants import NUMALOGIC_METRICS
+
 Vector = list[float]
 Matrix = Union[Vector, list[Vector], npt.ArrayLike]
 
@@ -66,7 +68,7 @@ class StreamPayload(_BasePayload):
 
     def __post_init__(self):
         if "numalogic_opex_tags" not in self.metadata:
-            self.metadata["numalogic_opex_tags"] = {"source": "numalogic_metrics"}
+            self.metadata["numalogic_opex_tags"] = {"source": NUMALOGIC_METRICS}
 
     @property
     def start_ts(self) -> int:
