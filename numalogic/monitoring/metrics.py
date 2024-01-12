@@ -28,7 +28,7 @@ class _BaseMetric:
 class PromCounterMetric(_BaseMetric):
     """Class is used to create a counter object and increment it."""
 
-    __slots__ = ["counter"]
+    __slots__ = "counter"
 
     def __init__(self, name: str, description: str, label_keys: list[str]) -> None:
         super().__init__(name, description, label_keys)
@@ -50,7 +50,7 @@ class PromCounterMetric(_BaseMetric):
 class PromInfoMetric(_BaseMetric):
     """Class is used to create an info object and increment it."""
 
-    __slots__ = ["info"]
+    __slots__ = "info"
 
     def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
         super().__init__(name, description, label_keys)
@@ -76,7 +76,7 @@ class PromInfoMetric(_BaseMetric):
 class PromSummaryMetric(_BaseMetric):
     """Class is used to create a histogram object and increment it."""
 
-    __slots__ = ["summary"]
+    __slots__ = "summary"
 
     def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
         super().__init__(name, description, label_keys)
@@ -98,7 +98,7 @@ class PromSummaryMetric(_BaseMetric):
 class PromGaugeMetric(_BaseMetric):
     """Class is used to create an info object and increment it."""
 
-    __slots__ = ["info"]
+    __slots__ = "info"
 
     def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
         super().__init__(name, description, label_keys)
