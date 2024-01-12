@@ -1,5 +1,6 @@
 import logging
 from typing import Optional
+from collections.abc import Sequence
 
 from prometheus_client import Counter, Info, Summary, Gauge
 
@@ -27,13 +28,13 @@ class _BaseMetric:
 class PromCounterMetric(_BaseMetric):
     """Class is used to create a counter object and increment it."""
 
-    __slots__ = "counter"
+    __slots__ = ["counter"]
 
     def __init__(self, name: str, description: str, label_keys: list[str]) -> None:
         super().__init__(name, description, label_keys)
         self.counter = Counter(name, description, label_keys)
 
-    def increment_counter(self, *label_values, amount: int = 1) -> None:
+    def increment_counter(self, *label_values: Sequence[str], amount: int = 1) -> None:
         """
         Utility function is used to increment the counter.
 
@@ -42,14 +43,14 @@ class PromCounterMetric(_BaseMetric):
             amount: Amount to increment the counter by
         """
         if len(label_values) != len(self.label_keys):
-            raise ValueError(f"Labels mismatch with the definition: {self.label_keys}")
+            raise ValueError(f"Labels length mismatch with the definition: {self.label_keys}")
         self.counter.labels(*label_values).inc(amount=amount)
 
 
 class PromInfoMetric(_BaseMetric):
     """Class is used to create an info object and increment it."""
 
-    __slots__ = "info"
+    __slots__ = ["info"]
 
     def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
         super().__init__(name, description, label_keys)
@@ -57,7 +58,7 @@ class PromInfoMetric(_BaseMetric):
 
     def add_info(
         self,
-        *label_values,
+        *label_values: Sequence[str],
         data: dict,
     ) -> None:
         """
@@ -68,14 +69,14 @@ class PromInfoMetric(_BaseMetric):
             data: Dictionary of data
         """
         if len(label_values) != len(self.label_keys):
-            raise ValueError(f"Labels mismatch with the definition: {self.label_keys}")
+            raise ValueError(f"Labels length mismatch with the definition: {self.label_keys}")
         self.info.labels(*label_values).info(data)
 
 
 class PromSummaryMetric(_BaseMetric):
     """Class is used to create a histogram object and increment it."""
 
-    __slots__ = "summary"
+    __slots__ = ["summary"]
 
     def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
         super().__init__(name, description, label_keys)
@@ -90,14 +91,14 @@ class PromSummaryMetric(_BaseMetric):
             value: Value to be updated
         """
         if len(label_values) != len(self.label_keys):
-            raise ValueError(f"Labels mismatch with the definition: {self.label_keys}")
+            raise ValueError(f"Labels length mismatch with the definition: {self.label_keys}")
         self.summary.labels(*label_values).observe(amount=value)
 
 
 class PromGaugeMetric(_BaseMetric):
     """Class is used to create an info object and increment it."""
 
-    __slots__ = "info"
+    __slots__ = ["info"]
 
     def __init__(self, name: str, description: str, label_keys: Optional[list[str]]) -> None:
         super().__init__(name, description, label_keys)
@@ -105,7 +106,7 @@ class PromGaugeMetric(_BaseMetric):
 
     def set_gauge(
         self,
-        *label_values,
+        *label_values: Sequence[str],
         data: float,
     ) -> None:
         """
