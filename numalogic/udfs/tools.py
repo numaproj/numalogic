@@ -61,20 +61,21 @@ def get_df(
 
 
 def _update_info_metric(
-    data: np.ndarray, metric_name: Sequence[str], labels: Sequence[str]
+    data: np.ndarray, metric_names: Sequence[str], labels: Sequence[str]
 ) -> None:
     """
     Utility function is used to update the gauge metric.
     Args:
         data: data
-        metric_name: metric name in the payload
+        metric_names: metric name in the payload
         labels: labels.
     """
-    for _data, _metric_name in zip(data.T, metric_name):
+    metric_mean = np.mean(data, axis=0)
+    for _data, _metric_name in zip(metric_mean, metric_names):
         _set_gauge(
             gauge=RECORDED_DATA_GAUGE,
             labels=(*labels, _metric_name),
-            data=np.mean(_data).squeeze(),
+            data=_data,
         )
 
 

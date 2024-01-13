@@ -67,7 +67,9 @@ class StreamPayload(_BasePayload):
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
-        if "numalogic_opex_tags" not in self.metadata:
+        try:
+            _ = self.metadata["numalogic_opex_tags"]["source"]
+        except KeyError:
             self.metadata["numalogic_opex_tags"] = {"source": NUMALOGIC_METRICS}
 
     @property

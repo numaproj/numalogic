@@ -100,13 +100,14 @@ class PreprocessUDF(NumalogicUDF):
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
         _conf = _stream_conf.ml_pipelines[data_payload["pipeline_id"]]
         raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=_stream_conf)
-        try:
+
+        source = NUMALOGIC_METRICS
+        if (
+            "numalogic_opex_tags" in data_payload["metadata"]
+            and "source" in data_payload["metadata"]["numalogic_opex_tags"]
+        ):
             source = data_payload["metadata"]["numalogic_opex_tags"]["source"]
-        except Exception:
-            _LOGGER.warning(
-                "Source not present in input paylyoad. Setting it to default: %s", NUMALOGIC_METRICS
-            )
-            source = NUMALOGIC_METRICS
+
         _metric_label_values = (
             source,
             self._vtx,

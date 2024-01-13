@@ -125,12 +125,13 @@ class PostprocessUDF(NumalogicUDF):
         #  Postprocess payload
         if payload.status in (Status.ARTIFACT_FOUND, Status.ARTIFACT_STALE) and thresh_artifact:
             try:
-                anomaly_scores = self.compute(
+                postproc_scores = self.compute(
                     model=thresh_artifact.artifact,
                     input_=payload.get_data(),
                     postproc_clf=postproc_clf,
                 )
-                _update_info_metric(anomaly_scores, payload.metrics, _metric_label_values)
+                _update_info_metric(postproc_scores, payload.metrics, _metric_label_values)
+                anomaly_scores = postproc_scores.reshape(-1)
             except RuntimeError:
                 _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
@@ -225,4 +226,4 @@ class PostprocessUDF(NumalogicUDF):
         _LOGGER.debug(
             "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
         )
-        return score.reshape(-1)
+        return score
