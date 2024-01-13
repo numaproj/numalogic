@@ -70,7 +70,7 @@ def _update_info_metric(
         metric_names: metric name in the payload
         labels: labels.
     """
-    metric_mean = np.mean(data, axis=0)
+    metric_mean = np.mean(data.reshape(-1, 1), axis=0)
     for _data, _metric_name in zip(metric_mean, metric_names):
         _set_gauge(
             gauge=RECORDED_DATA_GAUGE,
