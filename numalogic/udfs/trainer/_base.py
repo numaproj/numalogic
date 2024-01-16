@@ -164,8 +164,7 @@ class TrainerUDF(NumalogicUDF):
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
         retry_ts = _conf.numalogic_conf.trainer.retry_sec
         if not self.train_msg_deduplicator.ack_read(
-            key=payload.composite_keys,
-            pipeline_id=[payload.pipeline_id],
+            key=[*payload.composite_keys, payload.pipeline_id],
             uuid=payload.uuid,
             retrain_freq=retrain_freq_ts,
             retry=retry_ts,
@@ -238,7 +237,7 @@ class TrainerUDF(NumalogicUDF):
             vertex_name=self._vtx,
         )
         if self.train_msg_deduplicator.ack_train(
-            key=payload.composite_keys, pipeline_id=[payload.pipeline_id], uuid=payload.uuid
+            key=[*payload.composite_keys, payload.pipeline_id], uuid=payload.uuid
         ):
             _LOGGER.info(
                 "%s - Model trained and saved successfully.",
@@ -319,8 +318,7 @@ class TrainerUDF(NumalogicUDF):
         )
         if len(df) < _conf.numalogic_conf.trainer.min_train_size:
             _ = self.train_msg_deduplicator.ack_insufficient_data(
-                key=payload.composite_keys,
-                pipeline_id=[payload.pipeline_id],
+                key=[*payload.composite_keys, payload.pipeline_id],
                 uuid=payload.uuid,
                 train_records=len(df),
             )

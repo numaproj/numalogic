@@ -241,10 +241,8 @@ class TrainMsgDeduplicator:
         self.client = r_client
 
     @staticmethod
-    def __construct_train_key(skeys: KEYS, dkeys: KEYS) -> str:
-        _skeys = ":".join(skeys)
-        _dkeys = ":".join(dkeys)
-        _key = "::".join([_skeys, _dkeys])
+    def __construct_train_key(keys: KEYS) -> str:
+        _key = ":".join(keys)
         return f"TRAIN::{_key}"
 
     def __fetch_ts(self, key: str) -> _DedupMetadata:
@@ -267,14 +265,11 @@ class TrainMsgDeduplicator:
                 msg_train_records=_msg_train_records,
             )
 
-    def ack_insufficient_data(
-        self, key: KEYS, pipeline_id: KEYS, uuid: str, train_records: int
-    ) -> bool:
+    def ack_insufficient_data(self, key: KEYS, uuid: str, train_records: int) -> bool:
         """
         Acknowledge the insufficient data message. Retry training after certain period of a time.
         Args:
             key: key
-            pipeline_id: key
             uuid: uuid
             train_records: number of train records found.
 
@@ -282,7 +277,7 @@ class TrainMsgDeduplicator:
         -------
             bool.
         """
-        _key = self.__construct_train_key(key, pipeline_id)
+        _key = self.__construct_train_key(key)
         try:
             self.client.hset(name=_key, key="_msg_train_records", value=str(train_records))
         except RedisError:
@@ -299,7 +294,6 @@ class TrainMsgDeduplicator:
     def ack_read(
         self,
         key: KEYS,
-        pipeline_id: KEYS,
         uuid: str,
         retrain_freq: int = 24,
         retry: int = 600,
@@ -322,7 +316,8 @@ class TrainMsgDeduplicator:
             bool
 
         """
-        _key = self.__construct_train_key(key, pipeline_id)
+        print(key)
+        _key = self.__construct_train_key(key)
         metadata = self.__fetch_ts(key=_key)
         _msg_read_ts, _msg_train_ts, _msg_train_records = (
             metadata.msg_read_ts,
@@ -375,7 +370,7 @@ class TrainMsgDeduplicator:
         _LOGGER.info("%s - Acknowledging request for Training for key : %s", uuid, key)
         return True
 
-    def ack_train(self, key: KEYS, pipeline_id: KEYS, uuid: str) -> bool:
+    def ack_train(self, key: KEYS, uuid: str) -> bool:
         """
         Acknowledge the train message is trained and saved. Return True when
                 _msg_train_ts is updated.
@@ -388,7 +383,7 @@ class TrainMsgDeduplicator:
         -------
             bool
         """
-        _key = self.__construct_train_key(key, pipeline_id)
+        _key = self.__construct_train_key(key)
         try:
             self.client.hset(name=_key, key="_msg_train_ts", value=str(time.time()))
         except RedisError:
