@@ -269,7 +269,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
         self.udf1(self.keys, self.datum)
         ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
         with freeze_time(ts + timedelta(hours=25)):
-            TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
+            TrainMsgDeduplicator(REDIS_CLIENT).ack_read(
+                self.keys, pipeline_id=["pipeline1"], uuid="some-uuid"
+            )
         with freeze_time(ts + timedelta(hours=25) + timedelta(minutes=15)):
             self.udf1(self.keys, self.datum)
         self.assertEqual(
@@ -303,7 +305,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                 }
             ),
         )
-        TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, "some-uuid")
+        TrainMsgDeduplicator(REDIS_CLIENT).ack_read(self.keys, ["pipeline1"], "some-uuid")
         ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
         with freeze_time(ts + timedelta(minutes=15)):
             self.udf1(self.keys, self.datum)
@@ -407,18 +409,18 @@ class TestDruidTrainerUDF(unittest.TestCase):
     @patch("redis.Redis.hset", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_1(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
-        train_dedup.ack_read(self.keys, "some-uuid")
+        train_dedup.ack_read(self.keys, ["pipeline1"], "some-uuid")
         self.assertLogs("RedisError")
-        train_dedup.ack_train(self.keys, "some-uuid")
+        train_dedup.ack_train(self.keys, ["pipeline1"], "some-uuid")
         self.assertLogs("RedisError")
-        train_dedup.ack_insufficient_data(self.keys, "some-uuid", train_records=180)
+        train_dedup.ack_insufficient_data(self.keys, ["pipeline1"], "some-uuid", train_records=180)
         self.assertLogs("RedisError")
 
     @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_2(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
         with self.assertLogs(level="INFO") as log:
-            train_dedup.ack_read(self.keys, "some-uuid")
+            train_dedup.ack_read(self.keys, ["pipeline1"], "some-uuid")
             self.assertEqual(
                 "INFO:numalogic.udfs.tools:some-uuid - "
                 "Acknowledging request for Training for key : ['5984175597303660107']",
