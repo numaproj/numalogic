@@ -70,7 +70,9 @@ def _update_info_metric(
         metric_names: metric name in the payload
         labels: labels.
     """
-    metric_mean = np.mean(data.reshape(-1, 1), axis=0)
+    metric_mean = np.mean(data, axis=0)
+    if metric_mean.shape[0] != len(metric_names):
+        raise ValueError("Data Shape and metric name length do not match")
     for _data, _metric_name in zip(metric_mean, metric_names):
         _set_gauge(
             gauge=RECORDED_DATA_GAUGE,
@@ -110,8 +112,8 @@ def make_stream_payload(
 # TODO: move to base NumalogicUDF class and look into payload mutation
 def _get_artifact_stats(artifact_data):
     return {
-        "artifact_source": None or artifact_data.extras.get("source"),
-        "version": None or artifact_data.extras.get("version"),
+        "artifact_source": artifact_data.extras.get("source") or None,
+        "version": artifact_data.extras.get("version") or None,
     }
 
 
@@ -304,7 +306,6 @@ class TrainMsgDeduplicator:
         Acknowledge the read message. Return True when the msg has to be trained.
         Args:
             key: key
-            pipeline_id: key
             uuid: uuid.
             retrain_freq: retrain frequency for the model in hrs
             retry: Time difference(in secs) between triggering retraining and msg read_ack.
@@ -376,7 +377,6 @@ class TrainMsgDeduplicator:
                 _msg_train_ts is updated.
         Args:
             key: key
-            pipeline_id: key
             uuid: uuid.
 
         Returns
