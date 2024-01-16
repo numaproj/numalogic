@@ -60,3 +60,37 @@ class CausalConvBlock(nn.Module):
 
     def forward(self, input_: Tensor) -> Tensor:
         return self.relu(self.bnorm(self.conv(input_)))
+
+
+class ConvTransposeBlock(nn.Module):
+    """Basic transpose convolutional block consisting of:
+    - transpose convolutional layer
+    - batch norm
+    - relu activation.
+    """
+
+    def __init__(
+        self,
+        in_channels: int,
+        out_channels: int,
+        kernel_size: int,
+        stride: int = 1,
+        padding: int = 1,
+        dilation: int = 1,
+        output_padding: int = 0,
+    ):
+        super().__init__()
+        self.convtranspose = nn.ConvTranspose1d(
+            in_channels,
+            out_channels,
+            kernel_size=kernel_size,
+            stride=stride,
+            padding=padding,
+            dilation=dilation,
+            output_padding=output_padding,
+        )
+        self.bnorm = nn.BatchNorm1d(out_channels)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, input_: Tensor) -> Tensor:
+        return self.relu(self.bnorm(self.convtranspose(input_)))

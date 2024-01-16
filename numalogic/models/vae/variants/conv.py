@@ -33,12 +33,10 @@ class Encoder(nn.Module):
         n_features: int,
         latent_dim: int,
         conv_channels: Sequence[int] = (16,),
-        num_samples: int = 10,
     ):
         super().__init__()
 
         self.seq_len = seq_len
-        self.nsamples = num_samples
 
         conv_layer = CausalConvBlock(
             in_channels=n_features,
@@ -101,7 +99,7 @@ class Encoder(nn.Module):
 
 class Decoder(nn.Module):
     """
-    Decoder (non-probabilistic) module for Convolutional Variational Autoencoder.
+    Decoder module for Convolutional Variational Autoencoder.
 
     Args:
     ----
@@ -155,7 +153,6 @@ class Conv1dVAE(BaseVAE):
         n_features: num of features
         conv_channels: number of convolutional channels
         latent_dim: latent dimension
-        num_samples: number of samples to draw from the latent distribution
 
     Raises
     ------
@@ -170,21 +167,20 @@ class Conv1dVAE(BaseVAE):
         n_features: int,
         latent_dim: int,
         conv_channels: Sequence[int] = (16,),
-        num_samples: int = 10,
+        beta: float = 1.0,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.seq_len = seq_len
         self.z_dim = latent_dim
         self.n_features = n_features
-        self.nsamples = num_samples
+        self.beta = beta
 
         self.encoder = Encoder(
             seq_len=seq_len,
             n_features=n_features,
             conv_channels=conv_channels,
             latent_dim=latent_dim,
-            num_samples=num_samples,
         )
         self.decoder = Decoder(
             seq_len=seq_len,
@@ -245,4 +241,4 @@ class Conv1dVAE(BaseVAE):
             on_epoch=True,
             on_step=False,
         )
-        return kld_loss + recon_loss
+        return recon_loss + (self.beta * kld_loss)
