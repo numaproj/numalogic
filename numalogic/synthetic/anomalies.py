@@ -62,7 +62,10 @@ class AnomalyGenerator:
         self.anomaly_type = anomaly_type
         self.anomaly_ratio = anomaly_ratio
         self.anomaly_sign = anomaly_sign
-        self.freq = ref_df.index.freq
+        try:
+            self.freq = ref_df.index.freq
+        except AttributeError:
+            self.freq = None
         self.mu, self.sigma = mu, sigma
 
         self.scaler = StandardScaler()
@@ -138,7 +141,10 @@ class AnomalyGenerator:
         ).merge(anomaly_df, left_index=True, right_index=True)
 
     def _inject_contextual_anomalies(
-        self, target_df: pd.DataFrame, cols: Sequence[str], impact=1
+        self,
+        target_df: pd.DataFrame,
+        cols: Sequence[str],
+        impact=1,
     ) -> pd.DataFrame:
         target_df = self._init_target_df(target_df, cols)
         anomaly_df = pd.DataFrame(index=target_df.index)
@@ -146,10 +152,11 @@ class AnomalyGenerator:
 
         for col in self.__injected_cols:
             tseries = target_df[col]
-            sample = tseries[: -self.block_size].sample(1)
-            idx_start = sample.index
-            idx_end = idx_start + (self.block_size * self.freq)
-            outlier_block = tseries[idx_start.values[0] : idx_end.values[0]]
+
+            idx_start = self._find_start_idx(None, target_df)
+            idx_end = idx_start + self.block_size
+
+            outlier_block = tseries[idx_start:idx_end]
 
             # Add gaussian noise to the data
             noise = self._rnd_gen.normal(self.mu, self.sigma, outlier_block.shape)
@@ -172,7 +179,7 @@ class AnomalyGenerator:
                 )
 
             anomaly_col = anomaly_df["is_anomaly"]
-            anomaly_block = anomaly_col[idx_start.values[0] : idx_end.values[0]]
+            anomaly_block = anomaly_col[idx_start:idx_end]
             anomaly_block += self.add_impact_sign()
 
         return pd.DataFrame(

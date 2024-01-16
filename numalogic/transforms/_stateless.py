@@ -28,6 +28,8 @@ class LogTransformer(StatelessTransformer):
         add_factor: float value to be added to the feature before taking log.
     """
 
+    __slots__ = ("add_factor",)
+
     def __init__(self, add_factor=2):
         self.add_factor = add_factor
 
@@ -112,6 +114,8 @@ class GaussianNoiseAdder(StatelessTransformer):
         seed: int value to be used as the random seed (default: 42).
     """
 
+    __slots__ = ("_rng", "_is_abs", "_scale")
+
     def __init__(self, scale: float = 1e-8, positive_only: bool = True, seed: int = 42):
         self._rng = np.random.default_rng(seed)
         self._is_abs = positive_only
@@ -122,3 +126,17 @@ class GaussianNoiseAdder(StatelessTransformer):
         if self._is_abs:
             noise = np.abs(noise)
         return x + noise
+
+
+class DifferenceTransform(StatelessTransformer):
+    __slots__ = ("order",)
+
+    def __init__(
+        self,
+        order: int = 1,
+    ):
+        self.order = order
+
+    def transform(self, input_: npt.NDArray, **__):
+        diff_df = pd.DataFrame(input_).diff().bfill()
+        return diff_df.to_numpy(dtype=np.float32)

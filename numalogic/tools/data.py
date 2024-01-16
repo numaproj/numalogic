@@ -83,7 +83,11 @@ def inverse_window_last_only(batched: Tensor) -> Tensor:
     -------
         A 2D tensor of shape: (new_batch, num_features)
     """
-    output = batched[:, -1, :]
+    try:
+        output = batched[:, -1, :]
+    except IndexError:
+        batched = batched.unsqueeze(-1)
+        output = batched[:, -1, :]
     return torch.vstack((batched[0, :-1, :], output))
 
 

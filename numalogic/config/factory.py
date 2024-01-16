@@ -49,6 +49,7 @@ class PreprocessFactory(_ObjectFactory):
         TanhScaler,
         DataClipper,
         GaussianNoiseAdder,
+        DifferenceTransform,
     )
 
     _CLS_MAP: ClassVar[dict] = {
@@ -61,6 +62,7 @@ class PreprocessFactory(_ObjectFactory):
         "TanhScaler": TanhScaler,
         "DataClipper": DataClipper,
         "GaussianNoiseAdder": GaussianNoiseAdder,
+        "DifferenceTransform": DifferenceTransform,
     }
 
     def get_pipeline_instance(self, objs_info: list[ModelInfo]):
@@ -88,6 +90,7 @@ class ThresholdFactory(_ObjectFactory):
 
     from numalogic.models.threshold import (
         StdDevThreshold,
+        AggStdDevThreshold,
         MahalanobisThreshold,
         RobustMahalanobisThreshold,
         StaticThreshold,
@@ -96,6 +99,7 @@ class ThresholdFactory(_ObjectFactory):
 
     _CLS_MAP: ClassVar[dict] = {
         "StdDevThreshold": StdDevThreshold,
+        "AggStdDevThreshold": AggStdDevThreshold,
         "StaticThreshold": StaticThreshold,
         "SigmoidThreshold": SigmoidThreshold,
         "MahalanobisThreshold": MahalanobisThreshold,

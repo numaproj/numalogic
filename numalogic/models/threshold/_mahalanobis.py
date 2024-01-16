@@ -202,9 +202,10 @@ class RobustMahalanobisThreshold(MahalanobisThreshold):
         self,
         max_outlier_prob: float = 0.1,
         max_inlier_percentile: Optional[float] = None,
+        support_fraction: Optional[float] = 0.7,
     ):
         super().__init__(max_outlier_prob)
-        self._mcd = MinCovDet(store_precision=False)
+        self._mcd = MinCovDet(store_precision=False, support_fraction=support_fraction)
         if max_inlier_percentile and (not 75.0 <= max_inlier_percentile < 100.0):
             raise ValueError("max_inlier_percentile should be in range [75, 100)")
         self._max_inlier_percentile = max_inlier_percentile
