@@ -202,8 +202,7 @@ class Conv1dVAE(BaseVAE):
         x = self.configure_shape(x)
         z_mu, z_logvar = self.encoder(x)
         p = MultivariateNormal(loc=z_mu, covariance_matrix=torch.diag_embed(z_logvar.exp()))
-        samples = p.rsample(sample_shape=torch.Size([self.nsamples]))
-        z = torch.mean(samples, dim=0)
+        z = p.rsample()
         x_recon = self.decoder(z)
         return p, x_recon
 
