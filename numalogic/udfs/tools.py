@@ -317,7 +317,6 @@ class TrainMsgDeduplicator:
             bool
 
         """
-        print(key)
         _key = self.__construct_train_key(key)
         metadata = self.__fetch_ts(key=_key)
         _msg_read_ts, _msg_train_ts, _msg_train_records = (

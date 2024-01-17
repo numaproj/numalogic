@@ -357,7 +357,7 @@ class TrainerUDF(NumalogicUDF):
                 raw_df[col] = fill_value
                 nan_counter += len(raw_df)
             if max_value_map:
-                raw_df.loc[raw_df[col] > max_value_map[col], col] = max_value_map[col]
+                raw_df[col].clip(upper=max_value_map[col], inplace=True)
                 _LOGGER.info(
                     "Replaced %s with max_value_map from the map with value of %s.",
                     col,
