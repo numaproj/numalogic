@@ -350,8 +350,6 @@ class TrainerUDF(NumalogicUDF):
             inf_counter: Number of inf values
         """
         nan_counter = 0
-        if max_value_map and len(max_value_map) != len(metrics):
-            raise ValueError("max_value_list and metrics list have different length")
         for col in metrics:
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
