@@ -356,14 +356,16 @@ class TrainerUDF(NumalogicUDF):
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
                 nan_counter += len(raw_df)
-            if max_value_map:
-                raw_df[col].clip(upper=max_value_map[col], inplace=True)
-                _LOGGER.info(
-                    "Replaced %s with max_value_map from the map with value of %s.",
-                    col,
-                    max_value_map[col],
-                )
+
         feat_df = raw_df[metrics]
+        if max_value_map:
+            max_value_list = [max_value_map.get(col, np.nan) for col in metrics]
+            feat_df.clip(upper=max_value_list, inplace=True)
+            _LOGGER.info(
+                "Replaced %s with max_value_map from the map with value of %s.",
+                metrics,
+                max_value_list,
+            )
         nan_counter += raw_df.isna().sum().all()
         inf_counter = np.isinf(feat_df).sum().all()
         feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
