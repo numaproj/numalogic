@@ -20,7 +20,6 @@ from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf, MLPipelineConf
-from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs._metrics import (
     REDIS_ERROR_COUNTER,
     INSUFFICIENT_DATA_COUNTER,
@@ -33,6 +32,7 @@ from numalogic.udfs._metrics import (
     _increment_counter,
     _add_summary,
 )
+from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
 _LOGGER = logging.getLogger(__name__)
@@ -146,6 +146,7 @@ class TrainerUDF(NumalogicUDF):
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
         _metric_label_values = (
+            payload.composite_keys,
             ":".join(payload.composite_keys),
             payload.config_id,
             payload.pipeline_id,
@@ -163,7 +164,7 @@ class TrainerUDF(NumalogicUDF):
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
         retry_ts = _conf.numalogic_conf.trainer.retry_sec
         if not self.train_msg_deduplicator.ack_read(
-            key=payload.composite_keys,
+            key=[*payload.composite_keys, payload.pipeline_id],
             uuid=payload.uuid,
             retrain_freq=retrain_freq_ts,
             retry=retry_ts,
@@ -235,7 +236,9 @@ class TrainerUDF(NumalogicUDF):
             payload=payload,
             vertex_name=self._vtx,
         )
-        if self.train_msg_deduplicator.ack_train(key=payload.composite_keys, uuid=payload.uuid):
+        if self.train_msg_deduplicator.ack_train(
+            key=[*payload.composite_keys, payload.pipeline_id], uuid=payload.uuid
+        ):
             _LOGGER.info(
                 "%s - Model trained and saved successfully.",
                 payload.uuid,
@@ -315,7 +318,9 @@ class TrainerUDF(NumalogicUDF):
         )
         if len(df) < _conf.numalogic_conf.trainer.min_train_size:
             _ = self.train_msg_deduplicator.ack_insufficient_data(
-                key=payload.composite_keys, uuid=payload.uuid, train_records=len(df)
+                key=[*payload.composite_keys, payload.pipeline_id],
+                uuid=payload.uuid,
+                train_records=len(df),
             )
             return False
         return True

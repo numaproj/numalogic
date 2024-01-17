@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 
+from numalogic._constants import NUMALOGIC_METRICS
 from numalogic.config import PreprocessFactory, RegistryFactory
 from numalogic.udfs._metrics import (
     DATASHAPE_ERROR_COUNTER,
@@ -26,7 +27,7 @@ from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import Status, Header
-from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact
+from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact, _update_info_metric
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -100,8 +101,15 @@ class PreprocessUDF(NumalogicUDF):
         _conf = _stream_conf.ml_pipelines[data_payload["pipeline_id"]]
         raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=_stream_conf)
 
-        # TODO: Add pipeline id to the ml metrics
+        source = NUMALOGIC_METRICS
+        if (
+            "numalogic_opex_tags" in data_payload["metadata"]
+            and "source" in data_payload["metadata"]["numalogic_opex_tags"]
+        ):
+            source = data_payload["metadata"]["numalogic_opex_tags"]["source"]
+
         _metric_label_values = (
+            source,
             self._vtx,
             ":".join(keys),
             data_payload["config_id"],
@@ -166,6 +174,7 @@ class PreprocessUDF(NumalogicUDF):
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
+            _update_info_metric(x_scaled, payload.metrics, _metric_label_values)
             payload = replace(
                 payload,
                 data=x_scaled,
@@ -185,7 +194,7 @@ class PreprocessUDF(NumalogicUDF):
                 labels=_metric_label_values,
             )
             _LOGGER.exception(
-                "%s - Runtime inference error! Keys: %s, Metric: %s",
+                "%s - Runtime preprocess error! Keys: %s, Metric: %s",
                 payload.uuid,
                 payload.composite_keys,
                 payload.metrics,

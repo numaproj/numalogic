@@ -84,6 +84,7 @@ class PostprocessUDF(NumalogicUDF):
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
         _metric_label_values = (
+            payload.composite_keys,
             self._vtx,
             ":".join(payload.composite_keys),
             payload.config_id,

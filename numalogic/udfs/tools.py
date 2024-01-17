@@ -2,6 +2,7 @@ import logging
 from dataclasses import replace
 import time
 from typing import Optional, NamedTuple
+from collections.abc import Sequence
 
 import numpy as np
 import pandas as pd
@@ -20,6 +21,8 @@ from numalogic.udfs._metrics import (
     EXCEPTION_COUNTER,
     _increment_counter,
     _add_info,
+    RECORDED_DATA_GAUGE,
+    _set_gauge,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,6 +60,27 @@ def get_df(
     return df[features].astype(np.float32), df["timestamp"].astype(int).tolist()
 
 
+def _update_info_metric(
+    data: np.ndarray, metric_names: Sequence[str], labels: Sequence[str]
+) -> None:
+    """
+    Utility function is used to update the gauge metric.
+    Args:
+        data: data
+        metric_names: metric name in the payload
+        labels: labels.
+    """
+    metric_mean = np.mean(data, axis=0)
+    if metric_mean.shape[0] != len(metric_names):
+        raise ValueError("Data Shape and metric name length do not match")
+    for _data, _metric_name in zip(metric_mean, metric_names):
+        _set_gauge(
+            gauge=RECORDED_DATA_GAUGE,
+            labels=(*labels, _metric_name),
+            data=_data,
+        )
+
+
 def make_stream_payload(
     data_payload: dict, raw_df: DataFrame, timestamps: list[int], keys: list[str]
 ) -> StreamPayload:
@@ -88,8 +112,8 @@ def make_stream_payload(
 # TODO: move to base NumalogicUDF class and look into payload mutation
 def _get_artifact_stats(artifact_data):
     return {
-        "source": None or artifact_data.extras.get("source"),
-        "version": None or artifact_data.extras.get("version"),
+        "artifact_source": artifact_data.extras.get("source") or None,
+        "version": artifact_data.extras.get("version") or None,
     }
 
 
@@ -115,7 +139,13 @@ def _load_artifact(
     StreamPayload object
 
     """
-    _metric_label_values = (vertex, ":".join(skeys), payload.config_id, payload.pipeline_id)
+    _metric_label_values = (
+        payload.metadata["numalogic_opex_tags"]["source"],
+        vertex,
+        ":".join(skeys),
+        payload.config_id,
+        payload.pipeline_id,
+    )
 
     version_to_load = "-1"
     if payload.artifact_versions:
@@ -180,7 +210,12 @@ def _load_artifact(
         )
         _add_info(
             info=MODEL_INFO,
-            labels=(":".join(skeys), payload.config_id, payload.pipeline_id),
+            labels=(
+                payload.metadata["numalogic_opex_tags"]["source"],
+                ":".join(skeys),
+                payload.config_id,
+                payload.pipeline_id,
+            ),
             data=_get_artifact_stats(artifact_data),
         )
         if (
@@ -209,7 +244,8 @@ class TrainMsgDeduplicator:
 
     @staticmethod
     def __construct_train_key(keys: KEYS) -> str:
-        return f"TRAIN::{':'.join(keys)}"
+        _key = ":".join(keys)
+        return f"TRAIN::{_key}"
 
     def __fetch_ts(self, key: str) -> _DedupMetadata:
         try:
@@ -281,6 +317,7 @@ class TrainMsgDeduplicator:
             bool
 
         """
+        print(key)
         _key = self.__construct_train_key(key)
         metadata = self.__fetch_ts(key=_key)
         _msg_read_ts, _msg_train_ts, _msg_train_records = (
@@ -301,9 +338,9 @@ class TrainMsgDeduplicator:
                 " and training after %s secs",
                 uuid,
                 key,
-                _curr_time
-                - float(_msg_read_ts)
-                - ((min_train_records - int(_msg_train_records)) * data_freq),
+                ((min_train_records - int(_msg_train_records)) * data_freq)
+                - _curr_time
+                + float(_msg_read_ts),
             )
 
             return False

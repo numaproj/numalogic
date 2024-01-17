@@ -24,7 +24,7 @@ from numalogic.udfs._metrics import (
     _increment_counter,
 )
 from numalogic.udfs.entities import StreamPayload, Header, Status
-from numalogic.udfs.tools import _load_artifact
+from numalogic.udfs.tools import _load_artifact, _update_info_metric
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -104,6 +104,7 @@ class InferenceUDF(NumalogicUDF):
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
         _metric_label_values = (
+            payload.metadata["numalogic_opex_tags"]["source"],
             self._vtx,
             ":".join(payload.composite_keys),
             payload.config_id,
@@ -158,6 +159,7 @@ class InferenceUDF(NumalogicUDF):
         # Perform inference
         try:
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
+            _update_info_metric(x_inferred, payload.metrics, _metric_label_values)
         except RuntimeError:
             _increment_counter(counter=RUNTIME_ERROR_COUNTER, labels=_metric_label_values)
             _LOGGER.exception(
