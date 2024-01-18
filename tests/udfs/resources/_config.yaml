@@ -23,6 +23,14 @@ stream_confs:
             name: "StdDevThreshold"
             conf:
               min_threshold: 0.1
+          trainer:
+            train_hours: 3
+            min_train_size: 100
+            max_value_map:
+              "col1": 0
+            pltrainer_conf:
+              accelerator: cpu
+              max_epochs: 5
       pipeline2:
         pipeline_id: "pipeline2"
         metrics: [ "col1" , "col2" ]

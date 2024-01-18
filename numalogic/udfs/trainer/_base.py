@@ -201,7 +201,9 @@ class TrainerUDF(NumalogicUDF):
         _LOGGER.info("%s - Data fetched, shape: %s", payload.uuid, df.shape)
 
         # Construct feature array
-        x_train, nan_counter, inf_counter = self.get_feature_arr(df, payload.metrics)
+        x_train, nan_counter, inf_counter = self.get_feature_arr(
+            df, payload.metrics, max_value_map=_conf.numalogic_conf.trainer.max_value_map
+        )
         _add_summary(
             summary=NAN_SUMMARY,
             labels=_metric_label_values,
@@ -328,7 +330,10 @@ class TrainerUDF(NumalogicUDF):
     # TODO: Use a custom impute in transforms module
     @staticmethod
     def get_feature_arr(
-        raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
+        raw_df: pd.DataFrame,
+        metrics: list[str],
+        fill_value: float = 0.0,
+        max_value_map: Optional[dict[str, float]] = None,
     ) -> tuple[npt.NDArray[float], float, float]:
         """
         Get feature array from the raw dataframe.
@@ -349,7 +354,16 @@ class TrainerUDF(NumalogicUDF):
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
                 nan_counter += len(raw_df)
+
         feat_df = raw_df[metrics]
+        if max_value_map:
+            max_value_list = [max_value_map.get(col, np.nan) for col in metrics]
+            feat_df.clip(upper=max_value_list, inplace=True)
+            _LOGGER.info(
+                "Replaced %s with max_value_map from the map with value of %s.",
+                metrics,
+                max_value_list,
+            )
         nan_counter += raw_df.isna().sum().all()
         inf_counter = np.isinf(feat_df).sum().all()
         feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
