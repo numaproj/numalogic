@@ -213,12 +213,12 @@ class PostprocessUDF(NumalogicUDF):
         """
         _start_time = time.perf_counter()
         try:
-            y_score = model.score_samples(input_).astype(np.float32)
+            score = np.mean(input_, axis=0, keepdims=True)
+            y_score = model.score_samples(score).astype(np.float32)
         except Exception as err:
             raise RuntimeError("Threshold model scoring failed") from err
         try:
-            win_score = np.mean(y_score, axis=0, keepdims=True)
-            score = postproc_clf.transform(win_score)
+            score = postproc_clf.transform(y_score)
         except Exception as err:
             raise RuntimeError("Postprocess failed") from err
         _LOGGER.debug(
