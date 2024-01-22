@@ -11,7 +11,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 from omegaconf import MISSING
 
@@ -93,6 +93,8 @@ class TrainerConf:
     retry_sec: int = 600  # 10 min
     batch_size: int = 64
     data_freq_sec: int = 60
+    # TODO: Support trainer based transform models
+    max_value_map: Optional[dict[str, float]] = None
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
 

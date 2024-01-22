@@ -25,6 +25,15 @@ stream_confs:
             name: "MahalanobisThreshold"
             conf:
               max_outlier_prob: 0.08
+          trainer:
+            train_hours: 3
+            min_train_size: 100
+            max_value_map:
+              "failed": 0
+              "degraded": 0
+            pltrainer_conf:
+              accelerator: cpu
+              max_epochs: 5
 
 redis_conf:
   url: "isbsvc-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-e2e.svc"
