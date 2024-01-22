@@ -21,8 +21,12 @@ def init_server(step: str, server_type: str):
     pipeline_conf = load_pipeline_conf(BASE_CONF_FILE_PATH, APP_CONF_FILE_PATH)
     LOGGER.info("Pipeline config: %s", pipeline_conf)
 
-    redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
-    udf = UDFFactory.get_udf_instance(step, r_client=redis_client, pl_conf=pipeline_conf)
+    LOGGER.info("Starting vertex with step: %s, server_type %s", step, server_type)
+    if step == "mlpipeline":
+        udf = UDFFactory.get_udf_instance(step, pl_conf=pipeline_conf)
+    else:
+        redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
+        udf = UDFFactory.get_udf_instance(step, r_client=redis_client, pl_conf=pipeline_conf)
 
     return ServerFactory.get_server_instance(server_type, handler=udf)
 

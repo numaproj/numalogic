@@ -19,8 +19,7 @@ from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf, PipelineConf
-from numalogic.udfs.entities import TrainerPayload
+from numalogic.udfs._config import PipelineConf, MLPipelineConf
 from numalogic.udfs._metrics import (
     REDIS_ERROR_COUNTER,
     INSUFFICIENT_DATA_COUNTER,
@@ -33,6 +32,7 @@ from numalogic.udfs._metrics import (
     _increment_counter,
     _add_summary,
 )
+from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
 _LOGGER = logging.getLogger(__name__)
@@ -145,18 +145,26 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
-        _metric_label_values = (":".join(payload.composite_keys), payload.config_id)
-        _conf = self.get_conf(payload.config_id)
+        _metric_label_values = (
+            payload.composite_keys,
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
+
+        _conf = self.get_ml_pipeline_conf(
+            config_id=payload.config_id, pipeline_id=payload.pipeline_id
+        )
         _increment_counter(
             counter=MSG_IN_COUNTER,
-            labels=(self._vtx, ":".join(payload.composite_keys), payload.config_id),
+            labels=[self._vtx, *_metric_label_values],
         )
 
         # set the retry and retrain_freq
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
         retry_ts = _conf.numalogic_conf.trainer.retry_sec
         if not self.train_msg_deduplicator.ack_read(
-            key=payload.composite_keys,
+            key=[*payload.composite_keys, payload.pipeline_id],
             uuid=payload.uuid,
             retrain_freq=retrain_freq_ts,
             retry=retry_ts,
@@ -220,16 +228,17 @@ class TrainerUDF(NumalogicUDF):
         )
 
         # Save artifacts
-        skeys = payload.composite_keys
 
         self.artifacts_to_save(
-            skeys=skeys,
+            skeys=payload.composite_keys,
             dict_artifacts=dict_artifacts,
             model_registry=self.model_registry,
             payload=payload,
             vertex_name=self._vtx,
         )
-        if self.train_msg_deduplicator.ack_train(key=payload.composite_keys, uuid=payload.uuid):
+        if self.train_msg_deduplicator.ack_train(
+            key=[*payload.composite_keys, payload.pipeline_id], uuid=payload.uuid
+        ):
             _LOGGER.info(
                 "%s - Model trained and saved successfully.",
                 payload.uuid,
@@ -247,7 +256,7 @@ class TrainerUDF(NumalogicUDF):
         )
         return Messages(Message.to_drop())
 
-    def _construct_preproc_clf(self, _conf: StreamConf) -> Optional[artifact_t]:
+    def _construct_preproc_clf(self, _conf: MLPipelineConf) -> Optional[artifact_t]:
         preproc_clfs = []
         for _cfg in _conf.numalogic_conf.preprocess:
             _clf = self._preproc_factory.get_instance(_cfg)
@@ -281,7 +290,7 @@ class TrainerUDF(NumalogicUDF):
 
         """
         dict_artifacts = {
-            k: v
+            k: KeyedArtifact([payload.pipeline_id, *v.dkeys], v.artifact)
             for k, v in dict_artifacts.items()
             if not isinstance(v.artifact, StatelessTransformer)
         }
@@ -304,10 +313,14 @@ class TrainerUDF(NumalogicUDF):
             _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
-        _conf = self.get_conf(payload.config_id)
+        _conf = self.get_ml_pipeline_conf(
+            config_id=payload.config_id, pipeline_id=payload.pipeline_id
+        )
         if len(df) < _conf.numalogic_conf.trainer.min_train_size:
             _ = self.train_msg_deduplicator.ack_insufficient_data(
-                key=payload.composite_keys, uuid=payload.uuid, train_records=len(df)
+                key=[*payload.composite_keys, payload.pipeline_id],
+                uuid=payload.uuid,
+                train_records=len(df),
             )
             return False
         return True

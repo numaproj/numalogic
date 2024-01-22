@@ -1,6 +1,7 @@
 {
   "uuid": "dd7dfb43-532b-49a3-906e-f78f82ad9c4b",
   "config_id": "druid-config",
+  "pipeline_id": "pipeline1",
   "data": [
     {
       "degraded": 14,

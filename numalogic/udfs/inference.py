@@ -15,7 +15,6 @@ from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
-from numalogic.udfs.entities import StreamPayload, Header, Status
 from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
@@ -24,6 +23,7 @@ from numalogic.udfs._metrics import (
     UDF_TIME,
     _increment_counter,
 )
+from numalogic.udfs.entities import StreamPayload, Header, Status
 from numalogic.udfs.tools import _load_artifact, _update_info_metric
 
 _LOGGER = logging.getLogger(__name__)
@@ -103,7 +103,13 @@ class InferenceUDF(NumalogicUDF):
 
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
-        _metric_label_values = (self._vtx, ":".join(payload.composite_keys), payload.config_id)
+        _metric_label_values = (
+            payload.metadata["numalogic_opex_tags"]["source"],
+            self._vtx,
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
 
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
 
@@ -124,11 +130,12 @@ class InferenceUDF(NumalogicUDF):
             )
             return Messages(Message(keys=keys, value=payload.to_json()))
 
-        _conf = self.get_conf(payload.config_id)
+        _stream_conf = self.get_stream_conf(payload.config_id)
+        _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
 
         artifact_data, payload = _load_artifact(
-            skeys=[_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)],
-            dkeys=[_conf.numalogic_conf.model.name],
+            skeys=[_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)],
+            dkeys=[payload.pipeline_id, _conf.numalogic_conf.model.name],
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
@@ -211,7 +218,9 @@ class InferenceUDF(NumalogicUDF):
         -------
             True if artifact is stale, False otherwise
         """
-        _conf = self.get_conf(payload.config_id)
+        _conf = self.get_ml_pipeline_conf(
+            config_id=payload.config_id, pipeline_id=payload.pipeline_id
+        )
         if (
             self.model_registry.is_artifact_stale(
                 artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr

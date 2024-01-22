@@ -26,7 +26,7 @@ from numalogic.tools.exceptions import InvalidDataShapeError
 _LOGGER = logging.getLogger(__name__)
 
 
-def inverse_window(batched: Tensor, method="keep_last") -> Tensor:
+def inverse_window(batched: Tensor, method="keep_first") -> Tensor:
     r"""Convert a 3D windowed tensor back into a 2D tensor.
 
     Utility method to transform a 3D tensor of shape: (batch_size, seq_len, num_features)
@@ -35,7 +35,7 @@ def inverse_window(batched: Tensor, method="keep_last") -> Tensor:
     Args:
     ----
         batched: A 3D tensor of shape: (batch_size, seq_len, num_features)
-        method: The method to use for the inverse transformation. (default: "keep_last")
+        method: The method to use for the inverse transformation. (default: "keep_first")
                 Valid methods are: "keep_last", "keep_first"
     Returns:
         A 2D tensor of shape: (new_batch, num_features)

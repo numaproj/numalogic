@@ -18,13 +18,22 @@ _logger = logging.getLogger(__name__)
 
 
 @dataclass
+class MLPipelineConf:
+    pipeline_id: str = "default"
+    metrics: list[str] = field(default_factory=list)
+    numalogic_conf: NumalogicConf = field(default_factory=lambda: NumalogicConf())
+
+
+@dataclass
 class StreamConf:
     config_id: str = "default"
     source: ConnectorType = ConnectorType.druid  # TODO: do not allow redis connector here
     window_size: int = 12
     composite_keys: list[str] = field(default_factory=list)
-    metrics: list[str] = field(default_factory=list)
-    numalogic_conf: NumalogicConf = field(default_factory=lambda: NumalogicConf())
+    ml_pipelines: dict[str, MLPipelineConf] = field(default_factory=dict)
+
+    def get_numalogic_conf(self, mlpipe_id: str = "default") -> NumalogicConf:
+        return self.ml_pipelines[mlpipe_id].numalogic_conf
 
 
 @dataclass

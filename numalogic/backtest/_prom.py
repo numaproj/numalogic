@@ -34,7 +34,7 @@ from numalogic.connectors import ConnectorType
 from numalogic.connectors.prometheus import PrometheusFetcher
 from numalogic.tools.data import StreamingDataset, inverse_window
 from numalogic.tools.types import artifact_t
-from numalogic.udfs import UDFFactory, StreamConf
+from numalogic.udfs import UDFFactory, StreamConf, MLPipelineConf
 
 DEFAULT_OUTPUT_DIR = os.path.join(BASE_DIR, ".btoutput")
 LOGGER = logging.getLogger(__name__)
@@ -69,9 +69,8 @@ class PromBacktester:
 
         self.query = query
         self.metrics = metrics or []
-        self.conf = self._init_conf(metrics, numalogic_cfg, load_saved_conf)
-        self._seq_len = self.conf.window_size
-        self._n_features = len(self.conf.metrics)
+        self.conf: StreamConf = self._init_conf(metrics, numalogic_cfg, load_saved_conf)
+        self.nlconf: NumalogicConf = self.conf.get_numalogic_conf()
 
     def _init_conf(self, metrics: list[str], nl_conf: dict, load_saved_conf: bool) -> StreamConf:
         if load_saved_conf:
@@ -87,10 +86,17 @@ class PromBacktester:
             return StreamConf(
                 source=ConnectorType.prometheus,
                 window_size=DEFAULT_SEQUENCE_LEN,
-                metrics=metrics,
-                numalogic_conf=OmegaConf.to_object(
-                    OmegaConf.merge(OmegaConf.structured(NumalogicConf), OmegaConf.create(nl_conf)),
-                ),
+                ml_pipelines={
+                    "default": MLPipelineConf(
+                        pipeline_id="default",
+                        metrics=metrics,
+                        numalogic_conf=OmegaConf.to_object(
+                            OmegaConf.merge(
+                                OmegaConf.structured(NumalogicConf), OmegaConf.create(nl_conf)
+                            ),
+                        ),
+                    )
+                },
             )
 
         raise ValueError("Provide one of numalogic_conf or load_saved_conf")
@@ -121,13 +127,11 @@ class PromBacktester:
         LOGGER.info("Training data shape: %s", x_train.shape)
 
         artifacts = UDFFactory.get_udf_cls("promtrainer").compute(
-            model=ModelFactory().get_instance(self.conf.numalogic_conf.model),
+            model=ModelFactory().get_instance(self.nlconf.model),
             input_=x_train,
-            preproc_clf=PreprocessFactory().get_pipeline_instance(
-                self.conf.numalogic_conf.preprocess
-            ),
-            threshold_clf=ThresholdFactory().get_instance(self.conf.numalogic_conf.threshold),
-            numalogic_cfg=self.conf.numalogic_conf,
+            preproc_clf=PreprocessFactory().get_pipeline_instance(self.nlconf.preprocess),
+            threshold_clf=ThresholdFactory().get_instance(self.nlconf.threshold),
+            numalogic_cfg=self.nlconf,
         )
         artifacts_dict = {
             "model": artifacts["inference"].artifact,
@@ -138,7 +142,7 @@ class PromBacktester:
             torch.save(artifacts_dict, f)
 
         with open(os.path.join(self.out_dir, "config.yaml"), "w") as f:
-            OmegaConf.save(self.conf.numalogic_conf, f)
+            OmegaConf.save(self.nlconf, f)
 
         LOGGER.info("Models saved in %s", self._modelpath)
         return artifacts_dict
@@ -190,11 +194,9 @@ class PromBacktester:
         ds = StreamingDataset(x_scaled, seq_len=self.conf.window_size)
         raw_scores = np.zeros((len(ds), self.conf.window_size), dtype=np.float32)
         final_scores = np.zeros_like(raw_scores, dtype=np.float32)
-        postproc_func = PostprocessFactory().get_instance(self.conf.numalogic_conf.postprocess)
+        postproc_func = PostprocessFactory().get_instance(self.nlconf.postprocess)
 
-        x_recon = np.zeros(
-            (len(ds), self.conf.window_size, len(self.conf.metrics)), dtype=np.float32
-        )
+        x_recon = np.zeros((len(ds), self.conf.window_size, len(self.metrics)), dtype=np.float32)
 
         # Model Inference
         for idx, arr in enumerate(ds):
@@ -205,10 +207,12 @@ class PromBacktester:
                 postproc_clf=postproc_func,
             )
 
-        x_recon = inverse_window(torch.from_numpy(x_recon)).numpy()
-        raw_scores = inverse_window(torch.unsqueeze(torch.from_numpy(raw_scores), dim=2)).numpy()
+        x_recon = inverse_window(torch.from_numpy(x_recon), method="keep_first").numpy()
+        raw_scores = inverse_window(
+            torch.unsqueeze(torch.from_numpy(raw_scores), dim=2), method="keep_first"
+        ).numpy()
         final_scores = inverse_window(
-            torch.unsqueeze(torch.from_numpy(final_scores), dim=2)
+            torch.unsqueeze(torch.from_numpy(final_scores), dim=2), method="keep_first"
         ).numpy()
 
         return self._construct_output(
@@ -235,6 +239,8 @@ class PromBacktester:
         LOGGER.info(
             "Fetched dataframe with lookback days: %s with shape: %s", self.lookback_days, df.shape
         )
+        if df.empty:
+            return df
         if self.metrics:
             df = df[self.metrics]
         df = df.replace([np.inf, -np.inf], np.nan).fillna(fill_na_value)

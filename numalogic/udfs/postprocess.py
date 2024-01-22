@@ -11,6 +11,10 @@ from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
 from numalogic.transforms import expmov_avg_aggregator
+from numalogic.registry import LocalLRUCache
+from numalogic.tools.types import redis_client_t, artifact_t
+from numalogic.udfs import NumalogicUDF
+from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
@@ -19,12 +23,8 @@ from numalogic.udfs._metrics import (
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.registry import LocalLRUCache
-from numalogic.tools.types import redis_client_t, artifact_t
-from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
-from numalogic.udfs.tools import _load_artifact, _update_info_metric
+from numalogic.udfs.tools import _load_artifact
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -85,7 +85,13 @@ class PostprocessUDF(NumalogicUDF):
 
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
-        _metric_label_values = (self._vtx, ":".join(payload.composite_keys), payload.config_id)
+        _metric_label_values = (
+            payload.composite_keys,
+            self._vtx,
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
 
         _increment_counter(
             counter=MSG_IN_COUNTER,
@@ -93,14 +99,15 @@ class PostprocessUDF(NumalogicUDF):
         )
 
         # load configs
-        _conf = self.get_conf(payload.config_id)
+        _stream_conf = self.get_stream_conf(payload.config_id)
+        _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
         thresh_cfg = _conf.numalogic_conf.threshold
         postprocess_cfg = _conf.numalogic_conf.postprocess
 
         # load artifact
         thresh_artifact, payload = _load_artifact(
-            skeys=[_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)],
-            dkeys=[thresh_cfg.name],
+            skeys=[_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)],
+            dkeys=[payload.pipeline_id, thresh_cfg.name],
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
@@ -125,7 +132,6 @@ class PostprocessUDF(NumalogicUDF):
                     input_=payload.get_data(),
                     postproc_clf=postproc_clf,
                 )
-                _update_info_metric(raw_scores, payload.metrics, _metric_label_values)
             except RuntimeError:
                 _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
@@ -144,6 +150,7 @@ class PostprocessUDF(NumalogicUDF):
                 out_payload = OutputPayload(
                     uuid=payload.uuid,
                     config_id=payload.config_id,
+                    pipeline_id=payload.pipeline_id,
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
                     unified_anomaly=np.max(anomaly_scores),
@@ -161,13 +168,13 @@ class PostprocessUDF(NumalogicUDF):
 
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST or payload.status == Status.ARTIFACT_STALE:
-            _conf = self.get_conf(payload.config_id)
-            ckeys = [_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)]
+            ckeys = [_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)]
             train_payload = TrainerPayload(
                 uuid=payload.uuid,
                 composite_keys=ckeys,
                 metrics=payload.metrics,
                 config_id=payload.config_id,
+                pipeline_id=payload.pipeline_id,
             )
             messages.append(Message(keys=keys, value=train_payload.to_json(), tags=["train"]))
         _LOGGER.debug(
