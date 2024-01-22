@@ -98,7 +98,7 @@ class PreprocessUDF(NumalogicUDF):
             return Messages(Message.to_drop())
 
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
-        _conf = _stream_conf.ml_pipelines[data_payload["pipeline_id"]]
+        _conf = _stream_conf.ml_pipelines[data_payload.get("pipeline_id", "default")]
         raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=_stream_conf)
 
         source = NUMALOGIC_METRICS
@@ -113,7 +113,7 @@ class PreprocessUDF(NumalogicUDF):
             self._vtx,
             ":".join(keys),
             data_payload["config_id"],
-            data_payload["pipeline_id"],
+            data_payload.get("pipeline_id", "default"),
         )
 
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
