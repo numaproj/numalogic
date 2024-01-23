@@ -49,7 +49,7 @@ def get_df(
     -------
         dataframe and timestamps
     """
-    _conf = stream_conf.ml_pipelines[data_payload["pipeline_id"]]
+    _conf = stream_conf.ml_pipelines[data_payload.get("pipeline_id", "default")]
     features = _conf.metrics
     df = (
         pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
