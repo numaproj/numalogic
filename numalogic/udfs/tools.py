@@ -98,7 +98,7 @@ def make_stream_payload(
     return StreamPayload(
         uuid=data_payload["uuid"],
         config_id=data_payload["config_id"],
-        pipeline_id=data_payload["pipeline_id"],
+        pipeline_id=data_payload.get("pipeline_id", "default"),
         composite_keys=keys,
         data=np.ascontiguousarray(raw_df, dtype=np.float32),
         raw_data=np.ascontiguousarray(raw_df, dtype=np.float32),
