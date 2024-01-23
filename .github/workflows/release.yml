@@ -5,6 +5,11 @@ on:
     tags:
       - v*
   workflow_dispatch:
+    inputs:
+      extra_tag:
+        description: 'Tag suffix'
+        required: false
+        type: string
 
 jobs:
   build:
@@ -28,14 +33,23 @@ jobs:
           QUAYIO_ORG: quay.io/numaio
           PLATFORM: linux/x86_64
           TARGET: numalogic/udf
+          TAG_SUFFIX: ${{ inputs.extra_tag }}
         run: |
           type=$(basename $(dirname $GITHUB_REF))
           tag=$(basename $GITHUB_REF)
-          
+
           if [[ $type == "heads" ]]; then
             tag="$(basename $GITHUB_REF)v${{ env.version }}"
           fi
-          
+
+          echo "Tag: $tag"
+          echo "Type: $type"
+          echo "Tag suffix: $TAG_SUFFIX"
+
+          if [[ -n $TAG_SUFFIX ]]; then
+            tag="$(basename $GITHUB_REF)-${TAG_SUFFIX}"
+          fi
+
           image_name="${QUAYIO_ORG}/numalogic/udf:${tag}"
-          
+
           docker buildx build --platform ${PLATFORM} --build-arg INSTALL_EXTRAS='redis druid' --output "type=image,push=true" . -t $image_name
