@@ -95,6 +95,7 @@ class ThresholdFactory(_ObjectFactory):
         RobustMahalanobisThreshold,
         StaticThreshold,
         SigmoidThreshold,
+        MaxPercentileThreshold,
     )
 
     _CLS_MAP: ClassVar[dict] = {
@@ -104,6 +105,7 @@ class ThresholdFactory(_ObjectFactory):
         "SigmoidThreshold": SigmoidThreshold,
         "MahalanobisThreshold": MahalanobisThreshold,
         "RobustMahalanobisThreshold": RobustMahalanobisThreshold,
+        "MaxPercentileThreshold": MaxPercentileThreshold,
     }
 
 
