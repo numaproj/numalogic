@@ -114,3 +114,8 @@ class NumalogicConf:
 @dataclass
 class DataConnectorConf:
     source: str
+
+
+@dataclass
+class UnifiedScoreConf:
+    scoring_function: str = "max"

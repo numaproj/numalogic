@@ -4,7 +4,7 @@ from typing import Optional
 
 from omegaconf import OmegaConf
 
-from numalogic.config import NumalogicConf, RegistryInfo
+from numalogic.config import NumalogicConf, RegistryInfo, UnifiedScoreConf
 
 from numalogic.connectors import (
     ConnectorType,
@@ -21,6 +21,7 @@ _logger = logging.getLogger(__name__)
 class MLPipelineConf:
     pipeline_id: str = "default"
     metrics: list[str] = field(default_factory=list)
+    unified_scoring_conf: UnifiedScoreConf = field(default_factory=lambda: UnifiedScoreConf())
     numalogic_conf: NumalogicConf = field(default_factory=lambda: NumalogicConf())
 
 

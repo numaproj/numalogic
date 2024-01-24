@@ -33,6 +33,17 @@ LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 _LOGGER = logging.getLogger(__name__)
 
 
+def _calculate_unified_score(anomaly_scores, scoring_function):
+    try:
+        __fn = getattr(np, scoring_function)
+    except Exception as error:
+        raise AttributeError(
+            "Not a recognized numpy function for calculating unified score"
+        ) from error
+    else:
+        return __fn(anomaly_scores)
+
+
 class PostprocessUDF(NumalogicUDF):
     """
     Postprocess UDF for Numalogic.
@@ -151,16 +162,20 @@ class PostprocessUDF(NumalogicUDF):
                     pipeline_id=payload.pipeline_id,
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
-                    unified_anomaly=np.max(anomaly_scores),
+                    unified_anomaly=_calculate_unified_score(
+                        anomaly_scores, _conf.unified_scoring_conf.scoring_function
+                    ),
                     data=self._per_feature_score(payload.metrics, anomaly_scores),
                     metadata=payload.metadata,
                 )
                 _LOGGER.info(
-                    "%s - Successfully post-processed, Keys: %s, Scores: %s, Payload: %s",
+                    "%s - Successfully post-processed, Keys: %s, Scores: %s, Payload: %s "
+                    "using strategy: %s",
                     out_payload.uuid,
                     out_payload.composite_keys,
                     out_payload.unified_anomaly,
                     payload,
+                    _conf.unified_scoring_conf.scoring_function,
                 )
                 _LOGGER.info("%s-%s", payload.uuid, out_payload)
                 messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
