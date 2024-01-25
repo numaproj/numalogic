@@ -181,7 +181,7 @@ class TrainerUDF(NumalogicUDF):
         df = self.fetch_data(payload)
 
         # Check if data is sufficient
-        if df.empty or not self._is_data_sufficient(payload, df):
+        if not self._is_data_sufficient(payload, df):
             _LOGGER.warning(
                 "%s - Insufficient data found for keys %s, shape: %s",
                 payload.uuid,
