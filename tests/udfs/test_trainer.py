@@ -426,20 +426,20 @@ class TestDruidTrainerUDF(unittest.TestCase):
             )
 
     def test_druid_from_config_1(self):
-        with self.assertLogs(level="INFO") as log:
+        with self.assertLogs(level="WARN") as log:
             self.udf1(self.keys, self.datum)
             self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid -"
-                " Insufficient data found for keys ['5984175597303660107'], shape: (0, 0)",
+                "WARNING:numalogic.udfs.trainer._base:some-uuid - Caught exception/error while fetching from "
+                "source for key: ['5984175597303660107']",
                 log.output[-1],
             )
 
     def test_druid_from_config_2(self):
-        with self.assertLogs(level="INFO") as log:
+        with self.assertLogs(level="WARN") as log:
             self.udf2(self.keys, self.datum)
             self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid - Insufficient data found for keys "
-                "['5984175597303660107'], shape: (0, 0)",
+                "WARNING:numalogic.udfs.trainer._base:some-uuid - Caught exception/error while fetching "
+                "from source for key: ['5984175597303660107']",
                 log.output[-1],
             )
 

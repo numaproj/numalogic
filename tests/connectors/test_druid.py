@@ -170,7 +170,7 @@ class TestDruid(unittest.TestCase):
                 value=["count"],
             ),
         )
-        self.assertTrue(_out.empty)
+        self.assertEquals(_out, None)
 
 
 if __name__ == "__main__":

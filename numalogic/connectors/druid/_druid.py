@@ -108,7 +108,7 @@ class DruidFetcher(DataFetcher):
         group_by: Optional[list[str]] = None,
         pivot: Optional[Pivot] = None,
         hours: float = 24,
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         _start_time = time.perf_counter()
         filter_pairs = make_filter_pairs(filter_keys, filter_values)
         query_params = build_params(
@@ -125,7 +125,7 @@ class DruidFetcher(DataFetcher):
             response = self.client.groupby(**query_params)
         except Exception:
             _LOGGER.exception("Problem with getting response from client")
-            return pd.DataFrame()
+            return None
         else:
             df = response.export_pandas()
             if df.empty or df.shape[0] == 0:

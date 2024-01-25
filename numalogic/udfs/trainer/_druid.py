@@ -80,7 +80,7 @@ class DruidTrainerUDF(TrainerUDF):
         except KeyError as err:
             raise ConfigNotFoundError(f"Config with ID {fetcher_id} not found!") from err
 
-    def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
+    def fetch_data(self, payload: TrainerPayload) -> Optional[pd.DataFrame]:
         """
         Fetch data from druid.
 
@@ -133,13 +133,21 @@ class DruidTrainerUDF(TrainerUDF):
                 labels=_metric_label_values,
             )
             _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
-            return pd.DataFrame()
+            return None
         _end_time = time.perf_counter() - _start_time
         _add_summary(
             FETCH_TIME_SUMMARY,
             labels=_metric_label_values,
             data=_end_time,
         )
+        if not isinstance(_df, pd.DataFrame):
+            _LOGGER.debug(
+                "%s - Time taken to fetch data: %.3f sec",
+                payload.uuid,
+                _end_time,
+            )
+            return _df
+
         _LOGGER.debug(
             "%s - Time taken to fetch data: %.3f sec, df shape: %s",
             payload.uuid,

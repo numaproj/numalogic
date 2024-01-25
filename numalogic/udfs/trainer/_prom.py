@@ -48,7 +48,7 @@ class PromTrainerUDF(TrainerUDF):
         except AttributeError as err:
             raise ConfigNotFoundError("Prometheus config not found!") from err
 
-    def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
+    def fetch_data(self, payload: TrainerPayload) -> Optional[pd.DataFrame]:
         """
         Fetch data from Prometheus/Thanos.
 
@@ -90,7 +90,7 @@ class PromTrainerUDF(TrainerUDF):
                 labels=_metric_label_values,
             )
             _LOGGER.exception("%s - Error while fetching data from Prometheus", payload.uuid)
-            return pd.DataFrame()
+            return None
         _end_time = time.perf_counter() - _start_time
         _add_summary(
             FETCH_TIME_SUMMARY,
