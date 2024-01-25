@@ -429,7 +429,8 @@ class TestDruidTrainerUDF(unittest.TestCase):
         with self.assertLogs(level="WARN") as log:
             self.udf1(self.keys, self.datum)
             self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid - Caught exception/error while fetching from "
+                "WARNING:numalogic.udfs.trainer._base:some-uuid - "
+                "Caught exception/error while fetching from "
                 "source for key: ['5984175597303660107']",
                 log.output[-1],
             )
@@ -438,7 +439,8 @@ class TestDruidTrainerUDF(unittest.TestCase):
         with self.assertLogs(level="WARN") as log:
             self.udf2(self.keys, self.datum)
             self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid - Caught exception/error while fetching "
+                "WARNING:numalogic.udfs.trainer._base:some-uuid -"
+                " Caught exception/error while fetching "
                 "from source for key: ['5984175597303660107']",
                 log.output[-1],
             )
