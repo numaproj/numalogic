@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
-from typing import Self, Final
+from typing_extensions import Self, Final
 
 from numalogic.base import BaseThresholdModel
 from numalogic.tools.exceptions import InvalidDataShapeError, ModelInitializationError
