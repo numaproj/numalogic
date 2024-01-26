@@ -14,10 +14,22 @@ _INPUT_DIMS: Final[int] = 2
 
 
 class MaxPercentileThreshold(BaseThresholdModel):
+    """
+    Percentile based Thresholding estimator.
+
+    Args:
+        max_inlier_percentile: Max percentile greater than which will be treated as outlier
+        min_threshold:  Value to be used if threshold is less than this
+        aggregate: If True, combine the per-feature scores into 1
+        feature_weights: weights to be used for each feature (used only if aggregate=True)
+    """
+
+    __slots__ = ("_max_percentile", "_min_thresh", "_thresh", "_agg", "_weights", "_is_fitted")
+
     def __init__(
         self,
         max_inlier_percentile: float = 96.0,
-        min_threshold: float = 1e-3,
+        min_threshold: float = 1e-4,
         aggregate: bool = False,
         feature_weights: Optional[Sequence[float]] = None,
     ):
@@ -46,8 +58,14 @@ class MaxPercentileThreshold(BaseThresholdModel):
         self._is_fitted = True
         return self
 
-    def predict(self):
-        pass
+    def predict(self, x: npt.NDArray[float]) -> npt.NDArray[int]:
+        if not self._is_fitted:
+            raise ModelInitializationError("Model not fitted yet.")
+        self._validate_input(x)
+
+        y_hat = np.zeros(x.shape, dtype=int)
+        y_hat[x > self._thresh] = _OUTLIER
+        return y_hat
 
     def score_samples(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
         if not self._is_fitted:

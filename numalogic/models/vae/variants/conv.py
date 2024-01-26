@@ -232,12 +232,14 @@ class Conv1dVAE(BaseVAE):
         p, recon = self.forward(batch)
         kld_loss = self.kld_loss(p)
         recon_loss = self.recon_loss(batch, recon)
+        train_loss = recon_loss + (self.beta * kld_loss)
         self.log_dict(
             {
-                "train_kld_loss": kld_loss,
-                "train_recon_loss": recon_loss,
+                "train_loss": train_loss,
+                "kld_loss": kld_loss,
+                "recon_loss": recon_loss,
             },
             on_epoch=True,
             on_step=False,
         )
-        return recon_loss + (self.beta * kld_loss)
+        return train_loss

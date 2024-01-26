@@ -81,25 +81,22 @@ class PromBacktester:
             else:
                 LOGGER.info("Loaded saved config from %s", self.out_dir)
 
-        if nl_conf:
-            LOGGER.info("Using provided config!")
-            return StreamConf(
-                source=ConnectorType.prometheus,
-                window_size=DEFAULT_SEQUENCE_LEN,
-                ml_pipelines={
-                    "default": MLPipelineConf(
-                        pipeline_id="default",
-                        metrics=metrics,
-                        numalogic_conf=OmegaConf.to_object(
-                            OmegaConf.merge(
-                                OmegaConf.structured(NumalogicConf), OmegaConf.create(nl_conf)
-                            ),
-                        ),
-                    )
-                },
-            )
+        if not nl_conf:
+            raise ValueError("Provide one of numalogic_conf or load_saved_conf")
 
-        raise ValueError("Provide one of numalogic_conf or load_saved_conf")
+        nl_conf: NumalogicConf = OmegaConf.to_object(
+            OmegaConf.merge(OmegaConf.structured(NumalogicConf), OmegaConf.create(nl_conf)),
+        )
+
+        return StreamConf(
+            source=ConnectorType.prometheus,
+            window_size=nl_conf.model.conf.get("seq_len") or DEFAULT_SEQUENCE_LEN,
+            ml_pipelines={
+                "default": MLPipelineConf(
+                    pipeline_id="default", metrics=metrics, numalogic_conf=nl_conf
+                )
+            },
+        )
 
     def train_models(
         self,
@@ -193,7 +190,7 @@ class PromBacktester:
 
         ds = StreamingDataset(x_scaled, seq_len=self.conf.window_size)
         raw_scores = np.zeros((len(ds), self.conf.window_size), dtype=np.float32)
-        final_scores = np.zeros_like(raw_scores, dtype=np.float32)
+        final_scores = np.zeros((len(ds), 1), dtype=np.float32)
         postproc_func = PostprocessFactory().get_instance(self.nlconf.postprocess)
 
         x_recon = np.zeros((len(ds), self.conf.window_size, len(self.metrics)), dtype=np.float32)
@@ -214,6 +211,10 @@ class PromBacktester:
         final_scores = inverse_window(
             torch.unsqueeze(torch.from_numpy(final_scores), dim=2), method="keep_first"
         ).numpy()
+
+        final_scores = np.vstack(
+            [np.full((self.conf.window_size - 1, 1), fill_value=np.nan), final_scores]
+        )
 
         return self._construct_output(
             df_test,
