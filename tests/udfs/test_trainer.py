@@ -18,7 +18,11 @@ from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
 from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf
 from numalogic.connectors.druid import DruidFetcher
-from numalogic.tools.exceptions import ConfigNotFoundError, DruidFetcherError
+from numalogic.tools.exceptions import (
+    ConfigNotFoundError,
+    DruidFetcherError,
+    PrometheusFetcherError,
+)
 from numalogic.udfs import StreamConf, PipelineConf, MLPipelineConf
 from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
@@ -604,37 +608,30 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
             ),
         )
 
-    @patch.object(PromTrainerUDF, "fetch_data", Mock(return_value=_mock_default_fetch_data()))
-    def test_trainer_02(self):
-        udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
-        datum = Datum(
-            keys=self.keys,
-            value=orjson.dumps(
-                {
-                    "uuid": "some-uuid",
-                    "config_id": "myconf",
-                    "pipeline_id": "pipeline1",
-                    "composite_keys": [
-                        "dev-devx-druidreverseproxy-usw2-qal",
-                        "druid-reverse-proxy",
-                    ],
-                    "metrics": [
-                        "namespace_app_rollouts_http_request_error_rate",
-                    ],
-                }
-            ),
-            event_time=datetime.now(),
-            watermark=datetime.now(),
-        )
-        udf(["myns", "myapp"], datum)
-        self.assertEqual(
-            3,
-            REDIS_CLIENT.exists(
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:StandardScaler::LATEST",
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:SparseVanillaAE::LATEST",
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:StdDevThreshold::LATEST",
-            ),
-        )
+    @patch.object(PromTrainerUDF, "fetch_data", Mock(side_effect=PrometheusFetcherError))
+    def test_trainer_error(self):
+        with self.assertRaises(PrometheusFetcherError):
+            udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
+            datum = Datum(
+                keys=self.keys,
+                value=orjson.dumps(
+                    {
+                        "uuid": "some-uuid",
+                        "config_id": "myconf",
+                        "pipeline_id": "pipeline1",
+                        "composite_keys": [
+                            "dev-devx-druidreverseproxy-usw2-qal",
+                            "druid-reverse-proxy",
+                        ],
+                        "metrics": [
+                            "namespace_app_rollouts_http_request_error_rate",
+                        ],
+                    }
+                ),
+                event_time=datetime.now(),
+                watermark=datetime.now(),
+            )
+            udf(["myns", "myapp"], datum)
 
 
 if __name__ == "__main__":

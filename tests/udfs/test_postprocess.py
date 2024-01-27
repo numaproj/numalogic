@@ -184,6 +184,8 @@ class TestPostProcessUDF(unittest.TestCase):
     def test_postprocess_NotImplementedMethod(self):
         arr = np.asarray([[1, 1], [2, 2]])
         self.assertEqual(1.5, self.udf._calculate_unified_score(arr, "mean"))
+        self.assertEqual(1, self.udf._calculate_unified_score(arr, "min"))
+        self.assertEqual(2, self.udf._calculate_unified_score(arr, "max"))
         with self.assertRaises(NotImplementedError):
             self.udf._calculate_unified_score(arr, "mesadasd")
 
