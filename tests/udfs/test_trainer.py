@@ -16,7 +16,7 @@ from redis import RedisError
 from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
-from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf
+from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf, PrometheusFetcher
 from numalogic.connectors.druid import DruidFetcher
 from numalogic.tools.exceptions import (
     ConfigNotFoundError,
@@ -608,30 +608,36 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
             ),
         )
 
-    @patch.object(PromTrainerUDF, "fetch_data", Mock(side_effect=PrometheusFetcherError))
+    @patch.object(PrometheusFetcher, "fetch", Mock(side_effect=PrometheusFetcherError))
     def test_trainer_error(self):
-        with self.assertRaises(PrometheusFetcherError):
-            udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
-            datum = Datum(
-                keys=self.keys,
-                value=orjson.dumps(
-                    {
-                        "uuid": "some-uuid",
-                        "config_id": "myconf",
-                        "pipeline_id": "pipeline1",
-                        "composite_keys": [
-                            "dev-devx-druidreverseproxy-usw2-qal",
-                            "druid-reverse-proxy",
-                        ],
-                        "metrics": [
-                            "namespace_app_rollouts_http_request_error_rate",
-                        ],
-                    }
-                ),
-                event_time=datetime.now(),
-                watermark=datetime.now(),
+        udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
+        datum = Datum(
+            keys=self.keys,
+            value=orjson.dumps(
+                {
+                    "uuid": "some-uuid",
+                    "config_id": "myconf",
+                    "pipeline_id": "pipeline1",
+                    "composite_keys": [
+                        "odl-odlgraphql-usw2-e2e",
+                        "odl-graphql",
+                    ],
+                    "metrics": [
+                        "namespace_app_rollouts_http_request_error_rate",
+                    ],
+                }
+            ),
+            event_time=datetime.now(),
+            watermark=datetime.now(),
+        )
+        _out = udf(["odl-odlgraphql-usw2-e2e", "odl-graphql"], datum)
+        self.assertFalse(
+            REDIS_CLIENT.exists(
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:StandardScaler::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:Conv1dVAE::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:MahalanobisThreshold::LATEST",
             )
-            udf(["myns", "myapp"], datum)
+        )
 
 
 if __name__ == "__main__":
