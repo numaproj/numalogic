@@ -7,7 +7,7 @@ import pandas as pd
 import pytz
 
 from numalogic.config.factory import ConnectorFactory
-from numalogic.tools.exceptions import ConfigNotFoundError
+from numalogic.tools.exceptions import ConfigNotFoundError, PrometheusFetcherError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import TrainerPayload
@@ -84,7 +84,7 @@ class PromTrainerUDF(TrainerUDF):
                     **dict(zip(_stream_conf.composite_keys, payload.composite_keys)),
                 },
             )
-        except Exception:
+        except PrometheusFetcherError:
             _increment_counter(
                 counter=FETCH_EXCEPTION_COUNTER,
                 labels=_metric_label_values,

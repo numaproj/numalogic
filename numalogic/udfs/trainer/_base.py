@@ -182,7 +182,7 @@ class TrainerUDF(NumalogicUDF):
 
         # Retry the training if df is returning None due to some errors/exception
         # while fetching the data
-        if not isinstance(df, pd.DataFrame):
+        if df is None:
             _increment_counter(
                 counter=MSG_DROPPED_COUNTER,
                 labels=(self._vtx, *_metric_label_values),

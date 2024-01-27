@@ -18,7 +18,7 @@ from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
 from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf
 from numalogic.connectors.druid import DruidFetcher
-from numalogic.tools.exceptions import ConfigNotFoundError
+from numalogic.tools.exceptions import ConfigNotFoundError, DruidFetcherError
 from numalogic.udfs import StreamConf, PipelineConf, MLPipelineConf
 from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
@@ -376,7 +376,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
             )
         )
 
-    @patch.object(DruidFetcher, "fetch", Mock(side_effect=RuntimeError))
+    @patch.object(DruidFetcher, "fetch", Mock(side_effect=DruidFetcherError))
     def test_trainer_datafetcher_err(self):
         self.udf1.register_conf(
             "druid-config",
@@ -403,6 +403,42 @@ class TestDruidTrainerUDF(unittest.TestCase):
                 b"5984175597303660107:pipeline1::StandardScaler::LATEST",
             )
         )
+
+    @patch.object(
+        DruidFetcher, "fetch", Mock(side_effect=[DruidFetcherError, mock_druid_fetch_data()])
+    )
+    def test_trainer_datafetcher_err_and_train(self):
+        ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
+        with freeze_time(ts):
+            self.udf1.register_conf(
+                "druid-config",
+                StreamConf(
+                    ml_pipelines={
+                        "pipeline1": MLPipelineConf(
+                            pipeline_id="pipeline1",
+                            numalogic_conf=NumalogicConf(
+                                model=ModelInfo(
+                                    name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                                ),
+                                preprocess=[ModelInfo(name="StandardScaler", conf={})],
+                                trainer=TrainerConf(
+                                    pltrainer_conf=LightningTrainerConf(max_epochs=1)
+                                ),
+                            ),
+                        )
+                    }
+                ),
+            )
+            self.udf1(self.keys, self.datum)
+        with freeze_time(ts + timedelta(minutes=20)):
+            self.udf1(self.keys, self.datum)
+            self.assertTrue(
+                REDIS_CLIENT.exists(
+                    b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                    b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
+                    b"5984175597303660107:pipeline1::StandardScaler::LATEST",
+                )
+            )
 
     @patch("redis.Redis.hset", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_1(self):

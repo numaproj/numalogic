@@ -33,17 +33,6 @@ LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 _LOGGER = logging.getLogger(__name__)
 
 
-def _calculate_unified_score(anomaly_scores, scoring_function):
-    try:
-        __fn = getattr(np, scoring_function)
-    except Exception as error:
-        raise AttributeError(
-            "Not a recognized numpy function for calculating unified score"
-        ) from error
-    else:
-        return __fn(anomaly_scores)
-
-
 class PostprocessUDF(NumalogicUDF):
     """
     Postprocess UDF for Numalogic.
@@ -73,6 +62,16 @@ class PostprocessUDF(NumalogicUDF):
             ),
         )
         self.postproc_factory = PostprocessFactory()
+
+    @staticmethod
+    def _calculate_unified_score(anomaly_scores, scoring_function):
+        if scoring_function == "max":
+            return np.max(anomaly_scores)
+        if scoring_function == "min":
+            return np.min(anomaly_scores)
+        if scoring_function == "mean":
+            return np.mean(anomaly_scores)
+        raise NotImplementedError(f"Unsupported loss function provided: {scoring_function}")
 
     @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
@@ -162,7 +161,7 @@ class PostprocessUDF(NumalogicUDF):
                     pipeline_id=payload.pipeline_id,
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
-                    unified_anomaly=_calculate_unified_score(
+                    unified_anomaly=self._calculate_unified_score(
                         anomaly_scores, _conf.unified_scoring_conf.scoring_function
                     ),
                     data=self._per_feature_score(payload.metrics, anomaly_scores),

@@ -12,6 +12,8 @@ from numalogic.connectors._base import DataFetcher
 from numalogic.connectors._config import Pivot
 from typing import Optional
 
+from numalogic.tools.exceptions import DruidFetcherError
+
 _LOGGER = logging.getLogger(__name__)
 TIMEOUT = 10000
 
@@ -108,7 +110,7 @@ class DruidFetcher(DataFetcher):
         group_by: Optional[list[str]] = None,
         pivot: Optional[Pivot] = None,
         hours: float = 24,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame:
         _start_time = time.perf_counter()
         filter_pairs = make_filter_pairs(filter_keys, filter_values)
         query_params = build_params(
@@ -123,9 +125,8 @@ class DruidFetcher(DataFetcher):
         )
         try:
             response = self.client.groupby(**query_params)
-        except Exception:
-            _LOGGER.exception("Problem with getting response from client")
-            return None
+        except Exception as err:
+            raise DruidFetcherError("Druid Exception:\n") from err
         else:
             df = response.export_pandas()
             if df.empty or df.shape[0] == 0:

@@ -6,7 +6,7 @@ import pandas as pd
 
 from numalogic.config.factory import ConnectorFactory
 from numalogic.connectors import DruidFetcherConf
-from numalogic.tools.exceptions import ConfigNotFoundError
+from numalogic.tools.exceptions import ConfigNotFoundError, DruidFetcherError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import TrainerPayload
@@ -127,7 +127,7 @@ class DruidTrainerUDF(TrainerUDF):
                 pivot=_fetcher_conf.pivot,
                 hours=_conf.numalogic_conf.trainer.train_hours,
             )
-        except Exception:
+        except DruidFetcherError:
             _increment_counter(
                 counter=FETCH_EXCEPTION_COUNTER,
                 labels=_metric_label_values,
@@ -140,13 +140,6 @@ class DruidTrainerUDF(TrainerUDF):
             labels=_metric_label_values,
             data=_end_time,
         )
-        if not isinstance(_df, pd.DataFrame):
-            _LOGGER.debug(
-                "%s - Time taken to fetch data: %.3f sec",
-                payload.uuid,
-                _end_time,
-            )
-            return _df
 
         _LOGGER.debug(
             "%s - Time taken to fetch data: %.3f sec, df shape: %s",
