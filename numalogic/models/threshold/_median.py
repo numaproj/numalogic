@@ -83,5 +83,5 @@ class MaxPercentileThreshold(BaseThresholdModel):
         y: npt.NDArray[float], weights: Optional[Sequence[float]] = None
     ) -> npt.NDArray[float]:
         if weights:
-            return np.average(y, weights=weights, axis=1)
-        return np.mean(y, axis=1)
+            return np.average(y, weights=weights, axis=1, keepdims=True)
+        return np.mean(y, axis=1, keepdims=True)

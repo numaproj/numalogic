@@ -129,14 +129,6 @@ class GaussianNoiseAdder(StatelessTransformer):
 
 
 class DifferenceTransform(StatelessTransformer):
-    __slots__ = ("order",)
-
-    def __init__(
-        self,
-        order: int = 1,
-    ):
-        self.order = order
-
     def transform(self, input_: npt.NDArray, **__):
         diff_df = pd.DataFrame(input_).diff().bfill()
         return diff_df.to_numpy(dtype=np.float32)
