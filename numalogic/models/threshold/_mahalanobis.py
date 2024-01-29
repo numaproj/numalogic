@@ -191,7 +191,9 @@ class RobustMahalanobisThreshold(MahalanobisThreshold):
 
     Args:
     ----
-        max_inlier_percentile: maximum inlier percentile (default: 95)
+        max_outlier_prob: maximum outlier probability (default: 0.1)
+        support_fraction: The proportion of points to be included in the support of the raw
+            MCD estimate.(default: 0.7)
 
     Raises
     ------
@@ -201,14 +203,10 @@ class RobustMahalanobisThreshold(MahalanobisThreshold):
     def __init__(
         self,
         max_outlier_prob: float = 0.1,
-        max_inlier_percentile: Optional[float] = None,
         support_fraction: Optional[float] = 0.7,
     ):
         super().__init__(max_outlier_prob)
         self._mcd = MinCovDet(store_precision=False, support_fraction=support_fraction)
-        if max_inlier_percentile and (not 75.0 <= max_inlier_percentile < 100.0):
-            raise ValueError("max_inlier_percentile should be in range [75, 100)")
-        self._max_inlier_percentile = max_inlier_percentile
 
     def mahalanobis(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
         return np.sqrt(self._mcd.mahalanobis(x))
@@ -236,10 +234,7 @@ class RobustMahalanobisThreshold(MahalanobisThreshold):
         self._cov_inv = self._mcd.get_precision()
 
         mahal_dist = self.mahalanobis(x)
-        if self._max_inlier_percentile:
-            self._md_thresh = np.percentile(mahal_dist, self._max_inlier_percentile)
-        else:
-            self._md_thresh = np.mean(mahal_dist) + self._k * np.std(mahal_dist)
+        self._md_thresh = np.mean(mahal_dist) + self._k * np.std(mahal_dist)
 
         self._is_fitted = True
         return self

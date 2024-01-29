@@ -1,75 +1,95 @@
-import unittest
-
 import numpy as np
+import pytest
 
-from numalogic.models.threshold import (
-    MahalanobisThreshold,
-)
+from numalogic.models.threshold import MahalanobisThreshold, RobustMahalanobisThreshold
 from numalogic.tools.exceptions import ModelInitializationError, InvalidDataShapeError
 
 
-class TestMahalanobisThreshold(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        rng = np.random.default_rng(42)
-        cls.x_train = rng.normal(size=(100, 15))
-        cls.x_test = rng.normal(size=(30, 15))
+@pytest.fixture
+def rng_data():
+    rng = np.random.default_rng(42)
+    x_train = rng.normal(size=(100, 15))
+    x_test = rng.normal(size=(30, 15))
+    return x_train, x_test
 
-    def test_init(self):
+
+class TestMahalanobisThreshold:
+    def test_init(self, rng_data):
+        x_train, x_test = rng_data
         clf = MahalanobisThreshold(max_outlier_prob=0.25)
-        clf.fit(self.x_train)
-        md = clf.mahalanobis(self.x_test)
-        self.assertTupleEqual((self.x_test.shape[0],), md.shape)
-        self.assertGreater(all(md), 0.0)
-        self.assertGreater(clf.threshold, 0.0)
-        self.assertEqual(clf.std_factor, 2.0)
+        clf.fit(x_train)
+        md = clf.mahalanobis(x_test)
+        assert (x_test.shape[0],) == md.shape
+        assert all(md) > 0.0
+        assert clf.threshold > 0.0
+        assert clf.std_factor == 2.0
 
     def test_init_err(self):
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             MahalanobisThreshold(max_outlier_prob=0.0)
-        with self.assertRaises(ValueError):
+        with pytest.raises(ValueError):
             MahalanobisThreshold(max_outlier_prob=1.0)
 
     def test_singular(self):
         clf = MahalanobisThreshold()
         clf.fit(np.ones((100, 15)))
         md = clf.mahalanobis(np.ones((30, 15)))
-        self.assertTupleEqual((30,), md.shape)
+        assert (30,) == md.shape
 
-    def test_predict(self):
+    def test_predict(self, rng_data):
+        x_train, x_test = rng_data
         clf = MahalanobisThreshold()
-        clf.fit(self.x_train)
-        y = clf.predict(self.x_test)
-        self.assertTupleEqual((self.x_test.shape[0],), y.shape)
-        self.assertEqual(np.max(y), 1)
-        self.assertEqual(np.min(y), 0)
+        clf.fit(x_train)
+        y = clf.predict(x_test)
+        assert (x_test.shape[0],) == y.shape
+        assert np.max(y) == 1
+        assert np.min(y) == 0
 
-    def test_notfitted_err(self):
+    def test_notfitted_err(self, rng_data):
+        x_test = rng_data[1]
         clf = MahalanobisThreshold()
-        with self.assertRaises(ModelInitializationError):
-            clf.predict(self.x_test)
-        with self.assertRaises(ModelInitializationError):
-            clf.score_samples(self.x_test)
+        with pytest.raises(ModelInitializationError):
+            clf.predict(x_test)
+        with pytest.raises(ModelInitializationError):
+            clf.score_samples(x_test)
 
-    def test_invalid_input_err(self):
+    def test_invalid_input_err(self, rng_data):
+        x_train = rng_data[0]
         clf = MahalanobisThreshold()
-        clf.fit(self.x_train)
-        with self.assertRaises(InvalidDataShapeError):
+        clf.fit(x_train)
+        with pytest.raises(InvalidDataShapeError):
             clf.predict(np.ones((30, 15, 1)))
-        with self.assertRaises(InvalidDataShapeError):
+        with pytest.raises(InvalidDataShapeError):
             clf.score_samples(np.ones(30))
 
-    def test_score_samples(self):
+    def test_score_samples(self, rng_data):
+        x_train, x_test = rng_data
         clf = MahalanobisThreshold()
-        clf.fit(self.x_train)
-        y = clf.score_samples(self.x_test)
-        self.assertTupleEqual((self.x_test.shape[0],), y.shape)
+        clf.fit(x_train)
+        y = clf.score_samples(x_test)
+        assert (x_test.shape[0],) == y.shape
 
-    def test_score_samples_err(self):
+    def test_score_samples_err(self, rng_data):
+        x_test = rng_data[1]
         clf = MahalanobisThreshold()
-        with self.assertRaises(ModelInitializationError):
-            clf.score_samples(self.x_test)
+        with pytest.raises(ModelInitializationError):
+            clf.score_samples(x_test)
 
 
-if __name__ == "__main__":
-    unittest.main()
+class TestRobustMahalanobisThreshold:
+    def test_fit(self, rng_data):
+        x_train, x_test = rng_data
+        clf = RobustMahalanobisThreshold(max_outlier_prob=0.25)
+        clf.fit(x_train)
+        md = clf.mahalanobis(x_test)
+        assert (x_test.shape[0],) == md.shape
+        assert all(md) > 0.0
+        assert clf.threshold > 0.0
+        assert clf.std_factor == 2.0
+
+    def test_score(self, rng_data):
+        x_train, x_test = rng_data
+        clf = MahalanobisThreshold()
+        clf.fit(x_train)
+        y = clf.score_samples(x_test)
+        assert (x_test.shape[0],) == y.shape
