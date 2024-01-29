@@ -39,7 +39,7 @@ class PrometheusFetcher(DataFetcher):
         prometheus_server: Prometheus/Thanos URL
         scrape_interval_secs: Prometheus scrape interval in seconds
     Raises:
-        PrometheusFetcherError: DruidFetcherError: If error/exception during fetching of data.
+        PrometheusFetcherError: If error/exception during fetching of data.
     """
 
     __slots__ = ("_endpoint", "_step_secs")
