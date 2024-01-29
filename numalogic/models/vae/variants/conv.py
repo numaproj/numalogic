@@ -151,8 +151,9 @@ class Conv1dVAE(BaseVAE):
     ----
         seq_len: sequence length / window length
         n_features: num of features
-        conv_channels: number of convolutional channels
         latent_dim: latent dimension
+        conv_channels: number of convolutional channels
+        beta: disentanglement factor; weightage applied to KLD loss (default=0.1)
 
     Raises
     ------
@@ -167,7 +168,7 @@ class Conv1dVAE(BaseVAE):
         n_features: int,
         latent_dim: int,
         conv_channels: Sequence[int] = (16,),
-        beta: float = 1.0,
+        beta: float = 0.1,
         **kwargs,
     ):
         super().__init__(**kwargs)
