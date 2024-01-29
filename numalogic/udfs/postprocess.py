@@ -64,7 +64,9 @@ class PostprocessUDF(NumalogicUDF):
         self.postproc_factory = PostprocessFactory()
 
     @staticmethod
-    def _calculate_unified_score(anomaly_scores: np.ndarray, scoring_function: str) -> float:
+    def _calculate_unified_score(
+        anomaly_scores: np.ndarray, scoring_function: str
+    ) -> Optional[float]:
         if scoring_function == "max":
             return np.max(anomaly_scores)
         if scoring_function == "min":
@@ -72,7 +74,6 @@ class PostprocessUDF(NumalogicUDF):
         if scoring_function == "mean":
             return np.mean(anomaly_scores)
         return None
-        # raise NotImplementedError(f"Unsupported loss function provided: {scoring_function}")
 
     @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
