@@ -91,6 +91,11 @@ class DruidFetcher(DataFetcher):
     Args:
         url: Druid URL
         endpoint: Druid endpoint
+
+    Raises
+    ------
+        DruidFetcherError: If error/exception during fetching of data.
+
     """
 
     def __init__(self, url: str, endpoint: str):

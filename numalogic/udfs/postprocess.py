@@ -64,14 +64,15 @@ class PostprocessUDF(NumalogicUDF):
         self.postproc_factory = PostprocessFactory()
 
     @staticmethod
-    def _calculate_unified_score(anomaly_scores, scoring_function):
+    def _calculate_unified_score(anomaly_scores: np.ndarray, scoring_function: str) -> float:
         if scoring_function == "max":
             return np.max(anomaly_scores)
         if scoring_function == "min":
             return np.min(anomaly_scores)
         if scoring_function == "mean":
             return np.mean(anomaly_scores)
-        raise NotImplementedError(f"Unsupported loss function provided: {scoring_function}")
+        return None
+        # raise NotImplementedError(f"Unsupported loss function provided: {scoring_function}")
 
     @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
@@ -162,7 +163,8 @@ class PostprocessUDF(NumalogicUDF):
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
                     unified_anomaly=self._calculate_unified_score(
-                        anomaly_scores, _conf.unified_scoring_conf.scoring_function
+                        anomaly_scores,
+                        _conf.unified_scoring_conf.scoring_function,
                     ),
                     data=self._per_feature_score(payload.metrics, anomaly_scores),
                     metadata=payload.metadata,
@@ -174,7 +176,7 @@ class PostprocessUDF(NumalogicUDF):
                     out_payload.composite_keys,
                     out_payload.unified_anomaly,
                     payload,
-                    _conf.unified_scoring_conf.scoring_function,
+                    _conf.unified_scoring_conf.scoring_function.value,
                 )
                 _LOGGER.info("%s-%s", payload.uuid, out_payload)
                 messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))

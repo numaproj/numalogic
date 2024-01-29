@@ -16,7 +16,6 @@ from numalogic.config._config import (
     LightningTrainerConf,
     RegistryInfo,
     TrainerConf,
-    UnifiedScoreConf,
 )
 from numalogic.config.factory import (
     ModelFactory,
@@ -38,5 +37,4 @@ __all__ = [
     "ThresholdFactory",
     "RegistryFactory",
     "TrainerConf",
-    "UnifiedScoreConf",
 ]

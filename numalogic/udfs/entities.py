@@ -13,6 +13,14 @@ Vector = list[float]
 Matrix = Union[Vector, list[Vector], npt.ArrayLike]
 
 
+class ScoreFunc(str, Enum):
+    """An enumeration class representing the available score functions."""
+
+    MAX = "max"
+    MIN = "min"
+    MEAN = "mean"
+
+
 class Status(str, Enum):
     """Status of the current payload."""
 
