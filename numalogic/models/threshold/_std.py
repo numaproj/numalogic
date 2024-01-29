@@ -8,7 +8,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional
 
 import numpy as np
 from numpy.typing import NDArray
@@ -72,18 +71,3 @@ class StdDevThreshold(BaseThresholdModel):
     def score_samples(self, x_test: NDArray[float]) -> NDArray[float]:
         """Returns an anomaly score array with the same shape as input."""
         return x_test / self.threshold
-
-
-class AggStdDevThreshold(StdDevThreshold):
-    def __init__(
-        self,
-        feature_weights: Optional[list[float]] = None,
-        std_factor: float = 3.0,
-        min_threshold: float = 0.0,
-    ):
-        super().__init__(std_factor, min_threshold)
-        self.feature_weights = feature_weights
-
-    def score_samples(self, x_test: NDArray[float]) -> NDArray[float]:
-        scores = super().score_samples(x_test)
-        return np.average(scores, weights=self.feature_weights, axis=1, keepdims=True)

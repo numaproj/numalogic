@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.6.1.a9"
+version = "0.7.0"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -22,9 +22,6 @@ classifiers = [
 repository = "https://github.com/numaproj/numalogic"
 documentation = "https://numalogic.numaproj.io/"
 homepage = "https://numalogic.numaproj.io/"
-
-[tool.poetry.scripts]
-numalogic ="numalogic.backtest.__main__:app"
 
 [tool.poetry.dependencies]
 python = ">=3.9, <3.12"

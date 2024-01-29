@@ -1,6 +1,7 @@
 import unittest
 
 import numpy as np
+from numpy.testing import assert_array_equal
 
 from numalogic.models.threshold import StdDevThreshold
 
@@ -20,6 +21,8 @@ class TestStdDevThreshold(unittest.TestCase):
         clf = StdDevThreshold()
         clf.fit(self.x_train)
         score = clf.score_samples(self.x_test)
+
+        assert_array_equal(clf.mean + (clf.std_factor * clf.std), clf.threshold)
         self.assertAlmostEqual(0.93317, np.mean(score), places=2)
 
 
