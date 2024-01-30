@@ -158,7 +158,7 @@ class PostprocessUDF(NumalogicUDF):
                     pipeline_id=payload.pipeline_id,
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
-                    unified_anomaly=anomaly_score,
+                    unified_anomaly=anomaly_score.item(),
                     data=self._per_feature_score(payload.metrics, anomaly_scores),
                     metadata=payload.metadata,
                 )
