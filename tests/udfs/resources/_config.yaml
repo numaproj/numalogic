@@ -20,6 +20,8 @@ stream_confs:
           preprocess:
             - name: "FlattenVector"
               stateful: false
+              conf:
+                n_features: 2
             - name: "LogTransformer"
               stateful: false
               conf:
