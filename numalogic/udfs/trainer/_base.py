@@ -245,7 +245,6 @@ class TrainerUDF(NumalogicUDF):
             threshold_clf=thresh_clf,
             numalogic_cfg=_conf.numalogic_conf,
         )
-        print(dict_artifacts)
         # Save artifacts
 
         self.artifacts_to_save(
@@ -313,7 +312,6 @@ class TrainerUDF(NumalogicUDF):
             for k, v in dict_artifacts.items()
             if v.stateful
         }
-        print(dict_artifacts)
         try:
             ver_dict = model_registry.save_multiple(
                 skeys=skeys,
