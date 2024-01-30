@@ -16,9 +16,13 @@ from redis import RedisError
 from numalogic._constants import TESTS_DIR
 from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
-from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf
+from numalogic.connectors import RedisConf, DruidConf, DruidFetcherConf, PrometheusFetcher
 from numalogic.connectors.druid import DruidFetcher
-from numalogic.tools.exceptions import ConfigNotFoundError
+from numalogic.tools.exceptions import (
+    ConfigNotFoundError,
+    DruidFetcherError,
+    PrometheusFetcherError,
+)
 from numalogic.udfs import StreamConf, PipelineConf, MLPipelineConf
 from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
@@ -376,7 +380,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
             )
         )
 
-    @patch.object(DruidFetcher, "fetch", Mock(side_effect=RuntimeError))
+    @patch.object(DruidFetcher, "fetch", Mock(side_effect=DruidFetcherError))
     def test_trainer_datafetcher_err(self):
         self.udf1.register_conf(
             "druid-config",
@@ -404,6 +408,42 @@ class TestDruidTrainerUDF(unittest.TestCase):
             )
         )
 
+    @patch.object(
+        DruidFetcher, "fetch", Mock(side_effect=[DruidFetcherError, mock_druid_fetch_data()])
+    )
+    def test_trainer_datafetcher_err_and_train(self):
+        ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
+        with freeze_time(ts):
+            self.udf1.register_conf(
+                "druid-config",
+                StreamConf(
+                    ml_pipelines={
+                        "pipeline1": MLPipelineConf(
+                            pipeline_id="pipeline1",
+                            numalogic_conf=NumalogicConf(
+                                model=ModelInfo(
+                                    name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                                ),
+                                preprocess=[ModelInfo(name="StandardScaler", conf={})],
+                                trainer=TrainerConf(
+                                    pltrainer_conf=LightningTrainerConf(max_epochs=1)
+                                ),
+                            ),
+                        )
+                    }
+                ),
+            )
+            self.udf1(self.keys, self.datum)
+        with freeze_time(ts + timedelta(minutes=20)):
+            self.udf1(self.keys, self.datum)
+            self.assertTrue(
+                REDIS_CLIENT.exists(
+                    b"5984175597303660107::pipeline1:VanillaAE::LATEST",
+                    b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
+                    b"5984175597303660107:pipeline1::StandardScaler::LATEST",
+                )
+            )
+
     @patch("redis.Redis.hset", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_1(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
@@ -426,20 +466,22 @@ class TestDruidTrainerUDF(unittest.TestCase):
             )
 
     def test_druid_from_config_1(self):
-        with self.assertLogs(level="INFO") as log:
+        with self.assertLogs(level="WARN") as log:
             self.udf1(self.keys, self.datum)
             self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid -"
-                " Insufficient data found for keys ['5984175597303660107'], shape: (0, 0)",
+                "WARNING:numalogic.udfs.trainer._base:some-uuid - "
+                "Caught exception/error while fetching from "
+                "source for key: ['5984175597303660107']",
                 log.output[-1],
             )
 
     def test_druid_from_config_2(self):
-        with self.assertLogs(level="INFO") as log:
+        with self.assertLogs(level="WARN") as log:
             self.udf2(self.keys, self.datum)
             self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid - Insufficient data found for keys "
-                "['5984175597303660107'], shape: (0, 0)",
+                "WARNING:numalogic.udfs.trainer._base:some-uuid -"
+                " Caught exception/error while fetching "
+                "from source for key: ['5984175597303660107']",
                 log.output[-1],
             )
 
@@ -566,8 +608,8 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
             ),
         )
 
-    @patch.object(PromTrainerUDF, "fetch_data", Mock(return_value=_mock_default_fetch_data()))
-    def test_trainer_02(self):
+    @patch.object(PrometheusFetcher, "fetch", Mock(side_effect=PrometheusFetcherError))
+    def test_trainer_error(self):
         udf = PromTrainerUDF(REDIS_CLIENT, pl_conf=OmegaConf.to_object(self.conf))
         datum = Datum(
             keys=self.keys,
@@ -577,8 +619,8 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
                     "config_id": "myconf",
                     "pipeline_id": "pipeline1",
                     "composite_keys": [
-                        "dev-devx-druidreverseproxy-usw2-qal",
-                        "druid-reverse-proxy",
+                        "odl-odlgraphql-usw2-e2e",
+                        "odl-graphql",
                     ],
                     "metrics": [
                         "namespace_app_rollouts_http_request_error_rate",
@@ -588,14 +630,13 @@ class TestPrometheusTrainerUDF(unittest.TestCase):
             event_time=datetime.now(),
             watermark=datetime.now(),
         )
-        udf(["myns", "myapp"], datum)
-        self.assertEqual(
-            3,
+        _out = udf(["odl-odlgraphql-usw2-e2e", "odl-graphql"], datum)
+        self.assertFalse(
             REDIS_CLIENT.exists(
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:StandardScaler::LATEST",
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:SparseVanillaAE::LATEST",
-                b"dev-devx-druidreverseproxy-usw2-qal:druid-reverse-proxy::pipeline1:StdDevThreshold::LATEST",
-            ),
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:StandardScaler::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:Conv1dVAE::LATEST",
+                b"odl-odlgraphql-usw2-e2e:odl-graphql::pipeline1:MahalanobisThreshold::LATEST",
+            )
         )
 
 

@@ -180,8 +180,22 @@ class TrainerUDF(NumalogicUDF):
         # Fetch data
         df = self.fetch_data(payload)
 
+        # Retry the training if df is returning None due to some errors/exception
+        # while fetching the data
+        if df is None:
+            _increment_counter(
+                counter=MSG_DROPPED_COUNTER,
+                labels=(self._vtx, *_metric_label_values),
+            )
+            _LOGGER.warning(
+                "%s - Caught exception/error while fetching from source" " for key: %s",
+                payload.uuid,
+                payload.composite_keys,
+            )
+            return Messages(Message.to_drop())
+
         # Check if data is sufficient
-        if df.empty or not self._is_data_sufficient(payload, df):
+        if not self._is_data_sufficient(payload, df):
             _LOGGER.warning(
                 "%s - Insufficient data found for keys %s, shape: %s",
                 payload.uuid,
@@ -369,7 +383,7 @@ class TrainerUDF(NumalogicUDF):
         feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
         return feat_df.to_numpy(dtype=np.float32), nan_counter, inf_counter
 
-    def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
+    def fetch_data(self, payload: TrainerPayload) -> Optional[pd.DataFrame]:
         """
         Fetch data from a data connector.
 

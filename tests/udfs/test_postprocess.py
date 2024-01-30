@@ -76,7 +76,7 @@ DATA = {
     ],
     "status": Status.ARTIFACT_STALE,
     "header": Header.MODEL_INFERENCE,
-    "artifact_versions": {"pipeline1:StdDevThreshold": "0"},
+    "artifact_versions": {"pipeline1:StdDevThreshold": "0", "pipeline1:VanillaAE": "0"},
     "metadata": {
         "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
     },
@@ -180,6 +180,12 @@ class TestPostProcessUDF(unittest.TestCase):
         self.assertEqual(1, len(msg))
         payload = TrainerPayload(**orjson.loads(msg[0].value))
         self.assertEqual(payload.header, Header.TRAIN_REQUEST)
+
+    def test_postprocess_NotImplementedMethod(self):
+        arr = np.asarray([[1, 1], [2, 2]])
+        self.assertEqual(1.5, self.udf._calculate_unified_score(arr, "mean"))
+        self.assertEqual(1, self.udf._calculate_unified_score(arr, "min"))
+        self.assertEqual(2, self.udf._calculate_unified_score(arr, "max"))
 
 
 if __name__ == "__main__":
