@@ -10,7 +10,7 @@ from orjson import orjson
 from pynumaflow.mapper import Messages, Datum, Message
 
 from numalogic.config import PostprocessFactory, RegistryFactory
-from numalogic.transforms import expmov_avg_aggregator
+from numalogic.tools.aggregators import aggregate_window, aggregate_features
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
@@ -127,11 +127,16 @@ class PostprocessUDF(NumalogicUDF):
         #  Postprocess payload
         if payload.status in (Status.ARTIFACT_FOUND, Status.ARTIFACT_STALE) and thresh_artifact:
             try:
-                raw_scores, anomaly_scores = self.compute(
-                    model=thresh_artifact.artifact,
-                    input_=payload.get_data(),
-                    postproc_clf=postproc_clf,
-                )
+                raw_scores = self.compute_threshold(
+                    thresh_artifact.artifact, payload.get_data()
+                )  # (seqlen x nfeat)
+                raw_win_scores = aggregate_window(raw_scores)  # (nfeat,)
+                anomaly_scores = self.compute_postprocess(postproc_clf, raw_win_scores)  # (nfeat,)
+                anomaly_score = aggregate_features(
+                    anomaly_scores.reshape(1, -1),
+                    weights=_conf.numalogic_conf.threshold.conf.get("feature_weights"),
+                ).reshape(-1)  # (1,)
+
             except RuntimeError:
                 _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
@@ -153,7 +158,7 @@ class PostprocessUDF(NumalogicUDF):
                     pipeline_id=payload.pipeline_id,
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
-                    unified_anomaly=np.max(anomaly_scores),
+                    unified_anomaly=anomaly_score,
                     data=self._per_feature_score(payload.metrics, anomaly_scores),
                     metadata=payload.metadata,
                 )
@@ -190,9 +195,6 @@ class PostprocessUDF(NumalogicUDF):
 
     @staticmethod
     def _per_feature_score(feat_names: list[str], scores: NDArray[float]) -> dict[str, float]:
-        if scores.shape[0] == 1:
-            # TODO improve this to incorporate per feature anomaly insights
-            return {_name: scores.item() for _name in feat_names}
         return dict(zip(feat_names, scores))
 
     @classmethod
@@ -205,26 +207,38 @@ class PostprocessUDF(NumalogicUDF):
         Args:
         -------
         model: Model instance
-        input_: Input data
+        input_: Input data (Shape: seq_len x n_features)
         kwargs: Additional arguments
 
         Returns
         -------
-        Output data
+        Output data tuple of (threshold_output, postprocess_output)
+
+        Raises
+        ------
+            RuntimeError: If threshold model or postproc function fails
         """
         _start_time = time.perf_counter()
-        try:
-            y_score = model.score_samples(input_).astype(np.float32)
-        except Exception as err:
-            raise RuntimeError("Threshold model scoring failed") from err
-        try:
-            win_score = np.apply_along_axis(
-                func1d=expmov_avg_aggregator, axis=0, arr=y_score, beta=EXP_MOV_AVG_BETA
-            ).reshape(-1)
-            score = postproc_clf.transform(win_score)
-        except Exception as err:
-            raise RuntimeError("Postprocess failed") from err
+        raw_scores = cls.compute_threshold(model, input_)
+        raw_win_scores = aggregate_window(raw_scores)
+        final_scores = cls.compute_postprocess(postproc_clf, raw_win_scores)
         _LOGGER.debug(
             "Time taken in postprocess compute: %.4f sec", time.perf_counter() - _start_time
         )
-        return y_score.reshape(-1), score.reshape(-1)
+        return raw_scores, final_scores
+
+    @classmethod
+    def compute_threshold(cls, model: artifact_t, input_: NDArray[float]) -> NDArray[float]:
+        try:
+            scores = model.score_samples(input_).astype(np.float32)
+        except Exception as err:
+            raise RuntimeError("Threshold model scoring failed") from err
+        return scores
+
+    @classmethod
+    def compute_postprocess(cls, tx: artifact_t, input_: NDArray[float]):
+        try:
+            score = tx.transform(input_)
+        except Exception as err:
+            raise RuntimeError("Postprocess failed") from err
+        return score

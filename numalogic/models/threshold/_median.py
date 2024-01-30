@@ -72,11 +72,11 @@ class MaxPercentileThreshold(BaseThresholdModel):
             raise ModelInitializationError("Model not fitted yet.")
 
         self._validate_input(x)
-        scores = x / self._thresh
+        return x / self._thresh
 
-        if self._agg:
-            return self.agg_score_samples(scores, weights=self._weights)
-        return scores
+        # if self._agg:
+        #     return self.agg_score_samples(scores, weights=self._weights)
+        # return scores
 
     @staticmethod
     def agg_score_samples(
