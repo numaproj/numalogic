@@ -7,7 +7,7 @@ import pandas as pd
 import pytz
 
 from numalogic.config.factory import ConnectorFactory
-from numalogic.tools.exceptions import ConfigNotFoundError
+from numalogic.tools.exceptions import ConfigNotFoundError, PrometheusFetcherError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import TrainerPayload
@@ -48,7 +48,7 @@ class PromTrainerUDF(TrainerUDF):
         except AttributeError as err:
             raise ConfigNotFoundError("Prometheus config not found!") from err
 
-    def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
+    def fetch_data(self, payload: TrainerPayload) -> Optional[pd.DataFrame]:
         """
         Fetch data from Prometheus/Thanos.
 
@@ -84,13 +84,13 @@ class PromTrainerUDF(TrainerUDF):
                     **dict(zip(_stream_conf.composite_keys, payload.composite_keys)),
                 },
             )
-        except Exception:
+        except PrometheusFetcherError:
             _increment_counter(
                 counter=FETCH_EXCEPTION_COUNTER,
                 labels=_metric_label_values,
             )
             _LOGGER.exception("%s - Error while fetching data from Prometheus", payload.uuid)
-            return pd.DataFrame()
+            return None
         _end_time = time.perf_counter() - _start_time
         _add_summary(
             FETCH_TIME_SUMMARY,
