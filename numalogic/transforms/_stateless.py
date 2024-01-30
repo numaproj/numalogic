@@ -56,10 +56,19 @@ class StaticPowerTransformer(StatelessTransformer):
 
 
 class FlattenVector(StatelessTransformer):
-    """A stateless transformer that flattens a vector."""
+    """A stateless transformer that flattens a vector.
 
-    def transform(self, X, **__) -> npt.NDArray[float]:
+    Args:
+    ____
+        n_features: number of features
+
+    """
+
+    def __init__(self, n_features):
+        self.n_features = n_features
+
+    def transform(self, X: npt.NDArray[float], **__) -> npt.NDArray[float]:
         return X.flatten().reshape(-1, 1)
 
-    def inverse_transform(self, X):
-        raise NotImplementedError("Not implemented")
+    def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
+        return X.reshape(-1, self.n_features)
