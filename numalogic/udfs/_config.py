@@ -44,6 +44,7 @@ class MLPipelineConf:
 
     pipeline_id: str = "default"
     metrics: list[str] = field(default_factory=list)
+    combine_metrics: bool = False
     unified_scoring_conf: UnifiedScoreConf = field(default_factory=lambda: UnifiedScoreConf())
     numalogic_conf: NumalogicConf = field(default_factory=lambda: NumalogicConf())
 

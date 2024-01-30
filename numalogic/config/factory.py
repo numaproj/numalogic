@@ -43,7 +43,12 @@ class PreprocessFactory(_ObjectFactory):
     """Factory class to create preprocess instances."""
 
     from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler, RobustScaler
-    from numalogic.transforms import LogTransformer, StaticPowerTransformer, TanhScaler
+    from numalogic.transforms import (
+        LogTransformer,
+        StaticPowerTransformer,
+        TanhScaler,
+        FlattenVector,
+    )
 
     _CLS_MAP: ClassVar[dict] = {
         "StandardScaler": StandardScaler,
@@ -53,6 +58,7 @@ class PreprocessFactory(_ObjectFactory):
         "LogTransformer": LogTransformer,
         "StaticPowerTransformer": StaticPowerTransformer,
         "TanhScaler": TanhScaler,
+        "FlattenVector": FlattenVector,
     }
 
     def get_pipeline_instance(self, objs_info: list[ModelInfo]):

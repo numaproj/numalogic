@@ -48,13 +48,16 @@ def store_in_redis(pl_conf, registry):
             registry.save_multiple(
                 skeys=[*pl_conf.stream_confs["druid-config"].composite_keys],
                 dict_artifacts={
-                    "inference": KeyedArtifact(dkeys=[_pipeline_id, "AE"], artifact=VanillaAE(10)),
+                    "inference": KeyedArtifact(
+                        dkeys=[_pipeline_id, "AE"], artifact=VanillaAE(10), stateful=True
+                    ),
                     "preproc": KeyedArtifact(
                         dkeys=[
                             _pipeline_id,
                             *[_conf.name for _conf in _ml_conf.numalogic_conf.preprocess],
                         ],
                         artifact=preproc_clf,
+                        stateful=True,
                     ),
                 },
             )

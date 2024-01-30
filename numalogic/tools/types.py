@@ -43,6 +43,7 @@ class KeyedArtifact(NamedTuple):
 
     dkeys: KEYS
     artifact: artifact_t
+    stateful: bool
 
 
 class Singleton(type):

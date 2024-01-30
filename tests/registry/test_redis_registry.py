@@ -196,8 +196,8 @@ class TestRedisRegistry(unittest.TestCase):
         self.registry.save_multiple(
             skeys=self.skeys,
             dict_artifacts={
-                "AE": KeyedArtifact(dkeys=["AE"], artifact=VanillaAE(10)),
-                "scaler": KeyedArtifact(dkeys=["scaler"], artifact=StandardScaler()),
+                "AE": KeyedArtifact(dkeys=["AE"], artifact=VanillaAE(10), stateful=True),
+                "scaler": KeyedArtifact(dkeys=["scaler"], artifact=StandardScaler(), stateful=True),
             },
             **{"a": "b"}
         )
@@ -253,5 +253,7 @@ class TestRedisRegistry(unittest.TestCase):
         with self.assertRaises(RedisRegistryError):
             self.registry.save_multiple(
                 skeys=self.skeys,
-                dict_artifacts={"AE": KeyedArtifact(dkeys=self.dkeys, artifact=VanillaAE(10))},
+                dict_artifacts={
+                    "AE": KeyedArtifact(dkeys=self.dkeys, artifact=VanillaAE(10), stateful=True)
+                },
             )

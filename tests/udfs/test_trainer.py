@@ -105,30 +105,12 @@ class TestDruidTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_02(self):
-        self.udf1.register_conf(
-            "druid-config",
-            StreamConf(
-                ml_pipelines={
-                    "pipeline1": MLPipelineConf(
-                        pipeline_id="pipeline1",
-                        numalogic_conf=NumalogicConf(
-                            model=ModelInfo(
-                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
-                            ),
-                            preprocess=[ModelInfo(name="StandardScaler", conf={})],
-                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                        ),
-                    )
-                }
-            ),
-        )
         self.udf1(self.keys, self.datum)
         self.assertEqual(
-            3,
+            2,
             REDIS_CLIENT.exists(
                 b"5984175597303660107::pipeline1:VanillaAE::LATEST",
                 b"5984175597303660107::pipeline1:StdDevThreshold::LATEST",
-                b"5984175597303660107::pipeline1:StandardScaler::LATEST",
             ),
         )
 

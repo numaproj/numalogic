@@ -133,6 +133,14 @@ class PreprocessUDF(NumalogicUDF):
         # Make StreamPayload object
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
 
+        new_metrics = ["_".join(payload.metrics)] if _conf.combine_metrics else payload.metrics
+        payload = replace(payload, metrics=new_metrics)
+        _LOGGER.info(
+            "%s - Metrics used: %s",
+            payload.uuid,
+            new_metrics,
+        )
+
         # Check if model will be present in registry
         if any(_cfg.stateful for _cfg in _conf.numalogic_conf.preprocess):
             preproc_artifact, payload = _load_artifact(

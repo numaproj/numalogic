@@ -11,7 +11,6 @@ from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
-from numalogic.base import StatelessTransformer
 from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
 from numalogic.config._config import NumalogicConf
 from numalogic.models.autoencoder import TimeseriesTrainer
@@ -105,7 +104,9 @@ class TrainerUDF(NumalogicUDF):
         if preproc_clf:
             input_ = preproc_clf.fit_transform(input_)
             dict_artifacts["preproc_clf"] = KeyedArtifact(
-                dkeys=[_conf.name for _conf in numalogic_cfg.preprocess], artifact=preproc_clf
+                dkeys=[_conf.name for _conf in numalogic_cfg.preprocess],
+                artifact=preproc_clf,
+                stateful=any(_conf.stateful for _conf in numalogic_cfg.preprocess),
             )
 
         train_ds = StreamingDataset(input_, model.seq_len)
@@ -117,13 +118,15 @@ class TrainerUDF(NumalogicUDF):
             model, dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
         ).numpy()
         dict_artifacts["inference"] = KeyedArtifact(
-            dkeys=[numalogic_cfg.model.name], artifact=model
+            dkeys=[numalogic_cfg.model.name], artifact=model, stateful=numalogic_cfg.model.stateful
         )
 
         if threshold_clf:
             threshold_clf.fit(train_reconerr)
             dict_artifacts["threshold_clf"] = KeyedArtifact(
-                dkeys=[numalogic_cfg.threshold.name], artifact=threshold_clf
+                dkeys=[numalogic_cfg.threshold.name],
+                artifact=threshold_clf,
+                stateful=numalogic_cfg.threshold.stateful,
             )
 
         return dict_artifacts
@@ -242,7 +245,7 @@ class TrainerUDF(NumalogicUDF):
             threshold_clf=thresh_clf,
             numalogic_cfg=_conf.numalogic_conf,
         )
-
+        print(dict_artifacts)
         # Save artifacts
 
         self.artifacts_to_save(
@@ -306,11 +309,11 @@ class TrainerUDF(NumalogicUDF):
 
         """
         dict_artifacts = {
-            k: KeyedArtifact([payload.pipeline_id, *v.dkeys], v.artifact)
+            k: KeyedArtifact([payload.pipeline_id, *v.dkeys], v.artifact, v.stateful)
             for k, v in dict_artifacts.items()
-            if not isinstance(v.artifact, StatelessTransformer)
+            if v.stateful
         }
-
+        print(dict_artifacts)
         try:
             ver_dict = model_registry.save_multiple(
                 skeys=skeys,
