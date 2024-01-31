@@ -37,6 +37,17 @@ LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 _LOGGER = logging.getLogger(__name__)
 
 
+def _get_updated_metrics(uuid: str, metrics: list, shape: tuple) -> list[str]:
+    if shape[1] != len(metrics) and shape[1] == 1:
+        metrics = ["-".join(metrics)]
+    _LOGGER.debug(
+        "%s - Metrics used: %s",
+        uuid,
+        metrics,
+    )
+    return metrics
+
+
 class PreprocessUDF(NumalogicUDF):
     """
     Preprocess UDF for Numalogic.
@@ -175,14 +186,11 @@ class PreprocessUDF(NumalogicUDF):
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
 
-            # make one feature vector
-            if x_scaled.shape[1] != len(payload.metrics) and x_scaled.shape[1] == 1:
-                payload = replace(payload, metrics=["-".join(payload.metrics)])
-                _LOGGER.info(
-                    "%s - Metrics used: %s",
-                    payload.uuid,
-                    payload.metrics,
-                )
+            # make metrics list matching same shape as data
+            payload = replace(
+                payload, metrics=_get_updated_metrics(payload.uuid, payload.metrics, x_scaled.shape)
+            )
+
             _update_info_metric(x_scaled, payload.metrics, _metric_label_values)
             payload = replace(
                 payload,
