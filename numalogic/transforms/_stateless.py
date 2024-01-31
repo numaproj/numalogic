@@ -64,7 +64,7 @@ class FlattenVector(StatelessTransformer):
 
     """
 
-    def __init__(self, n_features):
+    def __init__(self, n_features: int):
         self.n_features = n_features
 
     def transform(self, X: npt.NDArray[float], **__) -> npt.NDArray[float]:
