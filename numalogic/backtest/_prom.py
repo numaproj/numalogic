@@ -32,7 +32,6 @@ from numalogic.config import (
 )
 from numalogic.connectors import ConnectorType
 from numalogic.connectors.prometheus import PrometheusFetcher
-from numalogic.tools.aggregators import aggregate_window, aggregate_features
 from numalogic.tools.data import StreamingDataset, inverse_window
 from numalogic.tools.types import artifact_t
 from numalogic.udfs import UDFFactory, StreamConf, MLPipelineConf
@@ -190,69 +189,50 @@ class PromBacktester:
         x_scaled = preproc_udf.compute(model=artifacts["preproc_clf"], input_=x_test)
 
         ds = StreamingDataset(x_scaled, seq_len=self.conf.window_size)
+
         x_recon = np.zeros((len(ds), self.conf.window_size, len(self.metrics)), dtype=np.float32)
-
-        # raw_scores = np.zeros_like(x_recon, dtype=np.float32)
         raw_scores = np.zeros((len(ds), self.conf.window_size, len(self.metrics)), dtype=np.float32)
-        # raw_scores = np.zeros((len(ds), len(self.metrics)), dtype=np.float32)
+        feature_scores = np.zeros((len(ds), len(self.metrics)), dtype=np.float32)
+        unified_scores = np.zeros((len(ds), 1), dtype=np.float32)
 
-        final_scores = np.zeros((len(ds), len(self.metrics)), dtype=np.float32)
-        agg_final_scores = np.zeros((len(ds), 1), dtype=np.float32)
         postproc_func = PostprocessFactory().get_instance(self.nlconf.postprocess)
 
         # Model Inference
         for idx, arr in enumerate(ds):
             x_recon[idx] = nn_udf.compute(model=artifacts["model"], input_=arr)
-            # y, y_final = postproc_udf.compute(
-            #     model=artifacts["threshold_clf"],
-            #     input_=x_recon[idx],
-            #     postproc_clf=postproc_func,
-            # )
-            # agg_final_scores[idx] = postproc_udf.aggregate_features(y_final)
-            # raw_scores[idx], final_scores[idx] = y, y_final
 
             thresh_out = postproc_udf.compute_threshold(artifacts["threshold_clf"], x_recon[idx])
             raw_scores[idx] = thresh_out
-            _y = aggregate_window(raw_scores[idx])
 
-            final_scores[idx] = postproc_udf.compute_postprocess(postproc_func, _y)
+            feature_scores[idx] = postproc_udf.compute_feature_scores(
+                raw_scores[idx], self.nlconf.score
+            )
 
-            _out = aggregate_features(final_scores[idx].reshape(1, -1)).reshape(-1)
-            agg_final_scores[idx] = _out
+            postproc_out = postproc_udf.compute_postprocess(postproc_func, feature_scores[idx])
 
-        print(x_recon.shape, raw_scores.shape, final_scores.shape, agg_final_scores.shape)
+            unified_scores[idx] = postproc_udf.compute_unified_score(
+                postproc_out, self.nlconf.score
+            )
 
         x_recon = inverse_window(torch.from_numpy(x_recon), method="keep_first").numpy()
-        # raw_scores = inverse_window(
-        #     torch.unsqueeze(torch.from_numpy(raw_scores), dim=2), method="keep_first"
-        # ).numpy()
         raw_scores = inverse_window(torch.from_numpy(raw_scores), method="keep_first").numpy()
-        # final_scores = inverse_window(
-        #     torch.unsqueeze(torch.from_numpy(final_scores), dim=2), method="keep_first"
-        # ).numpy()
-
-        print(x_recon.shape, raw_scores.shape, final_scores.shape, agg_final_scores.shape)
-
-        final_scores = np.vstack(
+        feature_scores = np.vstack(
             [
                 np.full((self.conf.window_size - 1, len(self.metrics)), fill_value=np.nan),
-                final_scores,
+                feature_scores,
             ]
         )
-
-        agg_final_scores = np.vstack(
-            [np.full((self.conf.window_size - 1, 1), fill_value=np.nan), agg_final_scores]
+        unified_scores = np.vstack(
+            [np.full((self.conf.window_size - 1, 1), fill_value=np.nan), unified_scores]
         )
-
-        print(x_recon.shape, raw_scores.shape, final_scores.shape, agg_final_scores.shape)
 
         return self._construct_output(
             df_test,
             preproc_out=x_scaled,
             nn_out=x_recon,
             thresh_out=raw_scores,
-            postproc_out=final_scores,
-            # postproc_out=agg_final_scores,
+            postproc_out=feature_scores,
+            unified_out=unified_scores,
         )
 
     @classmethod
@@ -319,8 +299,39 @@ class PromBacktester:
         nn_out: NDArray[float],
         thresh_out: NDArray[float],
         postproc_out: NDArray[float],
+        unified_out: NDArray[float],
     ) -> pd.DataFrame:
         ts_idx = input_df.index
+
+        if thresh_out.shape[1] > 1:
+            thresh_df = pd.DataFrame(
+                thresh_out,
+                columns=self.metrics,
+                index=ts_idx,
+            )
+        else:
+            thresh_df = pd.DataFrame(
+                thresh_out,
+                columns=["unified"],
+                index=ts_idx,
+            )
+
+        if postproc_out.shape[1] > 1:
+            postproc_df = pd.DataFrame(
+                postproc_out,
+                # columns=["unified_score"],
+                columns=self.metrics,
+                index=ts_idx,
+            )
+        else:
+            postproc_df = (
+                pd.DataFrame(
+                    postproc_out,
+                    columns=["unified"],
+                    index=ts_idx,
+                ),
+            )
+
         dfs = {
             "input": input_df,
             "preproc_out": pd.DataFrame(
@@ -333,16 +344,11 @@ class PromBacktester:
                 columns=self.metrics,
                 index=ts_idx,
             ),
-            "thresh_out": pd.DataFrame(
-                thresh_out,
-                # columns=["unified_score"],
-                columns=self.metrics,
-                index=ts_idx,
-            ),
-            "postproc_out": pd.DataFrame(
-                postproc_out,
-                # columns=["unified_score"],
-                columns=self.metrics,
+            "thresh_out": thresh_df,
+            "postproc_out": postproc_df,
+            "unified_out": pd.DataFrame(
+                unified_out,
+                columns=["unified"],
                 index=ts_idx,
             ),
         }

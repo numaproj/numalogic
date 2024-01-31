@@ -11,6 +11,7 @@
 
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Optional
 
 from omegaconf import MISSING
@@ -98,6 +99,34 @@ class TrainerConf:
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
 
+class AggMethod(str, Enum):
+    EXP = "exp_moving_average"
+    WEIGHTED_AVG = "weighted_average"
+    MEAN = "mean"
+    MAX = "max"
+    MIN = "min"
+
+    @classmethod
+    def get_all(cls) -> list[str]:
+        return [AggMethod.EXP, AggMethod.WEIGHTED_AVG, AggMethod.MEAN, AggMethod.MAX, AggMethod.MIN]
+
+
+@dataclass
+class AggregatorConf:
+    method: AggMethod
+    conf: dict[str, Any] = field(default_factory=dict)
+
+
+@dataclass
+class ScoreConf:
+    window_agg: AggregatorConf = field(
+        default_factory=lambda: AggregatorConf(method=AggMethod.EXP, conf=dict(beta=0.6))
+    )
+    feature_agg: AggregatorConf = field(
+        default_factory=lambda: AggregatorConf(method=AggMethod.MAX)
+    )
+
+
 @dataclass
 class NumalogicConf:
     """Top level config schema for numalogic."""
@@ -109,6 +138,7 @@ class NumalogicConf:
     postprocess: ModelInfo = field(
         default_factory=lambda: ModelInfo(name="TanhNorm", stateful=False)
     )
+    score: ScoreConf = field(default_factory=lambda: ScoreConf())
 
 
 @dataclass

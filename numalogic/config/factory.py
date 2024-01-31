@@ -10,11 +10,11 @@
 # limitations under the License.
 from typing import Union, ClassVar, TypeVar
 
+import numpy as np
 from sklearn.pipeline import make_pipeline
 
-from numalogic.config._config import ModelInfo, RegistryInfo
+from numalogic.config._config import ModelInfo, RegistryInfo, AggMethod
 from numalogic.tools.exceptions import UnknownConfigArgsError
-
 
 conf_t = TypeVar("conf_t", bound=Union[ModelInfo, RegistryInfo], covariant=True)
 
@@ -192,3 +192,31 @@ class ConnectorFactory(_ObjectFactory):
             raise UnknownConfigArgsError(
                 f"Invalid name provided for ConnectorFactory: {name}"
             ) from None
+
+
+class AggregatorFactory:
+    """Factory class for aggregator functions."""
+
+    from numalogic.transforms import expmov_avg_aggregator
+
+    _FUNC_MAP: ClassVar[dict] = {
+        AggMethod.MAX: np.max,
+        AggMethod.MIN: np.min,
+        AggMethod.MEAN: np.mean,
+        AggMethod.WEIGHTED_AVG: np.average,
+        AggMethod.EXP: expmov_avg_aggregator,
+    }
+
+    @classmethod
+    def get_func(cls, name: str):
+        try:
+            return cls._FUNC_MAP[name]
+        except KeyError:
+            raise UnknownConfigArgsError(
+                f"Invalid agg method provided for AggregatorFactory: {name}"
+            ) from None
+
+    @classmethod
+    def invoke_func(cls, name: str, *args, **kwargs):
+        func = cls.get_func(name)
+        return func(*args, **kwargs)
