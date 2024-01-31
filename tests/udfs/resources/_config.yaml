@@ -8,7 +8,6 @@ stream_confs:
       pipeline1:
         pipeline_id: "pipeline1"
         metrics: [ "col1" , "col2" ]
-        combine_metrics: true
         unified_scoring_conf:
           scoring_function: "MEAN"
         numalogic_conf:

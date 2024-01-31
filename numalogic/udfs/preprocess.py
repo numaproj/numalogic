@@ -133,14 +133,6 @@ class PreprocessUDF(NumalogicUDF):
         # Make StreamPayload object
         payload = make_stream_payload(data_payload, raw_df, timestamps, keys)
 
-        new_metrics = ["_".join(payload.metrics)] if _conf.combine_metrics else payload.metrics
-        payload = replace(payload, metrics=new_metrics)
-        _LOGGER.info(
-            "%s - Metrics used: %s",
-            payload.uuid,
-            new_metrics,
-        )
-
         # Check if model will be present in registry
         if any(_cfg.stateful for _cfg in _conf.numalogic_conf.preprocess):
             preproc_artifact, payload = _load_artifact(
@@ -182,6 +174,15 @@ class PreprocessUDF(NumalogicUDF):
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
+
+            # make one feature vector
+            if x_scaled.shape[1] != len(payload.metrics) and x_scaled.shape[1] == 1:
+                payload = replace(payload, metrics=["-".join(payload.metrics)])
+                _LOGGER.info(
+                    "%s - Metrics used: %s",
+                    payload.uuid,
+                    payload.metrics,
+                )
             _update_info_metric(x_scaled, payload.metrics, _metric_label_values)
             payload = replace(
                 payload,

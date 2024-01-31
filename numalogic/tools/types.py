@@ -9,7 +9,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from collections.abc import Sequence
-from typing import Union, TypeVar, ClassVar, NamedTuple, Optional
+from typing import Union, TypeVar, ClassVar, NamedTuple
 
 from sklearn.base import BaseEstimator
 from torch import Tensor
@@ -43,7 +43,7 @@ class KeyedArtifact(NamedTuple):
 
     dkeys: KEYS
     artifact: artifact_t
-    stateful: Optional[bool] = None
+    stateful: bool = True
 
 
 class Singleton(type):
