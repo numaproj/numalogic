@@ -1,7 +1,223 @@
 # Changelog
 
+## v0.6.2 (2024-01-31)
+
+ * [824a55d](https://github.com/numaproj/numalogic/commit/824a55dc7c755dedc11ade4b98a0b1c2c1acd6b1) fix: add FlattenVector transformer (#344)
+ * [146ec00](https://github.com/numaproj/numalogic/commit/146ec0090a87c2ded291a229573e215c556ca0f8) fix: add unified conf (#342)
+ * [870f263](https://github.com/numaproj/numalogic/commit/870f263166929c904e3c37e7f3ae530a378a963c) fix: take mean before calculating the thresholds (#340)
+ * [dbb510f](https://github.com/numaproj/numalogic/commit/dbb510fa0ba8e0696200d4aa62b046612db7527b) fix: add max value map for cliping the value (#339)
+ * [80ef431](https://github.com/numaproj/numalogic/commit/80ef43170bc119369aad6661ffa4a8417ba2b063) "Source" tag for metrics (#338)
+ * [b292553](https://github.com/numaproj/numalogic/commit/b292553adaa77e6b09731625a9e04849f7651704) Add pl conf (#336)
+ * [28fa28f](https://github.com/numaproj/numalogic/commit/28fa28fa972e347548f3b0d56e52605abc29f0d1) Metrics (#322)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.6.1.dev5 (2023-11-30)
+
+ * [dfc383a](https://github.com/numaproj/numalogic/commit/dfc383a37ee0c950ff01cb9559427f8a13757e60) feat: support both base conf and app conf (#328)
+ * [8b7f45f](https://github.com/numaproj/numalogic/commit/8b7f45f01427a2614f66d39a643c2c06d423f217) feat!: support full multivariate prometheus fetching (#325)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.1.dev4 (2023-11-21)
+
+ * [fb80cb6](https://github.com/numaproj/numalogic/commit/fb80cb6d09e88750e3373fe710736ccba8de7226) fix: inf filling
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.1.dev3 (2023-11-21)
+
+ * [5aa4c13](https://github.com/numaproj/numalogic/commit/5aa4c134ac57b6072e3e2e7307259f96ea279464) fix: use ckeys aligning with config in pre, post and inference vtx
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.1.dev2 (2023-11-20)
+
+ * [b761c94](https://github.com/numaproj/numalogic/commit/b761c948afa44e81418d67a658a33b01234eb874) fix: composite key unzip
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.1.dev1 (2023-11-20)
+
+ * [9d1b999](https://github.com/numaproj/numalogic/commit/9d1b99944954150bc2efa8bffd07ed78eb1a6dbe) fix: send conf keys instead of request keys to trainer
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.1.dev0 (2023-11-20)
+
+ * [14e1a66](https://github.com/numaproj/numalogic/commit/14e1a66b190ea01d7a9ab6c9bda1eac7567f7f98) fix: mock method
+ * [8369510](https://github.com/numaproj/numalogic/commit/8369510005b90f7f1fa0d0b3ed4a62e625de9924) feat!: separate Prom trainer and Druid trainer
+ * [7be6ddc](https://github.com/numaproj/numalogic/commit/7be6ddcbc73308963aef3e835dd46332a0ba25d6) add more tests
+ * [c783ba8](https://github.com/numaproj/numalogic/commit/c783ba8ecbc46a859a9d5a075ca1404b55e8f5b6) feat!: support mv query in fetch() method
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.1.a9 (2024-01-20)
+
+ * [870f263](https://github.com/numaproj/numalogic/commit/870f263166929c904e3c37e7f3ae530a378a963c) fix: take mean before calculating the thresholds (#340)
+ * [dbb510f](https://github.com/numaproj/numalogic/commit/dbb510fa0ba8e0696200d4aa62b046612db7527b) fix: add max value map for cliping the value (#339)
+ * [80ef431](https://github.com/numaproj/numalogic/commit/80ef43170bc119369aad6661ffa4a8417ba2b063) "Source" tag for metrics (#338)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.6.1.a7 (2023-12-22)
+
+
+### Contributors
+
+
+## v0.6.1 (2024-01-29)
+
+ * [146ec00](https://github.com/numaproj/numalogic/commit/146ec0090a87c2ded291a229573e215c556ca0f8) fix: add unified conf (#342)
+ * [870f263](https://github.com/numaproj/numalogic/commit/870f263166929c904e3c37e7f3ae530a378a963c) fix: take mean before calculating the thresholds (#340)
+ * [dbb510f](https://github.com/numaproj/numalogic/commit/dbb510fa0ba8e0696200d4aa62b046612db7527b) fix: add max value map for cliping the value (#339)
+ * [80ef431](https://github.com/numaproj/numalogic/commit/80ef43170bc119369aad6661ffa4a8417ba2b063) "Source" tag for metrics (#338)
+ * [b292553](https://github.com/numaproj/numalogic/commit/b292553adaa77e6b09731625a9e04849f7651704) Add pl conf (#336)
+ * [28fa28f](https://github.com/numaproj/numalogic/commit/28fa28fa972e347548f3b0d56e52605abc29f0d1) Metrics (#322)
+ * [dfc383a](https://github.com/numaproj/numalogic/commit/dfc383a37ee0c950ff01cb9559427f8a13757e60) feat: support both base conf and app conf (#328)
+ * [8b7f45f](https://github.com/numaproj/numalogic/commit/8b7f45f01427a2614f66d39a643c2c06d423f217) feat!: support full multivariate prometheus fetching (#325)
+ * [c967f20](https://github.com/numaproj/numalogic/commit/c967f200ddf757d239c65fd97c488023e5daf2ad) feat: support multivar prom (#317)
+ * [46cdfcd](https://github.com/numaproj/numalogic/commit/46cdfcdd42624263ff796f09ef3b8f20e8bb36a3) add retrain logic for insufficient data (#321)
+ * [0bbb53d](https://github.com/numaproj/numalogic/commit/0bbb53d63d300c20c545a107257bf78603520013) doc: Update to fix examples ipynb files (#318)
+ * [61f4575](https://github.com/numaproj/numalogic/commit/61f4575eb941e178d4ad128e870983ff026a78bf) chore!: unify and refactor trainer (#315)
+
+### Contributors
+
+ * Avik Basu
+ * Haripriya
+ * Kushal Batra
+
+## v0.6.0rc0 (2023-10-12)
+
+ * [9787b2d](https://github.com/numaproj/numalogic/commit/9787b2d9609f7c7743bdf26df79270c0104f035e) update version
+ * [a12948f](https://github.com/numaproj/numalogic/commit/a12948f7830fb227909bd64100795bb9c8072217) chore!: unify and refactor trainer
+ * [509e38a](https://github.com/numaproj/numalogic/commit/509e38a24fbbbf0a87bfa156809e7874b53d0261) feat: support multivariate threshold output (#314)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.0a11 (2023-10-04)
+
+ * [64c2e95](https://github.com/numaproj/numalogic/commit/64c2e95b3b1ba34f3eecdad9906d9857e63af48b) add: druidfetcher support for different configId (#307)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.6.0a10 (2023-10-02)
+
+ * [f25f49a](https://github.com/numaproj/numalogic/commit/f25f49a3a67ae74092212d77ea609bf77fce81f3) feat: add jitter (#305)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.6.0a9 (2023-10-02)
+
+ * [d7f9605](https://github.com/numaproj/numalogic/commit/d7f96059fc2d911fc81bbeb02706fcee4ff10331) feat: update druid query context (#304)
+
+### Contributors
+
+ * shrivardhan
+
+## v0.6.0a8 (2023-09-27)
+
+ * [a0e0ad0](https://github.com/numaproj/numalogic/commit/a0e0ad0bc364a1148240b98e911158aa1e971a17) fix: docker extra args error (#302)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.0a7 (2023-09-27)
+
+ * [dfab26e](https://github.com/numaproj/numalogic/commit/dfab26e6f12c7c06d016d8062d2a80c31185dd96) refactor druid connector (#301)
+ * [2973dd2](https://github.com/numaproj/numalogic/commit/2973dd2385d7cf5411e0bc385c418cb16d4dad56) feat: add dedup logic (#299)
+
+### Contributors
+
+ * Kushal Batra
+ * shrivardhan
+
+## v0.6.0a6 (2023-09-26)
+
+ * [fdec237](https://github.com/numaproj/numalogic/commit/fdec237a436809084b038147006003dd39ac6744) fix: trainer bug (#297)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.6.0a5 (2023-09-22)
+
+ * [d249942](https://github.com/numaproj/numalogic/commit/d249942d393e9d610e90449c20057cd8a3e7ce67) fix druid connector with tests (#296)
+
+### Contributors
+
+ * shrivardhan
+
+## v0.6.0a4 (2023-09-20)
+
+ * [98e376a](https://github.com/numaproj/numalogic/commit/98e376a488aead27eae75ba463f681ff7e5e1192) fix: udf server start error (#294)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.6.0a3 (2023-09-19)
+
+ * [f55312b](https://github.com/numaproj/numalogic/commit/f55312bc2d02c036308b4fd17f91aeca20546986) fix:  pydruid version update (#293)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.6.0a2 (2023-09-19)
+
+ * [21f85f9](https://github.com/numaproj/numalogic/commit/21f85f97a15e2668162fb9ccc56b42e967407602) try : wfl (#290)
+
+### Contributors
+
+ * Kushal Batra
+
 ## v0.6.0a1 (2023-09-19)
 
+
+### Contributors
+
+
+## v0.6.0 (2023-11-14)
+
+ * [46cdfcd](https://github.com/numaproj/numalogic/commit/46cdfcdd42624263ff796f09ef3b8f20e8bb36a3) add retrain logic for insufficient data (#321)
+ * [0bbb53d](https://github.com/numaproj/numalogic/commit/0bbb53d63d300c20c545a107257bf78603520013) doc: Update to fix examples ipynb files (#318)
+ * [61f4575](https://github.com/numaproj/numalogic/commit/61f4575eb941e178d4ad128e870983ff026a78bf) chore!: unify and refactor trainer (#315)
+ * [509e38a](https://github.com/numaproj/numalogic/commit/509e38a24fbbbf0a87bfa156809e7874b53d0261) feat: support multivariate threshold output (#314)
+ * [64c2e95](https://github.com/numaproj/numalogic/commit/64c2e95b3b1ba34f3eecdad9906d9857e63af48b) add: druidfetcher support for different configId (#307)
+ * [f25f49a](https://github.com/numaproj/numalogic/commit/f25f49a3a67ae74092212d77ea609bf77fce81f3) feat: add jitter (#305)
+ * [d7f9605](https://github.com/numaproj/numalogic/commit/d7f96059fc2d911fc81bbeb02706fcee4ff10331) feat: update druid query context (#304)
+ * [a0e0ad0](https://github.com/numaproj/numalogic/commit/a0e0ad0bc364a1148240b98e911158aa1e971a17) fix: docker extra args error (#302)
+ * [dfab26e](https://github.com/numaproj/numalogic/commit/dfab26e6f12c7c06d016d8062d2a80c31185dd96) refactor druid connector (#301)
+ * [2973dd2](https://github.com/numaproj/numalogic/commit/2973dd2385d7cf5411e0bc385c418cb16d4dad56) feat: add dedup logic (#299)
+ * [fdec237](https://github.com/numaproj/numalogic/commit/fdec237a436809084b038147006003dd39ac6744) fix: trainer bug (#297)
+ * [d249942](https://github.com/numaproj/numalogic/commit/d249942d393e9d610e90449c20057cd8a3e7ce67) fix druid connector with tests (#296)
+ * [98e376a](https://github.com/numaproj/numalogic/commit/98e376a488aead27eae75ba463f681ff7e5e1192) fix: udf server start error (#294)
+ * [f55312b](https://github.com/numaproj/numalogic/commit/f55312bc2d02c036308b4fd17f91aeca20546986) fix:  pydruid version update (#293)
+ * [21f85f9](https://github.com/numaproj/numalogic/commit/21f85f97a15e2668162fb9ccc56b42e967407602) try : wfl (#290)
  * [3e89ccd](https://github.com/numaproj/numalogic/commit/3e89ccd3ac5e78a26eef735daa93a3aedf4a0668) fix: allow full df scores in backtest (#288)
  * [bc1c627](https://github.com/numaproj/numalogic/commit/bc1c627cf89e9a41fa2194df3a2a1ed33e5d989e) feat: add multiple save for redis registry (#281)
  * [a364721](https://github.com/numaproj/numalogic/commit/a364721d617f42a56badde501b98e4e2684ea684) feat: initial version of backtest tool (#282)
@@ -18,6 +234,7 @@
 ### Contributors
 
  * Avik Basu
+ * Haripriya
  * Jason Zesheng Chen
  * Kushal Batra
  * shrivardhan
