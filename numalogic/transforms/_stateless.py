@@ -53,3 +53,22 @@ class StaticPowerTransformer(StatelessTransformer):
 
     def inverse_transform(self, X) -> npt.NDArray[float]:
         return np.power(X, 1.0 / self.n) - self.add_factor
+
+
+class FlattenVector(StatelessTransformer):
+    """A stateless transformer that flattens a vector.
+
+    Args:
+    ____
+        n_features: number of features
+
+    """
+
+    def __init__(self, n_features: int):
+        self.n_features = n_features
+
+    def transform(self, X: npt.NDArray[float], **__) -> npt.NDArray[float]:
+        return X.flatten().reshape(-1, 1)
+
+    def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
+        return X.reshape(-1, self.n_features)

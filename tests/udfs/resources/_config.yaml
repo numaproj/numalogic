@@ -3,7 +3,7 @@ stream_confs:
     config_id: "druid-config"
     source: "druid"
     composite_keys: [ 'service-mesh', '1', '2' ]
-    window_size: 10
+    window_size: 20
     ml_pipelines:
       pipeline1:
         pipeline_id: "pipeline1"
@@ -14,9 +14,13 @@ stream_confs:
           model:
             name: "VanillaAE"
             conf:
-              seq_len: 10
-              n_features: 2
+              seq_len: 20
+              n_features: 1
           preprocess:
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
             - name: "LogTransformer"
               stateful: false
               conf:
