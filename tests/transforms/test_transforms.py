@@ -6,8 +6,7 @@ from numpy.testing import assert_almost_equal, assert_array_less
 from sklearn.pipeline import make_pipeline
 
 from numalogic.base import StatelessTransformer
-from numalogic.transforms import LogTransformer, StaticPowerTransformer, TanhScaler
-
+from numalogic.transforms import LogTransformer, StaticPowerTransformer, TanhScaler, FlattenVector
 
 RNG = np.random.default_rng(42)
 
@@ -76,6 +75,13 @@ class TestTransformers(unittest.TestCase):
         self.assertRaises(NotImplementedError, trfr.transform, x)
         self.assertRaises(NotImplementedError, trfr.fit_transform, x)
         self.assertEqual(trfr.fit(x), trfr)
+
+    def test_FlattenVector(self):
+        x = RNG.random((5, 2))
+        clf = FlattenVector(n_features=2)
+        data = clf.transform(x)
+        self.assertEqual(data.shape[1], 1)
+        self.assertEqual(clf.inverse_transform(data).shape[1], 2)
 
 
 if __name__ == "__main__":
