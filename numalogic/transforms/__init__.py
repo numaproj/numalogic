@@ -36,4 +36,5 @@ __all__ = [
     "tanh_norm",
     "GaussianNoiseAdder",
     "DifferenceTransform",
+    "FlattenVector",
 ]

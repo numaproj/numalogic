@@ -132,3 +132,22 @@ class DifferenceTransform(StatelessTransformer):
     def transform(self, input_: npt.NDArray, **__):
         diff_df = pd.DataFrame(input_).diff().bfill()
         return diff_df.to_numpy(dtype=np.float32)
+
+
+class FlattenVector(StatelessTransformer):
+    """A stateless transformer that flattens a vector.
+
+    Args:
+    ____
+        n_features: number of features
+
+    """
+
+    def __init__(self, n_features: int):
+        self.n_features = n_features
+
+    def transform(self, X: npt.NDArray[float], **__) -> npt.NDArray[float]:
+        return X.flatten().reshape(-1, 1)
+
+    def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
+        return X.reshape(-1, self.n_features)

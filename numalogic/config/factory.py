@@ -50,6 +50,7 @@ class PreprocessFactory(_ObjectFactory):
         DataClipper,
         GaussianNoiseAdder,
         DifferenceTransform,
+        FlattenVector,
     )
 
     _CLS_MAP: ClassVar[dict] = {
@@ -63,6 +64,7 @@ class PreprocessFactory(_ObjectFactory):
         "DataClipper": DataClipper,
         "GaussianNoiseAdder": GaussianNoiseAdder,
         "DifferenceTransform": DifferenceTransform,
+        "FlattenVector": FlattenVector,
     }
 
     def get_pipeline_instance(self, objs_info: list[ModelInfo]):

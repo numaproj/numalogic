@@ -13,6 +13,7 @@ from numalogic.transforms import (
     DataClipper,
     GaussianNoiseAdder,
     DifferenceTransform,
+    FlattenVector,
 )
 
 
@@ -140,3 +141,12 @@ def test_difftx():
         x_,
         np.array([[-1, -1, -1], [-1, -1, -1], [1, 1, 1], [0, 0, 0], [1, 1, 1]]),
     )
+
+
+def test_flattenvector():
+    x = RNG.random((5, 2))
+    clf = FlattenVector(n_features=2)
+    data = clf.transform(x)
+
+    assert data.shape[1] == 1
+    assert clf.inverse_transform(data).shape[1] == 2

@@ -23,6 +23,9 @@ repository = "https://github.com/numaproj/numalogic"
 documentation = "https://numalogic.numaproj.io/"
 homepage = "https://numalogic.numaproj.io/"
 
+[tool.poetry.scripts]
+numalogic ="numalogic.backtest.__main__:app"
+
 [tool.poetry.dependencies]
 python = ">=3.9, <3.12"
 numpy = "^1.26"
@@ -41,7 +44,6 @@ mlflow-skinny = { version = "^2.0", optional = true }
 redis = {extras = ["hiredis"], version = "^5.0", optional = true}
 boto3 = { version = "^1.24.64", optional = true }
 pydruid= { version= "^0.6", optional = true }
-pytest = "^7.4.4"
 
 [tool.poetry.extras]
 mlflow = ["mlflow-skinny"]
