@@ -37,22 +37,3 @@ def test_predict(data, fitted):
     _, x_test = data
     y_pred = fitted.predict(x_test)
     assert y_pred.shape == (50, 3)
-
-
-def test_agg_score_samples(data):
-    x_train, x_test = data
-    clf_1 = MaxPercentileThreshold(max_inlier_percentile=75, min_threshold=1e-3, aggregate=True)
-    clf_2 = MaxPercentileThreshold(
-        max_inlier_percentile=75,
-        min_threshold=1e-3,
-        aggregate=True,
-        feature_weights=[0.1, 0.7, 0.2],
-    )
-    clf_1.fit(x_train)
-    clf_2.fit(x_train)
-
-    y_scores_1 = clf_1.score_samples(x_test)
-    y_scores_2 = clf_2.score_samples(x_test)
-
-    assert y_scores_1.shape == y_scores_2.shape == (50, 1)
-    assert np.sum(y_scores_1) > np.sum(y_scores_2)

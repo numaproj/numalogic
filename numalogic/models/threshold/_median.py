@@ -1,6 +1,3 @@
-from collections.abc import Sequence
-from typing import Optional
-
 import numpy as np
 import numpy.typing as npt
 from typing_extensions import Self, Final
@@ -24,21 +21,17 @@ class MaxPercentileThreshold(BaseThresholdModel):
         feature_weights: weights to be used for each feature (used only if aggregate=True)
     """
 
-    __slots__ = ("_max_percentile", "_min_thresh", "_thresh", "_agg", "_weights", "_is_fitted")
+    __slots__ = ("_max_percentile", "_min_thresh", "_thresh", "_is_fitted")
 
     def __init__(
         self,
         max_inlier_percentile: float = 96.0,
         min_threshold: float = 1e-4,
-        aggregate: bool = False,
-        feature_weights: Optional[Sequence[float]] = None,
     ):
         super().__init__()
         self._max_percentile = max_inlier_percentile
         self._min_thresh = min_threshold
         self._thresh = None
-        self._agg = aggregate
-        self._weights = feature_weights
         self._is_fitted = False
 
     @property
@@ -73,15 +66,3 @@ class MaxPercentileThreshold(BaseThresholdModel):
 
         self._validate_input(x)
         return x / self._thresh
-
-        # if self._agg:
-        #     return self.agg_score_samples(scores, weights=self._weights)
-        # return scores
-
-    @staticmethod
-    def agg_score_samples(
-        y: npt.NDArray[float], weights: Optional[Sequence[float]] = None
-    ) -> npt.NDArray[float]:
-        if weights:
-            return np.average(y, weights=weights, axis=1, keepdims=True)
-        return np.mean(y, axis=1, keepdims=True)

@@ -201,6 +201,7 @@ class PromBacktester:
         for idx, arr in enumerate(ds):
             x_recon[idx] = nn_udf.compute(model=artifacts["model"], input_=arr)
 
+            # TODO support for multivariate thresholding functions
             thresh_out = postproc_udf.compute_threshold(artifacts["threshold_clf"], x_recon[idx])
             raw_scores[idx] = thresh_out
 

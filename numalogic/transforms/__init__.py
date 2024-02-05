@@ -21,6 +21,7 @@ from numalogic.transforms._stateless import (
     DataClipper,
     GaussianNoiseAdder,
     DifferenceTransform,
+    FlattenVector,
 )
 from numalogic.transforms._movavg import ExpMovingAverage, expmov_avg_aggregator
 from numalogic.transforms._postprocess import TanhNorm, tanh_norm

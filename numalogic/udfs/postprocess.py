@@ -196,6 +196,8 @@ class PostprocessUDF(NumalogicUDF):
 
     @staticmethod
     def _per_feature_score(feat_names: list[str], scores: NDArray[float]) -> dict[str, float]:
+        if len(scores) != len(feat_names):
+            return {}
         return dict(zip(feat_names, scores))
 
     @classmethod

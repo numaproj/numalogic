@@ -14,7 +14,7 @@ CONF = OmegaConf.structured(
     NumalogicConf(
         preprocess=[ModelInfo(name="LogTransformer")],
         model=ModelInfo(name="Conv1dVAE", conf=dict(seq_len=12, n_features=3, latent_dim=1)),
-        threshold=ModelInfo(name="RobustMahalanobisThreshold"),
+        threshold=ModelInfo(name="MaxPercentileThreshold"),
         trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(accelerator="cpu", max_epochs=1)),
     )
 )

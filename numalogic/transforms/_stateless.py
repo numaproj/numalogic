@@ -89,9 +89,8 @@ class DataClipper(StatelessTransformer):
         if lower is None and upper is None:
             raise ValueError("At least one of lower or upper should be provided.")
 
-        if isinstance(lower, Sequence) and isinstance(upper, Sequence):
-            if len(lower) != len(upper):
-                raise ValueError("lower and upper should have the same length.")
+        if isinstance(lower, Sequence) and isinstance(upper, Sequence) and len(lower) != len(upper):
+            raise ValueError("lower and upper should have the same length.")
 
     def transform(self, x: npt.NDArray[float], **__) -> npt.NDArray[float]:
         _df = pd.DataFrame(x, dtype=np.float32)
@@ -129,6 +128,12 @@ class GaussianNoiseAdder(StatelessTransformer):
 
 
 class DifferenceTransform(StatelessTransformer):
+    """
+    Apply feature wise differencing.
+
+    Note: First value is backfilled with the first non-NAN value.
+    """
+
     def transform(self, input_: npt.NDArray, **__):
         diff_df = pd.DataFrame(input_).diff().bfill()
         return diff_df.to_numpy(dtype=np.float32)
