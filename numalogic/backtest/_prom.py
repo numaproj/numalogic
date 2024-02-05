@@ -204,14 +204,12 @@ class PromBacktester:
             thresh_out = postproc_udf.compute_threshold(artifacts["threshold_clf"], x_recon[idx])
             raw_scores[idx] = thresh_out
 
-            feature_scores[idx] = postproc_udf.compute_feature_scores(
-                raw_scores[idx], self.nlconf.score
-            )
+            winscores = postproc_udf.compute_feature_scores(raw_scores[idx], self.nlconf.score)
 
-            postproc_out = postproc_udf.compute_postprocess(postproc_func, feature_scores[idx])
+            feature_scores[idx] = postproc_udf.compute_postprocess(postproc_func, winscores)
 
             unified_scores[idx] = postproc_udf.compute_unified_score(
-                postproc_out, self.nlconf.score
+                feature_scores[idx], self.nlconf.score
             )
 
         x_recon = inverse_window(torch.from_numpy(x_recon), method="keep_first").numpy()
@@ -324,12 +322,10 @@ class PromBacktester:
                 index=ts_idx,
             )
         else:
-            postproc_df = (
-                pd.DataFrame(
-                    postproc_out,
-                    columns=["unified"],
-                    index=ts_idx,
-                ),
+            postproc_df = pd.DataFrame(
+                postproc_out,
+                columns=["unified"],
+                index=ts_idx,
             )
 
         dfs = {

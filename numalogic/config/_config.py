@@ -120,7 +120,7 @@ class AggregatorConf:
 @dataclass
 class ScoreConf:
     window_agg: AggregatorConf = field(
-        default_factory=lambda: AggregatorConf(method=AggMethod.EXP, conf=dict(beta=0.6))
+        default_factory=lambda: AggregatorConf(method=AggMethod.MEAN)
     )
     feature_agg: AggregatorConf = field(
         default_factory=lambda: AggregatorConf(method=AggMethod.MAX)
