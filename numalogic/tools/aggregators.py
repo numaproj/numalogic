@@ -1,13 +1,9 @@
-import os
 from collections.abc import Callable
 
 import numpy as np
 import numpy.typing as npt
 
 from numalogic.transforms import expmov_avg_aggregator
-
-
-EXP_MOV_AVG_BETA = float(os.getenv("EXP_MOV_AVG_BETA", "0.6"))
 
 
 def aggregate_window(

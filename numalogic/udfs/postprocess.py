@@ -30,7 +30,6 @@ from numalogic.udfs.tools import _load_artifact
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
-EXP_MOV_AVG_BETA = float(os.getenv("EXP_MOV_AVG_BETA", "0.6"))
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -196,7 +195,12 @@ class PostprocessUDF(NumalogicUDF):
 
     @staticmethod
     def _per_feature_score(feat_names: list[str], scores: NDArray[float]) -> dict[str, float]:
-        if len(scores) != len(feat_names):
+        if (scores_len := len(scores)) != len(feat_names):
+            _LOGGER.debug(
+                "Scores length: %s does not match feat_names: %s",
+                scores_len,
+                feat_names,
+            )
             return {}
         return dict(zip(feat_names, scores))
 

@@ -157,7 +157,6 @@ class TestPostProcessUDF(unittest.TestCase):
 
         msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
         payload = OutputPayload(**orjson.loads(msg[0].value))
-        print(payload)
         self.assertFalse(list(payload.data))
         self.assertEqual(1, len(msg))
 
