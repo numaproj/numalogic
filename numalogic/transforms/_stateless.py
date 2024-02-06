@@ -71,4 +71,4 @@ class FlattenVector(StatelessTransformer):
         return X.T.reshape(-1, 1)
 
     def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
-        return X.reshape( self.n_features, -1).T
+        return X.reshape(self.n_features, -1).T
