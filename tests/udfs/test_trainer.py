@@ -72,7 +72,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
     def tearDown(self) -> None:
         REDIS_CLIENT.flushall()
 
-    # @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
+    @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_01(self):
         self.udf1.register_conf(
             "druid-config",
@@ -86,13 +86,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                                 stateful=True,
                                 conf={"seq_len": 12, "n_features": 2},
                             ),
-                            preprocess=[
-                                ModelInfo(
-                                    name="FlattenVector",
-                                    stateful=False,
-                                    conf={"n_features": 2, "seq_length": 20},
-                                )
-                            ],
+                            preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
                             trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
                         ),
                     )
@@ -133,11 +127,8 @@ class TestDruidTrainerUDF(unittest.TestCase):
                                 name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
                             ),
                             preprocess=[
-                                ModelInfo(
-                                    name="FlattenVector",
-                                    stateful=False,
-                                    conf={"n_features": 2, "seq_length": 20},
-                                )
+                                ModelInfo(name="LogTransformer"),
+                                ModelInfo(name="StandardScaler"),
                             ],
                             trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
                         ),
