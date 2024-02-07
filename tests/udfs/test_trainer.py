@@ -86,7 +86,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                                 stateful=True,
                                 conf={"seq_len": 12, "n_features": 2},
                             ),
-                            preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
+                            preprocess=[ModelInfo(name="FlattenVector", stateful=False, conf={"n_features": 2})],
                             trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
                         ),
                     )
@@ -127,8 +127,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                                 name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
                             ),
                             preprocess=[
-                                ModelInfo(name="LogTransformer"),
-                                ModelInfo(name="StandardScaler"),
+                                ModelInfo(name="FlattenVector", stateful=False, conf={"n_features": 2, "seq_length": 20})
                             ],
                             trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
                         ),
