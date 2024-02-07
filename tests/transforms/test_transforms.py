@@ -77,8 +77,8 @@ class TestTransformers(unittest.TestCase):
         self.assertEqual(trfr.fit(x), trfr)
 
     def test_FlattenVector(self):
-        x = RNG.random((5, 2))
-        clf = FlattenVector(n_features=2)
+        x = np.arange(0, 50).reshape(25, 2)
+        clf = FlattenVector(n_features=2, seq_length=20)
         data = clf.transform(x)
         self.assertEqual(data.shape[1], 1)
         self.assertEqual(clf.inverse_transform(data).shape[1], 2)

@@ -70,6 +70,7 @@ class FlattenVector(StatelessTransformer):
 
     def transform(self, X: npt.NDArray[float], seq_length=20) -> npt.NDArray[float]:
         # Calculate the number of elements to take from each column
+        print("Before Flatten: ", X)
         n = seq_length // X.shape[1]
 
         # Initialize an empty list to store the results
@@ -83,7 +84,9 @@ class FlattenVector(StatelessTransformer):
                 result.extend(X[i : i + n, j])
 
         # Convert the result to a numpy array with shape (seq_length, 1)
-        return np.array(result).reshape(-1, 1)
+        Y = np.array(result).reshape(-1, 1)
+        print("After Flatten: ", Y)
+        return Y
 
 
     def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
