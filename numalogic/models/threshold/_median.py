@@ -17,8 +17,6 @@ class MaxPercentileThreshold(BaseThresholdModel):
     Args:
         max_inlier_percentile: Max percentile greater than which will be treated as outlier
         min_threshold:  Value to be used if threshold is less than this
-        aggregate: If True, combine the per-feature scores into 1
-        feature_weights: weights to be used for each feature (used only if aggregate=True)
     """
 
     __slots__ = ("_max_percentile", "_min_thresh", "_thresh", "_is_fitted")
