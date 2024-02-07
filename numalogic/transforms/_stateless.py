@@ -80,7 +80,7 @@ class FlattenVector(StatelessTransformer):
             # Loop over the columns of X
             for j in range(X.shape[1]):
                 # Take n elements from the current column and append them to the result
-                result.extend(X[i:i + n, j])
+                result.extend(X[i : i + n, j])
 
         # Convert the result to a numpy array with shape (seq_length, 1)
         result = np.array(result).reshape(-1, 1)
