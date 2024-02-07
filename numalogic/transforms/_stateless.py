@@ -68,10 +68,10 @@ class FlattenVector(StatelessTransformer):
         self.n_features = n_features
         self.seq_length = seq_length
 
-    def transform(self, X: npt.NDArray[float], seq_length=20) -> npt.NDArray[float]:
+    # Todo: Optimize creating the output vector. Currently, we are using loops, which is very slow.
+    def transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
         # Calculate the number of elements to take from each column
-        print("Before Flatten: ", X)
-        n = seq_length // X.shape[1]
+        n = self.seq_length // X.shape[1]
 
         # Initialize an empty list to store the results
         result = []
@@ -84,10 +84,7 @@ class FlattenVector(StatelessTransformer):
                 result.extend(X[i : i + n, j])
 
         # Convert the result to a numpy array with shape (seq_length, 1)
-        Y = np.array(result).reshape(-1, 1)
-        print("After Flatten: ", Y)
-        return Y
-
+        return np.array(result).reshape(-1, 1)
 
     def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
         # Todo: Change this aswell. Fix the inverse flatten aswell
