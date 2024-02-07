@@ -83,9 +83,8 @@ class FlattenVector(StatelessTransformer):
                 result.extend(X[i : i + n, j])
 
         # Convert the result to a numpy array with shape (seq_length, 1)
-        result = np.array(result).reshape(-1, 1)
+        return np.array(result).reshape(-1, 1)
 
-        return result
 
     def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
         # Todo: Change this aswell. Fix the inverse flatten aswell
