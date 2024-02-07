@@ -219,7 +219,7 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct feature array
         x_train, nan_counter, inf_counter = self.get_feature_arr(
-            df, payload.metrics, max_value_map=_conf.numalogic_conf.trainer.max_value_map
+            df, _conf.metrics, max_value_map=_conf.numalogic_conf.trainer.max_value_map
         )
         _add_summary(
             summary=NAN_SUMMARY,
