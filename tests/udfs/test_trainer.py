@@ -87,7 +87,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
                                 conf={"seq_len": 12, "n_features": 2},
                             ),
                             preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
-                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                            trainer=TrainerConf(
+                                pltrainer_conf=LightningTrainerConf(accelerator="cpu", max_epochs=1)
+                            ),
                         ),
                     )
                 }
@@ -122,6 +124,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                 ml_pipelines={
                     "pipeline1": MLPipelineConf(
                         pipeline_id="pipeline1",
+                        metrics=["failed", "degraded"],
                         numalogic_conf=NumalogicConf(
                             model=ModelInfo(
                                 name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
@@ -154,6 +157,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                 ml_pipelines={
                     "pipeline1": MLPipelineConf(
                         pipeline_id="pipeline1",
+                        metrics=["failed", "degraded"],
                         numalogic_conf=NumalogicConf(
                             model=ModelInfo(
                                 name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
@@ -197,6 +201,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                 ml_pipelines={
                     "pipeline1": MLPipelineConf(
                         pipeline_id="pipeline1",
+                        metrics=["failed", "degraded"],
                         numalogic_conf=NumalogicConf(
                             model=ModelInfo(
                                 name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
@@ -238,6 +243,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                 ml_pipelines={
                     "pipeline1": MLPipelineConf(
                         pipeline_id="pipeline1",
+                        metrics=["failed", "degraded"],
                         numalogic_conf=NumalogicConf(
                             model=ModelInfo(
                                 name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
@@ -402,6 +408,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                     ml_pipelines={
                         "pipeline1": MLPipelineConf(
                             pipeline_id="pipeline1",
+                            metrics=["failed", "degraded"],
                             numalogic_conf=NumalogicConf(
                                 model=ModelInfo(
                                     name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
