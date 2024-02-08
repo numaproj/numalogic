@@ -1,5 +1,46 @@
 # Changelog
 
+## v0.7.0 (2024-02-08)
+
+ * [b41a7f7](https://github.com/numaproj/numalogic/commit/b41a7f72ca92bd635e20d2cb125d45329038448a) fix: comments
+ * [780f2e2](https://github.com/numaproj/numalogic/commit/780f2e23cccf3648b385499c589347c3bed0461e) fix merge issues
+ * [9de1e83](https://github.com/numaproj/numalogic/commit/9de1e83f133b759431ddbf5ab690cd7d0cfca5d3) fix: backtest
+ * [c418b5a](https://github.com/numaproj/numalogic/commit/c418b5aed2807bc1d8fa3f4a943dd360e998b10e) tmpfix: numalogic opex tags for query filter
+ * [bc6d08c](https://github.com/numaproj/numalogic/commit/bc6d08c4abf6626a89c2b7555d486c12d24dd301) feat: Score config in postprocess
+ * [a913545](https://github.com/numaproj/numalogic/commit/a913545c1d1e2197d2ce65714f675a702dc56226) fix: get item for final score
+ * [cc681a3](https://github.com/numaproj/numalogic/commit/cc681a39fc644ffc5d69e717f291dd1a9e304ce7) tmp: testing per feature score
+ * [634b2cf](https://github.com/numaproj/numalogic/commit/634b2cf5e3acf1236f30fb4dfdf25578161b5e64) fix: factory class
+ * [36db5df](https://github.com/numaproj/numalogic/commit/36db5df3bf5c5bb0ebe567445028f9ddd2ab9c1d) tests: median thresh tests
+ * [777b5e2](https://github.com/numaproj/numalogic/commit/777b5e2415b1e3177e780c1d6806b4d14f77cef1) fix: import
+ * [a075761](https://github.com/numaproj/numalogic/commit/a075761c4b5cf730ba21f457716a0c5f22cf2d88) feat: add percentile thresholding
+ * [fbf171f](https://github.com/numaproj/numalogic/commit/fbf171f3b4b39831a0ee7698ed55ca3425b9398f) fix: pipeline id keyerr in tools.py
+ * [add642c](https://github.com/numaproj/numalogic/commit/add642c3b7ab49f8877fa732c2e6e7362bd25df8) fix: pipeline id key error
+ * [dc35c80](https://github.com/numaproj/numalogic/commit/dc35c80d26979fd27129405c98557c3aa415106a) try: better docker workflow
+ * [faf1e32](https://github.com/numaproj/numalogic/commit/faf1e32da4b4ed99a8b1b70acdc905ab97aeccb2) fix: default ml pipe id in preproc
+ * [03faf8f](https://github.com/numaproj/numalogic/commit/03faf8f723556a074703ca914ceaa28f92289f81) fix: vae nsamples
+ * [16c02f1](https://github.com/numaproj/numalogic/commit/16c02f158e701a95d1d18e663e83ea19581dd393) feat: add beta parameter for disentanglement
+ * [5ec5883](https://github.com/numaproj/numalogic/commit/5ec5883e2a3dcfd1df8f477c3cbd8c2be3459e34) feat: difference transform
+ * [46363d3](https://github.com/numaproj/numalogic/commit/46363d3c0ab01d7a6a6c157ffb9beff294850fa5) feat: output threshold + final scores
+ * [7f9317c](https://github.com/numaproj/numalogic/commit/7f9317c60209b5f463ecaadb328bb985a7051783) feat: support loading nl conf
+ * [3035407](https://github.com/numaproj/numalogic/commit/303540770d7452b864df591495d54ae6858c1f16) feat: multivariate backtesting
+ * [c0596d7](https://github.com/numaproj/numalogic/commit/c0596d7828fcface27fe6ce4bfbc5ece47de1035) add more logs
+ * [3ca8c15](https://github.com/numaproj/numalogic/commit/3ca8c152a6d35afb69bdbe9dfc872c8de33c3c9a) tmp: try exp mov average
+ * [43c1ec8](https://github.com/numaproj/numalogic/commit/43c1ec81ed69eeb6852fd56bf51232d00708cbee) feat: add transforms and robust thresholding
+ * [19ddc8e](https://github.com/numaproj/numalogic/commit/19ddc8ead61e1b720d69b8556385fabfb2746369) Demo branch (#335)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
+## v0.6.3 (2024-02-08)
+
+ * [4dbde41](https://github.com/numaproj/numalogic/commit/4dbde415ed214fb984fd3989775ee40c9f7b6bf9) Fix: Get metrics from _conf.metrics on Trainer to avoid issue with Flattening the matrix (#346)
+
+### Contributors
+
+ * shashank10456
+
 ## v0.6.2 (2024-01-31)
 
  * [824a55d](https://github.com/numaproj/numalogic/commit/824a55dc7c755dedc11ade4b98a0b1c2c1acd6b1) fix: add FlattenVector transformer (#344)
