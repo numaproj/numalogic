@@ -190,11 +190,10 @@ class InferenceUDF(NumalogicUDF):
             )
 
         _LOGGER.info(
-            "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s , Payload: %s }",
+            "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s }",
             payload.uuid,
             payload.composite_keys,
             payload.metrics,
-            payload,
         )
         _LOGGER.debug(
             "%s - Time taken in inference: %.4f sec",

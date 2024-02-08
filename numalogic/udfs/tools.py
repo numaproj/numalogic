@@ -7,7 +7,6 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
-from redis import RedisError
 
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
@@ -50,7 +49,7 @@ def get_df(
     -------
         dataframe and timestamps
     """
-    _conf = stream_conf.ml_pipelines[data_payload["pipeline_id"]]
+    _conf = stream_conf.ml_pipelines[data_payload.get("pipeline_id", "default")]
     features = _conf.metrics
     df = (
         pd.DataFrame(data_payload["data"], columns=["timestamp", *features])
@@ -99,7 +98,7 @@ def make_stream_payload(
     return StreamPayload(
         uuid=data_payload["uuid"],
         config_id=data_payload["config_id"],
-        pipeline_id=data_payload["pipeline_id"],
+        pipeline_id=data_payload.get("pipeline_id", "default"),
         composite_keys=keys,
         data=np.ascontiguousarray(raw_df, dtype=np.float32),
         raw_data=np.ascontiguousarray(raw_df, dtype=np.float32),
@@ -115,6 +114,25 @@ def _get_artifact_stats(artifact_data):
         "artifact_source": artifact_data.extras.get("source") or None,
         "version": artifact_data.extras.get("version") or None,
     }
+
+
+def _update_info_metric(
+    data: np.ndarray, metric_name: Sequence[str], labels: Sequence[str]
+) -> None:
+    """
+    Utility function is used to update the gauge metric.
+    Args:
+        data: data
+        metric_name: metric name in the payload
+        labels: labels.
+
+    """
+    for _data, _metric_name in zip(data.T, metric_name):
+        _set_gauge(
+            gauge=RECORDED_DATA_GAUGE,
+            labels=(*labels, _metric_name),
+            data=np.mean(_data).squeeze(),
+        )
 
 
 def _load_artifact(
@@ -250,7 +268,7 @@ class TrainMsgDeduplicator:
     def __fetch_ts(self, key: str) -> _DedupMetadata:
         try:
             data = self.client.hgetall(key)
-        except RedisError:
+        except Exception:
             _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
             return _DedupMetadata(msg_read_ts=None, msg_train_ts=None, msg_train_records=None)
         else:
@@ -282,7 +300,7 @@ class TrainMsgDeduplicator:
         _key = self.__construct_train_key(key)
         try:
             self.client.hset(name=_key, key="_msg_train_records", value=str(train_records))
-        except RedisError:
+        except Exception:
             _LOGGER.exception(
                 " %s - Problem while updating _msg_train_records information for the key: %s",
                 uuid,
@@ -360,7 +378,7 @@ class TrainMsgDeduplicator:
             return False
         try:
             self.client.hset(name=_key, key="_msg_read_ts", value=str(time.time()))
-        except RedisError:
+        except Exception:
             _LOGGER.exception(
                 "%s - Problem while updating msg_read_ts information for the key: %s",
                 uuid,
@@ -385,7 +403,7 @@ class TrainMsgDeduplicator:
         _key = self.__construct_train_key(key)
         try:
             self.client.hset(name=_key, key="_msg_train_ts", value=str(time.time()))
-        except RedisError:
+        except Exception:
             _LOGGER.exception(
                 " %s - Problem while updating msg_train_ts information for the key: %s",
                 uuid,

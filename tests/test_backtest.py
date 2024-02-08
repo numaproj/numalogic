@@ -1,234 +1,54 @@
 import os.path
-import shutil
-import tempfile
-import unittest
-from unittest.mock import patch, Mock
 
 import pandas as pd
-from typer.testing import CliRunner
-from numalogic.backtest._bt import app as btapp
-from numalogic.backtest.__main__ import app as rootapp
+import pytest
+from omegaconf import OmegaConf
+
 from numalogic._constants import TESTS_DIR
-from numalogic.connectors import PrometheusFetcher
-from numalogic.tools.exceptions import DataFormatError
+from numalogic.backtest import PromBacktester
+from numalogic.config import NumalogicConf, ModelInfo, TrainerConf, LightningTrainerConf
+from numalogic.models.vae import Conv1dVAE
 
-runner = CliRunner()
-
-
-def _mock_datafetch():
-    df = pd.read_csv(
-        os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv"),
-        usecols=["ts", "failure"],
-        nrows=1000,
+URL = "http://localhost:9090"
+CONF = OmegaConf.structured(
+    NumalogicConf(
+        preprocess=[ModelInfo(name="LogTransformer")],
+        model=ModelInfo(name="Conv1dVAE", conf=dict(seq_len=12, n_features=3, latent_dim=1)),
+        threshold=ModelInfo(name="MaxPercentileThreshold"),
+        trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(accelerator="cpu", max_epochs=1)),
     )
-    df.rename(columns={"ts": "timestamp"}, inplace=True, errors="raise")
-    return df
+)
 
 
-class TestBacktest(unittest.TestCase):
-    def tearDown(self) -> None:
-        _dir = os.path.join(TESTS_DIR, ".btoutput")
-        if os.path.exists(_dir):
-            shutil.rmtree(_dir, ignore_errors=False, onerror=None)
-
-    @patch.object(PrometheusFetcher, "fetch", Mock(return_value=_mock_datafetch()))
-    def test_univar(self):
-        res = runner.invoke(btapp, ["univariate", "ns1", "app1", "failure"], catch_exceptions=False)
-        self.assertEqual(0, res.exit_code)
-        self.assertIsNone(res.exception)
-
-    def test_multivar(self):
-        with self.assertRaises(NotImplementedError):
-            runner.invoke(btapp, ["multivariate"], catch_exceptions=False)
+@pytest.fixture
+def backtester(tmp_path):
+    return PromBacktester(
+        url=URL,
+        query="namespace_app_rollouts_http_request_error_rate{namespace='sandbox-numalogic-demo'}",
+        metrics=[
+            "namespace_app_rollouts_cpu_utilization",
+            "namespace_app_rollouts_http_request_error_rate",
+            "namespace_app_rollouts_memory_utilization",
+        ],
+        output_dir=tmp_path,
+        numalogic_cfg=OmegaConf.to_container(CONF),
+    )
 
 
-class TestRoot(unittest.TestCase):
-    def tearDown(self) -> None:
-        _dir = os.path.join(TESTS_DIR, ".btoutput")
-        if os.path.exists(_dir):
-            shutil.rmtree(_dir, ignore_errors=False, onerror=None)
-
-    def test_train(self):
-        data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
-        res = runner.invoke(
-            rootapp,
-            [
-                "train",
-                "--data-file",
-                data_path,
-                "--col-name",
-                "failure",
-                "--ts-col-name",
-                "ts",
-                "--train-ratio",
-                "0.1",
-            ],
-            catch_exceptions=False,
-        )
-        self.assertEqual(0, res.exit_code)
-        self.assertIsNone(res.exception)
-
-    def test_train_err(self):
-        data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
-        with self.assertRaises(DataFormatError):
-            runner.invoke(
-                rootapp,
-                [
-                    "train",
-                    "--data-file",
-                    data_path,
-                    "--col-name",
-                    "failure",
-                    "--ts-col-name",
-                    "timestamp",
-                    "--train-ratio",
-                    "0.1",
-                ],
-                catch_exceptions=False,
-            )
-
-    def test_train_arg_err(self):
-        res = runner.invoke(
-            rootapp,
-            [
-                "train",
-                "--col-name",
-                "failure",
-                "--ts-col-name",
-                "timestamp",
-                "--train-ratio",
-                "0.1",
-            ],
-            catch_exceptions=False,
-        )
-        self.assertEqual(1, res.exit_code)
-        self.assertIsNotNone(res.exception)
-
-    def test_score(self):
-        data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
-        res = runner.invoke(
-            rootapp,
-            [
-                "score",
-                "--data-file",
-                data_path,
-                "--col-name",
-                "failure",
-                "--ts-col-name",
-                "ts",
-                "--test-ratio",
-                "0.5",
-            ],
-            catch_exceptions=False,
-        )
-        self.assertEqual(0, res.exit_code)
-        self.assertIsNone(res.exception)
-
-    def test_score_fulldata(self):
-        data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
-        with tempfile.TemporaryDirectory() as tmpdir:
-            runner.invoke(
-                rootapp,
-                [
-                    "train",
-                    "--data-file",
-                    data_path,
-                    "--col-name",
-                    "failure",
-                    "--ts-col-name",
-                    "ts",
-                    "--train-ratio",
-                    "0.1",
-                    "--output-dir",
-                    tmpdir,
-                ],
-                catch_exceptions=False,
-            )
-            res = runner.invoke(
-                rootapp,
-                [
-                    "score",
-                    "--data-file",
-                    data_path,
-                    "--model-path",
-                    os.path.join(tmpdir, "failure", "models.pt"),
-                    "--col-name",
-                    "failure",
-                    "--ts-col-name",
-                    "ts",
-                    "--use-full-data",
-                ],
-                catch_exceptions=False,
-            )
-        self.assertEqual(0, res.exit_code)
-        self.assertIsNone(res.exception)
-
-    def test_score_fulldata_err(self):
-        data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with self.assertRaises(RuntimeError):
-                runner.invoke(
-                    rootapp,
-                    [
-                        "score",
-                        "--data-file",
-                        data_path,
-                        "--model-path",
-                        os.path.join(tmpdir, "models.pt"),
-                        "--col-name",
-                        "failure",
-                        "--ts-col-name",
-                        "ts",
-                        "--use-full-data",
-                    ],
-                    catch_exceptions=False,
-                )
-
-    def test_score_err(self):
-        data_path = os.path.join(TESTS_DIR, "resources", "data", "interactionstatus.csv")
-        with self.assertRaises(DataFormatError):
-            runner.invoke(
-                rootapp,
-                [
-                    "score",
-                    "--data-file",
-                    data_path,
-                    "--col-name",
-                    "failure",
-                    "--ts-col-name",
-                    "timestamp",
-                    "--test-ratio",
-                    "0.1",
-                ],
-                catch_exceptions=False,
-            )
-
-    def test_score_arg_err(self):
-        res = runner.invoke(
-            rootapp,
-            [
-                "score",
-                "--col-name",
-                "failure",
-                "--ts-col-name",
-                "timestamp",
-                "--test-ratio",
-                "0.1",
-            ],
-            catch_exceptions=False,
-        )
-        self.assertEqual(1, res.exit_code)
-        self.assertIsNotNone(res.exception)
-
-    def test_clear(self):
-        res = runner.invoke(
-            rootapp,
-            ["clear", "--output-dir", os.path.join(TESTS_DIR, ".btoutput"), "--all"],
-            catch_exceptions=False,
-        )
-        self.assertEqual(0, res.exit_code)
-        self.assertIsNone(res.exception)
+@pytest.fixture
+def read_data():
+    return pd.read_csv(
+        os.path.join(TESTS_DIR, "resources", "data", "prom_mv.csv"), index_col="timestamp"
+    )
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_train(backtester, read_data):
+    artifacts = backtester.train_models(read_data)
+    assert set(artifacts) == {"preproc_clf", "model", "threshold_clf"}
+    assert isinstance(artifacts["model"], Conv1dVAE)
+
+
+def test_scores(backtester, read_data):
+    out_df = backtester.generate_scores(read_data)
+    assert isinstance(out_df, pd.DataFrame)
+    assert out_df.shape[0] == int(backtester.test_ratio * read_data.shape[0])

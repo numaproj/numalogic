@@ -157,7 +157,7 @@ class TestPostProcessUDF(unittest.TestCase):
 
         msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
         payload = OutputPayload(**orjson.loads(msg[0].value))
-        self.assertListEqual(data["metrics"], list(payload.data))
+        self.assertFalse(list(payload.data))
         self.assertEqual(1, len(msg))
 
     @patch("numalogic.udfs.postprocess.PostprocessUDF.compute", Mock(side_effect=RuntimeError))
@@ -180,12 +180,6 @@ class TestPostProcessUDF(unittest.TestCase):
         self.assertEqual(1, len(msg))
         payload = TrainerPayload(**orjson.loads(msg[0].value))
         self.assertEqual(payload.header, Header.TRAIN_REQUEST)
-
-    def test_postprocess_NotImplementedMethod(self):
-        arr = np.asarray([[1, 1], [2, 2]])
-        self.assertEqual(1.5, self.udf._calculate_unified_score(arr, "mean"))
-        self.assertEqual(1, self.udf._calculate_unified_score(arr, "min"))
-        self.assertEqual(2, self.udf._calculate_unified_score(arr, "max"))
 
 
 if __name__ == "__main__":

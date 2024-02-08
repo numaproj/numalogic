@@ -81,6 +81,7 @@ class PromTrainerUDF(TrainerUDF):
                 return_labels=["rollouts_pod_template_hash"],
                 filters={
                     "numalogic": "true",
+                    "numalogic_opex_tags": "",
                     **dict(zip(_stream_conf.composite_keys, payload.composite_keys)),
                 },
             )

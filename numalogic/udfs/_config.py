@@ -67,6 +67,9 @@ class StreamConf:
     composite_keys: list[str] = field(default_factory=list)
     ml_pipelines: dict[str, MLPipelineConf] = field(default_factory=dict)
 
+    def get_numalogic_conf(self, mlpipe_id: str = "default") -> NumalogicConf:
+        return self.ml_pipelines[mlpipe_id].numalogic_conf
+
 
 @dataclass
 class PipelineConf:

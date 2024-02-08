@@ -16,6 +16,7 @@ from numalogic.config._config import (
     LightningTrainerConf,
     RegistryInfo,
     TrainerConf,
+    ScoreConf,
 )
 from numalogic.config.factory import (
     ModelFactory,
@@ -23,6 +24,7 @@ from numalogic.config.factory import (
     PostprocessFactory,
     ThresholdFactory,
     RegistryFactory,
+    AggregatorFactory,
 )
 
 
@@ -37,4 +39,6 @@ __all__ = [
     "ThresholdFactory",
     "RegistryFactory",
     "TrainerConf",
+    "ScoreConf",
+    "AggregatorFactory",
 ]

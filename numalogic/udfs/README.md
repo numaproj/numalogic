@@ -17,4 +17,4 @@
 |    FETCH_TIME_SUMMARY     |  Summary  |                     composite_key, config_id, pipeline_id                      |                Train Data Fetch time                 |
 |        MODEL_INFO         |   Info    |                     composite_key, config_id, pipeline_id                      |                      Model info                      |
 |         UDF_TIME          | Histogram |                     composite_key, config_id, pipeline_id                      |          Histogram for udf processing time           |
-|    RECORDED_DATA_GAUGE    |   Gauge   | "source", "vertex", "composite_key", "config_id", "pipeline_id", "metric_name" | Gauge metric to observe the mean value of the window | 
+|    RECORDED_DATA_GAUGE    |   Gauge   | "source", "vertex", "composite_key", "config_id", "pipeline_id", "metric_name" | Gauge metric to observe the mean value of the window |

@@ -15,7 +15,7 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
-from typing import Optional, ClassVar
+from typing import Optional, ClassVar, Union
 
 
 class AnomalyGenerator:
@@ -62,7 +62,10 @@ class AnomalyGenerator:
         self.anomaly_type = anomaly_type
         self.anomaly_ratio = anomaly_ratio
         self.anomaly_sign = anomaly_sign
-        self.freq = ref_df.index.freq
+        try:
+            self.freq = ref_df.index.freq
+        except AttributeError:
+            self.freq = None
         self.mu, self.sigma = mu, sigma
 
         self.scaler = StandardScaler()
@@ -103,7 +106,11 @@ class AnomalyGenerator:
         raise AttributeError(f"Invalid anomaly type provided: {self.anomaly_type}")
 
     def _inject_global_anomalies(
-        self, target_df: pd.DataFrame, cols: Optional[Sequence[str]] = None, impact=3
+        self,
+        target_df: pd.DataFrame,
+        cols: Optional[Sequence[str]] = None,
+        impact=3,
+        anomaly_start_idx: Optional[Union[int, str]] = None,
     ) -> pd.DataFrame:
         target_df = self._init_target_df(target_df, cols)
         anomaly_df = pd.DataFrame(index=target_df.index)
@@ -111,10 +118,11 @@ class AnomalyGenerator:
 
         for col in self.__injected_cols:
             tseries = target_df[col]
-            sample = tseries[: -self.block_size].sample(1)
-            idx_start = sample.index
-            idx_end = idx_start + (self.block_size * self.freq)
-            outlier_block = tseries[idx_start.values[0] : idx_end.values[0]]
+
+            idx_start = self._find_start_idx(anomaly_start_idx, target_df)
+            idx_end = idx_start + self.block_size
+
+            outlier_block = tseries[idx_start:idx_end]
             factor = abs(self.ref_stats_df.loc["max", col] - outlier_block.mean())
 
             # Add gaussian noise to the data
@@ -123,7 +131,7 @@ class AnomalyGenerator:
 
             # Add labels to the data
             anomaly_col = anomaly_df["is_anomaly"]
-            anomaly_block = anomaly_col[idx_start.values[0] : idx_end.values[0]]
+            anomaly_block = anomaly_col[idx_start:idx_end]
             anomaly_block += self.add_impact_sign()
 
         return pd.DataFrame(
@@ -133,7 +141,10 @@ class AnomalyGenerator:
         ).merge(anomaly_df, left_index=True, right_index=True)
 
     def _inject_contextual_anomalies(
-        self, target_df: pd.DataFrame, cols: Sequence[str], impact=1
+        self,
+        target_df: pd.DataFrame,
+        cols: Sequence[str],
+        impact=1,
     ) -> pd.DataFrame:
         target_df = self._init_target_df(target_df, cols)
         anomaly_df = pd.DataFrame(index=target_df.index)
@@ -141,10 +152,11 @@ class AnomalyGenerator:
 
         for col in self.__injected_cols:
             tseries = target_df[col]
-            sample = tseries[: -self.block_size].sample(1)
-            idx_start = sample.index
-            idx_end = idx_start + (self.block_size * self.freq)
-            outlier_block = tseries[idx_start.values[0] : idx_end.values[0]]
+
+            idx_start = self._find_start_idx(None, target_df)
+            idx_end = idx_start + self.block_size
+
+            outlier_block = tseries[idx_start:idx_end]
 
             # Add gaussian noise to the data
             noise = self._rnd_gen.normal(self.mu, self.sigma, outlier_block.shape)
@@ -155,7 +167,6 @@ class AnomalyGenerator:
             dist_from_max = np.linalg.norm(
                 outlier_block.to_numpy() - self.ref_stats_df.loc["max", col]
             )
-
             if dist_from_min > dist_from_max:
                 factor = abs(self.ref_stats_df.loc["min", col] - outlier_block.mean())
                 outlier_block -= (
@@ -168,7 +179,7 @@ class AnomalyGenerator:
                 )
 
             anomaly_col = anomaly_df["is_anomaly"]
-            anomaly_block = anomaly_col[idx_start.values[0] : idx_end.values[0]]
+            anomaly_block = anomaly_col[idx_start:idx_end]
             anomaly_block += self.add_impact_sign()
 
         return pd.DataFrame(
@@ -178,19 +189,22 @@ class AnomalyGenerator:
         ).merge(anomaly_df, left_index=True, right_index=True)
 
     def _inject_collective_anomalies(
-        self, target_df: pd.DataFrame, cols: Sequence[str], impact=0.8
+        self,
+        target_df: pd.DataFrame,
+        cols: Sequence[str],
+        impact=0.8,
+        anomaly_start_idx: Optional[Union[int, str]] = None,
     ) -> pd.DataFrame:
         target_df = self._init_target_df(target_df, cols)
         anomaly_df = pd.DataFrame(index=target_df.index)
         anomaly_df["is_anomaly"] = 0
 
-        sample = target_df[: -self.block_size].sample(1)
-        idx_start = sample.index
-        idx_end = idx_start + (self.block_size * self.freq)
+        idx_start = self._find_start_idx(anomaly_start_idx, target_df)
+        idx_end = idx_start + self.block_size
 
         for col in self.__injected_cols:
             tseries = target_df[col]
-            outlier_block = tseries[idx_start.values[0] : idx_end.values[0]]
+            outlier_block = tseries[idx_start:idx_end]
 
             # Add gaussian noise to the data
             noise = self._rnd_gen.normal(self.mu, self.sigma, outlier_block.shape)
@@ -212,7 +226,7 @@ class AnomalyGenerator:
                     noise + impact * factor * abs(outlier_block) * self.add_impact_sign()
                 )
             anomaly_col = anomaly_df["is_anomaly"]
-            anomaly_block = anomaly_col[idx_start.values[0] : idx_end.values[0]]
+            anomaly_block = anomaly_col[idx_start:idx_end]
             anomaly_block += self.add_impact_sign()
 
         return pd.DataFrame(
@@ -220,6 +234,19 @@ class AnomalyGenerator:
             index=target_df.index,
             columns=target_df.columns,
         ).merge(anomaly_df, left_index=True, right_index=True)
+
+    def _find_start_idx(self, anomaly_start_idx: Union[int, str], target_df: pd.DataFrame) -> int:
+        if anomaly_start_idx is None:
+            idx_start = self._rnd_gen.integers(0, target_df.shape[0] - self.block_size)
+        elif isinstance(anomaly_start_idx, str):
+            idx_start = target_df.index.get_slice_bound(anomaly_start_idx, side="left")
+        elif isinstance(anomaly_start_idx, int):
+            idx_start = anomaly_start_idx
+        else:
+            raise TypeError(
+                f"Invalid value for anomaly_start_idx: {anomaly_start_idx}, " f"expected int or str"
+            )
+        return idx_start
 
     def _inject_causal_anomalies(
         self, target_df: pd.DataFrame, cols: Sequence[str], impact=2, gap_range=(5, 20)
