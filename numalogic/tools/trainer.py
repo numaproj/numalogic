@@ -80,5 +80,5 @@ class TimeseriesTrainer(Trainer):
         recon_err = super().predict(model, **kwargs)
         recon_err = torch.vstack(recon_err)
         if unbatch:
-            return inverse_window(recon_err, method="keep_last")
+            return inverse_window(recon_err, method="keep_first")
         return recon_err

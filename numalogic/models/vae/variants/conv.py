@@ -33,12 +33,10 @@ class Encoder(nn.Module):
         n_features: int,
         latent_dim: int,
         conv_channels: Sequence[int] = (16,),
-        num_samples: int = 10,
     ):
         super().__init__()
 
         self.seq_len = seq_len
-        self.nsamples = num_samples
 
         conv_layer = CausalConvBlock(
             in_channels=n_features,
@@ -101,7 +99,7 @@ class Encoder(nn.Module):
 
 class Decoder(nn.Module):
     """
-    Decoder (non-probabilistic) module for Convolutional Variational Autoencoder.
+    Decoder module for Convolutional Variational Autoencoder.
 
     Args:
     ----
@@ -153,9 +151,9 @@ class Conv1dVAE(BaseVAE):
     ----
         seq_len: sequence length / window length
         n_features: num of features
-        conv_channels: number of convolutional channels
         latent_dim: latent dimension
-        num_samples: number of samples to draw from the latent distribution
+        conv_channels: number of convolutional channels
+        beta: disentanglement factor; weightage applied to KLD loss (default=0.1)
 
     Raises
     ------
@@ -170,21 +168,20 @@ class Conv1dVAE(BaseVAE):
         n_features: int,
         latent_dim: int,
         conv_channels: Sequence[int] = (16,),
-        num_samples: int = 10,
+        beta: float = 0.1,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.seq_len = seq_len
         self.z_dim = latent_dim
         self.n_features = n_features
-        self.nsamples = num_samples
+        self.beta = beta
 
         self.encoder = Encoder(
             seq_len=seq_len,
             n_features=n_features,
             conv_channels=conv_channels,
             latent_dim=latent_dim,
-            num_samples=num_samples,
         )
         self.decoder = Decoder(
             seq_len=seq_len,
@@ -206,8 +203,7 @@ class Conv1dVAE(BaseVAE):
         x = self.configure_shape(x)
         z_mu, z_logvar = self.encoder(x)
         p = MultivariateNormal(loc=z_mu, covariance_matrix=torch.diag_embed(z_logvar.exp()))
-        samples = p.rsample(sample_shape=torch.Size([self.nsamples]))
-        z = torch.mean(samples, dim=0)
+        z = p.rsample()
         x_recon = self.decoder(z)
         return p, x_recon
 
@@ -237,12 +233,14 @@ class Conv1dVAE(BaseVAE):
         p, recon = self.forward(batch)
         kld_loss = self.kld_loss(p)
         recon_loss = self.recon_loss(batch, recon)
+        train_loss = recon_loss + (self.beta * kld_loss)
         self.log_dict(
             {
-                "train_kld_loss": kld_loss,
-                "train_recon_loss": recon_loss,
+                "train_loss": train_loss,
+                "kld_loss": kld_loss,
+                "recon_loss": recon_loss,
             },
             on_epoch=True,
             on_step=False,
         )
-        return kld_loss + recon_loss
+        return train_loss

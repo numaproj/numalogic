@@ -33,7 +33,7 @@ stream_confs:
               "degraded": 0
             pltrainer_conf:
               accelerator: cpu
-              max_epochs: 5
+              max_epochs: 1
 
 redis_conf:
   url: "isbsvc-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-e2e.svc"
