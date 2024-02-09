@@ -11,6 +11,7 @@
 
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import Any, Optional
 
 from omegaconf import MISSING
@@ -93,7 +94,27 @@ class TrainerConf:
     retry_sec: int = 600  # 10 min
     batch_size: int = 64
     data_freq_sec: int = 60
+    # TODO: Support trainer based transform models
+    max_value_map: Optional[dict[str, float]] = None
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
+
+
+class AggMethod(str, Enum):
+    EXP = "exp_moving_average"
+    WEIGHTED_AVG = "weighted_average"
+    MEAN = "mean"
+    MAX = "max"
+    MIN = "min"
+
+    @classmethod
+    def get_all(cls) -> list[str]:
+        return [AggMethod.EXP, AggMethod.WEIGHTED_AVG, AggMethod.MEAN, AggMethod.MAX, AggMethod.MIN]
+
+
+@dataclass
+class AggregatorConf:
+    method: AggMethod
+    conf: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -101,6 +122,17 @@ class ScoreAdjustConf:
     weight: float
     metric_weights: Optional[list[float]]
     upper_limits: list[float]
+
+
+@dataclass
+class ScoreConf:
+    window_agg: AggregatorConf = field(
+        default_factory=lambda: AggregatorConf(method=AggMethod.MEAN)
+    )
+    feature_agg: AggregatorConf = field(
+        default_factory=lambda: AggregatorConf(method=AggMethod.MAX)
+    )
+    adjust: Optional[ScoreAdjustConf] = None
 
 
 @dataclass
@@ -114,7 +146,7 @@ class NumalogicConf:
     postprocess: ModelInfo = field(
         default_factory=lambda: ModelInfo(name="TanhNorm", stateful=False)
     )
-    adjust: Optional[ScoreAdjustConf] = None
+    score: ScoreConf = field(default_factory=lambda: ScoreConf())
 
 
 @dataclass

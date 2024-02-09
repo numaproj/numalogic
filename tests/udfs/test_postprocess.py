@@ -29,6 +29,7 @@ DATUM_KW = {
 DATA = {
     "uuid": "dd7dfb43-532b-49a3-906e-f78f82ad9c4b",
     "config_id": "druid-config",
+    "pipeline_id": "pipeline1",
     "composite_keys": ["service-mesh", "1", "2"],
     "data": [
         [2.055191, 2.205468],
@@ -73,10 +74,10 @@ DATA = {
         1691623740000.0,
         1691623800000.0,
     ],
-    "status": "artifact_found",
-    "header": "model_inference",
+    "status": Status.ARTIFACT_STALE,
+    "header": Header.MODEL_INFERENCE,
+    "artifact_versions": {"pipeline1:StdDevThreshold": "0", "pipeline1:VanillaAE": "0"},
     "metadata": {
-        "artifact_versions": {"StdDevThreshold": "0"},
         "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
     },
 }
@@ -113,7 +114,9 @@ class TestPostProcessUDF(unittest.TestCase):
         data["status"] = Status.ARTIFACT_STALE
         data["header"] = Header.MODEL_INFERENCE
         self.registry.save(
-            KEYS, ["StdDevThreshold"], StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]]))
+            [*KEYS],
+            ["pipeline1", "StdDevThreshold"],
+            StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]])),
         )
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
         self.assertEqual(2, len(msg))
@@ -123,9 +126,10 @@ class TestPostProcessUDF(unittest.TestCase):
         data["status"] = Status.ARTIFACT_FOUND
         data["header"] = Header.MODEL_INFERENCE
         self.registry.save(
-            KEYS, ["StdDevThreshold"], StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]]))
+            [*KEYS],
+            ["pipeline1", "StdDevThreshold"],
+            StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]])),
         )
-
         msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
         payload = OutputPayload(**orjson.loads(msg[0].value))
         self.assertListEqual(data["metrics"], list(payload.data))
@@ -141,17 +145,19 @@ class TestPostProcessUDF(unittest.TestCase):
         data["status"] = Status.ARTIFACT_FOUND
         data["header"] = Header.MODEL_INFERENCE
         # noinspection PyTypedDict
+        data["artifact_versions"] = {"pipeline1:MahalanobisThreshold": "0"}
         data["metadata"] = {
-            "artifact_versions": {"MahalanobisThreshold": "0"},
             "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
         }
         self.registry.save(
-            KEYS, ["MahalanobisThreshold"], MahalanobisThreshold().fit(np.asarray([[0, 1], [1, 2]]))
+            [*KEYS],
+            ["pipeline1", "MahalanobisThreshold"],
+            MahalanobisThreshold().fit(np.asarray([[0, 1], [1, 2]])),
         )
 
         msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
         payload = OutputPayload(**orjson.loads(msg[0].value))
-        self.assertListEqual(data["metrics"], list(payload.data))
+        self.assertFalse(list(payload.data))
         self.assertEqual(1, len(msg))
 
     @patch("numalogic.udfs.postprocess.PostprocessUDF.compute", Mock(side_effect=RuntimeError))

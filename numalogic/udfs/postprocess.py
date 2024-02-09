@@ -9,12 +9,20 @@ from numpy.typing import NDArray
 from orjson import orjson
 from pynumaflow.mapper import Messages, Datum, Message
 
-from numalogic.config import PostprocessFactory, RegistryFactory
+from numalogic.config import PostprocessFactory, RegistryFactory, ScoreConf, AggregatorFactory
+from numalogic.tools.aggregators import aggregate_window, aggregate_features
 from numalogic.registry import LocalLRUCache
-from numalogic.tools.adjust import ScoreAdjuster
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._metrics import (
+    MODEL_STATUS_COUNTER,
+    RUNTIME_ERROR_COUNTER,
+    MSG_PROCESSED_COUNTER,
+    MSG_IN_COUNTER,
+    UDF_TIME,
+    _increment_counter,
+)
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
 from numalogic.udfs.tools import _load_artifact
 
@@ -42,7 +50,7 @@ class PostprocessUDF(NumalogicUDF):
         r_client: redis_client_t,
         pl_conf: Optional[PipelineConf] = None,
     ):
-        super().__init__(pl_conf=pl_conf)
+        super().__init__(pl_conf=pl_conf, _vtx="postprocess")
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
         self.model_registry = model_registry_cls(
@@ -56,6 +64,7 @@ class PostprocessUDF(NumalogicUDF):
         )
         self.postproc_factory = PostprocessFactory()
 
+    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         The postprocess function here receives data from the previous udf.
@@ -75,20 +84,33 @@ class PostprocessUDF(NumalogicUDF):
 
         # Construct payload object
         payload = StreamPayload(**orjson.loads(datum.value))
+        _metric_label_values = (
+            payload.composite_keys,
+            self._vtx,
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
+
+        _increment_counter(
+            counter=MSG_IN_COUNTER,
+            labels=_metric_label_values,
+        )
 
         # load configs
-        _conf = self.get_conf(payload.config_id)
+        _stream_conf = self.get_stream_conf(payload.config_id)
+        _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
         thresh_cfg = _conf.numalogic_conf.threshold
         postprocess_cfg = _conf.numalogic_conf.postprocess
-        adjust_cfg = _conf.numalogic_conf.adjust
 
         # load artifact
         thresh_artifact, payload = _load_artifact(
-            skeys=[_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)],
-            dkeys=[thresh_cfg.name],
+            skeys=[_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)],
+            dkeys=[payload.pipeline_id, thresh_cfg.name],
             payload=payload,
             model_registry=self.model_registry,
             load_latest=LOAD_LATEST,
+            vertex=self._vtx,
         )
         postproc_clf = self.postproc_factory.get_instance(postprocess_cfg)
 
@@ -96,18 +118,27 @@ class PostprocessUDF(NumalogicUDF):
             payload = replace(
                 payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
             )
+            _increment_counter(
+                MODEL_STATUS_COUNTER,
+                labels=(payload.status.value, *_metric_label_values),
+            )
 
         #  Postprocess payload
         if payload.status in (Status.ARTIFACT_FOUND, Status.ARTIFACT_STALE) and thresh_artifact:
             try:
-                anomaly_scores = self.compute(
+                feature_scores = self.compute(
                     model=thresh_artifact.artifact,
                     input_=payload.get_data(),
+                    score_conf=_conf.numalogic_conf.score,
                     postproc_clf=postproc_clf,
-                    score_adjust_conf=adjust_cfg,
-                    raw_input=payload.get_data(original=True),
+                )  # (nfeat,)
+
+                unified_score = self.compute_unified_score(
+                    feature_scores, score_conf=_conf.numalogic_conf.score
                 )
+
             except RuntimeError:
+                _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
                 _LOGGER.exception(
                     "%s - Runtime postprocess error! Keys: %s, Metric: %s",
                     payload.uuid,
@@ -118,36 +149,37 @@ class PostprocessUDF(NumalogicUDF):
             else:
                 payload = replace(
                     payload,
-                    data=anomaly_scores,
+                    data=feature_scores,
                     header=Header.MODEL_INFERENCE,
                 )
                 out_payload = OutputPayload(
                     uuid=payload.uuid,
                     config_id=payload.config_id,
+                    pipeline_id=payload.pipeline_id,
                     composite_keys=payload.composite_keys,
                     timestamp=payload.end_ts,
-                    unified_anomaly=np.max(anomaly_scores),
-                    data=self._per_feature_score(payload.metrics, anomaly_scores),
-                    # TODO: add model version, & emit as ML metrics
+                    unified_anomaly=unified_score,
+                    data=self._per_feature_score(payload.metrics, feature_scores),
                     metadata=payload.metadata,
                 )
                 _LOGGER.info(
-                    "%s - Successfully post-processed, Keys: %s, Scores: %s",
+                    "%s - Successfully post-processed, Keys: %s, Score: %s, Feature Scores: %s",
                     out_payload.uuid,
                     out_payload.composite_keys,
                     out_payload.unified_anomaly,
+                    feature_scores.tolist(),
                 )
                 messages.append(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 
         # Forward payload if a training request is tagged
         if payload.header == Header.TRAIN_REQUEST or payload.status == Status.ARTIFACT_STALE:
-            _conf = self.get_conf(payload.config_id)
-            ckeys = [_ckey for _, _ckey in zip(_conf.composite_keys, payload.composite_keys)]
+            ckeys = [_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)]
             train_payload = TrainerPayload(
                 uuid=payload.uuid,
                 composite_keys=ckeys,
                 metrics=payload.metrics,
                 config_id=payload.config_id,
+                pipeline_id=payload.pipeline_id,
             )
             messages.append(Message(keys=keys, value=train_payload.to_json(), tags=["train"]))
         _LOGGER.debug(
@@ -155,13 +187,21 @@ class PostprocessUDF(NumalogicUDF):
             payload.uuid,
             time.perf_counter() - _start_time,
         )
+        _increment_counter(
+            MSG_PROCESSED_COUNTER,
+            labels=_metric_label_values,
+        )
         return messages
 
     @staticmethod
     def _per_feature_score(feat_names: list[str], scores: NDArray[float]) -> dict[str, float]:
-        if scores.shape[0] == 1:
-            # TODO improve this to incorporate per feature anomaly insights
-            return {_name: scores.item() for _name in feat_names}
+        if (scores_len := len(scores)) != len(feat_names):
+            _LOGGER.debug(
+                "Scores length: %s does not match feat_names: %s",
+                scores_len,
+                feat_names,
+            )
+            return {}
         return dict(zip(feat_names, scores))
 
     @classmethod
@@ -169,60 +209,66 @@ class PostprocessUDF(NumalogicUDF):
         cls,
         model: artifact_t,
         input_: NDArray[float],
+        score_conf: Optional[ScoreConf] = None,
         postproc_clf=None,
-        score_adjust_conf=None,
-        raw_input: Optional[NDArray[float]] = None,
-        **_
+        **_,
     ) -> NDArray[float]:
         """
-        Compute the postprocess function.
+        Compute thresholding, window aggregation followed by postprocess.
 
         Args:
         -------
-        model: Threshold model instance
-        input_: Input data of shape (n_samples, n_features)
-        postproc_clf: Postprocess classifier instance
-        score_adjust_conf: Score adjuster config
+        model: Model instance
+        input_: Input data (Shape: seq_len x n_features)
+        kwargs: Additional arguments
 
         Returns
         -------
-        Output data
+        Output data of shape (n_features, )
+
+        Raises
+        ------
+            RuntimeError: If threshold model or postproc function fails
         """
-        # Threshold model run
+        if score_conf is None:
+            raise RuntimeError("Score config not provided!")
 
-        print("input", input_, input_.shape)
+        scores = cls.compute_threshold(model, input_)  # (seqlen x nfeat)
+        win_scores = cls.compute_feature_scores(scores, score_conf)
+        if postproc_clf:
+            win_scores = cls.compute_postprocess(postproc_clf, win_scores)  # (seqlen x nfeat)
+        return win_scores  # (nfeat, )
 
+    @classmethod
+    def compute_threshold(cls, model: artifact_t, input_: NDArray[float]) -> NDArray[float]:
         try:
             scores = model.score_samples(input_).astype(np.float32)
         except Exception as err:
             raise RuntimeError("Threshold model scoring failed") from err
+        return scores
 
-        print("thresh", scores, scores.shape)
-
-        if not postproc_clf:
-            return np.mean(scores, axis=0, keepdims=True).reshape(-1)
-
-        # Postprocessing transform
+    @classmethod
+    def compute_postprocess(cls, tx: artifact_t, input_: NDArray[float]):
         try:
-            scores = postproc_clf.transform(scores)  # (10, 1)
+            score = tx.transform(input_)
         except Exception as err:
             raise RuntimeError("Postprocess failed") from err
+        return score
 
-        print("postproc", scores, scores.shape)
+    @classmethod
+    def compute_feature_scores(
+        cls, scores: NDArray[float], score_conf: ScoreConf
+    ) -> NDArray[float]:
+        return aggregate_window(
+            scores,
+            agg_func=AggregatorFactory.get_func(score_conf.window_agg.method),
+            **score_conf.window_agg.conf,
+        )
 
-        if not score_adjust_conf:
-            return np.mean(scores, axis=0, keepdims=True).reshape(-1)
-
-        # Score adjustment
-        if raw_input is None:
-            _LOGGER.warning("Raw input is None. Skipping score adjustment")
-            return np.mean(scores, axis=0, keepdims=True).reshape(-1)
-
-        print("raw_input", raw_input, raw_input.shape)
-
-        score_adjuster = ScoreAdjuster.from_conf(score_adjust_conf)
-        scores = score_adjuster.adjust(metric_in=raw_input, model_scores=scores)
-
-        print("adjusted", scores, scores.shape)
-
-        return np.mean(scores, axis=0, keepdims=True).reshape(-1)
+    @classmethod
+    def compute_unified_score(cls, scores: NDArray[float], score_conf: ScoreConf) -> float:
+        return aggregate_features(
+            scores.reshape(1, -1),
+            agg_func=AggregatorFactory.get_func(score_conf.feature_agg.method),
+            **score_conf.feature_agg.conf,
+        ).item()

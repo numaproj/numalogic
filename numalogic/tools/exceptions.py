@@ -104,3 +104,9 @@ class DataFormatError(Exception):
     """Raised when the data format is not valid."""
 
     pass
+
+
+class DruidFetcherError(Exception):
+    """Base class for all exceptions raised by the PrometheusFetcher class."""
+
+    pass

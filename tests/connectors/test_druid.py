@@ -20,6 +20,7 @@ from numalogic.connectors.druid import (
     postaggregator as _post_agg,
     aggregators as _agg,
 )
+from numalogic.tools.exceptions import DruidFetcherError
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -132,10 +133,14 @@ class TestDruid(unittest.TestCase):
                 fields=[Filter(type="selector", dimension="ciStatus", value="false")],
             ),
             "granularity": "all",
-            "aggregations": dict(),
-            "post_aggregations": dict(),
+            "aggregations": {},
+            "post_aggregations": {},
             "intervals": "",
-            "context": {"timeout": 10000, "configIds": list(filter_pairs), "source": "numalogic"},
+            "context": {
+                "timeout": 10000,
+                "configIds": list(filter_pairs),
+                "source": "numalogic",
+            },
         }
 
         actual = build_params(
@@ -152,21 +157,21 @@ class TestDruid(unittest.TestCase):
 
     @patch.object(PyDruid, "groupby", Mock(side_effect=OSError))
     def test_fetch_exception(self):
-        _out = self.druid.fetch(
-            filter_keys=["assetId"],
-            filter_values=["5984175597303660107"],
-            dimensions=["ciStatus"],
-            datasource="customer-interaction-metrics",
-            aggregations={"count": aggregators.doublesum("count")},
-            group_by=["timestamp", "ciStatus"],
-            hours=36,
-            pivot=Pivot(
-                index="timestamp",
-                columns=["ciStatus"],
-                value=["count"],
-            ),
-        )
-        self.assertTrue(_out.empty)
+        with self.assertRaises(DruidFetcherError):
+            _out = self.druid.fetch(
+                filter_keys=["assetId"],
+                filter_values=["5984175597303660107"],
+                dimensions=["ciStatus"],
+                datasource="customer-interaction-metrics",
+                aggregations={"count": aggregators.doublesum("count")},
+                group_by=["timestamp", "ciStatus"],
+                hours=36,
+                pivot=Pivot(
+                    index="timestamp",
+                    columns=["ciStatus"],
+                    value=["count"],
+                ),
+            )
 
 
 if __name__ == "__main__":

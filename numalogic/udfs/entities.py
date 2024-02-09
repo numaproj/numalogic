@@ -7,8 +7,18 @@ import numpy as np
 import numpy.typing as npt
 import orjson
 
+from numalogic._constants import NUMALOGIC_METRICS
+
 Vector = list[float]
 Matrix = Union[Vector, list[Vector], npt.ArrayLike]
+
+
+class ScoreFunc(str, Enum):
+    """An enumeration class representing the available score functions."""
+
+    MAX = "max"
+    MIN = "min"
+    MEAN = "mean"
 
 
 class Status(str, Enum):
@@ -33,6 +43,7 @@ class Header(str, Enum):
 class _BasePayload:
     uuid: str
     config_id: str
+    pipeline_id: str
     composite_keys: list[str]
 
 
@@ -60,7 +71,14 @@ class StreamPayload(_BasePayload):
     timestamps: list[int]
     status: Optional[Status] = None
     header: Header = Header.MODEL_INFERENCE
+    artifact_versions: dict[str, dict] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self):
+        try:
+            _ = self.metadata["numalogic_opex_tags"]["source"]
+        except KeyError:
+            self.metadata["numalogic_opex_tags"] = {"source": NUMALOGIC_METRICS}
 
     @property
     def start_ts(self) -> int:
@@ -85,6 +103,8 @@ class StreamPayload(_BasePayload):
         return (
             f'"StreamPayload(header={self.header}, status={self.status}, '
             f'composite_keys={self.composite_keys}, data={list(self.data)})"'
+            f"artifact_versions={self.artifact_versions}"
+            f"metadata={self.metadata}"
         )
 
     def __repr__(self) -> str:

@@ -12,7 +12,7 @@ from numalogic.config import NumalogicConf, ModelInfo, TrainerConf, LightningTra
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
-from numalogic.udfs import StreamConf, InferenceUDF
+from numalogic.udfs import StreamConf, InferenceUDF, MLPipelineConf
 from numalogic.udfs.entities import StreamPayload, Header, Status
 
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
@@ -24,6 +24,7 @@ DATUM_KW = {
 DATA = {
     "uuid": "dd7dfb43-532b-49a3-906e-f78f82ad9c4b",
     "config_id": "conf1",
+    "pipeline_id": "pipeline1",
     "composite_keys": ["service-mesh", "1", "2"],
     "data": [
         [4.801275, 1.4581239],
@@ -69,8 +70,8 @@ DATA = {
         1691623860000,
     ],
     "header": "model_inference",
+    "artifact_versions": {"pipeline1:VanillaAE": "0"},
     "metadata": {
-        "artifact_versions": {"VanillaAE": "0"},
         "tags": {
             "asset_alias": "some-alias",
             "asset_id": "362557362191815079",
@@ -86,10 +87,17 @@ class TestInferenceUDF(unittest.TestCase):
         self.udf.register_conf(
             "conf1",
             StreamConf(
-                numalogic_conf=NumalogicConf(
-                    model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
-                    trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                )
+                ml_pipelines={
+                    "pipeline1": MLPipelineConf(
+                        pipeline_id="pipeline1",
+                        numalogic_conf=NumalogicConf(
+                            model=ModelInfo(
+                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
+                            ),
+                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                        ),
+                    )
+                }
             ),
         )
 
@@ -117,7 +125,7 @@ class TestInferenceUDF(unittest.TestCase):
         self.assertEqual(1, len(msgs))
         payload = StreamPayload(**orjson.loads(msgs[0].value))
         self.assertEqual(Header.MODEL_INFERENCE, payload.header)
-        self.assertIsNone(payload.status)
+        self.assertIsNotNone(payload.status)
         self.assertTupleEqual((12, 2), payload.get_data().shape)
 
     @patch.object(

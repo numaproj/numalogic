@@ -11,7 +11,6 @@ from pynumaflow.mapper import Datum, Messages, Message
 from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
-from numalogic.base import StatelessTransformer
 from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
 from numalogic.config._config import NumalogicConf
 from numalogic.models.autoencoder import TimeseriesTrainer
@@ -19,7 +18,19 @@ from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import StreamConf, PipelineConf
+from numalogic.udfs._config import PipelineConf, MLPipelineConf
+from numalogic.udfs._metrics import (
+    REDIS_ERROR_COUNTER,
+    INSUFFICIENT_DATA_COUNTER,
+    NAN_SUMMARY,
+    INF_SUMMARY,
+    MSG_IN_COUNTER,
+    MSG_DROPPED_COUNTER,
+    MSG_PROCESSED_COUNTER,
+    UDF_TIME,
+    _increment_counter,
+    _add_summary,
+)
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
@@ -40,7 +51,7 @@ class TrainerUDF(NumalogicUDF):
         r_client: redis_client_t,
         pl_conf: Optional[PipelineConf] = None,
     ):
-        super().__init__(is_async=False, pl_conf=pl_conf)
+        super().__init__(pl_conf=pl_conf, _vtx="trainer")
         self.r_client = r_client
         self.registry_conf = self.pl_conf.registry_conf
         model_registry_cls = RegistryFactory.get_cls(self.registry_conf.name)
@@ -93,7 +104,9 @@ class TrainerUDF(NumalogicUDF):
         if preproc_clf:
             input_ = preproc_clf.fit_transform(input_)
             dict_artifacts["preproc_clf"] = KeyedArtifact(
-                dkeys=[_conf.name for _conf in numalogic_cfg.preprocess], artifact=preproc_clf
+                dkeys=[_conf.name for _conf in numalogic_cfg.preprocess],
+                artifact=preproc_clf,
+                stateful=any(_conf.stateful for _conf in numalogic_cfg.preprocess),
             )
 
         train_ds = StreamingDataset(input_, model.seq_len)
@@ -105,17 +118,20 @@ class TrainerUDF(NumalogicUDF):
             model, dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
         ).numpy()
         dict_artifacts["inference"] = KeyedArtifact(
-            dkeys=[numalogic_cfg.model.name], artifact=model
+            dkeys=[numalogic_cfg.model.name], artifact=model, stateful=numalogic_cfg.model.stateful
         )
 
         if threshold_clf:
             threshold_clf.fit(train_reconerr)
             dict_artifacts["threshold_clf"] = KeyedArtifact(
-                dkeys=[numalogic_cfg.threshold.name], artifact=threshold_clf
+                dkeys=[numalogic_cfg.threshold.name],
+                artifact=threshold_clf,
+                stateful=numalogic_cfg.threshold.stateful,
             )
 
         return dict_artifacts
 
+    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         Main run function for the UDF.
@@ -132,37 +148,89 @@ class TrainerUDF(NumalogicUDF):
 
         # Construct payload object
         payload = TrainerPayload(**orjson.loads(datum.value))
-        _conf = self.get_conf(payload.config_id)
+        _metric_label_values = (
+            payload.composite_keys,
+            ":".join(payload.composite_keys),
+            payload.config_id,
+            payload.pipeline_id,
+        )
+
+        _conf = self.get_ml_pipeline_conf(
+            config_id=payload.config_id, pipeline_id=payload.pipeline_id
+        )
+        _increment_counter(
+            counter=MSG_IN_COUNTER,
+            labels=[self._vtx, *_metric_label_values],
+        )
 
         # set the retry and retrain_freq
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
         retry_ts = _conf.numalogic_conf.trainer.retry_sec
         if not self.train_msg_deduplicator.ack_read(
-            key=payload.composite_keys,
+            key=[*payload.composite_keys, payload.pipeline_id],
             uuid=payload.uuid,
             retrain_freq=retrain_freq_ts,
             retry=retry_ts,
             min_train_records=_conf.numalogic_conf.trainer.min_train_size,
             data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
+            _increment_counter(
+                counter=MSG_DROPPED_COUNTER,
+                labels=(self._vtx, *_metric_label_values),
+            )
             return Messages(Message.to_drop())
 
         # Fetch data
         df = self.fetch_data(payload)
 
+        # Retry the training if df is returning None due to some errors/exception
+        # while fetching the data
+        if df is None:
+            _increment_counter(
+                counter=MSG_DROPPED_COUNTER,
+                labels=(self._vtx, *_metric_label_values),
+            )
+            _LOGGER.warning(
+                "%s - Caught exception/error while fetching from source" " for key: %s",
+                payload.uuid,
+                payload.composite_keys,
+            )
+            return Messages(Message.to_drop())
+
         # Check if data is sufficient
-        if df.empty or not self._is_data_sufficient(payload, df):
+        if not self._is_data_sufficient(payload, df):
             _LOGGER.warning(
                 "%s - Insufficient data found for keys %s, shape: %s",
                 payload.uuid,
                 payload.composite_keys,
                 df.shape,
             )
+            _increment_counter(
+                counter=INSUFFICIENT_DATA_COUNTER,
+                labels=_metric_label_values,
+            )
+            _increment_counter(
+                counter=MSG_DROPPED_COUNTER,
+                labels=(self._vtx, *_metric_label_values),
+            )
             return Messages(Message.to_drop())
+
         _LOGGER.info("%s - Data fetched, shape: %s", payload.uuid, df.shape)
 
         # Construct feature array
-        x_train = self.get_feature_arr(df, payload.metrics)
+        x_train, nan_counter, inf_counter = self.get_feature_arr(
+            df, _conf.metrics, max_value_map=_conf.numalogic_conf.trainer.max_value_map
+        )
+        _add_summary(
+            summary=NAN_SUMMARY,
+            labels=_metric_label_values,
+            data=nan_counter,
+        )
+        _add_summary(
+            summary=INF_SUMMARY,
+            labels=_metric_label_values,
+            data=inf_counter,
+        )
 
         # Initialize artifacts
         preproc_clf = self._construct_preproc_clf(_conf)
@@ -177,17 +245,18 @@ class TrainerUDF(NumalogicUDF):
             threshold_clf=thresh_clf,
             numalogic_cfg=_conf.numalogic_conf,
         )
-
         # Save artifacts
-        skeys = payload.composite_keys
 
         self.artifacts_to_save(
-            skeys=skeys,
+            skeys=payload.composite_keys,
             dict_artifacts=dict_artifacts,
             model_registry=self.model_registry,
             payload=payload,
+            vertex_name=self._vtx,
         )
-        if self.train_msg_deduplicator.ack_train(key=payload.composite_keys, uuid=payload.uuid):
+        if self.train_msg_deduplicator.ack_train(
+            key=[*payload.composite_keys, payload.pipeline_id], uuid=payload.uuid
+        ):
             _LOGGER.info(
                 "%s - Model trained and saved successfully.",
                 payload.uuid,
@@ -196,9 +265,16 @@ class TrainerUDF(NumalogicUDF):
         _LOGGER.debug(
             "%s - Time taken in trainer: %.4f sec", payload.uuid, time.perf_counter() - _start_time
         )
+        _increment_counter(
+            counter=MSG_PROCESSED_COUNTER,
+            labels=(
+                self._vtx,
+                *_metric_label_values,
+            ),
+        )
         return Messages(Message.to_drop())
 
-    def _construct_preproc_clf(self, _conf: StreamConf) -> Optional[artifact_t]:
+    def _construct_preproc_clf(self, _conf: MLPipelineConf) -> Optional[artifact_t]:
         preproc_clfs = []
         for _cfg in _conf.numalogic_conf.preprocess:
             _clf = self._preproc_factory.get_instance(_cfg)
@@ -215,6 +291,7 @@ class TrainerUDF(NumalogicUDF):
         dict_artifacts: dict[str, KeyedArtifact],
         model_registry,
         payload: TrainerPayload,
+        vertex_name: str,
     ) -> None:
         """
         Save artifacts.
@@ -231,11 +308,10 @@ class TrainerUDF(NumalogicUDF):
 
         """
         dict_artifacts = {
-            k: v
+            k: KeyedArtifact([payload.pipeline_id, *v.dkeys], v.artifact, v.stateful)
             for k, v in dict_artifacts.items()
-            if not isinstance(v.artifact, StatelessTransformer)
+            if v.stateful
         }
-
         try:
             ver_dict = model_registry.save_multiple(
                 skeys=skeys,
@@ -243,33 +319,72 @@ class TrainerUDF(NumalogicUDF):
                 uuid=payload.uuid,
             )
         except RedisRegistryError:
-            _LOGGER.exception("%s - Error while saving Model with skeys: %s", payload.uuid, skeys)
+            _increment_counter(
+                counter=REDIS_ERROR_COUNTER,
+                labels=(vertex_name, ":".join(payload.composite_keys), payload.config_id),
+            )
+            _LOGGER.exception(
+                "%s - Error while saving artifact with skeys: %s", payload.uuid, skeys
+            )
         else:
             _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
-        _conf = self.get_conf(payload.config_id)
+        _conf = self.get_ml_pipeline_conf(
+            config_id=payload.config_id, pipeline_id=payload.pipeline_id
+        )
         if len(df) < _conf.numalogic_conf.trainer.min_train_size:
             _ = self.train_msg_deduplicator.ack_insufficient_data(
-                key=payload.composite_keys, uuid=payload.uuid, train_records=len(df)
+                key=[*payload.composite_keys, payload.pipeline_id],
+                uuid=payload.uuid,
+                train_records=len(df),
             )
             return False
         return True
 
-    # TODO: Use a custom imputer in transforms module
+    # TODO: Use a custom impute in transforms module
     @staticmethod
     def get_feature_arr(
-        raw_df: pd.DataFrame, metrics: list[str], fill_value: float = 0.0
-    ) -> npt.NDArray[float]:
-        """Get feature array from the raw dataframe."""
+        raw_df: pd.DataFrame,
+        metrics: list[str],
+        fill_value: float = 0.0,
+        max_value_map: Optional[dict[str, float]] = None,
+    ) -> tuple[npt.NDArray[float], float, float]:
+        """
+        Get feature array from the raw dataframe.
+
+        Args:
+            raw_df: Raw dataframe
+            metrics: List of metrics
+            fill_value: Value to fill missing values with
+
+        Returns
+        -------
+            Numpy array
+            nan_counter: Number of nan values
+            inf_counter: Number of inf values
+        """
+        nan_counter = 0
         for col in metrics:
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
-        feat_df = raw_df[metrics]
-        feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
-        return feat_df.to_numpy(dtype=np.float32)
+                nan_counter += len(raw_df)
 
-    def fetch_data(self, payload: TrainerPayload) -> pd.DataFrame:
+        feat_df = raw_df[metrics]
+        if max_value_map:
+            max_value_list = [max_value_map.get(col, np.nan) for col in metrics]
+            feat_df.clip(upper=max_value_list, inplace=True)
+            _LOGGER.info(
+                "Replaced %s with max_value_map from the map with value of %s.",
+                metrics,
+                max_value_list,
+            )
+        nan_counter += raw_df.isna().sum().all()
+        inf_counter = np.isinf(feat_df).sum().all()
+        feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
+        return feat_df.to_numpy(dtype=np.float32), nan_counter, inf_counter
+
+    def fetch_data(self, payload: TrainerPayload) -> Optional[pd.DataFrame]:
         """
         Fetch data from a data connector.
 

@@ -10,14 +10,20 @@
 # limitations under the License.
 
 
-import os
+import logging
 
-NUMALOGIC_DIR = os.path.dirname(__file__)
-BASE_DIR = os.path.split(NUMALOGIC_DIR)[0]
-TESTS_DIR = os.path.join(NUMALOGIC_DIR, "../tests")
-BASE_CONF_DIR = os.path.join(BASE_DIR, "config")
+from prometheus_client import start_http_server
 
-DEFAULT_BASE_CONF_PATH = os.path.join(BASE_CONF_DIR, "default-configs", "config.yaml")
-DEFAULT_APP_CONF_PATH = os.path.join(BASE_CONF_DIR, "app-configs", "config.yaml")
-DEFAULT_METRICS_PORT = 8490
-NUMALOGIC_METRICS = "numalogic_metrics"
+_LOGGER = logging.getLogger(__name__)
+_LOGGER.addHandler(logging.NullHandler())
+
+
+def start_metrics_server(port: int) -> None:
+    """
+    Starts the Prometheus monitoring server.
+
+    Args:
+        port: Port number
+    """
+    _LOGGER.info("Starting Prometheus monitoring server on port: %s", port)
+    start_http_server(port)

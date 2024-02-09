@@ -9,10 +9,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Final
+from typing import Final, Optional
 
 import numpy as np
 import numpy.typing as npt
+from sklearn.covariance import MinCovDet
 
 from numalogic.base import BaseThresholdModel
 from typing_extensions import Self
@@ -158,7 +159,7 @@ class MahalanobisThreshold(BaseThresholdModel):
         y_hat[md >= self._md_thresh] = _OUTLIER
         return y_hat
 
-    def score_samples(self, x: npt.NDArray[float], keepdims=True) -> npt.NDArray[float]:
+    def score_samples(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
         """
         Returns the outlier score for each sample.
 
@@ -168,7 +169,6 @@ class MahalanobisThreshold(BaseThresholdModel):
         Args:
         ----
             x: input data of shape (n_samples, n_features)
-            keepdims: if True then return as a column vector
 
         Returns
         -------
@@ -182,7 +182,59 @@ class MahalanobisThreshold(BaseThresholdModel):
         if not self._is_fitted:
             raise ModelInitializationError("Model not fitted yet.")
         self._validate_input(x)
-        scores = self.mahalanobis(x) / self._md_thresh
-        if keepdims:
-            return scores.reshape(-1, 1)
-        return scores
+        return self.mahalanobis(x) / self._md_thresh
+
+
+class RobustMahalanobisThreshold(MahalanobisThreshold):
+    """
+    Robust Multivariate threshold estimator using Mahalanobis distance.
+
+    Args:
+    ----
+        max_outlier_prob: maximum outlier probability (default: 0.1)
+        support_fraction: The proportion of points to be included in the support of the raw
+            MCD estimate.(default: 0.7)
+
+    Raises
+    ------
+        ValueError: if max_inlier_percentile is not in range [75, 100)
+    """
+
+    def __init__(
+        self,
+        max_outlier_prob: float = 0.1,
+        support_fraction: Optional[float] = 0.7,
+    ):
+        super().__init__(max_outlier_prob)
+        self._mcd = MinCovDet(store_precision=False, support_fraction=support_fraction)
+
+    def mahalanobis(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
+        return np.sqrt(self._mcd.mahalanobis(x))
+
+    def fit(self, x: npt.NDArray[float]) -> Self:
+        """
+        Fit the estimator on the training set.
+
+        Args:
+        ----
+            x: training data of shape (n_samples, n_features)
+
+        Returns
+        -------
+            self
+
+        Raises
+        ------
+            InvalidDataShapeError: if the input matrix is not 2D
+        """
+        self._validate_input(x)
+        self._distr_mean = np.mean(x, axis=0)
+
+        self._mcd.fit(x)
+        self._cov_inv = self._mcd.get_precision()
+
+        mahal_dist = self.mahalanobis(x)
+        self._md_thresh = np.mean(mahal_dist) + self._k * np.std(mahal_dist)
+
+        self._is_fitted = True
+        return self

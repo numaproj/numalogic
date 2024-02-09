@@ -35,7 +35,7 @@ thresh_t = TypeVar("thresh_t", bound=BaseThresholdModel, covariant=True)
 META_T = TypeVar("META_T", bound=dict[str, Union[str, float, int, list, dict]])
 META_VT = TypeVar("META_VT", str, int, float, list, dict)
 EXTRA_T = TypeVar("EXTRA_T", bound=dict[str, Union[str, list, dict]])
-KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=True)
+KEYS = TypeVar("KEYS", bound=Sequence[str], covariant=False)
 
 
 class KeyedArtifact(NamedTuple):
@@ -43,6 +43,7 @@ class KeyedArtifact(NamedTuple):
 
     dkeys: KEYS
     artifact: artifact_t
+    stateful: bool = True
 
 
 class Singleton(type):

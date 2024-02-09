@@ -9,11 +9,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Self
 import numpy as np
 import numpy.typing as npt
 
-from numalogic.config import ScoreAdjustConf
 from numalogic.models.threshold import SigmoidThreshold
 
 
@@ -65,17 +63,17 @@ class ScoreAdjuster:
         weighted_scores = np.dot(feature_scores, self._kpi_wts)
         return (self._adjust_wt * weighted_scores) + ((1 - self._adjust_wt) * model_scores)
 
-    @classmethod
-    def from_conf(cls, conf: ScoreAdjustConf) -> Self:
-        """
-        Creates an instance of ScoreAdjuster from ScoreAdjustConf.
-
-        Args:
-        ----
-            conf: ScoreAdjustConf
-
-        Returns
-        -------
-            ScoreAdjuster instance
-        """
-        return cls(conf.weight, conf.metric_weights, conf.upper_limits)
+    # @classmethod
+    # def from_conf(cls, conf: ScoreAdjustConf) -> Self:
+    #     """
+    #     Creates an instance of ScoreAdjuster from ScoreAdjustConf.
+    #
+    #     Args:
+    #     ----
+    #         conf: ScoreAdjustConf
+    #
+    #     Returns
+    #     -------
+    #         ScoreAdjuster instance
+    #     """
+    #     return cls(conf.weight, conf.metric_weights, conf.upper_limits)

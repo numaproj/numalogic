@@ -3,47 +3,73 @@ stream_confs:
     config_id: "odl-graphql"
     source: "prometheus"
     composite_keys: [ "namespace", "app" ]
-    metrics: [ "namespace_app_rollouts_cpu_utilization", "namespace_app_rollouts_http_request_error_rate", "namespace_app_rollouts_memory_utilization" ]
     window_size: 12
-    numalogic_conf:
-      model:
-        name: "Conv1dVAE"
-        conf:
-          seq_len: 12
-          n_features: 3
-          latent_dim: 1
-      preprocess:
-        - name: "StandardScaler"
-      threshold:
-        name: "MahalanobisThreshold"
-      trainer:
-        train_hours: 3
-        min_train_size: 100
-        pltrainer_conf:
-          accelerator: cpu
-          max_epochs: 5
+    ml_pipelines:
+      pipeline1:
+        pipeline_id: "pipeline1"
+        metrics: [ "namespace_app_rollouts_cpu_utilization", "namespace_app_rollouts_http_request_error_rate", "namespace_app_rollouts_memory_utilization" ]
+        numalogic_conf:
+          model:
+            name: "Conv1dVAE"
+            conf:
+              seq_len: 12
+              n_features: 3
+              latent_dim: 1
+          preprocess:
+            - name: "StandardScaler"
+          threshold:
+            name: "MahalanobisThreshold"
+          trainer:
+            train_hours: 3
+            min_train_size: 100
+            pltrainer_conf:
+              accelerator: cpu
+              max_epochs: 5
   default:
     config_id: "default"
     source: "prometheus"
     composite_keys: [ "namespace", "app" ]
-    metrics: ["namespace_app_rollouts_http_request_error_rate"]
     window_size: 12
-    numalogic_conf:
-      model:
-        name: "SparseVanillaAE"
-        conf:
-          seq_len: 12
-          n_features: 1
-      preprocess:
-        - name: "StandardScaler"
-      threshold:
-        name: "StdDevThreshold"
-      trainer:
-        train_hours: 1
-        min_train_size: 100
-        pltrainer_conf:
-          accelerator: cpu
-          max_epochs: 5
+    ml_pipelines:
+      default:
+        pipeline_id: "default"
+        metrics: ["namespace_app_rollouts_http_request_error_rate"]
+        numalogic_conf:
+          model:
+            name: "SparseVanillaAE"
+            conf:
+              seq_len: 12
+              n_features: 1
+          preprocess:
+            - name: "StandardScaler"
+          threshold:
+            name: "StdDevThreshold"
+          trainer:
+            train_hours: 1
+            min_train_size: 100
+            pltrainer_conf:
+              accelerator: cpu
+              max_epochs: 5
+      pipeline1:
+        pipeline_id: "pipeline1"
+        metrics: [ "namespace_app_rollouts_http_request_error_rate" ]
+        numalogic_conf:
+          model:
+            name: "Conv1dVAE"
+            conf:
+              seq_len: 12
+              n_features: 1
+              latent_dim: 1
+          preprocess:
+            - name: "StandardScaler"
+          threshold:
+            name: "MahalanobisThreshold"
+          trainer:
+            train_hours: 3
+            min_train_size: 100
+            pltrainer_conf:
+              accelerator: cpu
+              max_epochs: 5
 
 redis_conf:
   url: "http://localhost:6379"

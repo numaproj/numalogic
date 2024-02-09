@@ -11,8 +11,7 @@
 
 import logging
 import warnings
-from typing import ClassVar
-
+from typing import ClassVar, TypeVar
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,12 +20,16 @@ class UDFFactory:
     """Factory class to fetch the right UDF."""
 
     from numalogic.udfs import NumalogicUDF
+    from numalogic.udfs.payloadtx import PayloadTransformer
     from numalogic.udfs.inference import InferenceUDF
     from numalogic.udfs.postprocess import PostprocessUDF
     from numalogic.udfs.preprocess import PreprocessUDF
     from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
 
+    nl_udf_t = TypeVar("nl_udf_t", bound=NumalogicUDF, covariant=True)
+
     _UDF_MAP: ClassVar[dict[str, type[NumalogicUDF]]] = {
+        "mlpipeline": PayloadTransformer,
         "preprocess": PreprocessUDF,
         "inference": InferenceUDF,
         "postprocess": PostprocessUDF,
@@ -35,7 +38,7 @@ class UDFFactory:
     }
 
     @classmethod
-    def get_udf_cls(cls, udf_name: str) -> type[NumalogicUDF]:
+    def get_udf_cls(cls, udf_name: str) -> type[nl_udf_t]:
         """
         Get the UDF class.
 
@@ -65,7 +68,7 @@ class UDFFactory:
             raise ValueError(_msg) from err
 
     @classmethod
-    def get_udf_instance(cls, udf_name: str, **kwargs) -> NumalogicUDF:
+    def get_udf_instance(cls, udf_name: str, **kwargs) -> nl_udf_t:
         """
         Get the UDF instance.
 
