@@ -14,6 +14,31 @@ from numalogic.udfs.preprocess import PreprocessUDF
 from numalogic.udfs.trainer import TrainerUDF, PromTrainerUDF, DruidTrainerUDF
 
 
+class ColoredFormatter(logging.Formatter):
+    """Custom formatter for colored console logs."""
+
+    WHITE = "\x1b[1m"
+    BLUE = "\x1b[1;36m"
+    YELLOW = "\x1b[33;20m"
+    RED = "\x1b[31;20m"
+    BOLD_RED = "\x1b[31;1m"
+    RESET = "\x1b[0m"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._formats = {
+            logging.DEBUG: f"{self.BLUE}{self._fmt}{self.RESET}",
+            logging.INFO: f"{self.WHITE}{self._fmt}{self.RESET}",
+            logging.WARNING: f"{self.YELLOW}{self._fmt}{self.RESET}",
+            logging.ERROR: f"{self.RED}{self._fmt}{self.RESET}",
+            logging.CRITICAL: f"{self.BOLD_RED}{self._fmt}{self.RESET}",
+        }
+
+    def format(self, record):
+        self._style._fmt = self._formats.get(record.levelno)
+        return super().format(record)
+
+
 def set_logger() -> None:
     """Sets the logger for the UDFs."""
     logconf.fileConfig(
