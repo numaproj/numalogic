@@ -5,7 +5,7 @@
 ARG PYTHON_VERSION=3.11
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
-ARG POETRY_VERSION=1.6
+ARG POETRY_VERSION=1.7
 ARG INSTALL_EXTRAS
 
 ENV POETRY_NO_INTERACTION=1 \
@@ -19,6 +19,7 @@ ENV POETRY_NO_INTERACTION=1 \
 RUN apt-get update \
     && apt-get install --no-install-recommends -y build-essential \
     && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && pip install --upgrade pip \
     && pip install --no-cache-dir poetry==$POETRY_VERSION
 
 WORKDIR /app
