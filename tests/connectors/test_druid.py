@@ -188,6 +188,24 @@ def test_fetch_exception(mocker, setup):
 
 
 @pytest.fixture()
+def get_args():
+    return {
+        "filter_keys": ["assetId"],
+        "filter_values": ["5984175597303660107"],
+        "dimensions": ["ciStatus"],
+        "datasource": "customer-interaction-metrics",
+        "aggregations": {"count": aggregators.doublesum("count")},
+        "group_by": ["timestamp", "ciStatus"],
+        "pivot": Pivot(
+            index="timestamp",
+            columns=["ciStatus"],
+            value=["count"],
+        ),
+        "hours": 24,
+    }
+
+
+@pytest.fixture()
 def mock_query_fetch(mocker):
     def _fetch(*_, **params):
         interval = params["intervals"][0]
@@ -201,51 +219,35 @@ def mock_query_fetch(mocker):
 
 
 @freeze_time("2024-02-22 15:30:00")
-def test_chunked_fetch(mock_query_fetch):
+def test_chunked_fetch(get_args, mock_query_fetch):
     fetcher = DruidFetcher(url="http://localhost:8888", endpoint="druid/v2/")
-    kwargs = {
-        "filter_keys": ["assetId"],
-        "filter_values": ["5984175597303660107"],
-        "dimensions": ["ciStatus"],
-        "datasource": "customer-interaction-metrics",
-        "aggregations": {"count": aggregators.doublesum("count")},
-        "group_by": ["timestamp", "ciStatus"],
-        "pivot": Pivot(
-            index="timestamp",
-            columns=["ciStatus"],
-            value=["count"],
-        ),
-        "hours": 24,
-    }
     chunked_out = fetcher.chunked_fetch(
-        **kwargs,
+        **get_args,
         chunked_hours=1,
     )
-    full_out = fetcher.fetch(**kwargs)
+    full_out = fetcher.fetch(**get_args)
     assert not chunked_out.empty
     assert not full_out.empty
     assert chunked_out.shape == full_out.shape
     assert chunked_out.equals(full_out)
 
 
-def test_chunked_fetch_err():
+@freeze_time("2025-02-22 15:30:00")
+def test_chunked_fetch_empty(get_args, mock_query_fetch):
     fetcher = DruidFetcher(url="http://localhost:8888", endpoint="druid/v2/")
-    kwargs = {
-        "filter_keys": ["assetId"],
-        "filter_values": ["5984175597303660107"],
-        "dimensions": ["ciStatus"],
-        "datasource": "customer-interaction-metrics",
-        "aggregations": {"count": aggregators.doublesum("count")},
-        "group_by": ["timestamp", "ciStatus"],
-        "pivot": Pivot(
-            index="timestamp",
-            columns=["ciStatus"],
-            value=["count"],
-        ),
-        "hours": 24,
-    }
+    chunked_out = fetcher.chunked_fetch(
+        **get_args,
+        chunked_hours=1,
+    )
+    full_out = fetcher.fetch(**get_args)
+    assert chunked_out.empty
+    assert full_out.empty
+
+
+def test_chunked_fetch_err(get_args):
+    fetcher = DruidFetcher(url="http://localhost:8888", endpoint="druid/v2/")
     with pytest.raises(ValueError):
         fetcher.chunked_fetch(
-            **kwargs,
+            **get_args,
             chunked_hours=0,
         )
