@@ -11,12 +11,13 @@ from pydruid.utils.filters import Filter
 
 from numalogic.connectors._base import DataFetcher
 from numalogic.connectors._config import Pivot
-from typing import Optional
+from typing import Optional, Final
 
 from numalogic.tools.exceptions import DruidFetcherError
 
 _LOGGER = logging.getLogger(__name__)
-TIMEOUT = 10000
+TIMEOUT: Final[int] = 10000
+_MAX_CONCURRENCY: Final[int] = 16
 
 
 # TODO: pass dictionary of keys and values as dict
@@ -253,7 +254,7 @@ class DruidFetcher(DataFetcher):
             )
             hours_elapsed += chunked_hours
 
-        max_threads = max(16, len(qparams))
+        max_threads = min(_MAX_CONCURRENCY, len(qparams))
         _LOGGER.debug("Fetching data concurrently with %s threads", max_threads)
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
             futures = [executor.submit(self._fetch, **params) for params in qparams]
