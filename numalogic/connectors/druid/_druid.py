@@ -1,6 +1,6 @@
 import logging
 import time
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -236,9 +236,10 @@ class DruidFetcher(DataFetcher):
         hours_elapsed = 0
         chunked_dfs = []
         qparams = []
+        curr_time = datetime.now(pytz.utc)
 
         while hours_elapsed < hours:
-            ref_dt = datetime.now(pytz.utc) - timedelta(hours=hours_elapsed)
+            ref_dt = curr_time - timedelta(hours=hours_elapsed)
             qparams.append(
                 build_params(
                     datasource=datasource,
@@ -258,7 +259,7 @@ class DruidFetcher(DataFetcher):
         _LOGGER.debug("Fetching data concurrently with %s threads", max_threads)
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
             futures = [executor.submit(self._fetch, **params) for params in qparams]
-            for future in as_completed(futures):
+            for future in futures:
                 chunked_dfs.append(future.result())
 
         df = pd.concat(chunked_dfs, axis=0, ignore_index=True)
