@@ -111,13 +111,32 @@ def udf_args():
 
 
 @freeze_time(datetime.now() + timedelta(hours=7))
-def test_inference(udf, udf_args, mocker):
+def test_inference_01(udf, udf_args, mocker):
     mocker.patch.object(
         RedisRegistry,
         "load",
         return_value=ArtifactData(
             artifact=VanillaAE(seq_len=12, n_features=2),
             extras=dict(version="0", timestamp=time.time(), source="registry"),
+            metadata={},
+        ),
+    )
+    msgs = udf(*udf_args)
+    assert len(msgs) == 1
+    payload = StreamPayload(**orjson.loads(msgs[0].value))
+    assert Header.MODEL_INFERENCE == payload.header
+    assert payload.status == Status.ARTIFACT_FOUND
+    assert (12, 2) == payload.get_data().shape
+
+
+@freeze_time(datetime.now() + timedelta(hours=7))
+def test_inference_02(udf, udf_args, mocker):
+    mocker.patch.object(
+        RedisRegistry,
+        "load",
+        return_value=ArtifactData(
+            artifact=VanillaAE(seq_len=12, n_features=2),
+            extras=dict(version="0", timestamp=time.time(), source="cache"),
             metadata={},
         ),
     )

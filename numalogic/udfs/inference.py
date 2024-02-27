@@ -230,11 +230,10 @@ class InferenceUDF(NumalogicUDF):
         _conf = self.get_ml_pipeline_conf(
             config_id=payload.config_id, pipeline_id=payload.pipeline_id
         )
-        if (
-            self.model_registry.is_artifact_stale(
-                artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr
-            )
-            and artifact_data.extras.get("source", "registry") == "registry"
+        if artifact_data.extras.get(
+            "source", "registry"
+        ) == "registry" and self.model_registry.is_artifact_stale(
+            artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr
         ):
             _LOGGER.info(
                 "%s - Inference artifact found is stale, Keys: %s, Metric: %s",
