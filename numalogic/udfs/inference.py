@@ -14,7 +14,7 @@ from numalogic.config import RegistryFactory
 from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
-from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._config import PipelineConf, StreamConf
 from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
@@ -23,7 +23,7 @@ from numalogic.udfs._metrics import (
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.udfs.entities import StreamPayload, Header, Status
+from numalogic.udfs.entities import StreamPayload, Status, TrainerPayload
 from numalogic.udfs.tools import _load_artifact, _update_info_metric
 
 _LOGGER = logging.getLogger(__name__)
@@ -86,6 +86,33 @@ class InferenceUDF(NumalogicUDF):
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)
 
+    @staticmethod
+    def _get_trainer_message(
+        keys: list[str],
+        stream_conf: StreamConf,
+        payload: StreamPayload,
+        *metric_values: str,
+    ) -> Message:
+        ckeys = [_ckey for _, _ckey in zip(stream_conf.composite_keys, payload.composite_keys)]
+        train_payload = TrainerPayload(
+            uuid=payload.uuid,
+            composite_keys=ckeys,
+            metrics=payload.metrics,
+            config_id=payload.config_id,
+            pipeline_id=payload.pipeline_id,
+        )
+        if metric_values:
+            _increment_counter(
+                counter=MODEL_STATUS_COUNTER,
+                labels=(payload.status.value, *metric_values),
+            )
+        _LOGGER.info(
+            "%s - Sending training request for: %s",
+            train_payload.uuid,
+            train_payload.composite_keys,
+        )
+        return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
+
     @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
@@ -110,25 +137,13 @@ class InferenceUDF(NumalogicUDF):
             payload.config_id,
             payload.pipeline_id,
         )
-
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
-
         _LOGGER.debug(
             "%s - Received Msg: { CompositeKeys: %s, Metrics: %s }",
             payload.uuid,
             payload.composite_keys,
             payload.metrics,
         )
-
-        # Forward payload if a training request is tagged
-        if payload.header == Header.TRAIN_REQUEST:
-            _LOGGER.info(
-                "%s - Forwarding the message with the key: %s to next vertex because header is: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.header,
-            )
-            return Messages(Message(keys=keys, value=payload.to_json()))
 
         _stream_conf = self.get_stream_conf(payload.config_id)
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
@@ -144,17 +159,9 @@ class InferenceUDF(NumalogicUDF):
 
         # Send training request if artifact loading is not successful
         if not artifact_data:
-            payload = replace(
-                payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
+            return Messages(
+                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
             )
-            _increment_counter(
-                counter=MODEL_STATUS_COUNTER,
-                labels=(
-                    payload.status.value,
-                    *_metric_label_values,
-                ),
-            )
-            return Messages(Message(keys=keys, value=payload.to_json()))
 
         # Perform inference
         try:
@@ -168,25 +175,28 @@ class InferenceUDF(NumalogicUDF):
                 payload.composite_keys,
                 payload.metrics,
             )
-            payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
-            _increment_counter(
-                counter=MODEL_STATUS_COUNTER, labels=(payload.status.value, *_metric_label_values)
+            return Messages(
+                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
             )
-            return Messages(Message(keys=keys, value=payload.to_json()))
-        else:
-            status = (
-                Status.ARTIFACT_STALE
-                if self.is_model_stale(artifact_data, payload)
-                else Status.ARTIFACT_FOUND
-            )
-            payload = replace(
-                payload,
-                data=x_inferred,
-                status=status,
-                metadata={
-                    "model_version": int(artifact_data.extras.get("version")),
-                    **payload.metadata,
-                },
+
+        msgs = Messages()
+        status = (
+            Status.ARTIFACT_STALE
+            if self.is_model_stale(artifact_data, payload)
+            else Status.ARTIFACT_FOUND
+        )
+        payload = replace(
+            payload,
+            data=x_inferred,
+            status=status,
+            metadata={
+                "model_version": int(artifact_data.extras.get("version")),
+                **payload.metadata,
+            },
+        )
+        if status == Status.ARTIFACT_STALE:
+            msgs.append(
+                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
             )
 
         _LOGGER.info(
@@ -195,16 +205,15 @@ class InferenceUDF(NumalogicUDF):
             payload.composite_keys,
             payload.metrics,
         )
+        _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
+        msgs.append(Message(keys=keys, value=payload.to_json()))
+
         _LOGGER.debug(
             "%s - Time taken in inference: %.4f sec",
             payload.uuid,
             time.perf_counter() - _start_time,
         )
-        _increment_counter(
-            counter=MODEL_STATUS_COUNTER, labels=(payload.status.value, *_metric_label_values)
-        )
-        _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
-        return Messages(Message(keys=keys, value=payload.to_json()))
+        return msgs
 
     def is_model_stale(self, artifact_data: ArtifactData, payload: StreamPayload) -> bool:
         """

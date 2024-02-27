@@ -25,8 +25,8 @@ from numalogic.udfs._metrics import (
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import PipelineConf
-from numalogic.udfs.entities import Status, Header
+from numalogic.udfs._config import PipelineConf, StreamConf
+from numalogic.udfs.entities import Status, Header, TrainerPayload, StreamPayload
 from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact, _update_info_metric
 
 # TODO: move to config
@@ -130,7 +130,8 @@ class PreprocessUDF(NumalogicUDF):
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < _stream_conf.window_size or raw_df.shape[1] != len(_conf.metrics):
-            _LOGGER.error("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
+            _LOGGER.critical("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
+            print(_metric_label_values)
             _increment_counter(
                 counter=DATASHAPE_ERROR_COUNTER,
                 labels=_metric_label_values,
@@ -168,14 +169,7 @@ class PreprocessUDF(NumalogicUDF):
                 )
                 payload = replace(payload, status=Status.ARTIFACT_FOUND)
             else:
-                payload = replace(
-                    payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
-                )
-                _increment_counter(
-                    counter=MODEL_STATUS_COUNTER,
-                    labels=(payload.status.value, *_metric_label_values),
-                )
-                return Messages(Message(keys=keys, value=payload.to_json()))
+                return Messages(self._get_trainer_message(keys, _stream_conf, payload))
         # Model will not be in registry
         else:
             # Load configuration for the config_id
@@ -217,32 +211,50 @@ class PreprocessUDF(NumalogicUDF):
                 payload.metrics,
             )
             # TODO check again what error is causing this and if retraining is required
-            payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
-            _increment_counter(
-                counter=MODEL_STATUS_COUNTER,
-                labels=(
-                    payload.status.value,
-                    *_metric_label_values,
-                ),
+            payload = replace(
+                payload,
+                status=Status.RUNTIME_ERROR,
             )
-            return Messages(Message(keys=keys, value=payload.to_json()))
+            return Messages(
+                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
+            )
+        _increment_counter(
+            counter=MSG_PROCESSED_COUNTER,
+            labels=_metric_label_values,
+        )
         _LOGGER.debug(
             "%s - Time taken to execute Preprocess: %.4f sec",
             payload.uuid,
             time.perf_counter() - _start_time,
         )
-        _increment_counter(
-            counter=MODEL_STATUS_COUNTER,
-            labels=(
-                payload.status.value,
-                *_metric_label_values,
-            ),
+        return Messages(Message(keys=keys, value=payload.to_json(), tags=["inference"]))
+
+    @staticmethod
+    def _get_trainer_message(
+        keys: list[str],
+        stream_conf: StreamConf,
+        payload: StreamPayload,
+        *metric_values: str,
+    ) -> Message:
+        ckeys = [_ckey for _, _ckey in zip(stream_conf.composite_keys, payload.composite_keys)]
+        train_payload = TrainerPayload(
+            uuid=payload.uuid,
+            composite_keys=ckeys,
+            metrics=payload.metrics,
+            config_id=payload.config_id,
+            pipeline_id=payload.pipeline_id,
         )
-        _increment_counter(
-            counter=MSG_PROCESSED_COUNTER,
-            labels=_metric_label_values,
+        if metric_values:
+            _increment_counter(
+                counter=MODEL_STATUS_COUNTER,
+                labels=(payload.status.value, *metric_values),
+            )
+        _LOGGER.info(
+            "%s - Sending training request for: %s",
+            train_payload.uuid,
+            train_payload.composite_keys,
         )
-        return Messages(Message(keys=keys, value=payload.to_json()))
+        return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
 
     @classmethod
     def compute(
@@ -263,11 +275,8 @@ class PreprocessUDF(NumalogicUDF):
         ------
             RuntimeError: If preprocess fails
         """
-        _start_time = time.perf_counter()
         try:
             x_scaled = model.transform(input_)
-            _LOGGER.info("Time taken in preprocessing: %.4f sec", time.perf_counter() - _start_time)
         except Exception as err:
             raise RuntimeError("Model transform failed!") from err
-        else:
-            return x_scaled
+        return x_scaled

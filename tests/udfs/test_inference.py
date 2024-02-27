@@ -1,8 +1,7 @@
 import time
-import unittest
 from datetime import datetime, timedelta
-from unittest.mock import patch, Mock
 
+import pytest
 from fakeredis import FakeServer, FakeStrictRedis
 from freezegun import freeze_time
 from orjson import orjson
@@ -13,7 +12,7 @@ from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.udfs import StreamConf, InferenceUDF, MLPipelineConf
-from numalogic.udfs.entities import StreamPayload, Header, Status
+from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload
 
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
 KEYS = ["service-mesh", "1", "2"]
@@ -81,162 +80,123 @@ DATA = {
 }
 
 
-class TestInferenceUDF(unittest.TestCase):
-    def setUp(self) -> None:
-        self.udf = InferenceUDF(REDIS_CLIENT)
-        self.udf.register_conf(
-            "conf1",
-            StreamConf(
-                ml_pipelines={
-                    "pipeline1": MLPipelineConf(
-                        pipeline_id="pipeline1",
-                        numalogic_conf=NumalogicConf(
-                            model=ModelInfo(
-                                name="VanillaAE", conf={"seq_len": 12, "n_features": 2}
-                            ),
-                            trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
-                        ),
-                    )
-                }
-            ),
-        )
-
-    @patch.object(
-        RedisRegistry,
-        "load",
-        Mock(
-            return_value=ArtifactData(
-                artifact=VanillaAE(seq_len=12, n_features=2),
-                extras=dict(version="0", timestamp=time.time(), source="registry"),
-                metadata={},
-            )
+@pytest.fixture
+def udf():
+    udf = InferenceUDF(REDIS_CLIENT)
+    udf.register_conf(
+        "conf1",
+        StreamConf(
+            ml_pipelines={
+                "pipeline1": MLPipelineConf(
+                    pipeline_id="pipeline1",
+                    numalogic_conf=NumalogicConf(
+                        model=ModelInfo(name="VanillaAE", conf={"seq_len": 12, "n_features": 2}),
+                        trainer=TrainerConf(pltrainer_conf=LightningTrainerConf(max_epochs=1)),
+                    ),
+                )
+            }
         ),
     )
-    def test_inference(self):
-        with freeze_time(datetime.now() + timedelta(hours=7)):
-            msgs = self.udf(
-                KEYS,
-                Datum(
-                    keys=KEYS,
-                    value=orjson.dumps(DATA),
-                    **DATUM_KW,
-                ),
-            )
-        self.assertEqual(1, len(msgs))
-        payload = StreamPayload(**orjson.loads(msgs[0].value))
-        self.assertEqual(Header.MODEL_INFERENCE, payload.header)
-        self.assertIsNotNone(payload.status)
-        self.assertTupleEqual((12, 2), payload.get_data().shape)
+    yield udf
+    REDIS_CLIENT.flushall()
 
-    @patch.object(
+
+@pytest.fixture()
+def udf_args():
+    return KEYS, Datum(
+        keys=KEYS,
+        value=orjson.dumps(DATA),
+        **DATUM_KW,
+    )
+
+
+@freeze_time(datetime.now() + timedelta(hours=7))
+def test_inference(udf, udf_args, mocker):
+    mocker.patch.object(
         RedisRegistry,
         "load",
-        Mock(
-            return_value=ArtifactData(
-                artifact=VanillaAE(seq_len=12, n_features=2),
-                extras=dict(
-                    version="1",
-                    timestamp=(datetime.now() - timedelta(hours=25)).timestamp(),
-                    source="registry",
-                ),
-                metadata={},
-            )
+        return_value=ArtifactData(
+            artifact=VanillaAE(seq_len=12, n_features=2),
+            extras=dict(version="0", timestamp=time.time(), source="registry"),
+            metadata={},
         ),
     )
-    def test_inference_stale(self):
-        msgs = self.udf(
-            KEYS,
-            Datum(
-                keys=KEYS,
-                value=orjson.dumps(DATA),
-                **DATUM_KW,
-            ),
-        )
-        self.assertEqual(1, len(msgs))
-        payload = StreamPayload(**orjson.loads(msgs[0].value))
-        self.assertEqual(Header.MODEL_INFERENCE, payload.header)
-        self.assertEqual(Status.ARTIFACT_STALE, payload.status)
-        self.assertTupleEqual((12, 2), payload.get_data().shape)
+    msgs = udf(*udf_args)
+    assert len(msgs) == 1
+    payload = StreamPayload(**orjson.loads(msgs[0].value))
+    assert Header.MODEL_INFERENCE == payload.header
+    assert payload.status == Status.ARTIFACT_FOUND
+    assert (12, 2) == payload.get_data().shape
 
-    def test_inference_train_request(self):
-        data = DATA.copy()
-        data["header"] = Header.TRAIN_REQUEST.value
-        msgs = self.udf(
-            KEYS,
-            Datum(
-                keys=KEYS,
-                value=orjson.dumps(data),
-                **DATUM_KW,
-            ),
-        )
-        self.assertEqual(1, len(msgs))
-        payload = StreamPayload(**orjson.loads(msgs[0].value))
-        self.assertEqual(Header.TRAIN_REQUEST, payload.header)
-        self.assertIsNone(payload.status)
 
-    def test_inference_no_artifact(self):
-        msgs = self.udf(
-            KEYS,
-            Datum(
-                keys=KEYS,
-                value=orjson.dumps(DATA),
-                **DATUM_KW,
-            ),
-        )
-        self.assertEqual(1, len(msgs))
-        payload = StreamPayload(**orjson.loads(msgs[0].value))
-        self.assertEqual(Header.TRAIN_REQUEST, payload.header)
-        self.assertEqual(Status.ARTIFACT_NOT_FOUND, payload.status)
-
-    @patch.object(
+def test_inference_stale(udf, udf_args, mocker):
+    mocker.patch.object(
         RedisRegistry,
         "load",
-        Mock(
-            return_value=ArtifactData(
-                artifact=VanillaAE(seq_len=12, n_features=2),
-                extras=dict(
-                    version="1",
-                    timestamp=(datetime.now() - timedelta(hours=25)).timestamp(),
-                    source="registry",
-                ),
-                metadata={},
-            )
+        return_value=ArtifactData(
+            artifact=VanillaAE(seq_len=12, n_features=2),
+            extras=dict(
+                version="1",
+                timestamp=(datetime.now() - timedelta(hours=25)).timestamp(),
+                source="registry",
+            ),
+            metadata={},
         ),
     )
-    @patch.object(InferenceUDF, "compute", Mock(side_effect=RuntimeError))
-    def test_inference_compute_err(self):
-        msgs = self.udf(
-            KEYS,
-            Datum(
-                keys=KEYS,
-                value=orjson.dumps(DATA),
-                **DATUM_KW,
-            ),
-        )
-        self.assertEqual(1, len(msgs))
-        payload = StreamPayload(**orjson.loads(msgs[0].value))
-        self.assertEqual(Header.TRAIN_REQUEST, payload.header)
-        self.assertEqual(Status.RUNTIME_ERROR, payload.status)
+    msgs = udf(*udf_args)
+    assert len(msgs) == 2
 
-    @patch.object(
+    trainer_payload = TrainerPayload(**orjson.loads(msgs[0].value))
+    assert Header.TRAIN_REQUEST == trainer_payload.header
+
+    stream_payload = StreamPayload(**orjson.loads(msgs[1].value))
+    assert Header.MODEL_INFERENCE == stream_payload.header
+    assert (12, 2) == stream_payload.get_data().shape
+
+
+def test_inference_no_artifact(udf, udf_args):
+    msgs = udf(*udf_args)
+    assert len(msgs) == 1
+    payload = TrainerPayload(**orjson.loads(msgs[0].value))
+    assert Header.TRAIN_REQUEST == payload.header
+
+
+def test_registry_error(udf, udf_args, mocker):
+    mocker.patch.object(RedisRegistry, "load", side_effect=RedisRegistryError())
+    msgs = udf(*udf_args)
+    assert len(msgs) == 1
+    payload = TrainerPayload(**orjson.loads(msgs[0].value))
+    assert Header.TRAIN_REQUEST == payload.header
+
+
+def test_compute_err(udf, udf_args, mocker):
+    mocker.patch.object(
         RedisRegistry,
         "load",
-        Mock(side_effect=RedisRegistryError()),
+        return_value=ArtifactData(
+            artifact=VanillaAE(seq_len=12, n_features=2),
+            extras=dict(version="0", timestamp=time.time(), source="registry"),
+            metadata={},
+        ),
     )
-    def test_redis_registry_err(self):
-        msgs = self.udf(
-            KEYS,
-            Datum(
-                keys=KEYS,
-                value=orjson.dumps(DATA),
-                **DATUM_KW,
-            ),
-        )
-        self.assertEqual(1, len(msgs))
-        payload = StreamPayload(**orjson.loads(msgs[0].value))
-        self.assertEqual(Header.TRAIN_REQUEST, payload.header)
-        self.assertEqual(Status.ARTIFACT_NOT_FOUND, payload.status)
+    mocker.patch.object(InferenceUDF, "compute", side_effect=RuntimeError)
+    msgs = udf(*udf_args)
+    assert len(msgs) == 1
+    payload = TrainerPayload(**orjson.loads(msgs[0].value))
+    assert Header.TRAIN_REQUEST == payload.header
 
 
-if __name__ == "__main__":
-    unittest.main()
+def test_model_pass_error(udf, udf_args, mocker):
+    mocker.patch.object(
+        RedisRegistry,
+        "load",
+        return_value=ArtifactData(
+            artifact=VanillaAE(seq_len=12, n_features=1),
+            extras=dict(version="0", timestamp=time.time(), source="registry"),
+            metadata={},
+        ),
+    )
+    msgs = udf(*udf_args)
+    assert len(msgs) == 1
+    payload = TrainerPayload(**orjson.loads(msgs[0].value))
+    assert Header.TRAIN_REQUEST == payload.header
