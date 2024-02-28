@@ -111,7 +111,7 @@ def udf_args():
 
 
 @freeze_time(datetime.now() + timedelta(hours=7))
-def test_inference_01(udf, udf_args, mocker):
+def test_inference_reg(udf, udf_args, mocker):
     mocker.patch.object(
         RedisRegistry,
         "load",
@@ -127,10 +127,11 @@ def test_inference_01(udf, udf_args, mocker):
     assert Header.MODEL_INFERENCE == payload.header
     assert payload.status == Status.ARTIFACT_FOUND
     assert (12, 2) == payload.get_data().shape
+    assert msgs[0].tags == ["postprocess"]
 
 
 @freeze_time(datetime.now() + timedelta(hours=7))
-def test_inference_02(udf, udf_args, mocker):
+def test_inference_cache(udf, udf_args, mocker):
     mocker.patch.object(
         RedisRegistry,
         "load",
@@ -146,6 +147,7 @@ def test_inference_02(udf, udf_args, mocker):
     assert Header.MODEL_INFERENCE == payload.header
     assert payload.status == Status.ARTIFACT_FOUND
     assert (12, 2) == payload.get_data().shape
+    assert msgs[0].tags == ["postprocess"]
 
 
 def test_inference_stale(udf, udf_args, mocker):
@@ -167,10 +169,12 @@ def test_inference_stale(udf, udf_args, mocker):
 
     trainer_payload = TrainerPayload(**orjson.loads(msgs[0].value))
     assert Header.TRAIN_REQUEST == trainer_payload.header
+    assert msgs[0].tags == ["train"]
 
     stream_payload = StreamPayload(**orjson.loads(msgs[1].value))
     assert Header.MODEL_INFERENCE == stream_payload.header
     assert (12, 2) == stream_payload.get_data().shape
+    assert msgs[1].tags == ["postprocess"]
 
 
 def test_inference_no_artifact(udf, udf_args):
@@ -178,6 +182,7 @@ def test_inference_no_artifact(udf, udf_args):
     assert len(msgs) == 1
     payload = TrainerPayload(**orjson.loads(msgs[0].value))
     assert Header.TRAIN_REQUEST == payload.header
+    assert msgs[0].tags == ["train"]
 
 
 def test_registry_error(udf, udf_args, mocker):
@@ -186,6 +191,7 @@ def test_registry_error(udf, udf_args, mocker):
     assert len(msgs) == 1
     payload = TrainerPayload(**orjson.loads(msgs[0].value))
     assert Header.TRAIN_REQUEST == payload.header
+    assert msgs[0].tags == ["train"]
 
 
 def test_compute_err(udf, udf_args, mocker):
@@ -203,6 +209,7 @@ def test_compute_err(udf, udf_args, mocker):
     assert len(msgs) == 1
     payload = TrainerPayload(**orjson.loads(msgs[0].value))
     assert Header.TRAIN_REQUEST == payload.header
+    assert msgs[0].tags == ["train"]
 
 
 def test_model_pass_error(udf, udf_args, mocker):
@@ -219,3 +226,4 @@ def test_model_pass_error(udf, udf_args, mocker):
     assert len(msgs) == 1
     payload = TrainerPayload(**orjson.loads(msgs[0].value))
     assert Header.TRAIN_REQUEST == payload.header
+    assert msgs[0].tags == ["train"]

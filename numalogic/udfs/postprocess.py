@@ -231,6 +231,7 @@ class PostprocessUDF(NumalogicUDF):
 
             # Compute adjusted unified score
             a_adjusted = self.compute_adjusted_score(a_unified, y_unified)
+            _LOGGER.debug("y_unified: %s, y_features: %s", y_unified, y_features)
             return a_adjusted, y_unified, y_features
         return a_unified, None, None
 
@@ -421,8 +422,7 @@ class PostprocessUDF(NumalogicUDF):
         -------
             Aggregated threshold scores of shape (n_features,)
         """
-        upper_limits = list(score_conf.adjust.upper_limits.values())
-        clf = SigmoidThreshold(upper_limits)
+        clf = SigmoidThreshold(*score_conf.adjust.upper_limits.values())
         y_features = clf.score_samples(input_)
         return cls.compute_feature_scores(y_features, score_conf.adjust.window_agg)
 

@@ -137,6 +137,7 @@ def test_postprocess(udf, mocker, artifact, data):
     assert len(msg) == 1
     payload = OutputPayload(**orjson.loads(msg[0].value))
     assert payload.unified_anomaly is not None
+    assert msg[0].tags == ["output"]
     print(payload)
 
 
@@ -145,6 +146,7 @@ def test_postprocess_no_artifact(udf):
     assert len(msg) == 1
     payload = TrainerPayload(**orjson.loads(msg[0].value))
     assert payload.header == Header.TRAIN_REQUEST
+    assert msg[0].tags == ["train"]
 
 
 def test_postprocess_runtime_err_01(udf, mocker, artifact):
@@ -152,6 +154,7 @@ def test_postprocess_runtime_err_01(udf, mocker, artifact):
     mocker.patch.object(PostprocessUDF, "compute", side_effect=RuntimeError)
     msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
     assert len(msg) == 1
+    assert msg[0].tags == ["train"]
     payload = TrainerPayload(**orjson.loads(msg[0].value))
     assert payload.header == Header.TRAIN_REQUEST
 
@@ -162,6 +165,7 @@ def test_postprocess_runtime_err_02(udf, mocker, bad_artifact):
     assert len(msg) == 1
     payload = TrainerPayload(**orjson.loads(msg[0].value))
     assert payload.header == Header.TRAIN_REQUEST
+    assert msg[0].tags == ["train"]
 
 
 def test_compute(udf, artifact):
