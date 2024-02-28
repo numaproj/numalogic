@@ -21,17 +21,16 @@ from numalogic.registry import LocalLRUCache
 from numalogic.tools.aggregators import aggregate_window, aggregate_features
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import PipelineConf, MLPipelineConf, StreamConf
+from numalogic.udfs._config import PipelineConf, MLPipelineConf
 from numalogic.udfs._metrics import (
-    MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload, OutputPayload
-from numalogic.udfs.tools import _load_artifact
+from numalogic.udfs.entities import StreamPayload, Header, Status, OutputPayload
+from numalogic.udfs.tools import _load_artifact, get_trainer_message
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -124,9 +123,7 @@ class PostprocessUDF(NumalogicUDF):
             payload = replace(
                 payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
             )
-            return Messages(
-                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
-            )
+            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 
         if payload.header == Header.STATIC_INFERENCE:
             _LOGGER.warning("Static inference not supported in postprocess yet")
@@ -157,9 +154,7 @@ class PostprocessUDF(NumalogicUDF):
                 payload.composite_keys,
                 payload.metrics,
             )
-            return Messages(
-                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
-            )
+            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 
         payload = replace(
             payload,
@@ -205,6 +200,22 @@ class PostprocessUDF(NumalogicUDF):
     def _adjust_score(
         self, mlpl_conf: MLPipelineConf, a_unified: float, payload: StreamPayload
     ) -> tuple[float, Optional[float], Optional[NDArray[float]]]:
+        """
+        Adjust the unified score using static threshold scores.
+
+        Args:
+        -------
+            mlpl_conf: MLPipelineConf object
+            a_unified: Unified anomaly score
+            payload: StreamPayload object
+
+        Returns
+        -------
+            A tuple consisting of
+                Adjusted unified score,
+                Unified static threshold score,
+                Static threshold scores per feature
+        """
         adjust_conf = mlpl_conf.numalogic_conf.score.adjust
         if adjust_conf:
             # Compute static threshold scores
@@ -231,6 +242,21 @@ class PostprocessUDF(NumalogicUDF):
         y_features: Optional[NDArray[float]] = None,
         y_unified: Optional[float] = None,
     ) -> dict[str, float]:
+        """
+        Get additional scores.
+
+        Args:
+        -------
+            feat_names: Feature names
+            a_features: ML model anomaly scores per feature
+            a_unified: ML model unified anomaly score
+            y_features: Static threshold scores per feature
+            y_unified: Static threshold unified score
+
+        Returns
+        -------
+            Dictionary with additional output scores
+        """
         data = self._per_feature_score(feat_names, a_features)
         data["namespace_app_rollouts_ML"] = a_unified
         if y_unified is not None:
@@ -249,47 +275,6 @@ class PostprocessUDF(NumalogicUDF):
             )
             return {}
         return dict(zip(feat_names, scores))
-
-    @staticmethod
-    def _get_trainer_message(
-        keys: list[str],
-        stream_conf: StreamConf,
-        payload: StreamPayload,
-        *metric_values: str,
-    ) -> Message:
-        """
-        Get message for training request.
-
-        Args:
-        -------
-            keys: List of keys
-            stream_conf: StreamConf instance
-            payload: StreamPayload object
-            metric_values: Optional metric values for monitoring
-
-        Returns
-        -------
-            Mapper Message instance
-        """
-        ckeys = [_ckey for _, _ckey in zip(stream_conf.composite_keys, payload.composite_keys)]
-        train_payload = TrainerPayload(
-            uuid=payload.uuid,
-            composite_keys=ckeys,
-            metrics=payload.metrics,
-            config_id=payload.config_id,
-            pipeline_id=payload.pipeline_id,
-        )
-        if metric_values:
-            _increment_counter(
-                counter=MODEL_STATUS_COUNTER,
-                labels=(payload.status, *metric_values),
-            )
-        _LOGGER.info(
-            "%s - Sending training request for: %s",
-            train_payload.uuid,
-            train_payload.composite_keys,
-        )
-        return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
 
     @classmethod
     def compute(

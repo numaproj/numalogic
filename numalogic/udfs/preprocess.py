@@ -18,16 +18,21 @@ from numalogic.udfs._metrics import (
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
     RUNTIME_ERROR_COUNTER,
-    MODEL_STATUS_COUNTER,
     UDF_TIME,
     _increment_counter,
 )
 from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import PipelineConf, StreamConf
-from numalogic.udfs.entities import Status, Header, TrainerPayload, StreamPayload
-from numalogic.udfs.tools import make_stream_payload, get_df, _load_artifact, _update_info_metric
+from numalogic.udfs._config import PipelineConf
+from numalogic.udfs.entities import Status, Header
+from numalogic.udfs.tools import (
+    make_stream_payload,
+    get_df,
+    _load_artifact,
+    _update_info_metric,
+    get_trainer_message,
+)
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -169,7 +174,7 @@ class PreprocessUDF(NumalogicUDF):
                 )
                 payload = replace(payload, status=Status.ARTIFACT_FOUND)
             else:
-                return Messages(self._get_trainer_message(keys, _stream_conf, payload))
+                return Messages(get_trainer_message(keys, _stream_conf, payload))
         # Model will not be in registry
         else:
             # Load configuration for the config_id
@@ -215,9 +220,7 @@ class PreprocessUDF(NumalogicUDF):
                 payload,
                 status=Status.RUNTIME_ERROR,
             )
-            return Messages(
-                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
-            )
+            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
         _increment_counter(
             counter=MSG_PROCESSED_COUNTER,
             labels=_metric_label_values,
@@ -228,33 +231,6 @@ class PreprocessUDF(NumalogicUDF):
             time.perf_counter() - _start_time,
         )
         return Messages(Message(keys=keys, value=payload.to_json(), tags=["inference"]))
-
-    @staticmethod
-    def _get_trainer_message(
-        keys: list[str],
-        stream_conf: StreamConf,
-        payload: StreamPayload,
-        *metric_values: str,
-    ) -> Message:
-        ckeys = [_ckey for _, _ckey in zip(stream_conf.composite_keys, payload.composite_keys)]
-        train_payload = TrainerPayload(
-            uuid=payload.uuid,
-            composite_keys=ckeys,
-            metrics=payload.metrics,
-            config_id=payload.config_id,
-            pipeline_id=payload.pipeline_id,
-        )
-        if metric_values:
-            _increment_counter(
-                counter=MODEL_STATUS_COUNTER,
-                labels=(payload.status.value, *metric_values),
-            )
-        _LOGGER.info(
-            "%s - Sending training request for: %s",
-            train_payload.uuid,
-            train_payload.composite_keys,
-        )
-        return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
 
     @classmethod
     def compute(

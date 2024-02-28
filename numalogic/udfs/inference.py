@@ -14,17 +14,16 @@ from numalogic.config import RegistryFactory
 from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
-from numalogic.udfs._config import PipelineConf, StreamConf
+from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._metrics import (
-    MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.udfs.entities import StreamPayload, Status, TrainerPayload
-from numalogic.udfs.tools import _load_artifact, _update_info_metric
+from numalogic.udfs.entities import StreamPayload, Status
+from numalogic.udfs.tools import _load_artifact, _update_info_metric, get_trainer_message
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -86,33 +85,6 @@ class InferenceUDF(NumalogicUDF):
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)
 
-    @staticmethod
-    def _get_trainer_message(
-        keys: list[str],
-        stream_conf: StreamConf,
-        payload: StreamPayload,
-        *metric_values: str,
-    ) -> Message:
-        ckeys = [_ckey for _, _ckey in zip(stream_conf.composite_keys, payload.composite_keys)]
-        train_payload = TrainerPayload(
-            uuid=payload.uuid,
-            composite_keys=ckeys,
-            metrics=payload.metrics,
-            config_id=payload.config_id,
-            pipeline_id=payload.pipeline_id,
-        )
-        if metric_values:
-            _increment_counter(
-                counter=MODEL_STATUS_COUNTER,
-                labels=(payload.status, *metric_values),
-            )
-        _LOGGER.info(
-            "%s - Sending training request for: %s",
-            train_payload.uuid,
-            train_payload.composite_keys,
-        )
-        return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
-
     @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
@@ -159,9 +131,7 @@ class InferenceUDF(NumalogicUDF):
 
         # Send training request if artifact loading is not successful
         if not artifact_data:
-            return Messages(
-                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
-            )
+            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 
         # Perform inference
         try:
@@ -175,9 +145,7 @@ class InferenceUDF(NumalogicUDF):
                 payload.composite_keys,
                 payload.metrics,
             )
-            return Messages(
-                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
-            )
+            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 
         msgs = Messages()
         status = (
@@ -195,9 +163,7 @@ class InferenceUDF(NumalogicUDF):
             },
         )
         if status == Status.ARTIFACT_STALE:
-            msgs.append(
-                self._get_trainer_message(keys, _stream_conf, payload, *_metric_label_values)
-            )
+            msgs.append(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 
         _LOGGER.info(
             "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s }",

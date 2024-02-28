@@ -7,12 +7,13 @@ from collections.abc import Sequence
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+from pynumaflow.mapper import Message
 
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import KEYS, redis_client_t
 from numalogic.udfs._config import StreamConf
-from numalogic.udfs.entities import StreamPayload
+from numalogic.udfs.entities import StreamPayload, TrainerPayload
 from numalogic.udfs._metrics import (
     SOURCE_COUNTER,
     MODEL_INFO,
@@ -22,6 +23,7 @@ from numalogic.udfs._metrics import (
     _add_info,
     RECORDED_DATA_GAUGE,
     _set_gauge,
+    MODEL_STATUS_COUNTER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -411,3 +413,44 @@ class TrainMsgDeduplicator:
             return False
         _LOGGER.info("%s - Acknowledging model saving complete for the key: %s", uuid, key)
         return True
+
+
+def get_trainer_message(
+    keys: list[str],
+    stream_conf: StreamConf,
+    payload: StreamPayload,
+    *metric_values: str,
+) -> Message:
+    """
+    Get message for training request.
+
+    Args:
+    -------
+        keys: List of keys
+        stream_conf: StreamConf instance
+        payload: StreamPayload object
+        metric_values: Optional metric values for monitoring
+
+    Returns
+    -------
+        Mapper Message instance
+    """
+    ckeys = [_ckey for _, _ckey in zip(stream_conf.composite_keys, payload.composite_keys)]
+    train_payload = TrainerPayload(
+        uuid=payload.uuid,
+        composite_keys=ckeys,
+        metrics=payload.metrics,
+        config_id=payload.config_id,
+        pipeline_id=payload.pipeline_id,
+    )
+    if metric_values:
+        _increment_counter(
+            counter=MODEL_STATUS_COUNTER,
+            labels=(payload.status, *metric_values),
+        )
+    _LOGGER.info(
+        "%s - Sending training request for: %s",
+        train_payload.uuid,
+        train_payload.composite_keys,
+    )
+    return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
