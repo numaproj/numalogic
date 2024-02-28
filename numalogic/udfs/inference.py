@@ -104,7 +104,7 @@ class InferenceUDF(NumalogicUDF):
         if metric_values:
             _increment_counter(
                 counter=MODEL_STATUS_COUNTER,
-                labels=(payload.status.value, *metric_values),
+                labels=(payload.status, *metric_values),
             )
         _LOGGER.info(
             "%s - Sending training request for: %s",

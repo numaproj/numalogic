@@ -39,7 +39,7 @@ class StaticThreshold(BaseThresholdModel):
         self.outlier_score = float(outlier_score)
         self.inlier_score = float(inlier_score)
 
-        if self.outlier_score > self.inlier_score:
+        if self.outlier_score < self.inlier_score:
             raise ValueError("Outlier score needs to be greater than inlier score")
 
     def fit(self, _: npt.NDArray[float]) -> Self:

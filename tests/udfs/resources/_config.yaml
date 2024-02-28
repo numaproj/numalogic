@@ -27,6 +27,12 @@ stream_confs:
             name: "StdDevThreshold"
             conf:
               min_threshold: 0.1
+          score:
+            feature_agg:
+              method: MAX
+            adjust:
+              upper_limits:
+                "col1": 23
           trainer:
             train_hours: 3
             min_train_size: 100
@@ -53,6 +59,14 @@ stream_confs:
             name: "StdDevThreshold"
             conf:
               min_threshold: 0.1
+          score:
+            feature_agg:
+              method: MEAN
+            adjust:
+              upper_limits:
+                "col1": 20
+                "col2": 18
+
 
 redis_conf:
   url: "isbsvc-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-e2e.svc"

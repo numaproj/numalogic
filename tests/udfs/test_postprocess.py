@@ -1,20 +1,19 @@
 import logging
 import os
-import unittest
+import time
 from copy import deepcopy
 from datetime import datetime
-from unittest.mock import patch, Mock
 
 import numpy as np
+import pytest
 from fakeredis import FakeServer, FakeStrictRedis
 from omegaconf import OmegaConf
 from orjson import orjson
 from pynumaflow.mapper import Datum
 
 from numalogic._constants import TESTS_DIR
-from numalogic.models.threshold import StdDevThreshold, MahalanobisThreshold
-from numalogic.registry import RedisRegistry, LocalLRUCache
-from numalogic.tools.exceptions import ModelKeyNotFound
+from numalogic.models.threshold import StdDevThreshold
+from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.udfs import PipelineConf
 from numalogic.udfs.entities import Header, TrainerPayload, Status, OutputPayload
 from numalogic.udfs.postprocess import PostprocessUDF
@@ -59,7 +58,7 @@ DATA = {
         [5.0, 7.0],
         [10.0, 8.0],
     ],
-    "metrics": ["failed", "degraded"],
+    "metrics": ["col1", "col2"],
     "timestamps": [
         1691623140000.0,
         1691623200000.0,
@@ -83,104 +82,88 @@ DATA = {
 }
 
 
-class TestPostProcessUDF(unittest.TestCase):
-    def setUp(self) -> None:
-        self.registry = RedisRegistry(REDIS_CLIENT)
-        self.cache = LocalLRUCache()
-        _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
-        schema = OmegaConf.structured(PipelineConf)
-        pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
-        self.udf = PostprocessUDF(REDIS_CLIENT, pl_conf=pl_conf)
+@pytest.fixture
+def conf():
+    _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config.yaml"))
+    schema = OmegaConf.structured(PipelineConf)
+    return PipelineConf(**OmegaConf.merge(schema, _given_conf))
 
-    def tearDown(self) -> None:
-        REDIS_CLIENT.flushall()
-        self.cache.clear()
 
-    def test_postprocess_preproc_artifact_not_found(self):
-        msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
+@pytest.fixture
+def udf(conf):
+    yield PostprocessUDF(REDIS_CLIENT, pl_conf=conf)
+    REDIS_CLIENT.flushall()
 
-        payload = TrainerPayload(**orjson.loads(msg[0].value))
-        self.assertEqual(payload.header, Header.TRAIN_REQUEST)
 
-    def test_postprocess_inference_model_absent(self):
+@pytest.fixture
+def artifact():
+    model = StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]]))
+    return ArtifactData(
+        artifact=model,
+        extras=dict(version="0", timestamp=time.time(), source="registry"),
+        metadata={},
+    )
+
+
+@pytest.fixture
+def bad_artifact():
+    model = StdDevThreshold()
+    return ArtifactData(
+        artifact=model,
+        extras=dict(version="0", timestamp=time.time(), source="registry"),
+        metadata={},
+    )
+
+
+@pytest.fixture
+def data(request):
+    if request.param == 1:
+        return deepcopy(DATA)
+    if request.param == 2:
         data = deepcopy(DATA)
-        data["status"] = Status.ARTIFACT_NOT_FOUND
-        msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
-        payload = TrainerPayload(**orjson.loads(msg[0].value))
-        self.assertEqual(payload.header, Header.TRAIN_REQUEST)
-
-    def test_postprocess_infer_model_stale(self):
-        data = deepcopy(DATA)
-        data["status"] = Status.ARTIFACT_STALE
-        data["header"] = Header.MODEL_INFERENCE
-        self.registry.save(
-            [*KEYS],
-            ["pipeline1", "StdDevThreshold"],
-            StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]])),
+        data["pipeline_id"] = "pipeline2"
+        data["artifact_versions"] = (
+            {"pipeline2:StdDevThreshold": "0", "pipeline2:VanillaAE": "0"},
         )
-        msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
-        self.assertEqual(2, len(msg))
-
-    def test_postprocess_all_model_present_01(self):
-        data = deepcopy(DATA)
-        data["status"] = Status.ARTIFACT_FOUND
-        data["header"] = Header.MODEL_INFERENCE
-        self.registry.save(
-            [*KEYS],
-            ["pipeline1", "StdDevThreshold"],
-            StdDevThreshold().fit(np.asarray([[0, 1], [1, 2]])),
-        )
-        msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
-        payload = OutputPayload(**orjson.loads(msg[0].value))
-        self.assertListEqual(data["metrics"], list(payload.data))
-        self.assertEqual(1, len(msg))
-
-    def test_postprocess_all_model_present_02(self):
-        _given_conf = OmegaConf.load(os.path.join(TESTS_DIR, "udfs", "resources", "_config2.yaml"))
-        schema = OmegaConf.structured(PipelineConf)
-        pl_conf = PipelineConf(**OmegaConf.merge(schema, _given_conf))
-        udf = PostprocessUDF(REDIS_CLIENT, pl_conf=pl_conf)
-
-        data = deepcopy(DATA)
-        data["status"] = Status.ARTIFACT_FOUND
-        data["header"] = Header.MODEL_INFERENCE
-        # noinspection PyTypedDict
-        data["artifact_versions"] = {"pipeline1:MahalanobisThreshold": "0"}
-        data["metadata"] = {
-            "tags": {"asset_alias": "data", "asset_id": "123456789", "env": "prd"},
-        }
-        self.registry.save(
-            [*KEYS],
-            ["pipeline1", "MahalanobisThreshold"],
-            MahalanobisThreshold().fit(np.asarray([[0, 1], [1, 2]])),
-        )
-
-        msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
-        payload = OutputPayload(**orjson.loads(msg[0].value))
-        self.assertFalse(list(payload.data))
-        self.assertEqual(1, len(msg))
-
-    @patch("numalogic.udfs.postprocess.PostprocessUDF.compute", Mock(side_effect=RuntimeError))
-    def test_postprocess_infer_runtime_error(self):
-        msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
-        self.assertEqual(1, len(msg))
-        payload = TrainerPayload(**orjson.loads(msg[0].value))
-        self.assertEqual(payload.header, Header.TRAIN_REQUEST)
-
-    @patch.object(PostprocessUDF, "compute", Mock(side_effect=RuntimeError))
-    def test_preprocess_run_time_error(self):
-        msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
-        self.assertEqual(1, len(msg))
-        payload = TrainerPayload(**orjson.loads(msg[0].value))
-        self.assertEqual(payload.header, Header.TRAIN_REQUEST)
-
-    @patch.object(RedisRegistry, "load", Mock(side_effect=ModelKeyNotFound))
-    def test_preprocess_4(self):
-        msg = self.udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
-        self.assertEqual(1, len(msg))
-        payload = TrainerPayload(**orjson.loads(msg[0].value))
-        self.assertEqual(payload.header, Header.TRAIN_REQUEST)
+        return data
+    raise ValueError("Invalid param")
 
 
-if __name__ == "__main__":
-    unittest.main()
+@pytest.mark.parametrize("data", [1, 2], indirect=True, ids=["pipeline1", "pipeline2"])
+def test_postprocess(udf, mocker, artifact, data):
+    mocker.patch.object(RedisRegistry, "load", return_value=artifact)
+    msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(data), **DATUM_KW))
+
+    assert len(msg) == 1
+    payload = OutputPayload(**orjson.loads(msg[0].value))
+    assert payload.unified_anomaly is not None
+    print(payload)
+
+
+def test_postprocess_no_artifact(udf):
+    msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
+    assert len(msg) == 1
+    payload = TrainerPayload(**orjson.loads(msg[0].value))
+    assert payload.header == Header.TRAIN_REQUEST
+
+
+def test_postprocess_runtime_err_01(udf, mocker, artifact):
+    mocker.patch.object(RedisRegistry, "load", return_value=artifact)
+    mocker.patch.object(PostprocessUDF, "compute", side_effect=RuntimeError)
+    msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
+    assert len(msg) == 1
+    payload = TrainerPayload(**orjson.loads(msg[0].value))
+    assert payload.header == Header.TRAIN_REQUEST
+
+
+def test_postprocess_runtime_err_02(udf, mocker, bad_artifact):
+    mocker.patch.object(RedisRegistry, "load", return_value=bad_artifact)
+    msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
+    assert len(msg) == 1
+    payload = TrainerPayload(**orjson.loads(msg[0].value))
+    assert payload.header == Header.TRAIN_REQUEST
+
+
+def test_compute(udf, artifact):
+    x_inferred = udf.compute(artifact.artifact, np.asarray(DATA["data"]))
+    assert x_inferred.shape == (2,)

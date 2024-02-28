@@ -17,6 +17,7 @@ from numalogic.config._config import (
     RegistryInfo,
     TrainerConf,
     ScoreConf,
+    AggregatorConf,
 )
 from numalogic.config.factory import (
     ModelFactory,
@@ -40,5 +41,6 @@ __all__ = [
     "RegistryFactory",
     "TrainerConf",
     "ScoreConf",
+    "AggregatorConf",
     "AggregatorFactory",
 ]
