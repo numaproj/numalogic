@@ -172,7 +172,7 @@ class InferenceUDF(NumalogicUDF):
             payload.metrics,
         )
         _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
-        msgs.append(Message(keys=keys, value=payload.to_json()))
+        msgs.append(Message(keys=keys, value=payload.to_json(), tags=["postprocess"]))
 
         _LOGGER.debug(
             "%s - Time taken in inference: %.4f sec",
