@@ -30,7 +30,7 @@ from numalogic.udfs._metrics import (
     _increment_counter,
 )
 from numalogic.udfs.entities import StreamPayload, Header, Status, OutputPayload
-from numalogic.udfs.tools import _load_artifact, get_trainer_message
+from numalogic.udfs.tools import _load_artifact, get_trainer_message, get_static_thresh_message
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -123,7 +123,11 @@ class PostprocessUDF(NumalogicUDF):
             payload = replace(
                 payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
             )
-            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
+            # Send training request if artifact loading is not successful
+            msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
+            if _conf.numalogic_conf.score.adjust:
+                msgs.append(get_static_thresh_message(keys, payload))
+            return msgs
 
         if payload.header == Header.STATIC_INFERENCE:
             _LOGGER.warning("Static inference not supported in postprocess yet")
@@ -154,7 +158,11 @@ class PostprocessUDF(NumalogicUDF):
                 payload.composite_keys,
                 payload.metrics,
             )
-            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
+            # Send training request if postprocess fails
+            msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
+            if _conf.numalogic_conf.score.adjust:
+                msgs.append(get_static_thresh_message(keys, payload))
+            return msgs
 
         payload = replace(
             payload,

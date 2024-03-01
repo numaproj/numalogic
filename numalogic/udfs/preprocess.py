@@ -32,6 +32,7 @@ from numalogic.udfs.tools import (
     _load_artifact,
     _update_info_metric,
     get_trainer_message,
+    get_static_thresh_message,
 )
 
 # TODO: move to config
@@ -136,7 +137,6 @@ class PreprocessUDF(NumalogicUDF):
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < _stream_conf.window_size or raw_df.shape[1] != len(_conf.metrics):
             _LOGGER.critical("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
-            print(_metric_label_values)
             _increment_counter(
                 counter=DATASHAPE_ERROR_COUNTER,
                 labels=_metric_label_values,
@@ -174,7 +174,10 @@ class PreprocessUDF(NumalogicUDF):
                 )
                 payload = replace(payload, status=Status.ARTIFACT_FOUND)
             else:
-                return Messages(get_trainer_message(keys, _stream_conf, payload))
+                msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
+                if _conf.numalogic_conf.score.adjust:
+                    msgs.append(get_static_thresh_message(keys, payload))
+                return msgs
         # Model will not be in registry
         else:
             # Load configuration for the config_id
@@ -220,7 +223,13 @@ class PreprocessUDF(NumalogicUDF):
                 payload,
                 status=Status.RUNTIME_ERROR,
             )
-            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
+            msgs = Messages(
+                get_trainer_message(keys, _stream_conf, payload, *_metric_label_values),
+            )
+            if _conf.numalogic_conf.score.adjust:
+                msgs.append(get_static_thresh_message(keys, payload))
+            return msgs
+
         _increment_counter(
             counter=MSG_PROCESSED_COUNTER,
             labels=_metric_label_values,

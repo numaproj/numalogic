@@ -454,3 +454,25 @@ def get_trainer_message(
         train_payload.composite_keys,
     )
     return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
+
+
+def get_static_thresh_message(keys: list[str], payload: StreamPayload) -> Message:
+    """
+    Get message for static thresholding request.
+
+    Args:
+    -------
+        keys: List of keys
+        stream_conf: StreamConf instance
+        payload: StreamPayload object
+
+    Returns
+    -------
+        Mapper Message instance
+    """
+    _LOGGER.info(
+        "%s - Sending static thresholding request for: %s",
+        payload.uuid,
+        payload.composite_keys,
+    )
+    return Message(keys=keys, value=payload.to_json(), tags=["staticthresh"])

@@ -142,30 +142,33 @@ def test_postprocess(udf, mocker, artifact, data):
 
 
 def test_postprocess_no_artifact(udf):
-    msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
-    assert len(msg) == 1
-    payload = TrainerPayload(**orjson.loads(msg[0].value))
+    msgs = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
+    assert len(msgs) == 2
+    payload = TrainerPayload(**orjson.loads(msgs[0].value))
     assert payload.header == Header.TRAIN_REQUEST
-    assert msg[0].tags == ["train"]
+    assert msgs[0].tags == ["train"]
+    assert msgs[1].tags == ["staticthresh"]
 
 
 def test_postprocess_runtime_err_01(udf, mocker, artifact):
     mocker.patch.object(RedisRegistry, "load", return_value=artifact)
     mocker.patch.object(PostprocessUDF, "compute", side_effect=RuntimeError)
-    msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
-    assert len(msg) == 1
-    assert msg[0].tags == ["train"]
-    payload = TrainerPayload(**orjson.loads(msg[0].value))
+    msgs = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
+    assert len(msgs) == 2
+    assert msgs[0].tags == ["train"]
+    payload = TrainerPayload(**orjson.loads(msgs[0].value))
     assert payload.header == Header.TRAIN_REQUEST
+    assert msgs[1].tags == ["staticthresh"]
 
 
 def test_postprocess_runtime_err_02(udf, mocker, bad_artifact):
     mocker.patch.object(RedisRegistry, "load", return_value=bad_artifact)
-    msg = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
-    assert len(msg) == 1
-    payload = TrainerPayload(**orjson.loads(msg[0].value))
+    msgs = udf(KEYS, Datum(keys=KEYS, value=orjson.dumps(DATA), **DATUM_KW))
+    assert len(msgs) == 2
+    payload = TrainerPayload(**orjson.loads(msgs[0].value))
     assert payload.header == Header.TRAIN_REQUEST
-    assert msg[0].tags == ["train"]
+    assert msgs[0].tags == ["train"]
+    assert msgs[1].tags == ["staticthresh"]
 
 
 def test_compute(udf, artifact):

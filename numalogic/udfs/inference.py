@@ -23,7 +23,12 @@ from numalogic.udfs._metrics import (
     _increment_counter,
 )
 from numalogic.udfs.entities import StreamPayload, Status
-from numalogic.udfs.tools import _load_artifact, _update_info_metric, get_trainer_message
+from numalogic.udfs.tools import (
+    _load_artifact,
+    _update_info_metric,
+    get_trainer_message,
+    get_static_thresh_message,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -131,7 +136,10 @@ class InferenceUDF(NumalogicUDF):
 
         # Send training request if artifact loading is not successful
         if not artifact_data:
-            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
+            msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
+            if _conf.numalogic_conf.score.adjust:
+                msgs.append(get_static_thresh_message(keys, payload))
+            return msgs
 
         # Perform inference
         try:
@@ -145,7 +153,11 @@ class InferenceUDF(NumalogicUDF):
                 payload.composite_keys,
                 payload.metrics,
             )
-            return Messages(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
+            # Send training request if inference fails
+            msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
+            if _conf.numalogic_conf.score.adjust:
+                msgs.append(get_static_thresh_message(keys, payload))
+            return msgs
 
         msgs = Messages()
         status = (
@@ -162,6 +174,7 @@ class InferenceUDF(NumalogicUDF):
                 **payload.metadata,
             },
         )
+        # Send trainer message if artifact is stale
         if status == Status.ARTIFACT_STALE:
             msgs.append(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 

@@ -100,9 +100,13 @@ def test_preprocess_run_time_error(setup, mocker):
     mocker.patch.object(PreprocessUDF, "compute", side_effect=RuntimeError)
     udf1, _ = setup
     msg = udf1(KEYS, DATUM)
-    payload = TrainerPayload(**orjson.loads(msg[0].value))
-    assert len(msg) == 1
-    assert payload.header == Header.TRAIN_REQUEST
+    assert len(msg) == 2
+    payload_1 = TrainerPayload(**orjson.loads(msg[0].value))
+    assert payload_1.header == Header.TRAIN_REQUEST
+    assert msg[0].tags == ["train"]
+    payload_2 = StreamPayload(**orjson.loads(msg[1].value))
+    assert msg[1].tags == ["staticthresh"]
+    assert payload_2.status == Status.RUNTIME_ERROR
 
 
 def test_preprocess_data_error(setup):
