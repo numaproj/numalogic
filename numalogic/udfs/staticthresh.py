@@ -1,4 +1,5 @@
 import logging
+import os
 
 from orjson import orjson
 from pynumaflow.mapper import Datum, Messages, Message
@@ -12,6 +13,7 @@ import numpy.typing as npt
 from numalogic.udfs.entities import StreamPayload, OutputPayload
 
 
+SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -23,7 +25,7 @@ class StaticThresholdUDF(NumalogicUDF):
         pl_conf: PipelineConf object
     """
 
-    def __init__(self, pl_conf: PipelineConf):
+    def __init__(self, pl_conf: PipelineConf, **_):
         super().__init__(pl_conf=pl_conf, _vtx="staticthresh")
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
@@ -91,7 +93,7 @@ class StaticThresholdUDF(NumalogicUDF):
         -------
             Additional scores
         """
-        scores_payload = {"unified_ST": y_unified}
+        scores_payload = {f"{SCORE_PREFIX}_ST": y_unified}
         if (scores_len := len(y_features)) == len(feat_names):
             _LOGGER.debug(
                 "Scores length: %s does not match feat_names: %s",

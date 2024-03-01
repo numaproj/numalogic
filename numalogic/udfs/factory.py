@@ -25,6 +25,7 @@ class UDFFactory:
     from numalogic.udfs.postprocess import PostprocessUDF
     from numalogic.udfs.preprocess import PreprocessUDF
     from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
+    from numalogic.udfs.staticthresh import StaticThresholdUDF
 
     nl_udf_t = TypeVar("nl_udf_t", bound=NumalogicUDF, covariant=True)
 
@@ -35,6 +36,7 @@ class UDFFactory:
         "postprocess": PostprocessUDF,
         "druidtrainer": DruidTrainerUDF,
         "promtrainer": PromTrainerUDF,
+        "staticthresh": StaticThresholdUDF,
     }
 
     @classmethod

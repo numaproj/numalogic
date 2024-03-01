@@ -36,6 +36,7 @@ from numalogic.udfs.tools import _load_artifact, get_trainer_message, get_static
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
+SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -274,9 +275,9 @@ class PostprocessUDF(NumalogicUDF):
             Dictionary with additional output scores
         """
         data = self._per_feature_score(feat_names, a_features)
-        data["unified_ML"] = a_unified
+        data[f"{SCORE_PREFIX}_ML"] = a_unified
         if y_unified is not None:
-            data["unified_ST"] = y_unified
+            data[f"{SCORE_PREFIX}_ST"] = y_unified
         if y_features is not None:
             _feat_names = [f"{f}_ST" for f in score_conf.adjust.upper_limits]
             data |= self._per_feature_score(_feat_names, y_features)
