@@ -161,8 +161,14 @@ class PostprocessUDF(NumalogicUDF):
             data=a_features,
             header=Header.MODEL_INFERENCE,
         )
+        # Construct output payload with feature level scores
         out_data = self._additional_scores(
-            payload.metrics, a_features, a_unified, y_features, y_unified
+            feat_names=payload.metrics,
+            a_features=a_features,
+            a_unified=a_unified,
+            y_features=y_features,
+            y_unified=y_unified,
+            score_conf=_conf.numalogic_conf.score,
         )
         out_payload = OutputPayload(
             uuid=payload.uuid,
@@ -176,8 +182,7 @@ class PostprocessUDF(NumalogicUDF):
         )
         _LOGGER.info(
             "%s - Successfully post-processed, Keys: %s, Score: %s, "
-            "Model Score: %s, Static Score: %s, Feature "
-            "Scores: %s",
+            "Model Score: %s, Static Score: %s, Feature Scores: %s",
             out_payload.uuid,
             out_payload.composite_keys,
             out_payload.unified_anomaly,
@@ -242,6 +247,7 @@ class PostprocessUDF(NumalogicUDF):
         a_unified: float,
         y_features: Optional[NDArray[float]] = None,
         y_unified: Optional[float] = None,
+        score_conf: Optional[ScoreConf] = None,
     ) -> dict[str, float]:
         """
         Get additional scores.
@@ -253,17 +259,19 @@ class PostprocessUDF(NumalogicUDF):
             a_unified: ML model unified anomaly score
             y_features: Static threshold scores per feature
             y_unified: Static threshold unified score
+            score_conf: Score Config
 
         Returns
         -------
             Dictionary with additional output scores
         """
         data = self._per_feature_score(feat_names, a_features)
-        data["namespace_app_rollouts_ML"] = a_unified
+        data["unified_ML"] = a_unified
         if y_unified is not None:
-            data["namespace_app_rollouts_ST"] = y_unified
+            data["unified_ST"] = y_unified
         if y_features is not None:
-            data |= self._per_feature_score([f"{f}_ST" for f in feat_names], y_features)
+            _feat_names = [f"{f}_ST" for f in score_conf.adjust.upper_limits]
+            data |= self._per_feature_score(_feat_names, y_features)
         return data
 
     @staticmethod
