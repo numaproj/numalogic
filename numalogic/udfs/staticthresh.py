@@ -74,6 +74,13 @@ class StaticThresholdUDF(NumalogicUDF):
             data=self._additional_scores(payload.metrics, y_features, y_unified),
             metadata=payload.metadata,
         )
+        _LOGGER.info(
+            "%s - Sending output payload, Keys: %s, Score: %s, Feature Scores: %s",
+            out_payload.uuid,
+            out_payload.composite_keys,
+            y_unified,
+            y_features,
+        )
         return Messages(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 
     @staticmethod
