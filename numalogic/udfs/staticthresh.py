@@ -71,7 +71,7 @@ class StaticThresholdUDF(NumalogicUDF):
             composite_keys=payload.composite_keys,
             timestamp=payload.end_ts,
             unified_anomaly=y_unified,
-            data=self._additional_scores(payload.metrics, y_features, y_unified),
+            data=self._additional_scores(adjust_conf, y_features, y_unified),
             metadata=payload.metadata,
         )
         _LOGGER.info(
@@ -85,7 +85,7 @@ class StaticThresholdUDF(NumalogicUDF):
 
     @staticmethod
     def _additional_scores(
-        feat_names: list[str], y_features: npt.NDArray[float], y_unified: float
+        adjust_conf: ScoreAdjustConf, y_features: npt.NDArray[float], y_unified: float
     ) -> dict[str, float]:
         """
         Additional scores to be computed.
@@ -101,13 +101,8 @@ class StaticThresholdUDF(NumalogicUDF):
             Additional scores
         """
         scores_payload = {f"{SCORE_PREFIX}_ST": y_unified}
-        if (scores_len := len(y_features)) == len(feat_names):
-            _LOGGER.debug(
-                "Scores length: %s does not match feat_names: %s",
-                scores_len,
-                feat_names,
-            )
-            scores_payload |= dict(zip(feat_names, y_features))
+        _feat_names = [f"{f}_ST" for f in adjust_conf.upper_limits]
+        scores_payload |= dict(zip(_feat_names, y_features))
         return scores_payload
 
     @classmethod

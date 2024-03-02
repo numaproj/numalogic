@@ -101,8 +101,8 @@ def test_staticthresh(udf, udf_args):
 
     assert_array_almost_equal(payload.unified_anomaly, 1.666, decimal=3)
     assert payload.data
-    assert_array_almost_equal(payload.data["col1"], 1.666, decimal=3)
-    assert_array_almost_equal(payload.data["col2"], 1.25, decimal=3)
+    assert_array_almost_equal(payload.data["col1_ST"], 1.666, decimal=3)
+    assert_array_almost_equal(payload.data["col2_ST"], 1.25, decimal=3)
     assert payload.unified_anomaly == payload.data.get("unified_ST")
 
 
