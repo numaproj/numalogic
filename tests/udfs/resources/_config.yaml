@@ -39,18 +39,18 @@ stream_confs:
               max_epochs: 40
 
 redis_conf:
-  url: "isbsvc-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-e2e.svc"
+  url: ""
   port: 26379
   expiry: 360
   master_name: "mymaster"
 
 druid_conf:
-  url: "https://obelix.odldruid-prd.a.intuit.com/"
-  endpoint: "druid/v2"
+  url: ""
+  endpoint: ""
   id_fetcher:
     fciPluginAppInteractions-metrics:
         dimensions: [ "ciStatus" ]
-        datasource: "tech-ip-customer-interaction-metrics"
+        datasource: ""
         group_by: [ "timestamp", "ciStatus" ]
         pivot:
           columns: [ "ciStatus" ]
