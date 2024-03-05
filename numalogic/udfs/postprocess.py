@@ -118,7 +118,7 @@ class PostprocessUDF(NumalogicUDF):
             load_latest=LOAD_LATEST,
             vertex=self._vtx,
         )
-        postproc_clf = self.postproc_factory.get_instance(postprocess_cfg)
+        postproc_tx = self.postproc_factory.get_instance(postprocess_cfg)
 
         if thresh_artifact is None:
             payload = replace(
@@ -140,7 +140,7 @@ class PostprocessUDF(NumalogicUDF):
                 model=thresh_artifact.artifact,
                 input_=payload.get_data(),
                 score_conf=_conf.numalogic_conf.score,
-                postproc_clf=postproc_clf,
+                postproc_tx=postproc_tx,
             )  # (nfeat,)
 
             # Compute unified score
