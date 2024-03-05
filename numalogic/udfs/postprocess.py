@@ -234,6 +234,7 @@ class PostprocessUDF(NumalogicUDF):
             raise RuntimeError("Score config not provided!")
 
         scores = cls.compute_threshold(model, input_)  # (seqlen x nfeat)
+        print("threshold\n", scores)
         win_scores = cls.compute_feature_scores(scores, score_conf)
         if postproc_clf:
             win_scores = cls.compute_postprocess(postproc_clf, win_scores)  # (seqlen x nfeat)

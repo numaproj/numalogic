@@ -160,6 +160,8 @@ class InferenceUDF(NumalogicUDF):
         try:
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
             _update_info_metric(x_inferred, payload.metrics, _metric_label_values)
+
+            print("x_inf: ", x_inferred)
         except RuntimeError:
             _increment_counter(counter=RUNTIME_ERROR_COUNTER, labels=_metric_label_values)
             _LOGGER.exception(

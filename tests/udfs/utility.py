@@ -27,7 +27,7 @@ def input_json_from_file(data_path: str) -> Datum:
         data = json.dumps(data).encode("utf-8")
 
     return Datum(
-        keys=["service-mesh", "1", "2"],
+        keys=["6200348379382484805", "4831254092648450521" ,"Acquire109xDocuments_Flow"],
         value=data,
         event_time=datetime.datetime.now(),
         watermark=datetime.datetime.now(),

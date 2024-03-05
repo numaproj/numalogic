@@ -46,9 +46,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
         REDIS_CLIENT.flushall()
         payload = {
             "uuid": "some-uuid",
-            "config_id": "druid-config",
-            "pipeline_id": "pipeline1",
-            "composite_keys": ["5984175597303660107"],
+            "config_id": "fciPluginAppInteractions",
+            "pipeline_id": "metrics",
+            "composite_keys": ["6200348379382484805", "4831254092648450521" ,"Acquire109xDocuments_Flow"],
             "metrics": ["failed", "degraded"],
         }
         self.keys = payload["composite_keys"]
@@ -74,28 +74,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_01(self):
-        self.udf1.register_conf(
-            "druid-config",
-            StreamConf(
-                ml_pipelines={
-                    "pipeline1": MLPipelineConf(
-                        pipeline_id="pipeline1",
-                        numalogic_conf=NumalogicConf(
-                            model=ModelInfo(
-                                name="VanillaAE",
-                                stateful=True,
-                                conf={"seq_len": 12, "n_features": 2},
-                            ),
-                            preprocess=[ModelInfo(name="LogTransformer", stateful=True, conf={})],
-                            trainer=TrainerConf(
-                                pltrainer_conf=LightningTrainerConf(accelerator="cpu", max_epochs=1)
-                            ),
-                        ),
-                    )
-                }
-            ),
-        )
+
         self.udf1(self.keys, self.datum)
+
 
         self.assertEqual(
             2,

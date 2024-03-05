@@ -1,3 +1,4 @@
+import copy
 import logging
 import time
 from dataclasses import asdict
@@ -100,6 +101,7 @@ class TrainerUDF(NumalogicUDF):
         if not (numalogic_cfg and numalogic_cfg.trainer):
             raise ConfigNotFoundError("Numalogic Trainer config not found!")
         dict_artifacts = {}
+        tmp = copy.deepcopy(input_)
         trainer_cfg = numalogic_cfg.trainer
         if preproc_clf:
             input_ = preproc_clf.fit_transform(input_)
@@ -129,6 +131,7 @@ class TrainerUDF(NumalogicUDF):
                 stateful=numalogic_cfg.threshold.stateful,
             )
 
+
         return dict_artifacts
 
     @UDF_TIME.time()
@@ -144,6 +147,7 @@ class TrainerUDF(NumalogicUDF):
         -------
             Messages instance (no forwarding)
         """
+        print("Correct!")
         _start_time = time.perf_counter()
 
         # Construct payload object
