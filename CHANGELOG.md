@@ -1,5 +1,30 @@
 # Changelog
 
+## v0.8.0 (2024-03-05)
+
+ * [8dee66b](https://github.com/numaproj/numalogic/commit/8dee66bc29e9799c39da656a3beed26c28242c99) feat!: support static threshold score adjustment (#350)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.8.dev0 (2024-02-28)
+
+ * [4e93088](https://github.com/numaproj/numalogic/commit/4e93088c6694457c431fb32e20d5d4477c4579cf) bump dev version
+ * [81971dc](https://github.com/numaproj/numalogic/commit/81971dcf5045f7e6350067ce73ee84609b7b810a) fix: static threshold
+ * [db943a6](https://github.com/numaproj/numalogic/commit/db943a6768136bd61bad1cb6614a68680c10f1ec) fix: conditional fwd tags
+ * [c0225a9](https://github.com/numaproj/numalogic/commit/c0225a967b08e360c426fe35f886c129f2a50363) refactor
+ * [8f8a532](https://github.com/numaproj/numalogic/commit/8f8a532c3312048489834b570e25c7b8773ebd20) feat: score adjustment with joined trainer vtx
+ * [ac0eda1](https://github.com/numaproj/numalogic/commit/ac0eda176187c41e4b1aa960b8d0d1cfaeacda38) more tests
+ * [6623e2b](https://github.com/numaproj/numalogic/commit/6623e2b1d0f85180c472037809b01b4176549eeb) feat: trainer join vertex for preprocess & inference
+ * [fb97b3a](https://github.com/numaproj/numalogic/commit/fb97b3a5bbe2668bb19a6680c04a6f337f3b05fa) feat: allow chunked druid fetch (#349)
+ * [d8bda0e](https://github.com/numaproj/numalogic/commit/d8bda0e159cc89af95daa70b2acd6b276a4f49c1) feat: Multivariate Anomaly Detection (#343)
+ * [d0dcb47](https://github.com/numaproj/numalogic/commit/d0dcb472fe5fcb80df33c51088332f946180e55a) feat: score adjuster using static threshold
+
+### Contributors
+
+ * Avik Basu
+
 ## v0.7.0 (2024-02-08)
 
  * [b41a7f7](https://github.com/numaproj/numalogic/commit/b41a7f72ca92bd635e20d2cb125d45329038448a) fix: comments
