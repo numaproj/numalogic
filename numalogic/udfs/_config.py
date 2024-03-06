@@ -13,21 +13,8 @@ from numalogic.connectors import (
     DruidConf,
 )
 from numalogic.tools.exceptions import ConfigNotFoundError
-from numalogic.udfs.entities import ScoreFunc
 
 _logger = logging.getLogger(__name__)
-
-
-@dataclass
-class UnifiedScoreConf:
-    """
-    A data class representing the configuration for unified scoring.
-
-    Args:
-        scoring_function (str): The scoring function to be used. Defaults to "max".
-    """
-
-    scoring_function: ScoreFunc = ScoreFunc.MAX
 
 
 @dataclass
@@ -38,13 +25,11 @@ class MLPipelineConf:
     Args:
         pipeline_id (str): The ID of the pipeline. Defaults to "default".
         metrics (List[str]): A list of metrics to be used in the pipeline.
-        unified_scoring_conf (UnifiedScoreConf): The configuration for unified scoring.
         numalogic_conf (NumalogicConf): The configuration for Numalogic.
     """
 
     pipeline_id: str = "default"
     metrics: list[str] = field(default_factory=list)
-    unified_scoring_conf: UnifiedScoreConf = field(default_factory=lambda: UnifiedScoreConf())
     numalogic_conf: NumalogicConf = field(default_factory=lambda: NumalogicConf())
 
 

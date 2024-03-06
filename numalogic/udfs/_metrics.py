@@ -32,7 +32,7 @@ MODEL_STATUS_COUNTER = PromCounterMetric(
 DATASHAPE_ERROR_COUNTER = PromCounterMetric(
     "numalogic_datashape_error_counter",
     "Count datashape errors in preprocess",
-    ["source", "composite_key", "config_id", "pipeline_id"],
+    ["source", "vertex", "composite_key", "config_id", "pipeline_id"],
 )
 MSG_DROPPED_COUNTER = PromCounterMetric(
     "numalogic_msg_dropped_counter",

@@ -20,6 +20,7 @@ from torch.distributions import kl_divergence, Bernoulli
 from torch.nn.init import calculate_gain
 
 from numalogic.models.autoencoder.base import BaseAE
+from numalogic.tools.exceptions import ModelInitializationError
 
 LOGGER = logging.getLogger(__name__)
 
@@ -223,9 +224,10 @@ class Conv1dAE(BaseAE):
             enc_kernel_sizes = [enc_kernel_sizes for _ in range(len(enc_channels))]
 
         elif isinstance(enc_kernel_sizes, Sequence):
-            assert len(enc_channels) == len(
-                enc_kernel_sizes
-            ), "enc_channels and enc_kernel_sizes should be of the same length"
+            if len(enc_channels) != len(enc_kernel_sizes):
+                raise ModelInitializationError(
+                    "enc_channels and enc_kernel_sizes should be of the same length"
+                )
         else:
             raise TypeError(f"Invalid enc_kernel_sizes type provided: {type(enc_kernel_sizes)}")
 
