@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 
 from numalogic._constants import TESTS_DIR
 from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
+from numalogic.tools.exceptions import ModelInitializationError
 from numalogic.tools.trainer import TimeseriesTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.models.autoencoder.variants.conv import SparseConv1dAE
@@ -86,7 +87,7 @@ class TestConvAE(unittest.TestCase):
             break
 
     def test_conv1d_err(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ModelInitializationError):
             Conv1dAE(
                 seq_len=SEQ_LEN,
                 in_channels=self.X_train.shape[1],

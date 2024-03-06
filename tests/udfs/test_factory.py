@@ -2,7 +2,7 @@ import unittest
 
 from fakeredis import FakeRedis, FakeServer
 
-from numalogic.udfs import UDFFactory, ServerFactory
+from numalogic.udfs import UDFFactory, ServerFactory, PipelineConf
 
 
 class TestUDFFactory(unittest.TestCase):
@@ -18,9 +18,15 @@ class TestUDFFactory(unittest.TestCase):
         with self.assertRaises(ValueError):
             UDFFactory.get_udf_cls("some_udf")
 
-    def test_get_instance(self):
+    def test_get_instance_01(self):
         udf = UDFFactory.get_udf_instance("preprocess", r_client=FakeRedis(server=FakeServer()))
         self.assertIsInstance(udf, UDFFactory.get_udf_cls("preprocess"))
+
+    def test_get_instance_02(self):
+        udf = UDFFactory.get_udf_instance(
+            "staticthresh", pl_conf=PipelineConf(), r_client=FakeRedis(server=FakeServer())
+        )
+        self.assertIsInstance(udf, UDFFactory.get_udf_cls("staticthresh"))
 
 
 class TestServerFactory(unittest.TestCase):

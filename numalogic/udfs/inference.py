@@ -16,15 +16,19 @@ from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._metrics import (
-    MODEL_STATUS_COUNTER,
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
     MSG_IN_COUNTER,
     UDF_TIME,
     _increment_counter,
 )
-from numalogic.udfs.entities import StreamPayload, Header, Status
-from numalogic.udfs.tools import _load_artifact, _update_info_metric
+from numalogic.udfs.entities import StreamPayload, Status
+from numalogic.udfs.tools import (
+    _load_artifact,
+    _update_info_metric,
+    get_trainer_message,
+    get_static_thresh_message,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -110,25 +114,13 @@ class InferenceUDF(NumalogicUDF):
             payload.config_id,
             payload.pipeline_id,
         )
-
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
-
         _LOGGER.debug(
             "%s - Received Msg: { CompositeKeys: %s, Metrics: %s }",
             payload.uuid,
             payload.composite_keys,
             payload.metrics,
         )
-
-        # Forward payload if a training request is tagged
-        if payload.header == Header.TRAIN_REQUEST:
-            _LOGGER.info(
-                "%s - Forwarding the message with the key: %s to next vertex because header is: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.header,
-            )
-            return Messages(Message(keys=keys, value=payload.to_json()))
 
         _stream_conf = self.get_stream_conf(payload.config_id)
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
@@ -144,17 +136,10 @@ class InferenceUDF(NumalogicUDF):
 
         # Send training request if artifact loading is not successful
         if not artifact_data:
-            payload = replace(
-                payload, status=Status.ARTIFACT_NOT_FOUND, header=Header.TRAIN_REQUEST
-            )
-            _increment_counter(
-                counter=MODEL_STATUS_COUNTER,
-                labels=(
-                    payload.status.value,
-                    *_metric_label_values,
-                ),
-            )
-            return Messages(Message(keys=keys, value=payload.to_json()))
+            msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
+            if _conf.numalogic_conf.score.adjust:
+                msgs.append(get_static_thresh_message(keys, payload))
+            return msgs
 
         # Perform inference
         try:
@@ -168,26 +153,30 @@ class InferenceUDF(NumalogicUDF):
                 payload.composite_keys,
                 payload.metrics,
             )
-            payload = replace(payload, status=Status.RUNTIME_ERROR, header=Header.TRAIN_REQUEST)
-            _increment_counter(
-                counter=MODEL_STATUS_COUNTER, labels=(payload.status.value, *_metric_label_values)
-            )
-            return Messages(Message(keys=keys, value=payload.to_json()))
-        else:
-            status = (
-                Status.ARTIFACT_STALE
-                if self.is_model_stale(artifact_data, payload)
-                else Status.ARTIFACT_FOUND
-            )
-            payload = replace(
-                payload,
-                data=x_inferred,
-                status=status,
-                metadata={
-                    "model_version": int(artifact_data.extras.get("version")),
-                    **payload.metadata,
-                },
-            )
+            # Send training request if inference fails
+            msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
+            if _conf.numalogic_conf.score.adjust:
+                msgs.append(get_static_thresh_message(keys, payload))
+            return msgs
+
+        msgs = Messages()
+        status = (
+            Status.ARTIFACT_STALE
+            if self.is_model_stale(artifact_data, payload)
+            else Status.ARTIFACT_FOUND
+        )
+        payload = replace(
+            payload,
+            data=x_inferred,
+            status=status,
+            metadata={
+                "model_version": int(artifact_data.extras.get("version")),
+                **payload.metadata,
+            },
+        )
+        # Send trainer message if artifact is stale
+        if status == Status.ARTIFACT_STALE:
+            msgs.append(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 
         _LOGGER.info(
             "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s }",
@@ -195,16 +184,15 @@ class InferenceUDF(NumalogicUDF):
             payload.composite_keys,
             payload.metrics,
         )
+        _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
+        msgs.append(Message(keys=keys, value=payload.to_json(), tags=["postprocess"]))
+
         _LOGGER.debug(
             "%s - Time taken in inference: %.4f sec",
             payload.uuid,
             time.perf_counter() - _start_time,
         )
-        _increment_counter(
-            counter=MODEL_STATUS_COUNTER, labels=(payload.status.value, *_metric_label_values)
-        )
-        _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
-        return Messages(Message(keys=keys, value=payload.to_json()))
+        return msgs
 
     def is_model_stale(self, artifact_data: ArtifactData, payload: StreamPayload) -> bool:
         """
@@ -221,11 +209,10 @@ class InferenceUDF(NumalogicUDF):
         _conf = self.get_ml_pipeline_conf(
             config_id=payload.config_id, pipeline_id=payload.pipeline_id
         )
-        if (
-            self.model_registry.is_artifact_stale(
-                artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr
-            )
-            and artifact_data.extras.get("source", "registry") == "registry"
+        if artifact_data.extras.get(
+            "source", "registry"
+        ) == "registry" and self.model_registry.is_artifact_stale(
+            artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr
         ):
             _LOGGER.info(
                 "%s - Inference artifact found is stale, Keys: %s, Metric: %s",

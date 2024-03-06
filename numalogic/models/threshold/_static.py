@@ -39,9 +39,8 @@ class StaticThreshold(BaseThresholdModel):
         self.outlier_score = float(outlier_score)
         self.inlier_score = float(inlier_score)
 
-        assert (
-            self.outlier_score > self.inlier_score
-        ), "Outlier score needs to be greater than inlier score"
+        if self.outlier_score < self.inlier_score:
+            raise ValueError("Outlier score needs to be greater than inlier score")
 
     def fit(self, _: npt.NDArray[float]) -> Self:
         """Does not do anything. Only for API compatibility."""
@@ -51,7 +50,7 @@ class StaticThreshold(BaseThresholdModel):
         """Returns an integer array of same shape as input.
         1 denotes anomaly.
         """
-        y = x.copy()
+        y = np.zeros_like(x, dtype=int)
         y[x < self.upper_limit] = 0
         y[x >= self.upper_limit] = 1
         return y
@@ -68,24 +67,30 @@ class StaticThreshold(BaseThresholdModel):
 
 class SigmoidThreshold(BaseThresholdModel):
     r"""Smooth and stateless static thesholding using sigmoid function as an estimator.
-    The values produced.
 
     Score is given by:
-            score = score_limit * 1/ exp(-coeff * (x - upper_limit))
+            score = score_limit * 1/ exp(-coeff * (x - upper_limits))
 
     Args:
     ----
-        upper_limit: is the desired threshold limit of x
+        upper_limits: is the desired threshold limit of x;
+            can be a float or a list of floats
+            list of floats represents the upper limits for each feature;
+            a single float represents the upper limit used for all features;
         slope_factor: determines the slope of the curve
         score_limit: is the scaler multiplier for the score
             e.g. a value of 10 means that the output score
             will be between 0 and 10.
+
+    Raises
+    ------
+        ValueError: If the input data shape does not match the provided upper_limits
     """
 
-    __slots__ = ("upper_limit", "coeff", "score_limit")
+    __slots__ = ("upper_limits", "coeff", "score_limit")
 
-    def __init__(self, upper_limit: float, slope_factor: int = 5, score_limit: int = 10):
-        self.upper_limit = float(upper_limit)
+    def __init__(self, *upper_limits: float, slope_factor: int = 5, score_limit: int = 10):
+        self.upper_limits = np.asarray(upper_limits, dtype=np.float32)
         self.coeff = slope_factor * np.pi
         self.score_limit = score_limit
 
@@ -93,20 +98,27 @@ class SigmoidThreshold(BaseThresholdModel):
         """Does not do anything. Only for API compatibility."""
         return self
 
+    def _validate_input(self, x: npt.NDArray[float]) -> None:
+        if len(self.upper_limits) == 1:
+            return
+        if x.shape[1] != len(self.upper_limits):
+            raise ValueError("Input data shape does not match provided upper_limits")
+
     def predict(self, x: npt.NDArray[float]) -> npt.NDArray[int]:
         """Returns an integer array of same shape as input.
         1 denotes anomaly.
 
         This is calculated as a hard threshold at upper limit.
         """
-        y = x.copy()
-        y[x < self.upper_limit] = 0
-        y[x >= self.upper_limit] = 1
+        self._validate_input(x)
+        y = np.zeros_like(x, dtype=int)
+        y[x < self.upper_limits] = 0
+        y[x >= self.upper_limits] = 1
         return y
 
     def score_samples(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
         """Returns an array of same shape as input
         with values being anomaly scores.
         """
-        x = x.copy()
-        return 10 / (1 + np.exp(-self.coeff * (x - self.upper_limit)))
+        self._validate_input(x)
+        return self.score_limit / (1.0 + np.exp(-self.coeff * (x.copy() - self.upper_limits)))

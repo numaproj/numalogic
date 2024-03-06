@@ -118,13 +118,34 @@ class AggregatorConf:
 
 
 @dataclass
-class ScoreConf:
+class ScoreAdjustConf:
+    upper_limits: dict[str, float] = field(default_factory=dict)
     window_agg: AggregatorConf = field(
         default_factory=lambda: AggregatorConf(method=AggMethod.MEAN)
     )
     feature_agg: AggregatorConf = field(
         default_factory=lambda: AggregatorConf(method=AggMethod.MAX)
     )
+
+
+@dataclass
+class ScoreConf:
+    """Schema for defining the scoring config.
+
+    Args:
+    ----
+        window_agg: Config for aggregation over the sliding window
+        feature_agg: Config for aggregation over the features
+        adjust: Config for adjusting the score using static threshold
+    """
+
+    window_agg: AggregatorConf = field(
+        default_factory=lambda: AggregatorConf(method=AggMethod.MEAN)
+    )
+    feature_agg: AggregatorConf = field(
+        default_factory=lambda: AggregatorConf(method=AggMethod.MAX)
+    )
+    adjust: Optional[ScoreAdjustConf] = None
 
 
 @dataclass

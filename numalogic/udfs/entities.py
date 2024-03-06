@@ -13,17 +13,10 @@ Vector = list[float]
 Matrix = Union[Vector, list[Vector], npt.ArrayLike]
 
 
-class ScoreFunc(str, Enum):
-    """An enumeration class representing the available score functions."""
-
-    MAX = "max"
-    MIN = "min"
-    MEAN = "mean"
-
-
 class Status(str, Enum):
     """Status of the current payload."""
 
+    NONE = "none"
     ARTIFACT_FOUND = "artifact_found"
     ARTIFACT_NOT_FOUND = "artifact_not_found"
     ARTIFACT_STALE = "artifact_is_stale"
@@ -69,7 +62,7 @@ class StreamPayload(_BasePayload):
     raw_data: Matrix
     metrics: list[str]
     timestamps: list[int]
-    status: Optional[Status] = None
+    status: Status = Status.NONE
     header: Header = Header.MODEL_INFERENCE
     artifact_versions: dict[str, dict] = field(default_factory=dict)
     metadata: dict[str, Any] = field(default_factory=dict)
@@ -91,10 +84,14 @@ class StreamPayload(_BasePayload):
     def set_data(self, arr: Matrix) -> None:
         self.data = arr
 
-    def get_data(self, original=False) -> npt.NDArray[float]:
+    def get_data(self, original=False, metrics: Optional[list[str]] = None) -> npt.NDArray[float]:
         if original:
-            return np.ascontiguousarray(self.raw_data, dtype=np.float32)
-        return np.ascontiguousarray(self.data, dtype=np.float32)
+            arr = np.ascontiguousarray(self.raw_data, dtype=np.float32)
+        else:
+            arr = np.ascontiguousarray(self.data, dtype=np.float32)
+        if metrics:
+            return arr[:, [self.metrics.index(m) for m in metrics]]
+        return arr
 
     def get_metadata(self, key: str) -> dict[str, Any]:
         return copy(self.metadata[key])
