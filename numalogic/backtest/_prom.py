@@ -236,6 +236,50 @@ class PromBacktester:
             unified_out=unified_scores,
         )
 
+    def generate_static_scores(self, df: pd.DataFrame) -> pd.DataFrame:
+        if not self.nlconf.score.adjust:
+            raise ValueError("No adjust params provided in the config!")
+
+        metrics = list(self.nlconf.score.adjust.upper_limits)
+        x_test = df[metrics].to_numpy(dtype=np.float32)
+
+        postproc_udf = UDFFactory.get_udf_cls("postprocess")
+        ds = StreamingDataset(x_test, seq_len=self.conf.window_size)
+
+        feature_scores = np.zeros((len(ds), len(metrics)), dtype=np.float32)
+        unified_scores = np.zeros((len(ds), 1), dtype=np.float32)
+
+        for idx, arr in enumerate(ds):
+            feature_scores[idx] = postproc_udf.compute_static_threshold(
+                arr, score_conf=self.nlconf.score
+            )
+            unified_scores[idx] = postproc_udf.compute_unified_score(
+                feature_scores[idx], self.nlconf.score.feature_agg
+            )
+        feature_scores = np.vstack(
+            [
+                np.full((self.conf.window_size - 1, len(metrics)), fill_value=np.nan),
+                feature_scores,
+            ]
+        )
+        unified_scores = np.vstack(
+            [np.full((self.conf.window_size - 1, 1), fill_value=np.nan), unified_scores]
+        )
+        dfs = {
+            "input": df,
+            "static_features": pd.DataFrame(
+                feature_scores,
+                columns=metrics,
+                index=df.index,
+            ),
+            "static_unified": pd.DataFrame(
+                unified_scores,
+                columns=["unified"],
+                index=df.index,
+            ),
+        }
+        return pd.concat(dfs, axis=1)
+
     @classmethod
     def get_outdir(cls, expname: str, outdir=DEFAULT_OUTPUT_DIR) -> str:
         """Get the output directory for the given metric."""
