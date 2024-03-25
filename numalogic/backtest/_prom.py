@@ -254,7 +254,7 @@ class PromBacktester:
                 arr, score_conf=self.nlconf.score
             )
             unified_scores[idx] = postproc_udf.compute_unified_score(
-                feature_scores[idx], self.nlconf.score.feature_agg
+                feature_scores[idx], feat_agg_conf=self.nlconf.score.adjust.feature_agg
             )
         feature_scores = np.vstack(
             [
