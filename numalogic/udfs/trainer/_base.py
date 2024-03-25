@@ -12,13 +12,13 @@ from sklearn.pipeline import make_pipeline
 from torch.utils.data import DataLoader
 
 from numalogic.config import PreprocessFactory, ModelFactory, ThresholdFactory, RegistryFactory
-from numalogic.config._config import NumalogicConf
+from numalogic.config._config import NumalogicConf, ModelInfo
 from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.tools.data import StreamingDataset
 from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
-from numalogic.udfs._config import PipelineConf, MLPipelineConf
+from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._metrics import (
     REDIS_ERROR_COUNTER,
     INSUFFICIENT_DATA_COUNTER,
@@ -76,6 +76,7 @@ class TrainerUDF(NumalogicUDF):
         model: artifact_t,
         input_: npt.NDArray[float],
         preproc_clf: Optional[artifact_t] = None,
+        trainer_transformer: Optional[artifact_t] = None,
         threshold_clf: Optional[artifact_t] = None,
         numalogic_cfg: Optional[NumalogicConf] = None,
     ) -> dict[str, KeyedArtifact]:
@@ -86,6 +87,7 @@ class TrainerUDF(NumalogicUDF):
             model: Model artifact
             input_: Input data
             preproc_clf: Preprocessing artifact
+            trainer_transformer: trainer specific preprocessing artifacts
             threshold_clf: Thresholding artifact
             numalogic_cfg: Numalogic configuration
 
@@ -101,8 +103,15 @@ class TrainerUDF(NumalogicUDF):
             raise ConfigNotFoundError("Numalogic Trainer config not found!")
         dict_artifacts = {}
         trainer_cfg = numalogic_cfg.trainer
+        print(pd.DataFrame(input_).max())
+        if trainer_transformer:
+            input_ = trainer_transformer.fit_transform(input_)
+            _LOGGER.info("Fit data using trainer transformer")
+            print(pd.DataFrame(input_).max())
+
         if preproc_clf:
             input_ = preproc_clf.fit_transform(input_)
+            _LOGGER.info("Fit data using preproc transformer")
             dict_artifacts["preproc_clf"] = KeyedArtifact(
                 dkeys=[_conf.name for _conf in numalogic_cfg.preprocess],
                 artifact=preproc_clf,
@@ -123,6 +132,7 @@ class TrainerUDF(NumalogicUDF):
 
         if threshold_clf:
             threshold_clf.fit(train_reconerr)
+            _LOGGER.info("Fit data using threshold model")
             dict_artifacts["threshold_clf"] = KeyedArtifact(
                 dkeys=[numalogic_cfg.threshold.name],
                 artifact=threshold_clf,
@@ -218,9 +228,7 @@ class TrainerUDF(NumalogicUDF):
         _LOGGER.info("%s - Data fetched, shape: %s", payload.uuid, df.shape)
 
         # Construct feature array
-        x_train, nan_counter, inf_counter = self.get_feature_arr(
-            df, _conf.metrics, max_value_map=_conf.numalogic_conf.trainer.max_value_map
-        )
+        x_train, nan_counter, inf_counter = self.get_feature_arr(df, _conf.metrics)
         _add_summary(
             summary=NAN_SUMMARY,
             labels=_metric_label_values,
@@ -233,15 +241,17 @@ class TrainerUDF(NumalogicUDF):
         )
 
         # Initialize artifacts
-        preproc_clf = self._construct_preproc_clf(_conf)
+        preproc_clf = self._construct_clf(_conf.numalogic_conf.preprocess)
+        trainer_transformer = self._construct_clf(_conf.numalogic_conf.trainer.transformer)
         model = self._model_factory.get_instance(_conf.numalogic_conf.model)
         thresh_clf = self._thresh_factory.get_instance(_conf.numalogic_conf.threshold)
 
         # Train artifacts
         dict_artifacts = self.compute(
-            model,
-            x_train,
+            model=model,
+            input_=x_train,
             preproc_clf=preproc_clf,
+            trainer_transformer=trainer_transformer,
             threshold_clf=thresh_clf,
             numalogic_cfg=_conf.numalogic_conf,
         )
@@ -274,9 +284,11 @@ class TrainerUDF(NumalogicUDF):
         )
         return Messages(Message.to_drop())
 
-    def _construct_preproc_clf(self, _conf: MLPipelineConf) -> Optional[artifact_t]:
+    def _construct_clf(self, _conf: Optional[list[ModelInfo]]) -> Optional[artifact_t]:
         preproc_clfs = []
-        for _cfg in _conf.numalogic_conf.preprocess:
+        if not _conf:
+            return None
+        for _cfg in _conf:
             _clf = self._preproc_factory.get_instance(_cfg)
             preproc_clfs.append(_clf)
         if not preproc_clfs:
@@ -348,7 +360,6 @@ class TrainerUDF(NumalogicUDF):
         raw_df: pd.DataFrame,
         metrics: list[str],
         fill_value: float = 0.0,
-        max_value_map: Optional[dict[str, float]] = None,
     ) -> tuple[npt.NDArray[float], float, float]:
         """
         Get feature array from the raw dataframe.
@@ -369,16 +380,7 @@ class TrainerUDF(NumalogicUDF):
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
                 nan_counter += len(raw_df)
-
         feat_df = raw_df[metrics]
-        if max_value_map:
-            max_value_list = [max_value_map.get(col, np.nan) for col in metrics]
-            feat_df.clip(upper=max_value_list, inplace=True)
-            _LOGGER.info(
-                "Replaced %s with max_value_map from the map with value of %s.",
-                metrics,
-                max_value_list,
-            )
         nan_counter += raw_df.isna().sum().all()
         inf_counter = np.isinf(feat_df).sum().all()
         feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)

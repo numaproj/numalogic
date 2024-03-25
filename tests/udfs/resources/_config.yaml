@@ -7,7 +7,7 @@ stream_confs:
     ml_pipelines:
       pipeline1:
         pipeline_id: "pipeline1"
-        metrics: [ "col1" , "col2" ]
+        metrics: [ "degraded" , "failed" ]
         numalogic_conf:
           model:
             name: "VanillaAE"
@@ -36,8 +36,10 @@ stream_confs:
           trainer:
             train_hours: 3
             min_train_size: 100
-            max_value_map:
-              "col1": 0
+            transformer:
+              - name: DataClipper
+                conf:
+                  lower: ['0.0', '-inf']
             pltrainer_conf:
               accelerator: cpu
               max_epochs: 5

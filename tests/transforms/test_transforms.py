@@ -16,7 +16,6 @@ from numalogic.transforms import (
     FlattenVector,
 )
 
-
 RNG = np.random.default_rng(42)
 
 
@@ -108,24 +107,32 @@ def test_gaussian_noise_adder():
 def test_dataclipper_1():
     x = np.ones((5, 3))
 
-    tx = DataClipper(upper=0.8)
+    tx = DataClipper(upper=["0.8", "0.1", "0.1"])
     x_ = tx.transform(x)
 
     assert x.shape == x_.shape
-    assert_almost_equal(np.mean(x_), 0.8, 5)
+    assert_array_equal(np.asarray([0.8, 0.1, 0.1], dtype=np.float32), np.max(x_, axis=0))
 
 
 def test_dataclipper_2():
     x = np.ones((3, 3))
     x[:, 1] = np.zeros(3)
 
-    tx = DataClipper(lower=[1.0, 0.5, 0.0], upper=[0.8, 1.0, 0.7])
+    tx = DataClipper(lower=["1.0", "0.5", "0.0"], upper=["1.2", "0.1", "0.7"])
     x_ = tx.transform(x)
 
     assert x.shape == x_.shape
-    assert_array_equal(
-        x_, np.array([[0.8, 0.8, 0.8], [0.5, 0.5, 0.5], [0.7, 0.7, 0.7]], dtype=np.float32).T
-    )
+    assert_array_equal(np.asarray([1.0, 0.5, 0.7], dtype=np.float32), np.max(x_, axis=0))
+
+
+def test_dataclipper_3():
+    np.ones((5, 3))
+    with pytest.raises(ValueError):
+        DataClipper(upper=["0.8", "0.1", "0.1"], lower=["0.8", "0.2", "0.2"])
+    with pytest.raises(ValueError):
+        DataClipper(upper=["0.8", "0.1"], lower=["0.8", "0.2", "0.2"])
+    with pytest.raises(ValueError):
+        DataClipper()
 
 
 def test_difftx():
