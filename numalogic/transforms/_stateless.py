@@ -10,7 +10,7 @@
 # limitations under the License.
 
 from collections.abc import Sequence
-from typing import Optional
+from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -75,21 +75,23 @@ class DataClipper(StatelessTransformer):
 
     def __init__(
         self,
-        lower: Optional[Sequence[float]] = None,
-        upper: Optional[Sequence[float]] = None,
+        lower: Optional[Union[float, Sequence[float]]] = None,
+        upper: Optional[Union[float, Sequence[float]]] = None,
     ):
         self.lower, self.upper = self._validate_args(lower, upper)
 
     @staticmethod
     def _validate_args(
-        lower: Optional[Sequence[float]], upper: Optional[Sequence[float]]
-    ) -> Optional[tuple[np.ndarray, np.ndarray]]:
+        lower: Optional[Union[float, Sequence[float]]],
+        upper: Optional[Union[float, Sequence[float]]],
+    ) -> Optional[tuple[Optional[Union[float, npt.NDArray]], Optional[Union[float, npt.NDArray]]]]:
         if lower is None and upper is None:
             raise ValueError("At least one of lower or upper should be provided.")
-        if isinstance(lower, Sequence) and isinstance(upper, Sequence) and len(lower) != len(upper):
-            raise ValueError("lower and upper should have the same length.")
-        lower, upper = np.array(lower, dtype=np.float32), np.array(upper, dtype=np.float32)
-        if np.any(np.less(upper, lower)):
+        if isinstance(lower, Sequence) and isinstance(upper, Sequence):
+            if len(lower) != len(upper):
+                raise ValueError("lower and upper should have the same length.")
+            lower, upper = np.asarray(lower, dtype=np.float32), np.asarray(upper, dtype=np.float32)
+        if upper is not None and lower is not None and np.any(lower > upper):
             raise ValueError("lower value should be less than or equal to upper value")
         return lower, upper
 

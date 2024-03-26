@@ -104,6 +104,17 @@ def test_gaussian_noise_adder():
     )
 
 
+def test_dataclipper():
+    x = np.ones((5, 2))
+
+    tx1 = DataClipper(upper=0.1)
+    x_ = tx1.transform(x)
+    print(x_)
+
+    assert x.shape == x_.shape
+    assert_array_equal(np.asarray([0.1, 0.1], dtype=np.float32), np.max(x_, axis=0))
+
+
 def test_dataclipper_1():
     x = np.ones((5, 2))
 
