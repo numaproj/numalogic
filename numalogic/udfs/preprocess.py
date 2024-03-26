@@ -1,4 +1,3 @@
-import logging
 import os
 import time
 from dataclasses import replace
@@ -11,6 +10,7 @@ from sklearn.pipeline import make_pipeline
 
 from numalogic._constants import NUMALOGIC_METRICS
 from numalogic.config import PreprocessFactory, RegistryFactory
+from numalogic.udfs._logger import configure_logger
 from numalogic.udfs._metrics import (
     DATASHAPE_ERROR_COUNTER,
     MSG_DROPPED_COUNTER,
@@ -40,17 +40,12 @@ LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 
-_LOGGER = logging.getLogger(__name__)
+_struct_log = configure_logger()
 
 
-def _get_updated_metrics(uuid: str, metrics: list, shape: tuple) -> list[str]:
+def _get_updated_metrics(metrics: list, shape: tuple) -> list[str]:
     if shape[1] != len(metrics) and shape[1] == 1:
         metrics = ["-".join(metrics)]
-    _LOGGER.debug(
-        "%s - Metrics used: %s",
-        uuid,
-        metrics,
-    )
     return metrics
 
 
@@ -105,13 +100,14 @@ class PreprocessUDF(NumalogicUDF):
 
         """
         _start_time = time.perf_counter()
+        log = _struct_log.bind(vertex=self._vtx)
 
         # check message sanity
         try:
             data_payload = orjson.loads(datum.value)
-            _LOGGER.info("%s - Data payload: %s", data_payload["uuid"], data_payload)
+            log = _struct_log.bind(uuid=data_payload["uuid"])
         except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
-            _LOGGER.exception("Error while decoding input json")
+            log.exception("Error while decoding input json")
             return Messages(Message.to_drop())
 
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
@@ -136,7 +132,9 @@ class PreprocessUDF(NumalogicUDF):
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < _stream_conf.window_size or raw_df.shape[1] != len(_conf.metrics):
-            _LOGGER.critical("Dataframe shape: (%f, %f) error ", raw_df.shape[0], raw_df.shape[1])
+            log.critical(
+                "Dataframe shape: (%f, %f) conditions not met ", raw_df.shape[0], raw_df.shape[1]
+            )
             _increment_counter(
                 counter=DATASHAPE_ERROR_COUNTER,
                 labels=_metric_label_values,
@@ -167,30 +165,27 @@ class PreprocessUDF(NumalogicUDF):
             )
             if preproc_artifact:
                 preproc_clf = preproc_artifact.artifact
-                _LOGGER.info(
-                    "%s - Loaded model from: %s",
-                    payload.uuid,
-                    preproc_artifact.extras.get("source"),
-                )
                 payload = replace(payload, status=Status.ARTIFACT_FOUND)
+                log = log.bind(artifact_source=preproc_artifact.extras.get("source"))
             else:
                 msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
                 if _conf.numalogic_conf.score.adjust:
                     msgs.append(get_static_thresh_message(keys, payload))
+                log.exception("Artifact model not loaded!")
                 return msgs
         # Model will not be in registry
         else:
             # Load configuration for the config_id
-            _LOGGER.info("%s - Initializing model from config: %s", payload.uuid, payload)
             _increment_counter(SOURCE_COUNTER, labels=("config", *_metric_label_values))
             preproc_clf = self._load_model_from_config(_conf.numalogic_conf.preprocess)
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
+            log = log.bind(model_from_config=preproc_clf, payload=payload)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
 
             # make metrics list matching same shape as data
             payload = replace(
-                payload, metrics=_get_updated_metrics(payload.uuid, payload.metrics, x_scaled.shape)
+                payload, metrics=_get_updated_metrics(payload.metrics, x_scaled.shape)
             )
 
             _update_info_metric(x_scaled, payload.metrics, _metric_label_values)
@@ -200,23 +195,22 @@ class PreprocessUDF(NumalogicUDF):
                 status=Status.ARTIFACT_FOUND,
                 header=Header.MODEL_INFERENCE,
             )
-            _LOGGER.info(
-                "%s - Successfully preprocessed, Keys: %s, Metrics: %s, x_scaled: %s",
-                payload.uuid,
-                keys,
-                payload.metrics,
-                x_scaled,
+            log.info(
+                "Successfully preprocessed!",
+                keys=keys,
+                payload_metrics=payload.metrics,
+                x_scaled=x_scaled,
             )
         except RuntimeError:
             _increment_counter(
                 counter=RUNTIME_ERROR_COUNTER,
                 labels=_metric_label_values,
             )
-            _LOGGER.exception(
-                "%s - Runtime preprocess error! Keys: %s, Metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metrics,
+            log.exception(
+                "Runtime preprocess error!",
+                status=Status.RUNTIME_ERROR,
+                payload_metrics=payload.metrics,
+                composite_keys=payload.composite_keys,
             )
             # TODO check again what error is causing this and if retraining is required
             payload = replace(
@@ -234,11 +228,7 @@ class PreprocessUDF(NumalogicUDF):
             counter=MSG_PROCESSED_COUNTER,
             labels=_metric_label_values,
         )
-        _LOGGER.debug(
-            "%s - Time taken to execute Preprocess: %.4f sec",
-            payload.uuid,
-            time.perf_counter() - _start_time,
-        )
+        log.debug("Time taken to preprocess: %.4f sec!", time.perf_counter() - _start_time)
         return Messages(Message(keys=keys, value=payload.to_json(), tags=["inference"]))
 
     @classmethod
