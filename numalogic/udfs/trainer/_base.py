@@ -240,7 +240,7 @@ class TrainerUDF(NumalogicUDF):
 
         # Initialize artifacts
         preproc_clf = self._construct_clf(_conf.numalogic_conf.preprocess)
-        trainer_transform = self._construct_clf(_conf.numalogic_conf.trainer.transform)
+        trainer_transform = self._construct_clf(_conf.numalogic_conf.trainer.transforms)
         model = self._model_factory.get_instance(_conf.numalogic_conf.model)
         thresh_clf = self._thresh_factory.get_instance(_conf.numalogic_conf.threshold)
 
