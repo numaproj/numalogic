@@ -76,7 +76,7 @@ class TrainerUDF(NumalogicUDF):
         model: artifact_t,
         input_: npt.NDArray[float],
         preproc_clf: Optional[artifact_t] = None,
-        trainer_transformer: Optional[artifact_t] = None,
+        trainer_transform: Optional[artifact_t] = None,
         threshold_clf: Optional[artifact_t] = None,
         numalogic_cfg: Optional[NumalogicConf] = None,
     ) -> dict[str, KeyedArtifact]:
@@ -87,7 +87,7 @@ class TrainerUDF(NumalogicUDF):
             model: Model artifact
             input_: Input data
             preproc_clf: Preprocessing artifact
-            trainer_transformer: trainer specific preprocessing artifacts
+            trainer_transform: trainer specific preprocessing artifacts
             threshold_clf: Thresholding artifact
             numalogic_cfg: Numalogic configuration
 
@@ -103,11 +103,9 @@ class TrainerUDF(NumalogicUDF):
             raise ConfigNotFoundError("Numalogic Trainer config not found!")
         dict_artifacts = {}
         trainer_cfg = numalogic_cfg.trainer
-        print(pd.DataFrame(input_).max())
-        if trainer_transformer:
-            input_ = trainer_transformer.fit_transform(input_)
-            _LOGGER.info("Fit data using trainer transformer")
-            print(pd.DataFrame(input_).max())
+        if trainer_transform:
+            input_ = trainer_transform.fit_transform(input_)
+            _LOGGER.info("Fit data using trainer transform")
 
         if preproc_clf:
             input_ = preproc_clf.fit_transform(input_)
@@ -242,7 +240,7 @@ class TrainerUDF(NumalogicUDF):
 
         # Initialize artifacts
         preproc_clf = self._construct_clf(_conf.numalogic_conf.preprocess)
-        trainer_transformer = self._construct_clf(_conf.numalogic_conf.trainer.transformer)
+        trainer_transform = self._construct_clf(_conf.numalogic_conf.trainer.transform)
         model = self._model_factory.get_instance(_conf.numalogic_conf.model)
         thresh_clf = self._thresh_factory.get_instance(_conf.numalogic_conf.threshold)
 
@@ -251,7 +249,7 @@ class TrainerUDF(NumalogicUDF):
             model=model,
             input_=x_train,
             preproc_clf=preproc_clf,
-            trainer_transformer=trainer_transformer,
+            trainer_transform=trainer_transform,
             threshold_clf=thresh_clf,
             numalogic_cfg=_conf.numalogic_conf,
         )

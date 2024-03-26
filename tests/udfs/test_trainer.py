@@ -147,7 +147,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                             ],
                             trainer=TrainerConf(
                                 pltrainer_conf=LightningTrainerConf(max_epochs=1),
-                                transformer=[ModelInfo(name="DataClipper", conf={"lower": [0, 0]})],
+                                transform=[ModelInfo(name="DataClipper", conf={"lower": [0, 0]})],
                             ),
                         ),
                     )

@@ -94,7 +94,7 @@ class TrainerConf:
     retry_sec: int = 600  # 10 min
     batch_size: int = 64
     data_freq_sec: int = 60
-    transformer: Optional[list[ModelInfo]] = None
+    transform: Optional[list[ModelInfo]] = None
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
 
