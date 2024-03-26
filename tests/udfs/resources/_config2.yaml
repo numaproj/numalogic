@@ -28,7 +28,7 @@ stream_confs:
           trainer:
             train_hours: 3
             min_train_size: 100
-            transformer:
+            transform:
               - name: "DataClipper"
                 conf:
                   lower: [0.0,0.0]

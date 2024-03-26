@@ -75,21 +75,19 @@ class DataClipper(StatelessTransformer):
 
     def __init__(
         self,
-        lower: Optional[Sequence[str]] = None,
-        upper: Optional[Sequence[str]] = None,
+        lower: Optional[Sequence[float]] = None,
+        upper: Optional[Sequence[float]] = None,
     ):
         self.lower, self.upper = self._validate_args(lower, upper)
 
     @staticmethod
     def _validate_args(
-        lower: Optional[Sequence[str]] = None,
-        upper: Optional[Sequence[str]] = None,
+        lower: Optional[Sequence[float]], upper: Optional[Sequence[float]]
     ) -> Optional[tuple[np.ndarray, np.ndarray]]:
         if lower is None and upper is None:
             raise ValueError("At least one of lower or upper should be provided.")
         if isinstance(lower, Sequence) and isinstance(upper, Sequence) and len(lower) != len(upper):
             raise ValueError("lower and upper should have the same length.")
-
         lower, upper = np.array(lower, dtype=np.float32), np.array(upper, dtype=np.float32)
         if np.any(np.less(upper, lower)):
             raise ValueError("lower value should be less than or equal to upper value")
@@ -97,10 +95,7 @@ class DataClipper(StatelessTransformer):
 
     def transform(self, x: npt.NDArray[float], **__) -> npt.NDArray[float]:
         _df = pd.DataFrame(x, dtype=np.float32)
-        if self.upper is not None:
-            _df.clip(upper=self.upper, axis=1, inplace=True)
-        if self.lower is not None:
-            _df.clip(lower=self.lower, axis=1, inplace=True)
+        _df = _df.clip(upper=self.upper, lower=self.lower, axis=1)
         return _df.to_numpy(dtype=np.float32)
 
 
