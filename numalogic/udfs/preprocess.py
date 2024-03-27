@@ -100,7 +100,7 @@ class PreprocessUDF(NumalogicUDF):
 
         """
         _start_time = time.perf_counter()
-        log = _struct_log.bind(vertex=self._vtx)
+        log = _struct_log.bind(udf_vertex=self._vtx)
 
         # check message sanity
         try:
