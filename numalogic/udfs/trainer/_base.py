@@ -105,11 +105,9 @@ class TrainerUDF(NumalogicUDF):
         trainer_cfg = numalogic_cfg.trainer
         if trainer_transform:
             input_ = trainer_transform.fit_transform(input_)
-            _LOGGER.info("Fit data using trainer transform")
 
         if preproc_clf:
             input_ = preproc_clf.fit_transform(input_)
-            _LOGGER.info("Fit data using preproc transformer")
             dict_artifacts["preproc_clf"] = KeyedArtifact(
                 dkeys=[_conf.name for _conf in numalogic_cfg.preprocess],
                 artifact=preproc_clf,
