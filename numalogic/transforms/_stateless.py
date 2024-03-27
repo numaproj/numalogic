@@ -10,7 +10,7 @@
 # limitations under the License.
 
 from collections.abc import Sequence
-from typing import Union, Optional
+from typing import Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -78,27 +78,27 @@ class DataClipper(StatelessTransformer):
         lower: Optional[Union[float, Sequence[float]]] = None,
         upper: Optional[Union[float, Sequence[float]]] = None,
     ):
-        self._validate_args(lower, upper)
-        self.lower = lower
-        self.upper = upper
+        self.lower, self.upper = self._validate_args(lower, upper)
 
     @staticmethod
     def _validate_args(
-        lower: Union[float, Sequence[float]], upper: Union[float, Sequence[float]]
-    ) -> None:
+        lower: Optional[Union[float, Sequence[float]]],
+        upper: Optional[Union[float, Sequence[float]]],
+    ) -> Optional[tuple[Optional[Union[float, npt.NDArray]], Optional[Union[float, npt.NDArray]]]]:
         if lower is None and upper is None:
             raise ValueError("At least one of lower or upper should be provided.")
-
-        if isinstance(lower, Sequence) and isinstance(upper, Sequence) and len(lower) != len(upper):
-            raise ValueError("lower and upper should have the same length.")
+        if isinstance(lower, Sequence) and isinstance(upper, Sequence):
+            if len(lower) != len(upper):
+                raise ValueError("lower and upper should have the same length.")
+            lower, upper = np.asarray(lower, dtype=np.float32), np.asarray(upper, dtype=np.float32)
+        if upper is not None and lower is not None and np.any(lower > upper):
+            raise ValueError("lower value should be less than or equal to upper value")
+        return lower, upper
 
     def transform(self, x: npt.NDArray[float], **__) -> npt.NDArray[float]:
         _df = pd.DataFrame(x, dtype=np.float32)
-        if (self.lower is not None) and (self.upper is not None):
-            return _df.clip(lower=self.lower, upper=self.upper, axis=1).to_numpy(dtype=np.float32)
-        if self.upper is not None:
-            return _df.clip(upper=self.upper, axis=1).to_numpy(dtype=np.float32)
-        return _df.clip(lower=self.lower, axis=1).to_numpy(dtype=np.float32)
+        _df = _df.clip(upper=self.upper, lower=self.lower, axis=1)
+        return _df.to_numpy(dtype=np.float32)
 
 
 class GaussianNoiseAdder(StatelessTransformer):
