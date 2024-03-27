@@ -105,7 +105,7 @@ class PreprocessUDF(NumalogicUDF):
         # check message sanity
         try:
             data_payload = orjson.loads(datum.value)
-            log = _struct_log.bind(uuid=data_payload["uuid"])
+            log = log.bind(uuid=data_payload["uuid"])
         except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
             log.exception("Error while decoding input json")
             return Messages(Message.to_drop())
