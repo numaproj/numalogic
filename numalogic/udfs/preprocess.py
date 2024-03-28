@@ -3,6 +3,7 @@ import time
 from dataclasses import replace
 from typing import Optional
 
+import numpy as np
 import orjson
 from numpy.typing import NDArray
 from pynumaflow.mapper import Datum, Messages, Message
@@ -10,7 +11,7 @@ from sklearn.pipeline import make_pipeline
 
 from numalogic._constants import NUMALOGIC_METRICS
 from numalogic.config import PreprocessFactory, RegistryFactory
-from numalogic.udfs._logger import configure_logger
+from numalogic.udfs._logger import configure_logger, log_data_payload_values
 from numalogic.udfs._metrics import (
     DATASHAPE_ERROR_COUNTER,
     MSG_DROPPED_COUNTER,
@@ -105,12 +106,11 @@ class PreprocessUDF(NumalogicUDF):
         # check message sanity
         try:
             data_payload = orjson.loads(datum.value)
-            log = log.bind(uuid=data_payload["uuid"])
-            log.info("Data payload= %s", data_payload)
         except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
             log.exception("Error while decoding input json")
             return Messages(Message.to_drop())
 
+        log = log_data_payload_values(log, data_payload)
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
         _conf = _stream_conf.ml_pipelines[data_payload.get("pipeline_id", "default")]
         raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=_stream_conf)
@@ -180,7 +180,7 @@ class PreprocessUDF(NumalogicUDF):
             _increment_counter(SOURCE_COUNTER, labels=("config", *_metric_label_values))
             preproc_clf = self._load_model_from_config(_conf.numalogic_conf.preprocess)
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
-            log = log.bind(model_from_config=preproc_clf, payload=payload)
+            log = log.bind(model_from_config=preproc_clf)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
 
@@ -200,7 +200,8 @@ class PreprocessUDF(NumalogicUDF):
                 "Successfully preprocessed!",
                 keys=keys,
                 payload_metrics=payload.metrics,
-                x_scaled=x_scaled,
+                x_scaled=np.array2string(x_scaled),
+                execution_time_secs=round(time.perf_counter() - _start_time, 4),
             )
         except RuntimeError:
             _increment_counter(
@@ -229,7 +230,6 @@ class PreprocessUDF(NumalogicUDF):
             counter=MSG_PROCESSED_COUNTER,
             labels=_metric_label_values,
         )
-        log.debug("Time taken to preprocess: %.4f sec!", time.perf_counter() - _start_time)
         return Messages(Message(keys=keys, value=payload.to_json(), tags=["inference"]))
 
     @classmethod
