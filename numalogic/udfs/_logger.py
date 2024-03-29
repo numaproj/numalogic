@@ -11,7 +11,7 @@ def configure_logger():
             stdlib.PositionalArgumentsFormatter(),
             processors.TimeStamper(fmt="iso"),
             processors.StackInfoRenderer(),
-            processors.format_exc_info,
+            # processors.format_exc_info,
             processors.UnicodeDecoder(),
             processors.KeyValueRenderer(key_order=["uuid", "event"]),
             stdlib.ProcessorFormatter.wrap_for_formatter,
@@ -28,8 +28,5 @@ def log_data_payload_values(log, data_payload):
         uuid=data_payload["uuid"],
         config_id=data_payload["config_id"],
         pipeline_id=data_payload.get("pipeline_id", "default"),
-        app=data_payload["metadata"]["app"],
-        namespace=data_payload["metadata"]["namespace"],
-        role=data_payload["metadata"]["role"],
-        rollouts_pod_template_hash=data_payload["metadata"]["rollouts_pod_template_hash"],
+        metadata=data_payload["metadata"],
     )
