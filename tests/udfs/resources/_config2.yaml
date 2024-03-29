@@ -28,9 +28,10 @@ stream_confs:
           trainer:
             train_hours: 3
             min_train_size: 100
-            max_value_map:
-              "failed": 0
-              "degraded": 0
+            transforms:
+              - name: "DataClipper"
+                conf:
+                  lower: [0.0,0.0]
             pltrainer_conf:
               accelerator: cpu
               max_epochs: 1
