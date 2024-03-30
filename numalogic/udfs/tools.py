@@ -13,6 +13,7 @@ from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import KEYS, redis_client_t
 from numalogic.udfs._config import StreamConf
+from numalogic.udfs._logger import configure_logger
 from numalogic.udfs.entities import StreamPayload, TrainerPayload
 from numalogic.udfs._metrics import (
     SOURCE_COUNTER,
@@ -26,6 +27,7 @@ from numalogic.udfs._metrics import (
     MODEL_STATUS_COUNTER,
 )
 
+_struct_log = configure_logger()
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -167,26 +169,23 @@ def _load_artifact(
         payload.pipeline_id,
     )
 
+    log = _struct_log.bind(
+        uuid=payload.uuid, skeys=skeys, dkeys=dkeys, payload_metrics=payload.metrics
+    )
+
     version_to_load = "-1"
     if payload.artifact_versions:
         artifact_version = payload.artifact_versions
         key = ":".join(dkeys)
         if key in artifact_version:
             version_to_load = artifact_version[key]
-            _LOGGER.info("%s - Found version info for keys: %s, %s", payload.uuid, skeys, dkeys)
+            log.debug("Found version info for keys")
         else:
-            _LOGGER.info(
-                "%s - Could not find what version of model to load: %s, %s",
-                payload.uuid,
-                skeys,
-                dkeys,
-            )
+            log.debug("Could not find what version of model to load")
     else:
-        _LOGGER.info(
-            "%s - No version info passed on! Loading latest artifact version "
-            "for Keys: %s (if one present in the registry)",
-            payload.uuid,
-            skeys,
+        log.debug(
+            "No version info passed on! Loading latest artifact version, "
+            "if one present in the registry"
         )
         load_latest = True
     try:
@@ -198,32 +197,19 @@ def _load_artifact(
             )
     except RedisRegistryError:
         _increment_counter(REDIS_ERROR_COUNTER, labels=_metric_label_values)
-        _LOGGER.warning(
-            "%s - Error while fetching artifact, Keys: %s, Metrics: %s",
-            payload.uuid,
-            skeys,
-            payload.metrics,
-        )
+        log.warning("Error while fetching artifact")
         return None, payload
 
     except Exception:
         _increment_counter(EXCEPTION_COUNTER, labels=_metric_label_values)
-        _LOGGER.exception(
-            "%s - Unhandled exception while fetching artifact, Keys: %s, Metric: %s,",
-            payload.uuid,
-            payload.composite_keys,
-            payload.metrics,
-        )
+        log.exception("Unhandled exception while fetching artifact")
         return None, payload
     else:
-        _LOGGER.info(
-            "%s - Loaded Model. Source: %s , version: %s, Keys: %s, %s",
-            payload.uuid,
-            artifact_data.extras.get("source"),
-            artifact_data.extras.get("version"),
-            skeys,
-            dkeys,
+        log = log.bind(
+            artifact_source=artifact_data.extras.get("source"),
+            artifact_version=artifact_data.extras.get("version"),
         )
+        log.debug("Loaded Model!")
         _increment_counter(
             counter=SOURCE_COUNTER,
             labels=(artifact_data.extras.get("source"), *_metric_label_values),
@@ -448,11 +434,7 @@ def get_trainer_message(
             counter=MODEL_STATUS_COUNTER,
             labels=(payload.status, *metric_values),
         )
-    _LOGGER.info(
-        "%s - Sending training request for: %s",
-        train_payload.uuid,
-        train_payload.composite_keys,
-    )
+    _struct_log.bind(uuid=train_payload.uuid).debug("Sending training request")
     return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
 
 
@@ -470,9 +452,5 @@ def get_static_thresh_message(keys: list[str], payload: StreamPayload) -> Messag
     -------
         Mapper Message instance
     """
-    _LOGGER.info(
-        "%s - Sending static thresholding request for: %s",
-        payload.uuid,
-        payload.composite_keys,
-    )
+    _struct_log.bind(uuid=payload.uuid).debug("Sending static thresholding request")
     return Message(keys=keys, value=payload.to_json(), tags=["staticthresh"])
