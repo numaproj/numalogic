@@ -110,10 +110,11 @@ class PreprocessUDF(NumalogicUDF):
             log.exception("Error while decoding input json")
             return Messages(Message.to_drop())
 
-        log = log_data_payload_values(log, data_payload)
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
         _conf = _stream_conf.ml_pipelines[data_payload.get("pipeline_id", "default")]
         raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=_stream_conf)
+
+        log = log_data_payload_values(log, data_payload)
 
         source = NUMALOGIC_METRICS
         if (
@@ -201,7 +202,7 @@ class PreprocessUDF(NumalogicUDF):
                 keys=keys,
                 payload_metrics=payload.metrics,
                 x_scaled=np.array2string(x_scaled),
-                execution_time_secs=round(time.perf_counter() - _start_time, 4),
+                execution_time_ms=round((time.perf_counter() - _start_time) * 1000, 4),
             )
         except RuntimeError:
             _increment_counter(
