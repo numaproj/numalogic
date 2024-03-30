@@ -1,4 +1,3 @@
-import logging
 import time
 from datetime import datetime, timedelta
 from typing import Optional
@@ -10,6 +9,7 @@ from numalogic.config.factory import ConnectorFactory
 from numalogic.tools.exceptions import ConfigNotFoundError, PrometheusFetcherError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._logger import configure_logger
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs._metrics import (
     DATAFRAME_SHAPE_SUMMARY,
@@ -20,7 +20,7 @@ from numalogic.udfs._metrics import (
 )
 from numalogic.udfs.trainer._base import TrainerUDF
 
-_LOGGER = logging.getLogger(__name__)
+_struct_log = configure_logger()
 
 
 class PromTrainerUDF(TrainerUDF):
@@ -60,6 +60,8 @@ class PromTrainerUDF(TrainerUDF):
             Dataframe
         """
         _start_time = time.perf_counter()
+        log = _struct_log.bind(udf_vertex=self._vtx)
+
         _metric_label_values = (
             payload.composite_keys,
             ":".join(payload.composite_keys),
@@ -90,7 +92,7 @@ class PromTrainerUDF(TrainerUDF):
                 counter=FETCH_EXCEPTION_COUNTER,
                 labels=_metric_label_values,
             )
-            _LOGGER.exception("%s - Error while fetching data from Prometheus", payload.uuid)
+            log.exception("Error while fetching data from Prometheus", uuid=payload.uuid)
             return None
         _end_time = time.perf_counter() - _start_time
         _add_summary(
@@ -98,11 +100,14 @@ class PromTrainerUDF(TrainerUDF):
             labels=_metric_label_values,
             data=_end_time,
         )
-        _LOGGER.debug(
-            "%s - Time taken to fetch data: %.3f sec, df shape: %s",
-            payload.uuid,
-            _end_time,
-            _df.shape,
+        log.info(
+            "Fetched data from Prometheus",
+            uuid=payload.uuid,
+            config_id=payload.config_id,
+            pipeline_id=payload.pipeline_id,
+            keys=payload.composite_keys,
+            df_shape=_df.shape,
+            execution_time_ms=round(_end_time * 1000, 4),
         )
         _add_summary(
             DATAFRAME_SHAPE_SUMMARY,
