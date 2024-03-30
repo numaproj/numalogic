@@ -187,10 +187,6 @@
   "start_time": 1691622660000,
   "end_time": 1691623860000,
   "metadata": {
-    "app": "o11y-fuzzy-gql",
-    "namespace": "dev-devx-o11yfuzzygqlfederation-usw2-qal",
-    "role": "stable",
-    "rollouts_pod_template_hash": "8459c44c87",
     "tags": {
       "asset_alias": "data",
       "asset_id": "123456789",
