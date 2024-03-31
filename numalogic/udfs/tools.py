@@ -1,4 +1,3 @@
-import logging
 from dataclasses import replace
 import time
 from typing import Optional, NamedTuple
@@ -28,7 +27,6 @@ from numalogic.udfs._metrics import (
 )
 
 _struct_log = configure_logger()
-_LOGGER = logging.getLogger(__name__)
 
 
 class _DedupMetadata(NamedTuple):
@@ -253,11 +251,13 @@ class TrainMsgDeduplicator:
         _key = ":".join(keys)
         return f"TRAIN::{_key}"
 
-    def __fetch_ts(self, key: str) -> _DedupMetadata:
+    def __fetch_ts(self, uuid: str, key: str) -> _DedupMetadata:
         try:
             data = self.client.hgetall(key)
         except Exception:
-            _LOGGER.exception("Problem  fetching ts information for the key: %s", key)
+            _struct_log.exception(
+                "Problem  fetching ts information for the key", uuid=uuid, key=key
+            )
             return _DedupMetadata(msg_read_ts=None, msg_train_ts=None, msg_train_records=None)
         else:
             # decode the key:value pair and update the values
@@ -289,13 +289,13 @@ class TrainMsgDeduplicator:
         try:
             self.client.hset(name=_key, key="_msg_train_records", value=str(train_records))
         except Exception:
-            _LOGGER.exception(
-                " %s - Problem while updating _msg_train_records information for the key: %s",
+            _struct_log.exception(
+                "Problem while updating _msg_train_records information for the key",
                 uuid,
                 key,
             )
             return False
-        _LOGGER.info("%s - Acknowledging insufficient data for the key: %s", uuid, key)
+        _struct_log.debug("Acknowledging insufficient data for the key", uuid, key)
         return True
 
     def ack_read(
@@ -323,7 +323,7 @@ class TrainMsgDeduplicator:
 
         """
         _key = self.__construct_train_key(key)
-        metadata = self.__fetch_ts(key=_key)
+        metadata = self.__fetch_ts(uuid=uuid, key=_key)
         _msg_read_ts, _msg_train_ts, _msg_train_records = (
             metadata.msg_read_ts,
             metadata.msg_train_ts,
@@ -337,8 +337,8 @@ class TrainMsgDeduplicator:
             and _curr_time - float(_msg_read_ts)
             < (min_train_records - int(_msg_train_records)) * data_freq
         ):
-            _LOGGER.info(
-                "%s - There was insufficient data for the key in the past: %s. Retrying fetching"
+            _struct_log.debug(
+                "There was insufficient data for the key in the past. Retrying fetching"
                 " and training after %s secs",
                 uuid,
                 key,
@@ -351,28 +351,30 @@ class TrainMsgDeduplicator:
 
         # Check if the model is being trained by another process
         if _msg_read_ts and time.time() - float(_msg_read_ts) < retry:
-            _LOGGER.info("%s - Model with key : %s is being trained by another process", uuid, key)
+            _struct_log.debug(
+                "Model with key is being trained by another process", uuid=uuid, key=key
+            )
             return False
 
         # This check is needed if there is backpressure in the pipeline
         if _msg_train_ts and time.time() - float(_msg_train_ts) < retrain_freq * 60 * 60:
-            _LOGGER.info(
-                "%s - Model was saved for the key: %s in less than %s hrs, skipping training",
-                uuid,
-                key,
-                retrain_freq,
+            _struct_log.debug(
+                "Model was saved for the key in less than retrain_freq hrs, skipping training",
+                uuid=uuid,
+                key=key,
+                retrain_freq=retrain_freq,
             )
             return False
         try:
             self.client.hset(name=_key, key="_msg_read_ts", value=str(time.time()))
         except Exception:
-            _LOGGER.exception(
-                "%s - Problem while updating msg_read_ts information for the key: %s",
-                uuid,
-                key,
+            _struct_log.exception(
+                "Problem while updating msg_read_ts information for the key",
+                uuid=uuid,
+                key=key,
             )
             return False
-        _LOGGER.info("%s - Acknowledging request for Training for key : %s", uuid, key)
+        _struct_log.debug("Acknowledging request for Training for key", uuid=uuid, key=key)
         return True
 
     def ack_train(self, key: KEYS, uuid: str) -> bool:
@@ -391,13 +393,13 @@ class TrainMsgDeduplicator:
         try:
             self.client.hset(name=_key, key="_msg_train_ts", value=str(time.time()))
         except Exception:
-            _LOGGER.exception(
-                " %s - Problem while updating msg_train_ts information for the key: %s",
-                uuid,
-                key,
+            _struct_log.exception(
+                "Problem while updating msg_train_ts information for the key",
+                uuid=uuid,
+                key=key,
             )
             return False
-        _LOGGER.info("%s - Acknowledging model saving complete for the key: %s", uuid, key)
+        _struct_log.debug("Acknowledging model saving complete for the key", uuid=uuid, key=key)
         return True
 
 
@@ -434,7 +436,14 @@ def get_trainer_message(
             counter=MODEL_STATUS_COUNTER,
             labels=(payload.status, *metric_values),
         )
-    _struct_log.bind(uuid=train_payload.uuid).debug("Sending training request")
+    _struct_log.debug(
+        "Sending training request",
+        uuid=payload.uuid,
+        composite_keys=ckeys,
+        metrics=payload.metrics,
+        config_id=payload.config_id,
+        pipeline_id=payload.pipeline_id,
+    )
     return Message(keys=keys, value=train_payload.to_json(), tags=["train"])
 
 
@@ -452,5 +461,12 @@ def get_static_thresh_message(keys: list[str], payload: StreamPayload) -> Messag
     -------
         Mapper Message instance
     """
-    _struct_log.bind(uuid=payload.uuid).debug("Sending static thresholding request")
+    _struct_log.debug(
+        "Sending thresholding request",
+        uuid=payload.uuid,
+        keys=keys,
+        metrics=payload.metrics,
+        config_id=payload.config_id,
+        pipeline_id=payload.pipeline_id,
+    )
     return Message(keys=keys, value=payload.to_json(), tags=["staticthresh"])
