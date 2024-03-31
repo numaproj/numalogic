@@ -291,8 +291,8 @@ class TrainMsgDeduplicator:
         except Exception:
             _struct_log.exception(
                 "Problem while updating _msg_train_records information for the key",
-                uuid,
-                key,
+                uuid=uuid,
+                key=key,
             )
             return False
         _struct_log.debug("Acknowledging insufficient data for the key", uuid, key)

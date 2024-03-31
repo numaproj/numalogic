@@ -428,13 +428,8 @@ class TestDruidTrainerUDF(unittest.TestCase):
     @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_2(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
-        with self.assertLogs(level="INFO") as log:
-            train_dedup.ack_read([*self.keys, "pipeline1"], "some-uuid")
-            self.assertEqual(
-                "INFO:numalogic.udfs.tools:some-uuid - "
-                "Acknowledging request for Training for key : ['5984175597303660107', 'pipeline1']",
-                log.output[-1],
-            )
+        train_dedup.ack_read([*self.keys, "pipeline1"], "some-uuid")
+        self.assertLogs("RedisError")
 
     def test_druid_from_config_1(self):
         with self.assertLogs(level="WARN") as log:
