@@ -1,7 +1,7 @@
 import logging
 import time
 from dataclasses import asdict
-from typing import Optional
+from typing import Optional, Tuple, Dict, Any
 
 import numpy as np
 import numpy.typing as npt
@@ -79,7 +79,7 @@ class TrainerUDF(NumalogicUDF):
         trainer_transform: Optional[artifact_t] = None,
         threshold_clf: Optional[artifact_t] = None,
         numalogic_cfg: Optional[NumalogicConf] = None,
-    ) -> dict[str, KeyedArtifact]:
+    ) -> tuple[dict[str, KeyedArtifact], Any]:
         """
         Train the model on the given input data.
 
@@ -115,7 +115,7 @@ class TrainerUDF(NumalogicUDF):
             )
 
         train_ds = StreamingDataset(input_, model.seq_len)
-        trainer = TimeseriesTrainer(**asdict(trainer_cfg.pltrainer_conf))
+        trainer = TimeseriesTrainer(**dict(trainer_cfg.pltrainer_conf))
         trainer.fit(
             model, train_dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
         )
@@ -135,7 +135,7 @@ class TrainerUDF(NumalogicUDF):
                 stateful=numalogic_cfg.threshold.stateful,
             )
 
-        return dict_artifacts
+        return dict_artifacts, train_reconerr
 
     @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
