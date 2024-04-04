@@ -4,7 +4,6 @@ import os
 import logging
 from numalogic.connectors.aws.boto3_client_manager import Boto3ClientManager
 from numalogic.connectors.aws.db_configurations import (
-    load_db_conf,
     DatabaseServiceProvider,
     DatabaseTypes,
 )

@@ -1,12 +1,9 @@
 from boto3 import Session
 import logging
-from numalogic.connectors.aws import BaseEnum
 from numalogic.connectors.aws.exceptions import UnRecognizedAWSClientException
 from numalogic.connectors.aws.sts_client_manager import STSClientManager
 from numalogic.connectors.aws.db_configurations import (
-    load_db_conf,
     DatabaseServiceProvider,
-    DatabaseTypes,
 )
 
 logging.basicConfig(level=logging.INFO)
@@ -22,20 +19,18 @@ class Boto3ClientManager:
         The Boto3ClientManager is responsible for managing AWS clients for different services like RDS and Athena.
         It uses the configurations to create the clients and manage their sessions.
 
-        Args:
-            configurations (object): An object containing the necessary configurations. The configurations should include:
-                - aws_assume_role_arn: The ARN of the role to assume for AWS services.
-                - aws_assume_role_session_name: The session name to use when assuming the role.
-                - endpoint: The endpoint for the AWS service.
-                - port: The port to use for the AWS service.
-                - database_username: The username for the database.
-                - aws_region: The AWS region where the services are located.
+        Args: configurations (object): An object containing the necessary configurations. The configurations should
+        include: - aws_assume_role_arn: The ARN of the role to assume for AWS services. -
+        aws_assume_role_session_name: The session name to use when assuming the role. - endpoint: The endpoint for
+        the AWS service. - port: The port to use for the AWS service. - database_username: The username for the
+        database. - aws_region: The AWS region where the services are located.
 
         Attributes:
             rds_client (boto3.client): The client for AWS RDS service. Initialized as None.
             athena_client (boto3.client): The client for AWS Athena service. Initialized as None.
             configurations (object): The configurations for the AWS services.
             sts_client_manager (STSClientManager): The STSClientManager for managing AWS STS sessions.
+
         """
         self.rds_client = None
         self.athena_client = None
