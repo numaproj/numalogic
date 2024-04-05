@@ -1,9 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
-from botocore.exceptions import NoCredentialsError
-from numalogic.connectors.aws.exceptions import UnRecognizedAWSClientException
-from numalogic.connectors.aws.boto3_client_manager import Boto3ClientManager
-from numalogic.connectors.aws.sts_client_manager import STSClientManager
+from numalogic.connectors.utils.aws.exceptions import UnRecognizedAWSClientException
+from numalogic.connectors.utils.aws.boto3_client_manager import Boto3ClientManager
+from numalogic.connectors.utils.aws.sts_client_manager import STSClientManager
 
 class TestBoto3ClientManager(unittest.TestCase):
 

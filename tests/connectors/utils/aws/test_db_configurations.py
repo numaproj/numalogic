@@ -1,7 +1,7 @@
 import unittest
-from unittest.mock import patch, Mock
-import numalogic.connectors.aws.db_configurations as db_configuration  # Replace with the actual module name
-from numalogic.connectors.aws.exceptions import ConfigNotFoundError
+from unittest.mock import patch
+import numalogic.connectors.utils.aws.db_configurations as db_configuration  # Replace with the actual module name
+from numalogic.connectors.utils.aws.db_configurations import ConfigNotFoundError
 from numalogic._constants import TESTS_DIR
 import os
 
@@ -12,7 +12,7 @@ class TestAwsConfig(unittest.TestCase):
         # here add the asserts to validate that the config has been created as expected
         self.assertIsNotNone(result)
 
-    @patch("numalogic.connectors.aws.db_configurations.OmegaConf.load", side_effect=FileNotFoundError())
+    @patch("numalogic.connectors.utils.aws.db_configurations.OmegaConf.load", side_effect=FileNotFoundError())
     def test_load_db_conf_file_not_exists(self, mock_load):
         path = "/path/doesnotexist/config.yaml"
         with self.assertRaises(ConfigNotFoundError):

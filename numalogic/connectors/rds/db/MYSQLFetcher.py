@@ -10,7 +10,7 @@ from numalogic.connectors.utils.aws.db_configurations import load_db_conf
 _LOGGER = logging.getLogger(__name__)
 
 
-class MysqlFetcher(RDSDataFetcher):
+class MYSQLFetcher(RDSDataFetcher):
     database_type = DatabaseTypes.mysql.value
 
     def __init__(self, db_config: RDSConfig, **kwargs):

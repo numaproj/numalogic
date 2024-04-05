@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Optional
 
-from numalogic import BaseEnum
+from numalogic.connectors.utils.enum import BaseEnum
 
 
 class DatabaseServiceProvider(BaseEnum):

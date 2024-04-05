@@ -1,9 +1,9 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from numalogic.connectors.aws.sts_client_manager import STSClientManager
+from numalogic.connectors.utils.aws.sts_client_manager import STSClientManager
 from datetime import datetime, timedelta, timezone
 class TestSTSClientManager(unittest.TestCase):
-    @patch('numalogic.connectors.aws.sts_client_manager.boto3.client')
+    @patch('numalogic.connectors.utils.aws.sts_client_manager.boto3.client')
     def test_STSClientManager(self, boto3_client_mock):
         # Prepare the mock methods
         mock_sts_client = MagicMock()

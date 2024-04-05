@@ -1,9 +1,8 @@
-from numalogic.connectors.aws import BaseEnum
+from numalogic.connectors.utils.enum import BaseEnum
 import unittest
-import  logging
+import logging
 
 logging.basicConfig(level=logging.DEBUG)
-
 
 
 class test_aws_init(unittest.TestCase):

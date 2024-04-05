@@ -4,9 +4,9 @@ from typing import Optional
 import pandas as pd
 import logging
 
-from numalogic.connectors.aws.db_connector import DBConnector
+from numalogic.connectors.aws import DBConnector
 
-from numalogic.connectors.aws.db_configurations import load_db_conf
+from numalogic.connectors.aws import load_db_conf
 
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
