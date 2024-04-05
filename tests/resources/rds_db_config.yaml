@@ -1,11 +1,11 @@
 
 
-aws_assume_role_arn: "arn:aws:iam::907103919737:role/RDS_IAM_ODL_USER_ROLE"
+aws_assume_role_arn: "arn:aws:iam::123456789:role/ml_iam_role"
 aws_assume_role_session_name: "ml_pipeline_reader"
-endpoint: "ml-poc-1.cluster-ro-c7aeliikpubn.us-west-2.rds.amazonaws.com"
+endpoint: "ml-rds-aurora-mysql-cluster.us-west-2.rds.amazonaws.com"
 port: 3306
-database_name: "ml_poc"
-database_username: "odl_user"
+database_name: "mldb"
+database_username: "ml_user"
 database_password: ""
 database_connection_timeout: 10
 database_type: "mysql"
