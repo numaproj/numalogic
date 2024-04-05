@@ -16,7 +16,7 @@ class RDSFetcher(object):
             self.fetcher = db.CLASS_TYPE(db_config)
             print(self.fetcher.database_type)
 
-    def _fetch(self, query) -> pd.DataFrame:
+    def fetch(self, query) -> pd.DataFrame:
         return self.fetcher.execute_query(query)
 
 
@@ -27,5 +27,5 @@ if __name__ == "__main__":
         "/Users/skondakindi/Desktop/codebase/odl/odl-ml-python-sdk/tests/resources/db_config_no_ssl.yaml"
     )
     rds = RDSFetcher(config)
-    result = rds._fetch("select 1")
+    result = rds.fetch("select 1")
     _LOGGER.info(result.to_json(orient="records"))

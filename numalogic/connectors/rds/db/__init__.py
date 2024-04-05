@@ -10,4 +10,4 @@ for file_name in os.listdir(os.path.dirname(__file__)):
         module = importlib.import_module(f'.{class_name}', __name__)
         CLASS_TYPE = getattr(module, class_name)
 
-del module
+
