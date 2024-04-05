@@ -5,7 +5,6 @@ from numalogic.connectors.rds._config import DatabaseServiceProvider
 from numalogic.connectors.utils.aws.exceptions import UnRecognizedAWSClientException
 from numalogic.connectors.utils.aws.sts_client_manager import STSClientManager
 
-
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
 
@@ -105,7 +104,7 @@ class Boto3ClientManager:
         message indicating the unrecognized client type and the available options.
 
         """
-        _LOGGER.debug(
+        _LOGGER.info(
             f"Generating AWS client for client_type: {client_type} , and configurations: {str(self.configurations)}"
         )
         if client_type in DatabaseServiceProvider:
@@ -122,12 +121,3 @@ class Boto3ClientManager:
             raise UnRecognizedAWSClientException(
                 f"Unrecognized Client Type : {client_type}, please choose one from {DatabaseServiceProvider.list()}"
             )
-
-#
-# if __name__ == "__main__":
-#     config = load_db_conf(
-#         "./db_config.yaml")
-#     boto3_client_manager = Boto3ClientManager(config)
-#     rds = DatabaseServiceProvider.rds.value
-#     rds_client = boto3_client_manager.get_client(rds)
-#     _LOGGER.info(boto3_client_manager.get_rds_token(rds_client))

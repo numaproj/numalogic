@@ -1,8 +1,5 @@
 import logging
-from dataclasses import dataclass, field
-from typing import Optional
 from omegaconf import OmegaConf
-
 from numalogic.connectors.rds._config import RDSConfig
 from numalogic.connectors.utils.aws.exceptions import ConfigNotFoundError
 
@@ -41,10 +38,3 @@ def load_db_conf(*paths: str) -> RDSConfig:
     schema = OmegaConf.structured(RDSConfig)
     conf = OmegaConf.merge(schema, *confs)
     return OmegaConf.to_object(conf)
-
-# if __name__ == "__main__":
-#     print(
-#         load_db_conf(
-#             "/Users/skondakindi/Desktop/codebase/odl/odl-ml-python-sdk/tests/resources/db_config.yaml"
-#         )
-#     )

@@ -1,7 +1,5 @@
-import time
 import logging
-from datetime import datetime, timedelta, timezone
-
+from datetime import datetime, timezone
 import boto3
 
 _LOGGER = logging.getLogger(__name__)
@@ -74,18 +72,3 @@ class STSClientManager:
 
             _LOGGER.debug("Using Existing Credentials")
         return self.credentials
-
-
-# if __name__ == "__main__":
-#     sts_client_manager = STSClientManager()
-#     credentials = sts_client_manager.get_credentials(
-#         "arn:aws:iam::907103919737:role/RDS_IAM_ODL_USER_ROLE",
-#         "ml_feature_store_session",
-#     )
-#     print(credentials)
-#     credentials["Expiration"] = datetime.now(timezone.utc) + timedelta(minutes=30)
-#     credentials = sts_client_manager.get_credentials(
-#         "arn:aws:iam::907103919737:role/RDS_IAM_ODL_USER_ROLE",
-#         "ml_feature_store_session",
-#     )
-#     print(credentials)
