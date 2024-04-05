@@ -45,6 +45,7 @@ class RDSDataFetcher(object):
         self.db_config = db_config
         self.connection = None
         self.database_type = db_config.database_type
+        self.boto3_client_manager = Boto3ClientManager(self.db_config)
 
     def get_rds_token(self):
         """
@@ -56,9 +57,8 @@ class RDSDataFetcher(object):
         Returns:
             str: The generated RDS authentication token.
         """
-        boto3_client_manager = Boto3ClientManager(self.db_config)
-        rds_client = boto3_client_manager.get_client(DatabaseServiceProvider.rds.value)
-        db_password = boto3_client_manager.get_rds_token(rds_client)
+        rds_client = self.boto3_client_manager.get_client(DatabaseServiceProvider.rds.value)
+        db_password = self.boto3_client_manager.get_rds_token(rds_client)
         return db_password
 
     def get_password(self) -> str:

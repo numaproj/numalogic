@@ -70,5 +70,5 @@ class STSClientManager:
             self.assume_role(role_arn, role_session_name)
         else:
 
-            _LOGGER.debug("Using Existing Credentials")
+            _LOGGER.info("Using Existing Credentials")
         return self.credentials

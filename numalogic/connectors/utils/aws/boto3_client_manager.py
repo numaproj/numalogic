@@ -104,7 +104,7 @@ class Boto3ClientManager:
         message indicating the unrecognized client type and the available options.
 
         """
-        _LOGGER.info(
+        _LOGGER.debug(
             f"Generating AWS client for client_type: {client_type} , and configurations: {str(self.configurations)}"
         )
         if client_type in DatabaseServiceProvider:

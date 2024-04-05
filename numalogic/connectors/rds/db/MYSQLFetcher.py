@@ -65,7 +65,7 @@ class MYSQLFetcher(RDSDataFetcher):
                 user=self.db_config.database_username,
                 password=self.get_password(),
                 db=self.db_config.database_name,
-                ssl=self.db_config.ssl,
+                ssl=self.db_config.ssl.__dict__,
                 cursorclass=pymysql.cursors.DictCursor,
                 charset="utf8mb4",
                 connect_timeout=self.db_config.database_connection_timeout,
