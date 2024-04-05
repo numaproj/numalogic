@@ -64,8 +64,6 @@ class TestMYSQLFetcher(unittest.TestCase):
         mock_get_db_cursor.assert_called_once_with(mock_get_connection.return_value)
         mock_cursor.execute.assert_called_once_with(mock_query)
 
-        print(result.to_dict())
-
         # It should return a dataframe
         self.assertEqual(result.to_dict(), {'col1': {0: 'val1'}, 'col2': {0: 'val2'}})
 

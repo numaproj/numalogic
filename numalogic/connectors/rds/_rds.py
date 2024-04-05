@@ -24,7 +24,7 @@ class RDSFetcher(object):
         self.db_config = db_config
         if db.CLASS_TYPE:
             self.fetcher = db.CLASS_TYPE(db_config)
-            print(self.fetcher.database_type)
+            _LOGGER.info(f"Executing for database type: {self.fetcher.database_type}")
 
     def fetch(self, query) -> pd.DataFrame:
         """

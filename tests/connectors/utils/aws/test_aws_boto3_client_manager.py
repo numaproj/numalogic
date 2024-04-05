@@ -4,6 +4,7 @@ from numalogic.connectors.utils.aws.exceptions import UnRecognizedAWSClientExcep
 from numalogic.connectors.utils.aws.boto3_client_manager import Boto3ClientManager
 from numalogic.connectors.utils.aws.sts_client_manager import STSClientManager
 
+
 class TestBoto3ClientManager(unittest.TestCase):
 
     def setUp(self):
@@ -23,23 +24,12 @@ class TestBoto3ClientManager(unittest.TestCase):
             "SecretAccessKey": "testSecretKey",
             "SessionToken": "testSessionToken"
         })
-
-        boto3_session = self.boto3_client_manager.get_boto3_session()
-
-        print(boto3_session)
-
-        # self.boto3_session_mock.assert_called_with(
-        #         aws_access_key_id="testAccessKey",
-        #         aws_secret_access_key="testSecretKey",
-        #         aws_session_token="testSessionToken"
-        #     )
-
-
-        with patch.object(Boto3ClientManager,'get_boto3_session', return_value=self.boto3_session_mock) as boto3_session_class:
+        with patch.object(Boto3ClientManager, 'get_boto3_session',
+                          return_value=self.boto3_session_mock) as boto3_session_class:
             boto3_session = self.boto3_client_manager.get_boto3_session()
 
             self.assertEqual(boto3_session, self.boto3_session_mock)
-            boto3_session_class.assert_called_with( )
+            boto3_session_class.assert_called_with()
 
     def test_get_rds_token(self):
         self.rds_client_mock.generate_db_auth_token.return_value = 'test_token'
@@ -69,7 +59,8 @@ class TestBoto3ClientManager(unittest.TestCase):
         rds_client = self.boto3_client_manager.get_client('rds')
 
         self.boto3_client_manager.get_boto3_session.assert_called_once()
-        self.boto3_session_mock.client.assert_called_with('rds', region_name=self.boto3_client_manager.configurations.aws_region)
+        self.boto3_session_mock.client.assert_called_with('rds',
+                                                          region_name=self.boto3_client_manager.configurations.aws_region)
         self.assertEqual(rds_client, self.rds_client_mock)
 
     def test_get_client_athena(self):
@@ -79,8 +70,8 @@ class TestBoto3ClientManager(unittest.TestCase):
         athena_client = self.boto3_client_manager.get_client('athena')
 
         self.boto3_client_manager.get_boto3_session.assert_called_once()
-        self.boto3_session_mock.client.assert_called_with('athena', region_name=self.boto3_client_manager.configurations.aws_region)
-
+        self.boto3_session_mock.client.assert_called_with('athena',
+                                                          region_name=self.boto3_client_manager.configurations.aws_region)
 
 
 if __name__ == '__main__':

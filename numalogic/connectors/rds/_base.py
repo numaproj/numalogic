@@ -79,7 +79,6 @@ class RDSDataFetcher(object):
         else:
             _LOGGER.info("using password from config to connect RDS Database")
             db_password = self.db_config.database_password
-            print(f"db_password: {db_password}")
             return db_password
 
     def get_connection(self):
