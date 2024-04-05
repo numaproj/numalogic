@@ -1,5 +1,8 @@
 import unittest
 from unittest.mock import MagicMock, patch
+
+from boto3 import Session
+
 from numalogic.connectors.utils.aws.exceptions import UnRecognizedAWSClientException
 from numalogic.connectors.utils.aws.boto3_client_manager import Boto3ClientManager
 from numalogic.connectors.utils.aws.sts_client_manager import STSClientManager
@@ -30,6 +33,29 @@ class TestBoto3ClientManager(unittest.TestCase):
 
             self.assertEqual(boto3_session, self.boto3_session_mock)
             boto3_session_class.assert_called_with()
+
+    @patch.object(STSClientManager, "get_credentials")
+    def test_valid_get_boto3_session(self, mock_get_credentials):
+        # Mock the STSClientManager.get_credentials method
+        mock_get_credentials.return_value={
+            "AccessKeyId": "testAccessKey",
+            "SecretAccessKey": "testSecretKey",
+            "SessionToken": "testSessionToken"
+        }
+
+        # Create a mock configurations object
+        configurations_mock = MagicMock()
+        configurations_mock.aws_assume_role_arn = "testRoleArn"
+        configurations_mock.aws_assume_role_session_name = "testSessionName"
+
+        # Create a Boto3ClientManager object with the mock configurations
+        boto3_client_manager = Boto3ClientManager(configurations_mock)
+
+        # Call the get_boto3_session method
+        boto3_session = boto3_client_manager.get_boto3_session()
+
+        # Assert that the returned object is an instance of Session
+        assert isinstance(boto3_session, Session)
 
     def test_get_rds_token(self):
         self.rds_client_mock.generate_db_auth_token.return_value = 'test_token'

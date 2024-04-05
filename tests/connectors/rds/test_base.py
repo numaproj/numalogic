@@ -1,11 +1,7 @@
 import unittest
 from unittest.mock import patch, Mock
-from argparse import Namespace
 from pandas import DataFrame
-
-from numalogic.connectors.rds._base import RDSDataFetcher, RDSConfig, UnRecognizedDatabaseTypeException, \
-    UnRecognizedDatabaseServiceProviderException, Boto3ClientManager
-from numalogic.connectors.rds._config import DatabaseTypes
+from numalogic.connectors.rds._base import RDSDataFetcher, RDSConfig, Boto3ClientManager
 
 
 class TestRDSDataFetcher(unittest.TestCase):
