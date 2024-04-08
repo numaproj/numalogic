@@ -12,24 +12,27 @@ _LOGGER = logging.getLogger(__name__)
 
 class MYSQLFetcher(RDSDataFetcher):
     """
-    This code snippet defines a class called MYSQLFetcher that inherits from RDSDataFetcher. It is used to fetch data
-    from a MySQL database. The class has several methods:
+    This code snippet defines a class called MYSQLFetcher that inherits from RDSDataFetcher. It
+    is used to fetch data from a MySQL database. The class has several methods:
 
-    - __init__(self, db_config: RDSConfig, **kwargs): Initializes the MYSQLFetcher object with the given RDSConfig
-    and additional keyword arguments. - get_connection(self): Establishes a connection to the MySQL database using
-    the provided configuration. - get_db_cursor(self, connection): Returns a cursor object for executing queries on
-    the database. - execute_query(self, query) -> pd.DataFrame: Executes the given query on the database and returns
-    the result as a pandas DataFrame.
+    - __init__(self, db_config: RDSConfig, **kwargs): Initializes the MYSQLFetcher object with
+    the given RDSConfig and additional keyword arguments. - get_connection(self): Establishes a
+    connection to the MySQL database using the provided configuration. - get_db_cursor(self,
+    connection): Returns a cursor object for executing queries on the database. - execute_query(
+    self, query) -> pd.DataFrame: Executes the given query on the database and returns the
+    result as a pandas DataFrame.
 
-    The MYSQLFetcher class is designed to be used as a base class for fetching data from a MySQL database. It
-    provides methods for establishing a connection, executing queries, and retrieving the results. The class can be
-    extended and customized as needed for specific use cases.
+    The MYSQLFetcher class is designed to be used as a base class for fetching data from a MySQL
+    database. It provides methods for establishing a connection, executing queries,
+    and retrieving the results. The class can be extended and customized as needed for specific
+    use cases.
     """
     database_type = DatabaseTypes.mysql.value
 
     def __init__(self, db_config: RDSConfig, **kwargs):
         """
-        Initializes the MYSQLFetcher object with the given RDSConfig and additional keyword arguments.
+        Initializes the MYSQLFetcher object with the given RDSConfig and additional keyword
+        arguments.
 
         Parameters:
         - db_config (RDSConfig): The configuration object for the RDS connection.
@@ -53,10 +56,11 @@ class MYSQLFetcher(RDSDataFetcher):
         Raises:
             None
 
-        Notes:
-            - If SSL/TLS is enabled and configured in the RDSConfig object, the connection will be established with SSL/TLS.
-            - If SSL/TLS is not enabled or configured, the connection will be established without SSL/TLS.
-            - The connection object is returned for further use in executing queries on the database.
+        Notes: - If SSL/TLS is enabled and configured in the RDSConfig object, the connection
+        will be established with SSL/TLS. - If SSL/TLS is not enabled or configured,
+        the connection will be established without SSL/TLS. - The connection object is returned
+        for further use in executing queries on the database.
+
         """
         if self.db_config.ssl and self.db_config.ssl_enabled:
             connection = pymysql.connect(
@@ -88,8 +92,8 @@ class MYSQLFetcher(RDSDataFetcher):
         """
         Returns a cursor object for executing queries on the database.
 
-        Parameters:
-        - connection (pymysql.connections.Connection): The connection object for the MySQL database.
+        Parameters: - connection (pymysql.connections.Connection): The connection object for the
+        MySQL database.
 
         Returns:
             pymysql.cursors.Cursor: The cursor object for executing queries on the database.
@@ -100,6 +104,7 @@ class MYSQLFetcher(RDSDataFetcher):
         Notes:
             - The cursor object is used to execute queries on the database.
             - The connection object must be established before calling this method.
+
         """
         cursor = connection.cursor()
         return cursor
@@ -117,13 +122,12 @@ class MYSQLFetcher(RDSDataFetcher):
         Raises:
             None
 
-        Notes:
-            - This method establishes a connection to the database using the get_connection() method.
-            - It retrieves a cursor object using the get_db_cursor() method.
-            - The query is executed using the cursor.execute() method.
-            - The column names are extracted from the cursor.description attribute.
-            - The rows are fetched using the cursor.fetchall() method.
-            - The result is returned as a pandas DataFrame with the column names as the column headers.
+        Notes: - This method establishes a connection to the database using the get_connection()
+        method. - It retrieves a cursor object using the get_db_cursor() method. - The query is
+        executed using the cursor.execute() method. - The column names are extracted from the
+        cursor.description attribute. - The rows are fetched using the cursor.fetchall() method.
+        - The result is returned as a pandas DataFrame with the column names as the column headers.
+
         """
         connection = self.get_connection()
         cursor = self.get_db_cursor(connection)
