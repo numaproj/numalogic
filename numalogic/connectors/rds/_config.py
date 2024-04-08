@@ -50,8 +50,8 @@ class SSLConfig:
     """
     SSLConfig class represents the configuration for SSL/TLS settings.
 
-    Attributes:
-        ca (Optional[str]): The path to the Certificate Authority (CA) file. Defaults to an empty string.
+    Attributes: ca (Optional[str]): The path to the Certificate Authority (CA) file. Defaults to
+    an empty string.
 
     """
 
@@ -61,19 +61,23 @@ class SSLConfig:
 @dataclass
 class RDBMSConfig:
     """
-    RDBMSConfig class represents the configuration for a Relational Database Management System (RDBMS).
+    RDBMSConfig class represents the configuration for a Relational Database Management System (
+    RDBMS).
 
-    Attributes:
-        endpoint (str): The endpoint or hostname of the database. Defaults to an empty string.
-        port (int): The port number of the database. Defaults to 3306.
-        database_name (str): The name of the database. Defaults to an empty string.
-        database_username (str): The username for the database connection. Defaults to an empty string.
-        database_password (str): The password for the database connection. Defaults to an empty string.
-        database_connection_timeout (int): The timeout duration for the database connection in seconds. Defaults to 10.
-        database_type (str): The type of the database. Defaults to 'mysql'.
-        database_provider (str): The provider of the database service. Defaults to 'rds'.
-        ssl_enabled (bool): Flag indicating whether SSL/TLS is enabled for the database connection. Defaults to False.
-        ssl (Optional[SSLConfig]): The SSL/TLS configuration for the database connection. Defaults to an empty SSLConfig object.
+    Attributes: endpoint (str): The endpoint or hostname of the database. Defaults to an empty
+    string.
+    port (int): The port number of the database. Defaults to 3306.
+    database_name (str): The name of the database. Defaults to an empty string.
+    database_username (str): The username for the database connection. Defaults to an empty string.
+    database_password (str): The password for the database connection. Defaults to an empty string.
+    database_connection_timeout (int): The timeout duration for the database connection in
+    seconds. Defaults to 10.
+    database_type (str): The type of the database. Defaults to 'mysql'.
+    database_provider (str): The provider of the database service. Defaults to 'rds'.
+    ssl_enabled (bool): Flag indicating whether SSL/TLS is enabled for the database connection.
+    Defaults to False.
+    ssl (Optional[SSLConfig]): The SSL/TLS configuration for the database
+    connection. Defaults to an empty SSLConfig object.
 
     """
 
@@ -93,25 +97,30 @@ class RDSConfig(AWSConfig, RDBMSConfig):
     """
     Class representing the configuration for an RDS (Relational Database Service) instance.
 
-    Inherits from:
-    - AWSConfig: Class representing AWS configuration.
-    - RDBMSConfig: Class representing the configuration for a Relational Database Management System (RDBMS).
+    Inherits from: - AWSConfig: Class representing AWS configuration. - RDBMSConfig: Class
+    representing the configuration for a Relational Database Management System (RDBMS).
 
     Attributes:
-        aws_assume_role_arn (str): The ARN of the IAM role to assume.
-        aws_assume_role_session_name (str): The name of the session when assuming the IAM role.
-        endpoint (str): The endpoint or hostname of the database. Defaults to an empty string.
-        port (int): The port number of the database. Defaults to 3306.
-        database_name (str): The name of the database. Defaults to an empty string.
-        database_username (str): The username for the database connection. Defaults to an empty string.
-        database_password (str): The password for the database connection. Defaults to an empty string.
-        database_connection_timeout (int): The timeout duration for the database connection in seconds. Defaults to 10.
-        database_type (str): The type of the database. Defaults to 'mysql'.
-        database_provider (str): The provider of the database service. Defaults to 'rds'.
-        ssl_enabled (bool): Flag indicating whether SSL/TLS is enabled for the database connection. Defaults to False.
-        ssl (Optional[SSLConfig]): The SSL/TLS configuration for the database connection. Defaults to an empty SSLConfig object.
-        aws_region (str): The AWS region for the RDS instance.
-        aws_rds_use_iam (bool): Flag indicating whether to use IAM authentication for the RDS instance. Defaults to False.
+
+    aws_assume_role_arn (str): The ARN of the IAM role to assume.
+    aws_assume_role_session_name (str): The name of the session when assuming the IAM role.
+    endpoint (str): The endpoint or hostname of the database. Defaults to an empty string.
+    port (int): The port number of the database. Defaults to 3306.
+    database_name (str): The name of the database. Defaults to an empty string.
+    database_username (str): The username for the database connection. Defaults to an empty string.
+    database_password (str): The password for the database connection. Defaults to an empty string.
+    database_connection_timeout (int): The timeout duration for the database connection in seconds.
+     Defaults to 10.
+    database_type (str): The type of the database. Defaults to 'mysql'.
+    database_provider (str): The provider of the database service. Defaults to 'rds'.
+    ssl_enabled (bool): Flag indicating whether SSL/TLS is enabled for the database connection.
+    Defaults to False.
+    ssl (Optional[SSLConfig]): The SSL/TLS configuration for the database connection.
+    Defaults to an empty SSLConfig object.
+    aws_region (str): The AWS region for the RDS instance.
+    aws_rds_use_iam (bool): Flag indicating whether to use IAM authentication for the RDS instance.
+     Defaults to False.
+
     """
 
     aws_region: str = ""

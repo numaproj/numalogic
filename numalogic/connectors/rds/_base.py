@@ -10,8 +10,9 @@ class RDSDataFetcher:
     """
     Class: RDSDataFetcher
 
-    This class represents a data fetcher for RDS (Relational Database Service) connections. It provides methods for
-    retrieving the RDS token, getting the password, establishing a connection, and executing queries.
+    This class represents a data fetcher for RDS (Relational Database Service) connections. It
+    provides methods for retrieving the RDS token, getting the password, establishing a
+    connection, and executing queries.
 
     Attributes:
 
@@ -20,12 +21,13 @@ class RDSDataFetcher:
 
     Methods:
 
-    - get_rds_token(): Retrieves the RDS token using the Boto3ClientManager. - get_password() -> str:
-    Retrieves the password for the RDS connection. If 'aws_rds_use_iam' is True, it calls the get_rds_token() method,
-    otherwise it returns the database password from the configuration. - get_connection(): Placeholder method for
-    establishing a connection to the RDS database. - get_db_cursor(): Placeholder method for getting a database
-    cursor. - execute_query(query) -> pd.DataFrame: Placeholder method for executing a query and returning the result
-    as a pandas DataFrame.
+    - get_rds_token(): Retrieves the RDS token using the Boto3ClientManager. - get_password() ->
+    str: Retrieves the password for the RDS connection. If 'aws_rds_use_iam' is True, it calls
+    the get_rds_token() method, otherwise it returns the database password from the
+    configuration. - get_connection(): Placeholder method for establishing a connection to the
+    RDS database. - get_db_cursor(): Placeholder method for getting a database cursor. -
+    execute_query(query) -> pd.DataFrame: Placeholder method for executing a query and returning
+    the result as a pandas DataFrame.
     """
 
     def __init__(self, db_config: RDSConfig, **kwargs):
@@ -37,7 +39,6 @@ class RDSDataFetcher:
         - kwargs (dict): Additional keyword arguments.
 
         Attributes:
-
         - self.kwargs (dict): Additional keyword arguments.
         - self.db_config (RDSConfig): The configuration object for the RDS connection.
         - self.connection (None): The connection object for the RDS database.
@@ -45,6 +46,7 @@ class RDSDataFetcher:
 
         Returns:
         - None
+
         """
         self.kwargs = kwargs
         self.db_config = db_config
@@ -56,11 +58,12 @@ class RDSDataFetcher:
         """
         Generates an RDS authentication token using the provided RDS boto3 client.
 
-        Parameters:
-            rds_boto3_client (boto3.client): The RDS boto3 client used to generate the authentication token.
+        Parameters: rds_boto3_client (boto3.client): The RDS boto3 client used to generate the
+        authentication token.
 
         Returns:
             str: The generated RDS authentication token.
+
         """
         rds_client = self.boto3_client_manager.get_client(DatabaseServiceProvider.rds.value)
         db_password = self.boto3_client_manager.get_rds_token(rds_client)
@@ -70,11 +73,12 @@ class RDSDataFetcher:
         """
         Retrieves the password for the RDS connection.
 
-        If 'aws_rds_use_iam' is True, it calls the get_rds_token() method to generate the RDS token.
-        Otherwise, it returns the database password from the configuration.
+        If 'aws_rds_use_iam' is True, it calls the get_rds_token() method to generate the RDS
+        token. Otherwise, it returns the database password from the configuration.
 
         Returns:
             str: The password for the RDS connection.
+
         """
         db_password = None
         if self.db_config.aws_rds_use_iam:
@@ -90,11 +94,13 @@ class RDSDataFetcher:
         """
         Establishes a connection to the RDS database.
 
-        This method is a placeholder and needs to be implemented in a subclass. It should handle the logic for
-        establishing a connection to the RDS database based on the provided configuration.
+        This method is a placeholder and needs to be implemented in a subclass. It should handle
+        the logic for establishing a connection to the RDS database based on the provided
+        configuration.
 
         Returns:
             None
+
         """
         pass
 
@@ -102,11 +108,12 @@ class RDSDataFetcher:
         """
         Retrieves a database cursor for executing queries.
 
-        This method is a placeholder and needs to be implemented in a subclass.
-        It should handle the logic for retrieving a database cursor based on the established connection.
+        This method is a placeholder and needs to be implemented in a subclass. It should handle
+        the logic for retrieving a database cursor based on the established connection.
 
         Returns:
             None
+
         """
         pass
 
@@ -119,5 +126,6 @@ class RDSDataFetcher:
 
         Returns:
             pd.DataFrame: The result of the query as a pandas DataFrame.
+
         """
         pass
