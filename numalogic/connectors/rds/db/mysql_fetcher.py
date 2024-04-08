@@ -8,7 +8,7 @@ from numalogic.connectors.rds._config import DatabaseTypes, RDSConfig
 _LOGGER = logging.getLogger(__name__)
 
 
-class MYSQLFetcher(RDSDataFetcher):
+class MysqlFetcher(RDSDataFetcher):
     """
     MYSQLFetcher that inherits from RDSDataFetcher. It is used to fetch data from a MySQL database.
 
@@ -30,19 +30,6 @@ class MYSQLFetcher(RDSDataFetcher):
     database_type = DatabaseTypes.mysql.value
 
     def __init__(self, db_config: RDSConfig, **kwargs):
-        """
-        Initializes the MYSQLFetcher object with the given RDSConfig and additional keyword
-        arguments.
-
-        Parameters
-        ----------
-        - db_config (RDSConfig): The configuration object for the RDS connection.
-        - **kwargs: Additional keyword arguments.
-
-        Returns
-        -------
-        None
-        """
         super().__init__(db_config)
         self.db_config = db_config
         self.kwargs = kwargs
@@ -96,7 +83,8 @@ class MYSQLFetcher(RDSDataFetcher):
         """
         Returns a cursor object for executing queries on the database.
 
-        Parameters: - connection (pymysql.connections.Connection): The connection object for the
+        Arguments:
+        - connection (pymysql.connections.Connection): The connection object for the
         MySQL database.
 
         Returns
@@ -119,7 +107,7 @@ class MYSQLFetcher(RDSDataFetcher):
         """
         Executes the given query on the database and returns the result as a pandas DataFrame.
 
-        Parameters
+        Arguments
         ----------
         - query (str): The SQL query to be executed on the database.
 
@@ -131,10 +119,15 @@ class MYSQLFetcher(RDSDataFetcher):
         ------
             None
 
-        Notes: - This method establishes a connection to the database using the get_connection()
-        method. - It retrieves a cursor object using the get_db_cursor() method. - The query is
-        executed using the cursor.execute() method. - The column names are extracted from the
-        cursor.description attribute. - The rows are fetched using the cursor.fetchall() method.
+        Notes
+        -----
+        - This method establishes a connection to the database using the get_connection()
+        method.
+        - It retrieves a cursor object using the get_db_cursor() method. - The query is
+        executed using the cursor.execute() method.
+        - The column names are extracted from the
+        cursor. Description attribute.
+        - The rows are fetched using the cursor.fetchall() method.
         - The result is returned as a pandas DataFrame with the column names as the column headers.
 
         """

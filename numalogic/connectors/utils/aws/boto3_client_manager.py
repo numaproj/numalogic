@@ -30,26 +30,6 @@ class Boto3ClientManager:
     """
 
     def __init__(self, configurations):
-        """
-        Initializes the Boto3ClientManager with the given configurations.
-
-        The Boto3ClientManager is responsible for managing AWS clients for different services
-        like RDS and Athena. It uses the configurations to create the clients and manage their
-        sessions.
-
-        Args: configurations (object): An object containing the necessary configurations. The
-        configurations should include: - aws_assume_role_arn: The ARN of the role to assume for
-        AWS services. - aws_assume_role_session_name: The session name to use when assuming the
-        role. - endpoint: The endpoint for the AWS service. - port: The port to use for the AWS
-        service. - database_username: The username for the database. - aws_region: The AWS
-        region where the services are located.
-
-        Attributes ---------- rds_client (boto3.client): The client for AWS RDS service.
-        Initialized as None. athena_client (boto3.client): The client for AWS Athena service.
-        Initialized as None. configurations (object): The configurations for the AWS services.
-        sts_client_manager (STSClientManager): The STSClientManager for managing AWS STS sessions.
-
-        """
         self.rds_client = None
         self.athena_client = None
         self.configurations = configurations
@@ -91,8 +71,9 @@ class Boto3ClientManager:
         database. - Port: The port number of the RDS database. - DBUsername: The username for
         the RDS database. - Region: The AWS region where the RDS database is located.
 
-        Parameters ---------- rds_boto3_client (boto3.client): The RDS boto3 client used to
-        generate the authentication token.
+        Arguments:
+         - rds_boto3_client (boto3.client): The RDS boto3 client used to generate the
+         authentication token.
 
         Returns
         -------
@@ -116,7 +97,8 @@ class Boto3ClientManager:
         corresponding AWS client using the `get_boto3_session().client()` method and returns the
         client object.
 
-        Parameters: client_type (str): The type of AWS client to generate. This should be one of
+        Arguments:
+        - client_type (str): The type of AWS client to generate. This should be one of
         the values defined in the `DatabaseServiceProvider` enum.
 
         Returns
@@ -131,7 +113,8 @@ class Boto3ClientManager:
         client = None
         _LOGGER.debug(
             "Generating AWS client for client_type: %s and configurations:%s ",
-            client_type, str(self.configurations)
+            client_type,
+            str(self.configurations),
         )
         if client_type in DatabaseServiceProvider:
             if client_type == DatabaseServiceProvider.rds.value:

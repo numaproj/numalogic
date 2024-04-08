@@ -1,11 +1,10 @@
 from numalogic.connectors.utils.enum import BaseEnum
-import unittest
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
 
-class test_aws_init(unittest.TestCase):
+class test_aws_init:
     def test_invalid_value_returns_false(self):
         # Arrange
         class MyEnum(BaseEnum):

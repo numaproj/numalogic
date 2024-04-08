@@ -32,37 +32,17 @@ class RDSDataFetcher:
     """
 
     def __init__(self, db_config: RDSConfig, **kwargs):
-        """
-        Initialize an instance of the RDSDataFetcher class.
-
-        Parameters
-        ----------
-        - db_config (RDSConfig): The configuration object for the RDS connection.
-        - kwargs (dict): Additional keyword arguments.
-
-        Attributes
-        ----------
-        - self.kwargs (dict): Additional keyword arguments.
-        - self.db_config (RDSConfig): The configuration object for the RDS connection.
-        - self.connection (None): The connection object for the RDS database.
-        - self.database_type (str): The type of the database.
-
-        Returns
-        -------
-        - None
-
-        """
         self.kwargs = kwargs
         self.db_config = db_config
         self.connection = None
         self.database_type = db_config.database_type
         self.boto3_client_manager = Boto3ClientManager(self.db_config)
 
-    def get_rds_token(self):
+    def get_rds_token(self) -> str:
         """
         Generates an RDS authentication token using the provided RDS boto3 client.
 
-        Parameters
+        Arguments
         ----------
         - rds_boto3_client (boto3.client): The RDS boto3 client used to generate the
         authentication token.
@@ -123,6 +103,9 @@ class RDSDataFetcher:
             None
 
         """
+        pass
+
+    def format_dataframe(self):
         pass
 
     def execute_query(self, query) -> pd.DataFrame:

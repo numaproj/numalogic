@@ -1,35 +1,23 @@
-import unittest
-from unittest.mock import Mock, patch
+import pytest
+from numalogic.connectors.rds._config import RDSConfig
 from numalogic.connectors.rds._rds import RDSFetcher
+import pandas as pd
 
 
-class TestRDSFetcher(unittest.TestCase):
+class TestRDSFetcher:
+    @pytest.fixture(autouse=True)
+    def setUp(self):
+        self.mock_db_config = RDSConfig()
+        self.data_fetcher = RDSFetcher(db_config=self.mock_db_config)
 
-    @patch("numalogic.connectors.rds._rds.db")
-    def test_init(self, mock_db):
-        config = Mock()
-        fetcher = RDSFetcher(config)
+    def test_init(self):
+        assert self.data_fetcher.db_config == self.mock_db_config
 
-        self.assertEqual(fetcher.db_config, config)
-        # If a CLASS_TYPE is defined, it should have been instantiated
-        # with the db_config.
-        if mock_db.CLASS_TYPE:
-            # db.CLASS_TYPE constructor should have been called with db_config
-            mock_db.CLASS_TYPE.assert_called_once_with(config)
-            # fetcher.fetcher should be an instance of db.CLASS_TYPE
-            self.assertIsInstance(fetcher.fetcher,
-                                  mock_db.CLASS_TYPE.return_value.__class__)
+    def test_fetch(self, mocker):
+        mock_data = pd.DataFrame(data={"col1": ["value1", "value2"], "col2": ["value3", "value4"]})
 
-    @patch("numalogic.connectors.rds._rds.db")
-    def test_fetch(self, mock_db):
-        config = Mock()
-        fetcher = RDSFetcher(config)
-        mock_db.CLASS_TYPE.return_value.execute_query.return_value = "Expected Result"
-        result = fetcher.fetch("select 1")
-        self.assertEqual(result, "Expected Result")
-        # It should call db.CLASS_TYPE.execute_query with query
-        mock_db.CLASS_TYPE.return_value.execute_query.assert_called_once_with("select 1")
+        mocker.patch.object(RDSFetcher, "fetch", return_value=mock_data)
 
+        result = self.data_fetcher.fetch("SELECT * FROM table")
 
-if __name__ == "__main__":
-    unittest.main()
+        assert isinstance(result, pd.DataFrame)

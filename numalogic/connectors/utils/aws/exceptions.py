@@ -1,4 +1,4 @@
-class UnRecognizedAWSClientException(Exception):
+class AWSException(Exception):
     """
     Custom exception class for handling unrecognized AWS clients.
 
@@ -26,13 +26,12 @@ class UnRecognizedAWSClientException(Exception):
     pass
 
 
-class ConfigNotFoundError(Exception):
+class UnRecognizedAWSClientException(AWSException):
     """
-    Exception raised when a configuration file is not found.
+    Custom exception class for handling unrecognized AWS clients.
 
-    This exception is raised when a configuration file is expected but cannot be found. It is
-    typically used in situations where a specific configuration file is required for the proper
-    functioning of a program or module.
+    This exception is raised when an unrecognized AWS client is requested from the
+    Boto3ClientManager class.
 
     Attributes
     ----------
@@ -42,17 +41,20 @@ class ConfigNotFoundError(Exception):
     -------
         None
 
-    Usage:
+    Usage: This exception can be raised when attempting to retrieve an AWS client that is not
+    recognized by the Boto3ClientManager.
+
+    Example:
         try:
-            # code that requires a configuration file
-        except ConfigNotFoundError:
-            # handle the exception
+            boto3_client_manager.get_client("unrecognized")
+        except UnRecognizedAWSClientException:
+            print("Unrecognized AWS client requested.")
     """
 
     pass
 
 
-class UnRecognizedDatabaseTypeException(Exception):
+class UnRecognizedDatabaseTypeException(AWSException):
     """
     Exception raised when an unrecognized database type is encountered.
 

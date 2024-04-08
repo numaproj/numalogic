@@ -37,11 +37,12 @@ prometheus_client = "^0.18.0"
 # extras
 mlflow-skinny = { version = "^2.0", optional = true }
 redis = { extras = ["hiredis"], version = "^5.0", optional = true }
-boto3 = { version = "^1.24.64", optional = false }
+boto3 = { version = "^1.24.64", optional = true }
 pydruid = { version = "^0.6", optional = true }
-PyMySQL = { version = "^1.1.0", optional = false }
+PyMySQL = { version = "^1.1.0", optional = true }
 cryptography = { version = "^42.0.5", optional = true }
 SQLAlchemy = { version = "^2.0.28", optional = true }
+pytest = "^7.1"
 
 
 [tool.poetry.extras]
@@ -50,9 +51,7 @@ redis = ["redis"]
 dynamodb = ["boto3"]
 druid = ["pydruid"]
 boto3 = ["boto3"]
-mysql = ["PyMySQL"]
-cryptography = ["cryptography"]
-SQLAlchemy = ["SQLAlchemy"]
+rds = ["PyMySQL", "cryptography", "boto3"]
 
 [tool.poetry.group.torch]
 optional = true

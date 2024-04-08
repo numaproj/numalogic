@@ -9,10 +9,12 @@ class STSClientManager:
     """
     Assumes the specified role and retrieves the temporary security credentials.
 
-    Parameters: - role_arn (str): The Amazon Resource Name (ARN) of the role to assume. -
-    role_session_name (str): A name for the assumed role session. - duration_seconds (int): The
-    duration, in seconds, for which the temporary credentials are valid. Default is 3600 seconds
-    (1 hour).
+    Arguments
+    ----------
+    - role_arn (str): The Amazon Resource Name (ARN) of the role to assume.
+    - role_session_name (str): A name for the assumed role session.
+    - duration_seconds (int): The duration, in seconds,
+    for which the temporary credentials are valid. Default is 3600 seconds (1 hour).
 
     Returns
     -------
@@ -31,9 +33,12 @@ class STSClientManager:
         """
         Assumes the specified role and retrieves the temporary security credentials.
 
-        Parameters ---------- - role_arn (str): The Amazon Resource Name (ARN) of the role to
-        assume. - role_session_name (str): A name for the assumed role session. -
-        duration_seconds (int): The duration, in seconds, for which the temporary credentials
+        Arguments
+        ----------
+        - role_arn (str): The Amazon Resource Name (ARN) of the role to
+        assume.
+        - role_session_name (str): A name for the assumed role session.
+        - duration_seconds (int): The duration, in seconds, for which the temporary credentials
         are valid. Default is 3600 seconds (1 hour).
 
         Returns
@@ -72,12 +77,14 @@ class STSClientManager:
         """
         Retrieves the AWS IAM credentials for the specified role and role session name.
 
-        Parameters
+        Arguments
         ----------
         - role_arn (str): The Amazon Resource Name (ARN) of the role to assume.
         - role_session_name (str): A name for the assumed role session.
 
-        Returns ------- - dict: A dictionary containing the temporary security credentials,
+        Returns
+        -------
+        - dict: A dictionary containing the temporary security credentials,
         including the access key, secret key, session token, and expiration time.
 
         Raises
@@ -92,6 +99,5 @@ class STSClientManager:
             )
             self.assume_role(role_arn, role_session_name)
         else:
-
             _LOGGER.info("Using Existing Credentials")
         return self.credentials
