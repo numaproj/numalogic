@@ -1,4 +1,3 @@
-import logging
 import time
 from dataclasses import asdict
 from typing import Optional
@@ -19,6 +18,7 @@ from numalogic.tools.exceptions import ConfigNotFoundError, RedisRegistryError
 from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifact
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._logger import configure_logger, log_data_payload_values
 from numalogic.udfs._metrics import (
     REDIS_ERROR_COUNTER,
     INSUFFICIENT_DATA_COUNTER,
@@ -34,7 +34,7 @@ from numalogic.udfs._metrics import (
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 
-_LOGGER = logging.getLogger(__name__)
+_struct_log = configure_logger()
 
 
 class TrainerUDF(NumalogicUDF):
@@ -128,7 +128,7 @@ class TrainerUDF(NumalogicUDF):
 
         if threshold_clf:
             threshold_clf.fit(train_reconerr)
-            _LOGGER.info("Fit data using threshold model")
+            _struct_log.debug("Fit data using threshold model")
             dict_artifacts["threshold_clf"] = KeyedArtifact(
                 dkeys=[numalogic_cfg.threshold.name],
                 artifact=threshold_clf,
@@ -151,9 +151,11 @@ class TrainerUDF(NumalogicUDF):
             Messages instance (no forwarding)
         """
         _start_time = time.perf_counter()
+        log = _struct_log.bind(udf_vertex=self._vtx)
 
         # Construct payload object
-        payload = TrainerPayload(**orjson.loads(datum.value))
+        json_payload = orjson.loads(datum.value)
+        payload = TrainerPayload(**json_payload)
         _metric_label_values = (
             payload.composite_keys,
             ":".join(payload.composite_keys),
@@ -168,6 +170,8 @@ class TrainerUDF(NumalogicUDF):
             counter=MSG_IN_COUNTER,
             labels=[self._vtx, *_metric_label_values],
         )
+
+        log = log_data_payload_values(log, json_payload)
 
         # set the retry and retrain_freq
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
@@ -196,20 +200,21 @@ class TrainerUDF(NumalogicUDF):
                 counter=MSG_DROPPED_COUNTER,
                 labels=(self._vtx, *_metric_label_values),
             )
-            _LOGGER.warning(
-                "%s - Caught exception/error while fetching from source" " for key: %s",
-                payload.uuid,
-                payload.composite_keys,
+            log.warning(
+                "Caught exception/error while fetching from source",
+                uuid=payload.uuid,
+                keys=payload.composite_keys,
             )
+
             return Messages(Message.to_drop())
 
         # Check if data is sufficient
         if not self._is_data_sufficient(payload, df):
-            _LOGGER.warning(
-                "%s - Insufficient data found for keys %s, shape: %s",
-                payload.uuid,
-                payload.composite_keys,
-                df.shape,
+            log.warning(
+                "Insufficient data found",
+                uuid=payload.uuid,
+                keys=payload.composite_keys,
+                shape=df.shape,
             )
             _increment_counter(
                 counter=INSUFFICIENT_DATA_COUNTER,
@@ -221,7 +226,7 @@ class TrainerUDF(NumalogicUDF):
             )
             return Messages(Message.to_drop())
 
-        _LOGGER.info("%s - Data fetched, shape: %s", payload.uuid, df.shape)
+        log.debug("Data fetched", uuid=payload.uuid, shape=df.shape)
 
         # Construct feature array
         x_train, nan_counter, inf_counter = self.get_feature_arr(df, _conf.metrics)
@@ -259,17 +264,15 @@ class TrainerUDF(NumalogicUDF):
             model_registry=self.model_registry,
             payload=payload,
             vertex_name=self._vtx,
+            log=log,
         )
         if self.train_msg_deduplicator.ack_train(
             key=[*payload.composite_keys, payload.pipeline_id], uuid=payload.uuid
         ):
-            _LOGGER.info(
-                "%s - Model trained and saved successfully.",
-                payload.uuid,
-            )
+            log.info("Model trained and saved successfully", uuid=payload.uuid)
 
-        _LOGGER.debug(
-            "%s - Time taken in trainer: %.4f sec", payload.uuid, time.perf_counter() - _start_time
+        log.debug(
+            "Time taken in trainer", execution_time_secs=round(time.perf_counter() - _start_time, 4)
         )
         _increment_counter(
             counter=MSG_PROCESSED_COUNTER,
@@ -300,6 +303,7 @@ class TrainerUDF(NumalogicUDF):
         model_registry,
         payload: TrainerPayload,
         vertex_name: str,
+        log,
     ) -> None:
         """
         Save artifacts.
@@ -331,11 +335,10 @@ class TrainerUDF(NumalogicUDF):
                 counter=REDIS_ERROR_COUNTER,
                 labels=(vertex_name, ":".join(payload.composite_keys), payload.config_id),
             )
-            _LOGGER.exception(
-                "%s - Error while saving artifact with skeys: %s", payload.uuid, skeys
-            )
+            log.exception("Error while saving artifact with skeys", uuid=payload.uuid, skeys=skeys)
+
         else:
-            _LOGGER.info("%s - Artifact saved with with versions: %s", payload.uuid, ver_dict)
+            log.info("Artifact saved with with versions", uuid=payload.uuid, version_dict=ver_dict)
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
         _conf = self.get_ml_pipeline_conf(

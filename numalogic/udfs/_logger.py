@@ -28,5 +28,5 @@ def log_data_payload_values(log, data_payload):
         uuid=data_payload["uuid"],
         config_id=data_payload["config_id"],
         pipeline_id=data_payload.get("pipeline_id", "default"),
-        metadata=data_payload["metadata"],
+        metadata=data_payload.get("metadata", {}),
     )

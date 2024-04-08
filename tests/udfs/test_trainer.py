@@ -434,20 +434,23 @@ class TestDruidTrainerUDF(unittest.TestCase):
     def test_druid_from_config_1(self):
         with self.assertLogs(level="WARN") as log:
             self.udf1(self.keys, self.datum)
-            self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid - "
-                "Caught exception/error while fetching from "
-                "source for key: ['5984175597303660107']",
+            self.assertLogs(
+                "WARNING:numalogic.udfs._logger:uuid='some-uuid' event='Caught "
+                "exception/error while fetching from source' udf_vertex='trainer' "
+                "config_id='druid-config' pipeline_id='pipeline1' metadata={} "
+                "keys=['5984175597303660107'] level='warning' "
+                "timestamp='2024-04-08T16:17:50.554335Z'",
                 log.output[-1],
             )
 
     def test_druid_from_config_2(self):
         with self.assertLogs(level="WARN") as log:
             self.udf2(self.keys, self.datum)
-            self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid -"
-                " Caught exception/error while fetching "
-                "from source for key: ['5984175597303660107']",
+            self.assertLogs(
+                "WARNING:numalogic.udfs._logger:uuid='some-uuid' event='Caught "
+                "exception/error while fetching from source' udf_vertex='trainer' "
+                "config_id='druid-config' pipeline_id='pipeline1' metadata={} "
+                "keys=['5984175597303660107'] level='warning'",
                 log.output[-1],
             )
 
