@@ -1,0 +1,274 @@
+stream_confs:
+  fciAsset:
+    config_id: "fciAsset"
+    source: "druid"
+    composite_keys: ["assetId" ]
+    window_size: 10
+    ml_pipelines:
+      assetFailed:
+        pipeline_id: "metrics"
+        metrics: [ "failed", "degraded" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 20
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "StandardScaler"
+              stateful: True
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 8
+            batch_size: 256
+            train_hours: 240
+            retry_sec: 600
+            pltrainer_conf:
+              max_epochs: 40
+
+  fciPlugin:
+    config_id: "fciPlugin"
+    source: "druid"
+    composite_keys: [ "assetId" , "pluginId" ]
+    window_size: 10
+    ml_pipelines:
+      requestsFailed:
+        pipeline_id: "metrics"
+        metrics: [ "failed", "degraded" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 20
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "StandardScaler"
+              stateful: True
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 8
+            batch_size: 256
+            train_hours: 240
+            retry_sec: 600
+            pltrainer_conf:
+              max_epochs: 40
+
+  fciPluginAsset:
+    config_id: "fciPluginAsset"
+    source: "druid"
+    composite_keys: [ "pluginAssetId" ]
+    window_size: 10
+    ml_pipelines:
+      metricsFailed:
+        pipeline_id: "metrics"
+        metrics: [ "failed", "degraded" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 20
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "StandardScaler"
+              stateful: True
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 8
+            batch_size: 256
+            train_hours: 240
+            retry_sec: 600
+            pltrainer_conf:
+              max_epochs: 40
+
+  fciPluginAttrAuthType:
+    config_id: "fciPluginAttrAuthType"
+    source: "druid"
+    composite_keys: [ "pluginAssetId" , "assetId" , "authType" ]
+    window_size: 10
+    ml_pipelines:
+      authTypeFailed:
+        pipeline_id: "metrics"
+        metrics: [ "failed", "degraded" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 20
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "StandardScaler"
+              stateful: True
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 8
+            batch_size: 256
+            train_hours: 240
+            retry_sec: 600
+            pltrainer_conf:
+              max_epochs: 40
+
+  fciPluginAppInteractions:
+    config_id: "fciPluginAppInteractions"
+    source: "druid"
+    composite_keys: [ "pluginAssetId", "assetId", "interactionName" ]
+    window_size: 10
+    ml_pipelines:
+      metrics:
+        pipeline_id: "metrics"
+        metrics: [ "failed", "degraded"]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 20
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "StandardScaler"
+              stateful: True
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 8
+            batch_size: 256
+            train_hours: 240
+            retry_sec: 600
+            pltrainer_conf:
+              max_epochs: 40
+
+  fci:
+    config_id: "fci"
+    source: "druid"
+    composite_keys: ["assetId", "interactionName"]
+    window_size: 10
+    ml_pipelines:
+      interactionsFailed:
+        pipeline_id: "metrics"
+        metrics: [ "failed", "degraded" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 20
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "StandardScaler"
+              stateful: True
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 8
+            batch_size: 256
+            train_hours: 240
+            retry_sec: 600
+            pltrainer_conf:
+              max_epochs: 40
+
+  fciPluginInteractions:
+    config_id: "fciPluginInteractions"
+    source: "druid"
+    composite_keys: [ "pluginAssetId", "interactionName" ]
+    window_size: 10
+    ml_pipelines:
+      metrics:
+        metrics: [ "failed", "degraded" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 20
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "StandardScaler"
+              stateful: True
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 8
+            batch_size: 256
+            train_hours: 240
+            retry_sec: 600
+            pltrainer_conf:
+              max_epochs: 40
+
+redis_conf:
+  url: "isbsvc-fci-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-prd.svc"
+  port: 26379
+  expiry: 360
+  master_name: "mymaster"
+
+registry_conf:
+  name: "RedisRegistry"
+  model_expiry_sec: 172800
+  jitter_conf:
+    jitter_sec: 900
+    jitter_steps_sec: 120
+
+druid_conf:
+  url: "https://obelix.odldruid-prd.a.intuit.com/"
+  endpoint: "druid/v2"
+  fetcher:
+    dimensions: [ "ciStatus" ]
+    datasource: "tech-ip-customer-interaction-metrics"
+    group_by: [ "timestamp", "ciStatus" ]
+    pivot:
+      columns: [ "ciStatus" ]
