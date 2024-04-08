@@ -8,7 +8,8 @@ class DatabaseServiceProvider(BaseEnum):
     """
     A class representing the database service providers.
 
-    Attributes:
+    Attributes
+    ----------
         rds (str): Represents the RDS (Relational Database Service) provider.
         athena (str): Represents the Athena provider.
 
@@ -22,7 +23,8 @@ class DatabaseTypes(BaseEnum):
     """
     A class representing different types of databases.
 
-    Attributes:
+    Attributes
+    ----------
         mysql (str): Represents the MySQL database type.
         athena (str): Represents the Athena database type.
     """
@@ -36,7 +38,8 @@ class AWSConfig:
     """
     Class representing AWS configuration.
 
-    Attributes:
+    Attributes
+    ----------
         aws_assume_role_arn (str): The ARN of the IAM role to assume.
         aws_assume_role_session_name (str): The name of the session when assuming the IAM role.
     """
@@ -64,7 +67,9 @@ class RDBMSConfig:
     RDBMSConfig class represents the configuration for a Relational Database Management System (
     RDBMS).
 
-    Attributes: endpoint (str): The endpoint or hostname of the database. Defaults to an empty
+    Attributes
+    ----------
+    endpoint (str): The endpoint or hostname of the database. Defaults to an empty
     string.
     port (int): The port number of the database. Defaults to 3306.
     database_name (str): The name of the database. Defaults to an empty string.
@@ -100,8 +105,8 @@ class RDSConfig(AWSConfig, RDBMSConfig):
     Inherits from: - AWSConfig: Class representing AWS configuration. - RDBMSConfig: Class
     representing the configuration for a Relational Database Management System (RDBMS).
 
-    Attributes:
-
+    Attributes
+    ----------
     aws_assume_role_arn (str): The ARN of the IAM role to assume.
     aws_assume_role_session_name (str): The name of the session when assuming the IAM role.
     endpoint (str): The endpoint or hostname of the database. Defaults to an empty string.

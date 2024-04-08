@@ -6,6 +6,23 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class STSClientManager:
+    """
+    Assumes the specified role and retrieves the temporary security credentials.
+
+    Parameters: - role_arn (str): The Amazon Resource Name (ARN) of the role to assume. -
+    role_session_name (str): A name for the assumed role session. - duration_seconds (int): The
+    duration, in seconds, for which the temporary credentials are valid. Default is 3600 seconds
+    (1 hour).
+
+    Returns
+    -------
+    - None
+
+    Raises
+    ------
+    - botocore.exceptions.ClientError: If the assume role operation fails.
+    """
+
     def __init__(self):
         self.sts_client = boto3.client("sts")
         self.credentials = None
@@ -14,15 +31,17 @@ class STSClientManager:
         """
         Assumes the specified role and retrieves the temporary security credentials.
 
-        Parameters:
-        - role_arn (str): The Amazon Resource Name (ARN) of the role to assume.
-        - role_session_name (str): A name for the assumed role session.
-        - duration_seconds (int): The duration, in seconds, for which the temporary credentials are valid. Default is 3600 seconds (1 hour).
+        Parameters ---------- - role_arn (str): The Amazon Resource Name (ARN) of the role to
+        assume. - role_session_name (str): A name for the assumed role session. -
+        duration_seconds (int): The duration, in seconds, for which the temporary credentials
+        are valid. Default is 3600 seconds (1 hour).
 
-        Returns:
+        Returns
+        -------
         - None
 
-        Raises:
+        Raises
+        ------
         - botocore.exceptions.ClientError: If the assume role operation fails.
 
         """
@@ -37,7 +56,8 @@ class STSClientManager:
         """
         Checks if the token is about to expire.
 
-        Returns:
+        Returns
+        -------
             bool: True if the token is about to expire within the next 15 minutes, False otherwise.
 
         """
@@ -52,20 +72,23 @@ class STSClientManager:
         """
         Retrieves the AWS IAM credentials for the specified role and role session name.
 
-        Parameters:
+        Parameters
+        ----------
         - role_arn (str): The Amazon Resource Name (ARN) of the role to assume.
         - role_session_name (str): A name for the assumed role session.
 
-        Returns:
-        - dict: A dictionary containing the temporary security credentials, including the access key, secret key, session token, and expiration time.
+        Returns ------- - dict: A dictionary containing the temporary security credentials,
+        including the access key, secret key, session token, and expiration time.
 
-        Raises:
+        Raises
+        ------
         - botocore.exceptions.ClientError: If the assume role operation fails.
 
         """
         if not self.credentials or self.is_token_about_to_expire():
             _LOGGER.info(
-                "Renewing AWS IAM Credentials as existing credentials are expired or does not exists"
+                "Renewing AWS IAM Credentials as existing credentials are expired or does not "
+                "exists"
             )
             self.assume_role(role_arn, role_session_name)
         else:

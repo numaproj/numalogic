@@ -17,7 +17,7 @@ class test_aws_init(unittest.TestCase):
         result = "INVALID" in MyEnum
 
         # Assert
-        assert result == False
+        assert result is False
 
     def test_invalid_value_returns_true(self):
         # Arrange
@@ -30,7 +30,7 @@ class test_aws_init(unittest.TestCase):
         result = 1 in MyEnum
 
         # Assert
-        assert result == True
+        assert result is True
 
     def test_list_method_returns_list_of_values(self):
         # Arrange

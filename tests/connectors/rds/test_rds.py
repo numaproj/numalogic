@@ -5,7 +5,7 @@ from numalogic.connectors.rds._rds import RDSFetcher
 
 class TestRDSFetcher(unittest.TestCase):
 
-    @patch('numalogic.connectors.rds._rds.db')
+    @patch("numalogic.connectors.rds._rds.db")
     def test_init(self, mock_db):
         config = Mock()
         fetcher = RDSFetcher(config)
@@ -20,7 +20,7 @@ class TestRDSFetcher(unittest.TestCase):
             self.assertIsInstance(fetcher.fetcher,
                                   mock_db.CLASS_TYPE.return_value.__class__)
 
-    @patch('numalogic.connectors.rds._rds.db')
+    @patch("numalogic.connectors.rds._rds.db")
     def test_fetch(self, mock_db):
         config = Mock()
         fetcher = RDSFetcher(config)

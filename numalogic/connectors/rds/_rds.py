@@ -6,34 +6,39 @@ import pandas as pd
 _LOGGER = logging.getLogger(__name__)
 
 
-class RDSFetcher(object):
+class RDSFetcher:
 
     def __init__(self, db_config: RDSConfig):
         """
         Initialize an instance of the RDSFetcher class.
 
-        Parameters:
+        Parameters
+        ----------
             db_config (RDSConfig): The configuration for the RDS instance.
 
-        Returns:
+        Returns
+        -------
             None
 
-        Raises:
+        Raises
+        ------
             None
         """
         self.db_config = db_config
         if db.CLASS_TYPE:
             self.fetcher = db.CLASS_TYPE(db_config)
-            _LOGGER.info(f"Executing for database type: {self.fetcher.database_type}")
+            _LOGGER.info("Executing for database type: %s", self.fetcher.database_type)
 
     def fetch(self, query) -> pd.DataFrame:
         """
         Fetches data from the RDS instance by executing the given query.
 
-        Parameters:
+        Parameters
+        ----------
             query (str): The SQL query to be executed.
 
-        Returns:
+        Returns
+        -------
             pd.DataFrame: A pandas DataFrame containing the fetched data.
 
         """

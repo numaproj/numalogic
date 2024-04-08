@@ -10,13 +10,16 @@ def load_db_conf(*paths: str) -> RDSConfig:
     """
     Load database configuration from one or more YAML files.
 
-    Parameters:
+    Parameters
+    ----------
     - paths (str): One or more paths to YAML files containing the database configuration.
 
-    Returns:
+    Returns
+    -------
     - RDSConfig: An instance of the RDSConfig class representing the loaded database configuration.
 
-    Raises:
+    Raises
+    ------
     - ConfigNotFoundError: If none of the given configuration file paths exist.
 
     Example:

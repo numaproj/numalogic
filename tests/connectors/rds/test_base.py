@@ -25,15 +25,15 @@ class TestRDSDataFetcher(unittest.TestCase):
         result = self.data_fetcher.get_password()
         self.assertEqual(result, "password")
 
-    @patch.object(RDSDataFetcher, 'get_rds_token')
+    @patch.object(RDSDataFetcher, "get_rds_token")
     def test_get_password_aws(self, mock_get_rds_token):
         mock_get_rds_token.return_value = "password"
         self.mock_rds_config.aws_rds_use_iam = True
         result = self.data_fetcher.get_password()
         self.assertEqual(result, "password")
 
-    @patch.object(Boto3ClientManager, 'get_client', autospec=True)
-    @patch.object(Boto3ClientManager, 'get_rds_token', autospec=True)
+    @patch.object(Boto3ClientManager, "get_client", autospec=True)
+    @patch.object(Boto3ClientManager, "get_rds_token", autospec=True)
     def test_get_rds_token(self, mock_get_rds_token, mock_get_client):
         mock_get_rds_token.return_value = "password"
         result = self.data_fetcher.get_rds_token()
@@ -41,9 +41,9 @@ class TestRDSDataFetcher(unittest.TestCase):
 
     def test_execute_query(self):
         self.data_fetcher.execute_query = Mock(return_value=DataFrame())
-        dataframe_result = self.data_fetcher.execute_query('SELECT * FROM table')
+        dataframe_result = self.data_fetcher.execute_query("SELECT * FROM table")
         self.assertIsInstance(dataframe_result, DataFrame)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
