@@ -1,7 +1,7 @@
 from boto3 import Session
 import logging
 
-from numalogic.connectors.utils.aws.config import DatabaseServiceProvider
+from numalogic.connectors.utils.aws.config import DatabaseServiceProvider, RDSConfig
 from numalogic.connectors.utils.aws.exceptions import UnRecognizedAWSClientException
 from numalogic.connectors.utils.aws.sts_client_manager import STSClientManager
 
@@ -29,7 +29,7 @@ class Boto3ClientManager:
     methods.
     """
 
-    def __init__(self, configurations):
+    def __init__(self, configurations: RDSConfig):
         self.rds_client = None
         self.athena_client = None
         self.configurations = configurations
@@ -72,6 +72,7 @@ class Boto3ClientManager:
         the RDS database. - Region: The AWS region where the RDS database is located.
 
         Arguments:
+        ---------
          - rds_boto3_client (boto3.client): The RDS boto3 client used to generate the
          authentication token.
 
@@ -98,6 +99,7 @@ class Boto3ClientManager:
         client object.
 
         Arguments:
+        ---------
         - client_type (str): The type of AWS client to generate. This should be one of
         the values defined in the `DatabaseServiceProvider` enum.
 
@@ -117,12 +119,12 @@ class Boto3ClientManager:
             str(self.configurations),
         )
         if client_type in DatabaseServiceProvider:
-            if client_type == DatabaseServiceProvider.rds.value:
+            if client_type == DatabaseServiceProvider.RDS.value:
                 self.rds_client = self.get_boto3_session().client(
                     "rds", region_name=self.configurations.aws_region
                 )
                 client = self.rds_client
-            if client_type == DatabaseServiceProvider.athena.value:
+            if client_type == DatabaseServiceProvider.ATHENA.value:
                 self.athena_client = self.get_boto3_session().client(
                     "athena", region_name=self.configurations.aws_region
                 )

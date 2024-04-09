@@ -55,7 +55,7 @@ class RDSDataFetcher:
             str: The generated RDS authentication token.
 
         """
-        rds_client = self.boto3_client_manager.get_client(DatabaseServiceProvider.rds.value)
+        rds_client = self.boto3_client_manager.get_client(DatabaseServiceProvider.RDS.value)
         return self.boto3_client_manager.get_rds_token(rds_client)
 
     def get_password(self) -> str:

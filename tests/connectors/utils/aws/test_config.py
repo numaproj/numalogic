@@ -28,7 +28,7 @@ class TestDataClasses:
             database_username="user",
             database_password="password",
             database_connection_timeout=300,
-            database_type=DatabaseTypes.mysql.value,
+            database_type=DatabaseTypes.MYSQL.value,
             ssl_enabled=True,
             ssl=SSLConfig(ca="path_to_ca"),
         )
@@ -48,7 +48,7 @@ class TestDataClasses:
             database_username="user",
             database_password="password",
             database_connection_timeout=300,
-            database_type=DatabaseTypes.mysql.value,
+            database_type=DatabaseTypes.MYSQL.value,
             ssl_enabled=True,
             ssl=SSLConfig(ca="path_to_ca"),
         )

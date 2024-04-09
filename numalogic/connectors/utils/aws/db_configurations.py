@@ -11,7 +11,7 @@ def load_db_conf(*paths: str) -> RDSConfig:
     """
     Load database configuration from one or more YAML files.
 
-    Parameters
+    Arguments
     ----------
     - paths (str): One or more paths to YAML files containing the database configuration.
 

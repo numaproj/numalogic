@@ -28,7 +28,7 @@ class MysqlFetcher(RDSDataFetcher):
     use cases.
     """
 
-    database_type = DatabaseTypes.mysql.value
+    database_type = DatabaseTypes.MYSQL.value
 
     def __init__(self, db_config: RDSConfig, **kwargs):
         super().__init__(db_config)

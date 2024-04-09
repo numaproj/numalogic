@@ -15,8 +15,8 @@ class DatabaseServiceProvider(BaseEnum):
 
     """
 
-    rds = "rds"
-    athena = "athena"
+    RDS = "rds"
+    ATHENA = "athena"
 
 
 class DatabaseTypes(BaseEnum):
@@ -29,8 +29,8 @@ class DatabaseTypes(BaseEnum):
         athena (str): Represents the Athena database type.
     """
 
-    mysql = "mysql"
-    athena = "athena"
+    MYSQL = "mysql"
+    ATHENA = "athena"
 
 
 @dataclass
@@ -53,12 +53,12 @@ class SSLConfig:
     """
     SSLConfig class represents the configuration for SSL/TLS settings.
 
-    Attributes: ca (Optional[str]): The path to the Certificate Authority (CA) file. Defaults to
+    Attributes: ca (str): The path to the Certificate Authority (CA) file. Defaults to
     an empty string.
 
     """
 
-    ca: Optional[str] = ""
+    ca: str = ""
 
 
 @dataclass
@@ -92,7 +92,7 @@ class RDBMSConfig:
     database_username: str = ""
     database_password: str = ""
     database_connection_timeout: int = 10
-    database_type: str = DatabaseTypes.mysql.value
+    database_type: str = DatabaseTypes.MYSQL.value
     ssl_enabled: bool = False
     ssl: Optional[SSLConfig] = field(default_factory=lambda: SSLConfig())
 
@@ -130,4 +130,4 @@ class RDSConfig(AWSConfig, RDBMSConfig):
 
     aws_region: str = ""
     aws_rds_use_iam: bool = False
-    database_provider: str = DatabaseServiceProvider.rds.value
+    database_provider: str = DatabaseServiceProvider.RDS.value
