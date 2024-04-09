@@ -1,7 +1,10 @@
+from typing import Optional
 import pandas as pd
 from numalogic.connectors.rds._config import DatabaseServiceProvider, RDSConfig
 from numalogic.connectors.utils.aws.boto3_client_manager import Boto3ClientManager
 import logging
+from numalogic.connectors._config import Pivot
+import time
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -89,7 +92,7 @@ class RDSDataFetcher:
             None
 
         """
-        pass
+        raise NotImplementedError
 
     def get_db_cursor(self):
         """
@@ -105,8 +108,53 @@ class RDSDataFetcher:
         """
         pass
 
-    def format_dataframe(self):
-        pass
+    def format_dataframe(
+        self,
+        df: pd.DataFrame,
+        query: str,
+        datetime_field_name: str,
+        group_by: Optional[list[str]] = None,
+        pivot: Optional[Pivot] = None,
+    ):
+        """
+        Executes formatting operations on a pandas DataFrame.
+
+        Arguments
+        ----------
+        df : pd.DataFrame
+            The input DataFrame to be formatted.
+        query : str
+            The SQL query used to retrieve the data.
+        datetime_field_name : str
+            The name of the datetime field in the DataFrame.
+        group_by : Optional[list[str]], optional
+            A list of column names to group the DataFrame by, by default None.
+        pivot : Optional[Pivot], optional
+            An optional Pivot object specifying the index, columns,
+            and values for pivoting the DataFrame, by default None.
+
+        Returns
+        -------
+        pd.DataFrame : The formatted DataFrame.
+
+        """
+        _start_time = time.perf_counter()
+        df["timestamp"] = pd.to_datetime(df[datetime_field_name]).astype("int64") // 10**6
+        df.drop(columns=datetime_field_name, inplace=True)
+        if group_by:
+            df = df.groupby(by=group_by).sum().reset_index()
+
+        if pivot and pivot.columns:
+            df = df.pivot(
+                index=pivot.index,
+                columns=pivot.columns,
+                values=pivot.value,
+            )
+            df.columns = df.columns.map("{0[1]}".format)
+            df.reset_index(inplace=True)
+        _end_time = time.perf_counter() - _start_time
+        _LOGGER.info("RDS MYSQL Query: %s, Format time:  %.4fs", query, _end_time)
+        return df
 
     def execute_query(self, query) -> pd.DataFrame:
         """
@@ -121,4 +169,4 @@ class RDSDataFetcher:
             pd.DataFrame: The result of the query as a pandas DataFrame.
 
         """
-        pass
+        raise NotImplementedError

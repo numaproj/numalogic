@@ -1,3 +1,4 @@
+import time
 from numalogic.connectors.rds._base import RDSDataFetcher
 import pymysql
 import pandas as pd
@@ -107,33 +108,29 @@ class MysqlFetcher(RDSDataFetcher):
         """
         Executes the given query on the database and returns the result as a pandas DataFrame.
 
-        Arguments
-        ----------
-        - query (str): The SQL query to be executed on the database.
+        Arguments:
+            query (str): The SQL query to be executed.
 
         Returns
         -------
-            pd.DataFrame: The result of the query as a pandas DataFrame.
-
-        Raises
-        ------
-            None
+            pandas.DataFrame: The result of the query as a DataFrame.
 
         Notes
         -----
-        - This method establishes a connection to the database using the get_connection()
-        method.
-        - It retrieves a cursor object using the get_db_cursor() method. - The query is
-        executed using the cursor.execute() method.
-        - The column names are extracted from the
-        cursor. Description attribute.
-        - The rows are fetched using the cursor.fetchall() method.
-        - The result is returned as a pandas DataFrame with the column names as the column headers.
-
+            - This method establishes a connection to the MySQL database using the
+            provided configuration.
+            - It retrieves a cursor object for executing queries on the database.
+            - The query is executed using the cursor object.
+            - The result is fetched and converted into a DataFrame.
+            - The execution time of the query is logged using the _LOGGER object.
         """
+        _start_time = time.perf_counter()
         connection = self.get_connection()
         cursor = self.get_db_cursor(connection)
         cursor.execute(query)
         col_names = [desc[0] for desc in cursor.description]
         rows = cursor.fetchall()
-        return pd.DataFrame(rows, columns=col_names)
+        df = pd.DataFrame(rows, columns=col_names)
+        _end_time = time.perf_counter() - _start_time
+        _LOGGER.info("RDS MYSQL Query: %s, execution time:  %.4fs", query, _end_time)
+        return df
