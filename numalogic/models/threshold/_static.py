@@ -87,9 +87,11 @@ class SigmoidThreshold(BaseThresholdModel):
         ValueError: If the input data shape does not match the provided upper_limits
     """
 
+    _CLIP_VALUE: int = 80
+
     __slots__ = ("upper_limits", "coeff", "score_limit")
 
-    def __init__(self, *upper_limits: float, slope_factor: int = 5, score_limit: int = 10):
+    def __init__(self, *upper_limits: float, slope_factor: int = 5, score_limit: float = 10.0):
         self.upper_limits = np.asarray(upper_limits, dtype=np.float32)
         self.coeff = slope_factor * np.pi
         self.score_limit = score_limit
@@ -121,4 +123,7 @@ class SigmoidThreshold(BaseThresholdModel):
         with values being anomaly scores.
         """
         self._validate_input(x)
-        return self.score_limit / (1.0 + np.exp(-self.coeff * (x.copy() - self.upper_limits)))
+        exp_arg = np.clip(
+            -self.coeff * (x - self.upper_limits), -self._CLIP_VALUE, -self._CLIP_VALUE
+        ).astype(np.float32)
+        return self.score_limit / (1.0 + np.exp(exp_arg))
