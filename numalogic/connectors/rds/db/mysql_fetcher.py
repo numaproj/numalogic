@@ -11,18 +11,18 @@ _LOGGER = logging.getLogger(__name__)
 
 class MysqlFetcher(RDSDataFetcher):
     """
-    MYSQLFetcher that inherits from RDSDataFetcher. It is used to fetch data from a MySQL database.
+    MysqlFetcher that inherits from RDSDataFetcher. It is used to fetch data from a MySQL database.
 
     The class has several methods:
 
-    - __init__(self, db_config: RDSConfig, **kwargs): Initializes the MYSQLFetcher object with
+    - __init__(self, db_config: RDSConfig, **kwargs): Initializes the MysqlFetcher object with
     the given RDSConfig and additional keyword arguments. - get_connection(self): Establishes a
     connection to the MySQL database using the provided configuration. - get_db_cursor(self,
     connection): Returns a cursor object for executing queries on the database. - execute_query(
     self, query) -> pd.DataFrame: Executes the given query on the database and returns the
     result as a pandas DataFrame.
 
-    The MYSQLFetcher class is designed to be used as a base class for fetching data from a MySQL
+    The MysqlFetcher class is designed to be used as a base class for fetching data from a MySQL
     database. It provides methods for establishing a connection, executing queries,
     and retrieving the results. The class can be extended and customized as needed for specific
     use cases.
@@ -91,10 +91,6 @@ class MysqlFetcher(RDSDataFetcher):
         Returns
         -------
             pymysql.cursors.Cursor: The cursor object for executing queries on the database.
-
-        Raises
-        ------
-            None
 
         Notes
         -----
