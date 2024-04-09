@@ -47,7 +47,7 @@ class BaseVAE(TorchModel):
         optimizer = optim.Adam(self.parameters(), lr=self._lr, weight_decay=self.weight_decay)
         return {"optimizer": optimizer}
 
-    def recon_loss(self, batch: Tensor, recon: Tensor, reduction: str = "sum"):
+    def recon_loss(self, batch: Tensor, recon: Tensor, reduction: str = "mean"):
         return self.criterion(batch, recon, reduction=reduction)
 
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:

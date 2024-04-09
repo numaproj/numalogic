@@ -57,7 +57,7 @@ class Encoder(nn.Module):
         self.logvar = nn.Linear(latent_dim, latent_dim)
 
     @staticmethod
-    def _construct_conv_layers(conv_channels) -> nn.ModuleList:
+    def _construct_conv_layers(conv_channels: Sequence[int]) -> nn.ModuleList:
         """Construct dilated causal convolutional layers."""
         layers = nn.ModuleList()
         layer_idx = 1
@@ -226,7 +226,7 @@ class Conv1dVAE(BaseVAE):
         """
         q = MultivariateNormal(torch.zeros(self.z_dim), torch.eye(self.z_dim))
         kld = kl_divergence(q, p)
-        return kld.sum()
+        return kld.mean()
 
     def training_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         """Training step for the model."""
