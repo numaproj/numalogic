@@ -2,7 +2,7 @@ import logging
 
 from numalogic.tools.exceptions import ConfigNotFoundError
 from omegaconf import OmegaConf
-from numalogic.connectors.rds._config import RDSConfig
+from numalogic.connectors.utils.aws.config import RDSConfig
 
 _LOGGER = logging.getLogger(__name__)
 

@@ -4,7 +4,7 @@ import pymysql
 import pandas as pd
 import logging
 
-from numalogic.connectors.rds._config import DatabaseTypes, RDSConfig
+from numalogic.connectors.utils.aws.config import DatabaseTypes, RDSConfig
 
 _LOGGER = logging.getLogger(__name__)
 

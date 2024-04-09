@@ -1,7 +1,7 @@
 from typing import Optional
 from numalogic.connectors._base import DataFetcher
 from numalogic.connectors._config import Pivot
-from numalogic.connectors.rds._config import RDSConfig
+from numalogic.connectors.utils.aws.config import RDSConfig
 import logging
 import pandas as pd
 from numalogic.connectors.rds.db.factory import RdsFactory

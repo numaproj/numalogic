@@ -1,6 +1,6 @@
 from typing import Optional
 import pandas as pd
-from numalogic.connectors.rds._config import DatabaseServiceProvider, RDSConfig
+from numalogic.connectors.utils.aws.config import DatabaseServiceProvider, RDSConfig
 from numalogic.connectors.utils.aws.boto3_client_manager import Boto3ClientManager
 import logging
 from numalogic.connectors._config import Pivot

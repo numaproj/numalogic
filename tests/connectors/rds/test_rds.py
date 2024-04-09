@@ -3,7 +3,7 @@ from unittest.mock import patch
 import pytest
 from pandas import DataFrame
 
-from numalogic.connectors.rds._config import RDSConfig
+from numalogic.connectors.utils.aws.config import RDSConfig
 from numalogic.connectors.rds._rds import RDSFetcher
 import pandas as pd
 

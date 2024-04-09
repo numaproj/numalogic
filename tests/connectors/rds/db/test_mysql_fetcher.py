@@ -1,6 +1,6 @@
 from unittest.mock import patch, Mock, MagicMock
 
-from numalogic.connectors.rds._config import RDSConfig
+from numalogic.connectors.utils.aws.config import RDSConfig
 from numalogic.connectors.rds.db.mysql_fetcher import MysqlFetcher
 
 

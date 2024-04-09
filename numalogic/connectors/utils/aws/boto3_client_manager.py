@@ -1,7 +1,7 @@
 from boto3 import Session
 import logging
 
-from numalogic.connectors.rds._config import DatabaseServiceProvider
+from numalogic.connectors.utils.aws.config import DatabaseServiceProvider
 from numalogic.connectors.utils.aws.exceptions import UnRecognizedAWSClientException
 from numalogic.connectors.utils.aws.sts_client_manager import STSClientManager
 

@@ -1,4 +1,4 @@
-from numalogic.connectors.rds._config import (
+from numalogic.connectors.utils.aws.config import (
     DatabaseTypes,
     AWSConfig,
     SSLConfig,
