@@ -9,9 +9,9 @@ import time
 _LOGGER = logging.getLogger(__name__)
 
 
-class RDSDataFetcher:
+class RDSBase:
     """
-    Class: RDSDataFetcher.
+    Class: RDSBase.
 
     This class represents a data fetcher for RDS (Relational Database Service) connections. It
     provides methods for retrieving the RDS token, getting the password, establishing a

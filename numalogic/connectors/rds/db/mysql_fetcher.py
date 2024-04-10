@@ -1,5 +1,5 @@
 import time
-from numalogic.connectors.rds._base import RDSDataFetcher
+from numalogic.connectors.rds._base import RDSBase
 import pymysql
 import pandas as pd
 import logging
@@ -9,7 +9,7 @@ from numalogic.connectors.utils.aws.config import DatabaseTypes, RDSConfig
 _LOGGER = logging.getLogger(__name__)
 
 
-class MysqlFetcher(RDSDataFetcher):
+class MysqlFetcher(RDSBase):
     """
     MysqlFetcher that inherits from RDSDataFetcher. It is used to fetch data from a MySQL database.
 

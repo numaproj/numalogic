@@ -20,9 +20,6 @@ class RdsFactory:
             the numalogic.connectors.rds.db.mysql_fetcher module.
         - If the database_type is not supported, it returns None.
 
-    Attributes
-    ----------
-    - _LOGGER: The logger instance for logging messages.
     """
 
     @classmethod
