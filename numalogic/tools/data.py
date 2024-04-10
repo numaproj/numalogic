@@ -101,6 +101,7 @@ class StreamingDataset(IterableDataset):
     ----
         data: A numpy array containing the input data in the shape of (batch, num_features).
         seq_len: Length of the sliding window sequences to be generated from the input data
+        stride: Stride to jump between sequences; defaults to 1
 
     Raises
     ------
@@ -109,11 +110,14 @@ class StreamingDataset(IterableDataset):
                                have a minimum dimension size of 2
     """
 
-    __slots__ = ("_seq_len", "_data")
+    __slots__ = ("_seq_len", "_data", "_stride")
 
-    def __init__(self, data: npt.NDArray[float], seq_len: int):
+    def __init__(self, data: npt.NDArray[float], seq_len: int, stride: int = 1):
         if seq_len > len(data):
             raise ValueError(f"Sequence length: {seq_len} is more than data size: {len(data)}")
+
+        if stride >= seq_len:
+            raise ValueError(f"Stride: {stride} should be less than sequence length: {seq_len}")
 
         if data.ndim != 2:
             raise InvalidDataShapeError(
@@ -122,6 +126,7 @@ class StreamingDataset(IterableDataset):
 
         self._seq_len = seq_len
         self._data = data.astype(np.float32)
+        self._stride = stride
 
     @property
     def data(self) -> npt.NDArray[float]:
@@ -148,9 +153,9 @@ class StreamingDataset(IterableDataset):
             A subarray of size (seq_len, num_features) from the input data.
         """
         idx = 0
-        while idx < len(self):
+        while idx < len(self._data) - self._seq_len + 1:
             yield input_[idx : idx + self._seq_len]
-            idx += 1
+            idx += self._stride
 
     def __iter__(self) -> Iterator[npt.NDArray[float]]:
         r"""Returns an iterator for the StreamingDataset object.
@@ -167,7 +172,7 @@ class StreamingDataset(IterableDataset):
 
     def __len__(self) -> int:
         r"""Returns the number of sequences that can be generated from the input data."""
-        return len(self._data) - self._seq_len + 1
+        return (len(self._data) - self._seq_len) // self._stride + 1
 
     def __getitem__(self, idx: Union[int, slice]) -> npt.NDArray[float]:
         r"""Retrieves a sequence from the input data at the specified index."""
@@ -178,7 +183,7 @@ class StreamingDataset(IterableDataset):
             raw_data_size = len(self._data)
             start = idx.start or 0
             stop = min(idx.stop, raw_data_size) if idx.stop else raw_data_size
-            for i in range(start, stop - self._seq_len + 1):
+            for i in range(start, stop - self._seq_len + 1, self._stride):
                 output.append(self._data[i : (i + self._seq_len)])
             return np.stack(output)
         if idx >= len(self):

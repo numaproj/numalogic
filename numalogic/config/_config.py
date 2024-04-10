@@ -82,6 +82,7 @@ class LightningTrainerConf:
     enable_checkpointing: bool = False
     enable_progress_bar: bool = False
     enable_model_summary: bool = True
+    deterministic: bool = False
 
 
 @dataclass
@@ -94,6 +95,7 @@ class TrainerConf:
     retry_sec: int = 600  # 10 min
     batch_size: int = 64
     data_freq_sec: int = 60
+    ds_stride: int = 1
     transforms: Optional[list[ModelInfo]] = None
     pltrainer_conf: LightningTrainerConf = field(default_factory=LightningTrainerConf)
 
