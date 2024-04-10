@@ -114,7 +114,7 @@ class TrainerUDF(NumalogicUDF):
                 stateful=any(_conf.stateful for _conf in numalogic_cfg.preprocess),
             )
 
-        train_ds = StreamingDataset(input_, model.seq_len)
+        train_ds = StreamingDataset(input_, model.seq_len, stride=trainer_cfg.ds_stride)
         trainer = TimeseriesTrainer(**asdict(trainer_cfg.pltrainer_conf))
         trainer.fit(
             model, train_dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
