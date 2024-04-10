@@ -11,6 +11,7 @@
 
 import logging
 import os.path
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional, Union
@@ -38,6 +39,16 @@ from numalogic.udfs import UDFFactory, StreamConf, MLPipelineConf
 
 DEFAULT_OUTPUT_DIR = os.path.join(BASE_DIR, ".btoutput")
 LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class OutDataFrames:
+    input: pd.DataFrame
+    preproc_out: pd.DataFrame
+    model_out: pd.DataFrame
+    thresh_out: pd.DataFrame
+    postproc_out: pd.DataFrame
+    unified_out: pd.DataFrame
 
 
 class PromBacktester:
@@ -144,12 +155,44 @@ class PromBacktester:
         LOGGER.info("Models saved in %s", self._modelpath)
         return artifacts_dict
 
+    def window_inverse(self, x: NDArray[float]) -> NDArray[float]:
+        """
+        Perform inverse windowing on the given data.
+
+        If stride is 1, return the data as is.
+        If stride is 2, return the data by stacking the two windows.
+        Stride > 2 is not supported yet.
+
+        Args:
+        -------
+            x: Input data
+
+        Returns
+        -------
+            Inverse windowed data with feature recovery if stride is 2
+        """
+        x = torch.from_numpy(x)
+        stride = self.nlconf.trainer.ds_stride
+
+        if stride == 1:
+            return inverse_window(x).numpy()
+
+        # TODO support for stride > 2
+        if stride > 2:
+            raise NotImplementedError("Stride > 2 not supported!")
+
+        # Recover the features
+        x1, x2 = x[:, ::stride], x[:, 1::stride]
+        x1 = inverse_window(x1).numpy()
+        x2 = inverse_window(x2).numpy()
+        return np.hstack([x1, x2])
+
     def generate_scores(
         self,
         df: pd.DataFrame,
         model_path: Optional[str] = None,
         use_full_data: bool = False,
-    ) -> pd.DataFrame:
+    ) -> OutDataFrames:
         """
         Generate scores for the given data.
 
@@ -161,7 +204,7 @@ class PromBacktester:
 
         Returns
         -------
-            Dataframe with timestamp and metric values
+            Dict of dataframes with timestamp and metric values for each step
 
         Raises
         ------
@@ -188,11 +231,16 @@ class PromBacktester:
         # Preprocess
         x_scaled = preproc_udf.compute(model=artifacts["preproc_clf"], input_=x_test)
 
-        ds = StreamingDataset(x_scaled, seq_len=self.conf.window_size)
+        seqlen = self.nlconf.model.conf["seq_len"]
+        n_feat = x_scaled.shape[1]
 
-        x_recon = np.zeros((len(ds), self.conf.window_size, len(self.metrics)), dtype=np.float32)
-        raw_scores = np.zeros((len(ds), self.conf.window_size, len(self.metrics)), dtype=np.float32)
-        feature_scores = np.zeros((len(ds), len(self.metrics)), dtype=np.float32)
+        ds = StreamingDataset(
+            x_scaled, seq_len=self.conf.window_size, stride=self.nlconf.trainer.ds_stride
+        )
+
+        x_recon = np.zeros((len(ds), seqlen, n_feat), dtype=np.float32)
+        raw_scores = np.zeros((len(ds), seqlen, n_feat), dtype=np.float32)
+        feature_scores = np.zeros((len(ds), n_feat), dtype=np.float32)
         unified_scores = np.zeros((len(ds), 1), dtype=np.float32)
 
         postproc_func = PostprocessFactory().get_instance(self.nlconf.postprocess)
@@ -215,16 +263,17 @@ class PromBacktester:
                 feature_scores[idx], self.nlconf.score.feature_agg
             )
 
-        x_recon = inverse_window(torch.from_numpy(x_recon), method="keep_first").numpy()
-        raw_scores = inverse_window(torch.from_numpy(raw_scores), method="keep_first").numpy()
+        x_recon = self.window_inverse(x_recon)
+        raw_scores = self.window_inverse(raw_scores)
+
         feature_scores = np.vstack(
             [
-                np.full((self.conf.window_size - 1, len(self.metrics)), fill_value=np.nan),
+                np.full((len(x_test) - len(ds), n_feat), fill_value=np.nan),
                 feature_scores,
             ]
         )
         unified_scores = np.vstack(
-            [np.full((self.conf.window_size - 1, 1), fill_value=np.nan), unified_scores]
+            [np.full((len(x_test) - len(ds), 1), fill_value=np.nan), unified_scores]
         )
 
         return self._construct_output(
@@ -345,8 +394,12 @@ class PromBacktester:
         thresh_out: NDArray[float],
         postproc_out: NDArray[float],
         unified_out: NDArray[float],
-    ) -> pd.DataFrame:
+    ) -> OutDataFrames:
         ts_idx = input_df.index
+
+        print(
+            preproc_out.shape, nn_out.shape, thresh_out.shape, postproc_out.shape, unified_out.shape
+        )
 
         if thresh_out.shape[1] > 1:
             thresh_df = pd.DataFrame(
@@ -364,7 +417,6 @@ class PromBacktester:
         if postproc_out.shape[1] > 1:
             postproc_df = pd.DataFrame(
                 postproc_out,
-                # columns=["unified_score"],
                 columns=self.metrics,
                 index=ts_idx,
             )
@@ -375,24 +427,30 @@ class PromBacktester:
                 index=ts_idx,
             )
 
-        dfs = {
-            "input": input_df,
-            "preproc_out": pd.DataFrame(
+        if len(preproc_out) == len(ts_idx) and preproc_out.shape[1] == len(self.metrics):
+            preproc_df = pd.DataFrame(
                 preproc_out,
                 columns=self.metrics,
                 index=ts_idx,
-            ),
-            "model_out": pd.DataFrame(
+            )
+        else:
+            preproc_df = pd.DataFrame(
+                preproc_out,
+            )
+
+        return OutDataFrames(
+            input=input_df,
+            preproc_out=preproc_df,
+            model_out=pd.DataFrame(
                 nn_out,
                 columns=self.metrics,
                 index=ts_idx,
             ),
-            "thresh_out": thresh_df,
-            "postproc_out": postproc_df,
-            "unified_out": pd.DataFrame(
+            thresh_out=thresh_df,
+            postproc_out=postproc_df,
+            unified_out=pd.DataFrame(
                 unified_out,
                 columns=["unified"],
                 index=ts_idx,
             ),
-        }
-        return pd.concat(dfs, axis=1)
+        )
