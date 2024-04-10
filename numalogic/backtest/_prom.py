@@ -82,6 +82,7 @@ class PromBacktester:
         self.metrics = metrics or []
         self.conf: StreamConf = self._init_conf(metrics, numalogic_cfg, load_saved_conf)
         self.nlconf: NumalogicConf = self.conf.get_numalogic_conf()
+        self.seq_len = self.conf.window_size
 
     def _init_conf(self, metrics: list[str], nl_conf: dict, load_saved_conf: bool) -> StreamConf:
         if load_saved_conf:
@@ -231,15 +232,12 @@ class PromBacktester:
         # Preprocess
         x_scaled = preproc_udf.compute(model=artifacts["preproc_clf"], input_=x_test)
 
-        seqlen = self.nlconf.model.conf["seq_len"]
         n_feat = x_scaled.shape[1]
 
-        ds = StreamingDataset(
-            x_scaled, seq_len=self.conf.window_size, stride=self.nlconf.trainer.ds_stride
-        )
+        ds = StreamingDataset(x_scaled, seq_len=self.seq_len, stride=self.nlconf.trainer.ds_stride)
 
-        x_recon = np.zeros((len(ds), seqlen, n_feat), dtype=np.float32)
-        raw_scores = np.zeros((len(ds), seqlen, n_feat), dtype=np.float32)
+        x_recon = np.zeros((len(ds), self.seq_len, n_feat), dtype=np.float32)
+        raw_scores = np.zeros((len(ds), self.seq_len, n_feat), dtype=np.float32)
         feature_scores = np.zeros((len(ds), n_feat), dtype=np.float32)
         unified_scores = np.zeros((len(ds), 1), dtype=np.float32)
 
@@ -293,7 +291,7 @@ class PromBacktester:
         x_test = df[metrics].to_numpy(dtype=np.float32)
 
         postproc_udf = UDFFactory.get_udf_cls("postprocess")
-        ds = StreamingDataset(x_test, seq_len=self.conf.window_size)
+        ds = StreamingDataset(x_test, seq_len=self.seq_len)
 
         feature_scores = np.zeros((len(ds), len(metrics)), dtype=np.float32)
         unified_scores = np.zeros((len(ds), 1), dtype=np.float32)
@@ -307,12 +305,12 @@ class PromBacktester:
             )
         feature_scores = np.vstack(
             [
-                np.full((self.conf.window_size - 1, len(metrics)), fill_value=np.nan),
+                np.full((self.seq_len - 1, len(metrics)), fill_value=np.nan),
                 feature_scores,
             ]
         )
         unified_scores = np.vstack(
-            [np.full((self.conf.window_size - 1, 1), fill_value=np.nan), unified_scores]
+            [np.full((self.seq_len - 1, 1), fill_value=np.nan), unified_scores]
         )
         dfs = {
             "input": df,
