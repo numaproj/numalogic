@@ -127,6 +127,9 @@ class StreamingDataset(IterableDataset):
         self._seq_len = seq_len
         self._data = data.astype(np.float32)
         self._stride = stride
+        _LOGGER.info(
+            "StreamingDataset initialized with seq_len: %s, stride: %s", self._seq_len, self._stride
+        )
 
     @property
     def data(self) -> npt.NDArray[float]:
