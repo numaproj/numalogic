@@ -5,7 +5,7 @@ import pytest
 from omegaconf import OmegaConf
 
 from numalogic._constants import TESTS_DIR
-from numalogic.backtest import PromBacktester
+from numalogic.backtest import PromBacktester, OutDataFrames
 from numalogic.config import (
     NumalogicConf,
     ModelInfo,
@@ -64,9 +64,11 @@ def test_train(backtester, read_data):
 
 
 def test_scores(backtester, read_data):
-    out_df = backtester.generate_scores(read_data)
-    assert isinstance(out_df, pd.DataFrame)
-    assert out_df.shape[0] == int(backtester.test_ratio * read_data.shape[0])
+    out_dfs = backtester.generate_scores(read_data)
+    assert isinstance(out_dfs, OutDataFrames)
+    assert out_dfs.input.shape[0] == int(backtester.test_ratio * read_data.shape[0])
+    assert out_dfs.postproc_out.shape[0] == int(backtester.test_ratio * read_data.shape[0])
+    assert out_dfs.unified_out.shape[0] == int(backtester.test_ratio * read_data.shape[0])
 
 
 def test_static_scores(backtester, read_data):
