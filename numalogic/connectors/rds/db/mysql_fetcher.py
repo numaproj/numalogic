@@ -1,4 +1,7 @@
 import time
+
+from pymysql.cursors import Cursor
+
 from numalogic.connectors.rds._base import RDSBase
 import pymysql
 import pandas as pd
@@ -11,16 +14,10 @@ _LOGGER = logging.getLogger(__name__)
 
 class MysqlFetcher(RDSBase):
     """
-    MysqlFetcher that inherits from RDSDataFetcher. It is used to fetch data from a MySQL database.
-
-    The class has several methods:
+    class that inherits from RDSBase. It is used to fetch data from a MySQL database.
 
     - __init__(self, db_config: RDSConfig, **kwargs): Initializes the MysqlFetcher object with
-    the given RDSConfig and additional keyword arguments. - get_connection(self): Establishes a
-    connection to the MySQL database using the provided configuration. - get_db_cursor(self,
-    connection): Returns a cursor object for executing queries on the database. - execute_query(
-    self, query) -> pd.DataFrame: Executes the given query on the database and returns the
-    result as a pandas DataFrame.
+    the given RDSConfig and additional keyword arguments.
 
     The MysqlFetcher class is designed to be used as a base class for fetching data from a MySQL
     database. It provides methods for establishing a connection, executing queries,
@@ -35,7 +32,7 @@ class MysqlFetcher(RDSBase):
         self.db_config = db_config
         self.kwargs = kwargs
 
-    def get_connection(self):
+    def get_connection(self) -> pymysql.Connection:
         """
         Establishes a connection to the MySQL database using the provided configuration.
 
@@ -49,44 +46,36 @@ class MysqlFetcher(RDSBase):
 
         Notes: - If SSL/TLS is enabled and configured in the RDSConfig object, the connection
         will be established with SSL/TLS. - If SSL/TLS is not enabled or configured,
-        the connection will be established without SSL/TLS. - The connection object is returned
-        for further use in executing queries on the database.
+        the connection will be established without SSL/TLS.
 
         """
-        connection = None
+        params = dict(
+            host=self.db_config.endpoint,
+            port=self.db_config.port,
+            user=self.db_config.database_username,
+            password=self.get_password(),
+            db=self.db_config.database_name,
+            cursorclass=pymysql.cursors.DictCursor,
+            charset="utf8mb4",
+            connect_timeout=self.db_config.database_connection_timeout,
+        )
         if self.db_config.ssl and self.db_config.ssl_enabled:
-            connection = pymysql.connect(
-                host=self.db_config.endpoint,
-                port=self.db_config.port,
-                user=self.db_config.database_username,
-                password=self.get_password(),
-                db=self.db_config.database_name,
+            return pymysql.connect(
                 ssl=self.db_config.ssl.__dict__,
-                cursorclass=pymysql.cursors.DictCursor,
-                charset="utf8mb4",
-                connect_timeout=self.db_config.database_connection_timeout,
-            )
-        else:
-            connection = pymysql.connect(
-                host=self.db_config.endpoint,
-                port=self.db_config.port,
-                user=self.db_config.database_username,
-                password=self.get_password(),
-                db=self.db_config.database_name,
-                cursorclass=pymysql.cursors.DictCursor,
-                charset="utf8mb4",
-                connect_timeout=self.db_config.database_connection_timeout,
+                **params,
             )
 
-        return connection
+        return pymysql.connect(
+            **params,
+        )
 
-    def get_db_cursor(self, connection):
+    def get_db_cursor(self, connection) -> Cursor:
         """
         Returns a cursor object for executing queries on the database.
 
-        Arguments:
-        - connection (pymysql.connections.Connection): The connection object for the
-        MySQL database.
+        Args:
+            - connection (pymysql.connections.Connection): The connection object for the
+            MySQL database.
 
         Returns
         -------
@@ -100,11 +89,11 @@ class MysqlFetcher(RDSBase):
         """
         return connection.cursor()
 
-    def execute_query(self, query) -> pd.DataFrame:
+    def execute_query(self, query: str) -> pd.DataFrame:
         """
         Executes the given query on the database and returns the result as a pandas DataFrame.
 
-        Arguments:
+        Args:
             query (str): The SQL query to be executed.
 
         Returns

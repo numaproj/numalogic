@@ -1,3 +1,4 @@
+import boto3
 from boto3 import Session
 import logging
 
@@ -61,7 +62,7 @@ class Boto3ClientManager:
             aws_session_token=security_token,
         )
 
-    def get_rds_token(self, rds_boto3_client) -> str:
+    def get_rds_token(self, rds_boto3_client: boto3.session.Session.client) -> str:
         """
         Generates an RDS authentication token using the provided RDS boto3 client.
 
@@ -71,10 +72,9 @@ class Boto3ClientManager:
         database. - Port: The port number of the RDS database. - DBUsername: The username for
         the RDS database. - Region: The AWS region where the RDS database is located.
 
-        Arguments:
-        ---------
-         - rds_boto3_client (boto3.client): The RDS boto3 client used to generate the
-         authentication token.
+        Args:
+             - rds_boto3_client (boto3.client): The RDS boto3 client used to generate the
+             authentication token.
 
         Returns
         -------
@@ -88,7 +88,7 @@ class Boto3ClientManager:
             Region=self.configurations.aws_region,
         )
 
-    def get_client(self, client_type: str):
+    def get_client(self, client_type: str) -> boto3.session.Session.client:
         """
         Generates an AWS client based on the provided client type.
 
@@ -98,10 +98,9 @@ class Boto3ClientManager:
         corresponding AWS client using the `get_boto3_session().client()` method and returns the
         client object.
 
-        Arguments:
-        ---------
-        - client_type (str): The type of AWS client to generate. This should be one of
-        the values defined in the `DatabaseServiceProvider` enum.
+        Args:
+            - client_type (str): The type of AWS client to generate. This should be one of
+            the values defined in the `DatabaseServiceProvider` enum.
 
         Returns
         -------

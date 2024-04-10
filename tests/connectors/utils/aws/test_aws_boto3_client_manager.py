@@ -14,13 +14,7 @@ def config_mock():
 
 @pytest.fixture(autouse=True)
 def boto3_client_manager_mock(config_mock):
-    boto3_client_manager_mock = Boto3ClientManager(config_mock)
-    return boto3_client_manager_mock
-
-
-@pytest.fixture(autouse=True)
-def config_mock():
-    return MagicMock()
+    return Boto3ClientManager(config_mock)
 
 
 @pytest.fixture(autouse=True)
@@ -56,7 +50,7 @@ def test_get_boto3_session(boto3_client_manager_mock):
         }
     )
     with patch.object(
-            Boto3ClientManager, "get_boto3_session", return_value=boto3_session_mock
+        Boto3ClientManager, "get_boto3_session", return_value=boto3_session_mock
     ) as boto3_session_class:
         boto3_session = boto3_client_manager_mock.get_boto3_session()
 
@@ -109,9 +103,7 @@ def test_get_client_unrecognized(boto3_client_manager_mock):
 
 
 def test_get_client_rds(boto3_client_manager_mock, rds_client_mock, boto3_session_mock):
-    boto3_client_manager_mock.get_boto3_session = MagicMock(
-        return_value=boto3_session_mock
-    )
+    boto3_client_manager_mock.get_boto3_session = MagicMock(return_value=boto3_session_mock)
     boto3_session_mock.client.return_value = rds_client_mock
 
     rds_client = boto3_client_manager_mock.get_client("rds")
@@ -124,9 +116,7 @@ def test_get_client_rds(boto3_client_manager_mock, rds_client_mock, boto3_sessio
 
 
 def test_get_client_athena(boto3_client_manager_mock, athena_client_mock, boto3_session_mock):
-    boto3_client_manager_mock.get_boto3_session = MagicMock(
-        return_value=boto3_session_mock
-    )
+    boto3_client_manager_mock.get_boto3_session = MagicMock(return_value=boto3_session_mock)
     boto3_session_mock.client.return_value = athena_client_mock
 
     boto3_client_manager_mock.get_client("athena")

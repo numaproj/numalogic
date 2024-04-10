@@ -1,3 +1,4 @@
+from abc import ABCMeta, abstractmethod
 from typing import Optional
 import pandas as pd
 from numalogic.connectors.utils.aws.config import DatabaseServiceProvider, RDSConfig
@@ -9,28 +10,63 @@ import time
 _LOGGER = logging.getLogger(__name__)
 
 
-class RDSBase:
+def format_dataframe(
+    df: pd.DataFrame,
+    query: str,
+    datetime_field_name: str,
+    group_by: Optional[list[str]] = None,
+    pivot: Optional[Pivot] = None,
+) -> pd.DataFrame:
     """
-    Class: RDSBase.
+    Executes formatting operations on a pandas DataFrame.
 
-    This class represents a data fetcher for RDS (Relational Database Service) connections. It
+    Arguments
+    ----------
+    df : pd.DataFrame
+        The input DataFrame to be formatted.
+    query : str
+        The SQL query used to retrieve the data.
+    datetime_field_name : str
+        The name of the datetime field in the DataFrame.
+    group_by : Optional[list[str]], optional
+        A list of column names to group the DataFrame by, by default None.
+    pivot : Optional[Pivot], optional
+        An optional Pivot object specifying the index, columns,
+        and values for pivoting the DataFrame, by default None.
+
+    Returns
+    -------
+    pd.DataFrame : The formatted DataFrame.
+
+    """
+    _start_time = time.perf_counter()
+    df["timestamp"] = pd.to_datetime(df[datetime_field_name]).astype("int64") // 10**6
+    df.drop(columns=datetime_field_name, inplace=True)
+    if group_by:
+        df = df.groupby(by=group_by).sum().reset_index()
+
+    if pivot and pivot.columns:
+        df = df.pivot(
+            index=pivot.index,
+            columns=pivot.columns,
+            values=pivot.value,
+        )
+        df.columns = df.columns.map("{0[1]}".format)
+        df.reset_index(inplace=True)
+    _end_time = time.perf_counter() - _start_time
+    _LOGGER.info("RDS MYSQL Query: %s, Format time:  %.4fs", query, _end_time)
+    return df
+
+
+class RDSBase(metaclass=ABCMeta):
+    """
+    class represents a data fetcher for RDS (Relational Database Service) connections. It
     provides methods for retrieving the RDS token, getting the password, establishing a
     connection, and executing queries.
 
-    Attributes
-    ----------
-    - db_config (RDSConfig): The configuration object for the RDS connection.
-    - kwargs (dict): Additional keyword arguments.
-
-    Methods
-    -------
-    - get_rds_token(): Retrieves the RDS token using the Boto3ClientManager. - get_password() ->
-    str: Retrieves the password for the RDS connection. If 'aws_rds_use_iam' is True, it calls
-    the get_rds_token() method, otherwise it returns the database password from the
-    configuration. - get_connection(): Placeholder method for establishing a connection to the
-    RDS database. - get_db_cursor(): Placeholder method for getting a database cursor. -
-    execute_query(query) -> pd.DataFrame: Placeholder method for executing a query and returning
-    the result as a pandas DataFrame.
+    Args:
+        - db_config (RDSConfig): The configuration object for the RDS connection.
+        - kwargs (dict): Additional keyword arguments.
 
     """
 
@@ -45,10 +81,9 @@ class RDSBase:
         """
         Generates an RDS authentication token using the provided RDS boto3 client.
 
-        Arguments
-        ----------
-        - rds_boto3_client (boto3.client): The RDS boto3 client used to generate the
-        authentication token.
+        Args:
+            - rds_boto3_client (boto3.client): The RDS boto3 client used to generate the
+            authentication token.
 
         Returns
         -------
@@ -70,15 +105,14 @@ class RDSBase:
             str: The password for the RDS connection.
 
         """
-        password = None
         if self.db_config.aws_rds_use_iam:
             _LOGGER.info("using aws_rds_use_iam to generate RDS Token")
-            password = self.get_rds_token()
-        else:
-            _LOGGER.info("using password from config to connect RDS Database")
-            password = self.db_config.database_password
-        return password
+            return self.get_rds_token()
 
+        _LOGGER.info("using password from config to connect RDS Database")
+        return self.db_config.database_password
+
+    @abstractmethod
     def get_connection(self):
         """
         Establishes a connection to the RDS database.
@@ -94,7 +128,8 @@ class RDSBase:
         """
         raise NotImplementedError
 
-    def get_db_cursor(self):
+    @abstractmethod
+    def get_db_cursor(self, *args, **kwargs):
         """
         Retrieves a database cursor for executing queries.
 
@@ -106,63 +141,15 @@ class RDSBase:
             None
 
         """
-        pass
+        raise NotImplementedError
 
-    def format_dataframe(
-        self,
-        df: pd.DataFrame,
-        query: str,
-        datetime_field_name: str,
-        group_by: Optional[list[str]] = None,
-        pivot: Optional[Pivot] = None,
-    ):
-        """
-        Executes formatting operations on a pandas DataFrame.
-
-        Arguments
-        ----------
-        df : pd.DataFrame
-            The input DataFrame to be formatted.
-        query : str
-            The SQL query used to retrieve the data.
-        datetime_field_name : str
-            The name of the datetime field in the DataFrame.
-        group_by : Optional[list[str]], optional
-            A list of column names to group the DataFrame by, by default None.
-        pivot : Optional[Pivot], optional
-            An optional Pivot object specifying the index, columns,
-            and values for pivoting the DataFrame, by default None.
-
-        Returns
-        -------
-        pd.DataFrame : The formatted DataFrame.
-
-        """
-        _start_time = time.perf_counter()
-        df["timestamp"] = pd.to_datetime(df[datetime_field_name]).astype("int64") // 10**6
-        df.drop(columns=datetime_field_name, inplace=True)
-        if group_by:
-            df = df.groupby(by=group_by).sum().reset_index()
-
-        if pivot and pivot.columns:
-            df = df.pivot(
-                index=pivot.index,
-                columns=pivot.columns,
-                values=pivot.value,
-            )
-            df.columns = df.columns.map("{0[1]}".format)
-            df.reset_index(inplace=True)
-        _end_time = time.perf_counter() - _start_time
-        _LOGGER.info("RDS MYSQL Query: %s, Format time:  %.4fs", query, _end_time)
-        return df
-
-    def execute_query(self, query) -> pd.DataFrame:
+    @abstractmethod
+    def execute_query(self, query: str) -> pd.DataFrame:
         """
         Executes a query on the RDS database and returns the result as a pandas DataFrame.
 
-        Parameters
-        ----------
-            query (str): The SQL query to be executed.
+        Args:
+                query (str): The SQL query to be executed.
 
         Returns
         -------

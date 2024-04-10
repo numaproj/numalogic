@@ -9,12 +9,11 @@ class STSClientManager:
     """
     Assumes the specified role and retrieves the temporary security credentials.
 
-    Arguments
-    ----------
-    - role_arn (str): The Amazon Resource Name (ARN) of the role to assume.
-    - role_session_name (str): A name for the assumed role session.
-    - duration_seconds (int): The duration, in seconds,
-    for which the temporary credentials are valid. Default is 3600 seconds (1 hour).
+    Args:
+        - role_arn (str): The Amazon Resource Name (ARN) of the role to assume.
+        - role_session_name (str): A name for the assumed role session.
+        - duration_seconds (int): The duration, in seconds,
+        for which the temporary credentials are valid. Default is 3600 seconds (1 hour).
 
     Returns
     -------
@@ -29,17 +28,16 @@ class STSClientManager:
         self.sts_client = boto3.client("sts")
         self.credentials = None
 
-    def assume_role(self, role_arn, role_session_name, duration_seconds=3600):
+    def assume_role(self, role_arn: str, role_session_name: str, duration_seconds: int = 3600):
         """
         Assumes the specified role and retrieves the temporary security credentials.
 
-        Arguments
-        ----------
-        - role_arn (str): The Amazon Resource Name (ARN) of the role to
-        assume.
-        - role_session_name (str): A name for the assumed role session.
-        - duration_seconds (int): The duration, in seconds, for which the temporary credentials
-        are valid. Default is 3600 seconds (1 hour).
+        Args:
+            - role_arn (str): The Amazon Resource Name (ARN) of the role to
+            assume.
+            - role_session_name (str): A name for the assumed role session.
+            - duration_seconds (int): The duration, in seconds, for which the temporary credentials
+            are valid. Default is 3600 seconds (1 hour).
 
         Returns
         -------
@@ -57,7 +55,7 @@ class STSClientManager:
         )
         self.credentials = response["Credentials"]
 
-    def is_token_about_to_expire(self):
+    def is_token_about_to_expire(self) -> bool:
         """
         Checks if the token is about to expire.
 
@@ -73,14 +71,13 @@ class STSClientManager:
                 return (remaining_time.total_seconds()) <= 15 * 60
         return True
 
-    def get_credentials(self, role_arn, role_session_name):
+    def get_credentials(self, role_arn, role_session_name) -> dict:
         """
         Retrieves the AWS IAM credentials for the specified role and role session name.
 
-        Arguments
-        ----------
-        - role_arn (str): The Amazon Resource Name (ARN) of the role to assume.
-        - role_session_name (str): A name for the assumed role session.
+        Args:
+            - role_arn (str): The Amazon Resource Name (ARN) of the role to assume.
+            - role_session_name (str): A name for the assumed role session.
 
         Returns
         -------

@@ -10,14 +10,12 @@ import pandas as pd
 
 @pytest.fixture(autouse=True)
 def mock_db_config():
-    mock_db_config = RDSConfig()
-    return mock_db_config
+    return RDSConfig()
 
 
 @pytest.fixture(autouse=True)
 def data_fetcher(mock_db_config):
-    data_fetcher = RDSFetcher(db_config=mock_db_config)
-    return data_fetcher
+    return RDSFetcher(db_config=mock_db_config)
 
 
 def test_init(data_fetcher, mock_db_config):

@@ -4,7 +4,6 @@ from numalogic.connectors.rds.db.mysql_fetcher import MysqlFetcher
 from numalogic.connectors.utils.aws.exceptions import UnRecognizedDatabaseTypeException
 
 
-
 def test_get_db_handler_with_supported_db_type():
     # Arrange
     db_type = "mysql"
@@ -13,6 +12,7 @@ def test_get_db_handler_with_supported_db_type():
 
     # Assert
     assert result == MysqlFetcher
+
 
 def test_get_db_handler_with_unsupported_db_type():
     # Arrange
