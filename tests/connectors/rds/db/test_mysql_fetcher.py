@@ -78,7 +78,7 @@ def mock_mysql_fetcher_ssl_disabled(mock_db_config_ssl_disabled):
 def test_init_method(mock_mysql_fetcher, mock_db_config):
     db_config, params = mock_db_config
     assert mock_mysql_fetcher.db_config == db_config
-    assert mock_mysql_fetcher.database_type == DatabaseTypes.MYSQL.value
+    assert mock_mysql_fetcher.database_type == DatabaseTypes.MYSQL
 
 
 def test_get_db_cursor_method(mock_mysql_fetcher):

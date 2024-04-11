@@ -26,7 +26,7 @@ class RdsFactory:
             - UnRecognizedDatabaseTypeException: If the specified database type is not supported.
 
         """
-        if database_type == DatabaseTypes.MYSQL.value:
+        if database_type == DatabaseTypes.MYSQL:
             from numalogic.connectors.rds.db.mysql_fetcher import MysqlFetcher
 
             return MysqlFetcher

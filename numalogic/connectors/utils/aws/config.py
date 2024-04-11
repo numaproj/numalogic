@@ -4,7 +4,7 @@ from typing import Optional
 from numalogic.connectors.utils.enum import BaseEnum
 
 
-class DatabaseServiceProvider(BaseEnum):
+class DatabaseServiceProvider(str, BaseEnum):
     """
     A class representing the database service providers.
 
@@ -19,7 +19,7 @@ class DatabaseServiceProvider(BaseEnum):
     ATHENA = "athena"
 
 
-class DatabaseTypes(BaseEnum):
+class DatabaseTypes(str, BaseEnum):
     """
     A class representing different types of databases.
 
@@ -92,7 +92,7 @@ class RDBMSConfig:
     database_username: str = ""
     database_password: str = ""
     database_connection_timeout: int = 10
-    database_type: str = DatabaseTypes.MYSQL.value
+    database_type: str = DatabaseTypes.MYSQL
     ssl_enabled: bool = False
     ssl: Optional[SSLConfig] = field(default_factory=lambda: SSLConfig())
 
@@ -130,4 +130,4 @@ class RDSConfig(AWSConfig, RDBMSConfig):
 
     aws_region: str = ""
     aws_rds_use_iam: bool = False
-    database_provider: str = DatabaseServiceProvider.RDS.value
+    database_provider: str = DatabaseServiceProvider.RDS

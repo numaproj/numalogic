@@ -90,7 +90,7 @@ class RDSBase(metaclass=ABCMeta):
             str: The generated RDS authentication token.
 
         """
-        rds_client = self.boto3_client_manager.get_client(DatabaseServiceProvider.RDS.value)
+        rds_client = self.boto3_client_manager.get_client(DatabaseServiceProvider.RDS)
         return self.boto3_client_manager.get_rds_token(rds_client)
 
     def get_password(self) -> str:

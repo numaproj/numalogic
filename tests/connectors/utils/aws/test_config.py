@@ -29,7 +29,7 @@ def test_rdbms_config():
         database_username="user",
         database_password="password",
         database_connection_timeout=300,
-        database_type=DatabaseTypes.MYSQL.value,
+        database_type=DatabaseTypes.MYSQL,
         ssl_enabled=True,
         ssl=SSLConfig(ca="path_to_ca"),
     )
@@ -50,7 +50,7 @@ def test_rds_config():
         database_username="user",
         database_password="password",
         database_connection_timeout=300,
-        database_type=DatabaseTypes.MYSQL.value,
+        database_type=DatabaseTypes.MYSQL,
         ssl_enabled=True,
         ssl=SSLConfig(ca="path_to_ca"),
     )

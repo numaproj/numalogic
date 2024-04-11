@@ -25,7 +25,7 @@ class MysqlFetcher(RDSBase):
     use cases.
     """
 
-    database_type = DatabaseTypes.MYSQL.value
+    database_type = DatabaseTypes.MYSQL
 
     def __init__(self, db_config: RDSConfig, **kwargs):
         super().__init__(db_config)
@@ -116,6 +116,7 @@ class MysqlFetcher(RDSBase):
         col_names = [desc[0] for desc in cursor.description]
         rows = cursor.fetchall()
         df = pd.DataFrame(rows, columns=col_names)
+        connection.close()
         _end_time = time.perf_counter() - _start_time
         _LOGGER.info("RDS MYSQL Query: %s, execution time:  %.4fs", query, _end_time)
         return df

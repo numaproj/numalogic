@@ -118,12 +118,12 @@ class Boto3ClientManager:
             str(self.configurations),
         )
         if client_type in DatabaseServiceProvider:
-            if client_type == DatabaseServiceProvider.RDS.value:
+            if client_type == DatabaseServiceProvider.RDS:
                 self.rds_client = self.get_boto3_session().client(
                     "rds", region_name=self.configurations.aws_region
                 )
                 client = self.rds_client
-            if client_type == DatabaseServiceProvider.ATHENA.value:
+            if client_type == DatabaseServiceProvider.ATHENA:
                 self.athena_client = self.get_boto3_session().client(
                     "athena", region_name=self.configurations.aws_region
                 )
