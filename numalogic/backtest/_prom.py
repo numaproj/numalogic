@@ -395,10 +395,6 @@ class PromBacktester:
     ) -> OutDataFrames:
         ts_idx = input_df.index
 
-        print(
-            preproc_out.shape, nn_out.shape, thresh_out.shape, postproc_out.shape, unified_out.shape
-        )
-
         if thresh_out.shape[1] > 1:
             thresh_df = pd.DataFrame(
                 thresh_out,
