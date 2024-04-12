@@ -11,6 +11,7 @@ from numalogic.connectors import (
     RedisConf,
     PrometheusConf,
     DruidConf,
+    RDSConf,
 )
 from numalogic.tools.exceptions import ConfigNotFoundError
 
@@ -77,6 +78,7 @@ class PipelineConf:
     )
     prometheus_conf: Optional[PrometheusConf] = None
     druid_conf: Optional[DruidConf] = None
+    rds_conf: Optional[RDSConf] = None
 
 
 def load_pipeline_conf(*paths: str) -> PipelineConf:
