@@ -2,8 +2,9 @@ import os
 import unittest
 
 import numpy as np
+import pytest
 import torch
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 from torch.testing import assert_close
 from torch.utils.data import DataLoader
 
@@ -22,40 +23,40 @@ SEQ_LEN = 12
 RNG = np.random.default_rng(42)
 
 
-class TestStreamingDataset(unittest.TestCase):
-    data = None
-    m = None
-    n = None
+@pytest.fixture
+def setup():
+    m, n = 30, 3
+    return np.arange(30 * 3).reshape(30, 3).astype(np.float32), m, n
 
-    @classmethod
-    def setUpClass(cls) -> None:
-        cls.m = 30
-        cls.n = 3
-        cls.data = np.arange(cls.m * cls.n).reshape(30, 3)
 
-    def test_dataset(self):
-        dataset = StreamingDataset(self.data, seq_len=SEQ_LEN)
+class TestStreamingDataset:
+    def test_dataset(self, setup):
+        data, m, n = setup
+        dataset = StreamingDataset(data, seq_len=SEQ_LEN)
         for seq in dataset:
-            self.assertTupleEqual((SEQ_LEN, self.n), seq.shape)
-        self.assertEqual(self.data.shape[0] - SEQ_LEN + 1, len(dataset))
-        assert_allclose(np.ravel(dataset[0]), np.ravel(self.data[:12, :]))
-        assert_allclose(self.data, dataset.data)
+            assert (SEQ_LEN, n) == seq.shape
+        assert (data.shape[0] - SEQ_LEN + 1) == len(dataset)
+        assert_allclose(np.ravel(dataset[0]), np.ravel(data[:12, :]))
+        assert_allclose(data, dataset.data)
 
-    def test_dataset_getitem(self):
-        ds = StreamingDataset(self.data, seq_len=SEQ_LEN)
-        self.assertEqual(len(self.data) - SEQ_LEN + 1, len(ds))
-        self.assertTupleEqual((15 - SEQ_LEN + 1, SEQ_LEN, self.n), ds[:15].shape)
-        self.assertTupleEqual((1, SEQ_LEN, self.n), ds[3:15].shape)
-        self.assertTupleEqual((self.m - SEQ_LEN + 1, SEQ_LEN, self.n), ds[:50].shape)
+    def test_dataset_getitem(self, setup):
+        data, m, n = setup
+        ds = StreamingDataset(data, seq_len=SEQ_LEN)
+        assert (len(data) - SEQ_LEN + 1) == len(ds)
+        assert (15 - SEQ_LEN + 1, SEQ_LEN, n) == ds[:15].shape
+        assert (1, SEQ_LEN, n) == ds[3:15].shape
+        assert (m - SEQ_LEN + 1, SEQ_LEN, n) == ds[:50].shape
 
-    def test_as_array(self):
-        ds = StreamingDataset(self.data, seq_len=SEQ_LEN)
-        self.assertTupleEqual((self.m - SEQ_LEN + 1, SEQ_LEN, self.n), ds.as_array().shape)
+    def test_as_array(self, setup):
+        data, m, n = setup
+        ds = StreamingDataset(data, seq_len=SEQ_LEN)
+        assert (m - SEQ_LEN + 1, SEQ_LEN, n) == ds.as_array().shape
 
-    def test_w_dataloader_01(self):
+    def test_w_dataloader_01(self, setup):
+        data, m, n = setup
         batch_size = 4
         dl = DataLoader(
-            StreamingDataset(self.data, seq_len=SEQ_LEN),
+            StreamingDataset(data, seq_len=SEQ_LEN),
             batch_size=batch_size,
             num_workers=1,
             drop_last=True,
@@ -64,9 +65,9 @@ class TestStreamingDataset(unittest.TestCase):
             assert_close(batch[0, 1, :], batch[1, 0, :])
             assert_close(batch[2, 1, :], batch[3, 0, :])
 
-        with self.assertRaises(NotImplementedError):
+        with pytest.raises(NotImplementedError):
             dl = DataLoader(
-                StreamingDataset(self.data, seq_len=SEQ_LEN),
+                StreamingDataset(data, seq_len=SEQ_LEN),
                 batch_size=batch_size,
                 drop_last=True,
                 num_workers=2,
@@ -74,18 +75,53 @@ class TestStreamingDataset(unittest.TestCase):
             for _ in dl:
                 pass
 
-    def test_dataset_err_01(self):
-        with self.assertRaises(ValueError):
-            StreamingDataset(self.data, seq_len=self.m + 1)
+    def test_dataset_err_01(self, setup):
+        data, m, _ = setup
+        with pytest.raises(ValueError):
+            StreamingDataset(data, seq_len=m + 1)
 
-    def test_dataset_err_02(self):
-        dataset = StreamingDataset(self.data, seq_len=SEQ_LEN)
-        with self.assertRaises(IndexError):
-            _ = dataset[self.m - 5]
+    def test_dataset_err_02(self, setup):
+        data, m, _ = setup
+        dataset = StreamingDataset(data, seq_len=SEQ_LEN)
+        with pytest.raises(IndexError):
+            _ = dataset[m - 5]
 
-    def test_dataset_err_03(self):
-        with self.assertRaises(InvalidDataShapeError):
-            StreamingDataset(self.data.ravel(), seq_len=SEQ_LEN)
+    def test_dataset_err_03(self, setup):
+        data, _, _ = setup
+        with pytest.raises(InvalidDataShapeError):
+            StreamingDataset(data.ravel(), seq_len=SEQ_LEN)
+
+    def test_ds_with_stride(self, setup):
+        data, m, n = setup
+        stride = 4
+        dataset = StreamingDataset(data, seq_len=SEQ_LEN, stride=stride)
+        assert (m - SEQ_LEN) // stride + 1 == len(dataset)
+        for idx, seq in enumerate(dataset):
+            assert (SEQ_LEN, n) == seq.shape
+            assert_array_equal(seq[0], data[idx * stride])
+
+        assert (len(dataset), SEQ_LEN, n) == dataset.as_array().shape
+        assert (len(dataset), SEQ_LEN, n) == dataset.as_tensor().shape
+
+    def test_ds_with_stride_err(self, setup):
+        data, _, _ = setup
+        with pytest.raises(ValueError):
+            StreamingDataset(data, seq_len=SEQ_LEN, stride=20)
+
+    def test_ds_with_stride_dataloader(self, setup):
+        data, m, n = setup
+        stride = 2
+        dataset = StreamingDataset(data, seq_len=SEQ_LEN, stride=stride)
+        batch_size = 5
+        dl = DataLoader(
+            dataset,
+            batch_size=batch_size,
+        )
+        total_samples = 0
+        for batch in dl:
+            total_samples += batch.shape[0]
+            assert (batch_size, SEQ_LEN, n) == batch.shape
+        assert total_samples == len(dataset)
 
 
 class TestStreamingDataLoader(unittest.TestCase):

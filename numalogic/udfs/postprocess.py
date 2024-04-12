@@ -328,9 +328,9 @@ class PostprocessUDF(NumalogicUDF):
         scores = cls.compute_threshold(model, input_)  # (seqlen x nfeat)
         win_scores = cls.compute_feature_scores(
             scores, win_agg_conf=score_conf.window_agg
-        )  # (seqlen x nfeat)
+        )  # (nfeat,)
         if postproc_tx:
-            win_scores = cls.compute_postprocess(postproc_tx, win_scores)  # (seqlen x nfeat)
+            win_scores = cls.compute_postprocess(postproc_tx, win_scores)  # (nfeat,)
         return win_scores  # (nfeat, )
 
     @classmethod

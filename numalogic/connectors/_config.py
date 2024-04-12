@@ -7,6 +7,7 @@ class ConnectorType(IntEnum):
     redis = 0
     prometheus = 1
     druid = 2
+    rds = 3
 
 
 @dataclass
