@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Optional
+from numalogic.connectors.utils.aws.config import RDSConfig
 
 
 class ConnectorType(IntEnum):
@@ -53,6 +54,17 @@ class DruidFetcherConf:
 
 
 @dataclass
+class RDSFetcherConf:
+    datasource: str
+    dimensions: list[str] = field(default_factory=list)
+    aggregations: dict = field(default_factory=dict)
+    group_by: list[str] = field(default_factory=list)
+    pivot: Pivot = field(default_factory=lambda: Pivot())
+    granularity: str = "minute"
+    hash_query_type: bool = True
+
+
+@dataclass
 class DruidConf(ConnectorConf):
     """
     Class for configuring Druid connector.
@@ -70,3 +82,19 @@ class DruidConf(ConnectorConf):
     delay_hrs: float = 3.0
     fetcher: Optional[DruidFetcherConf] = None
     id_fetcher: Optional[dict[str, DruidFetcherConf]] = None
+
+
+@dataclass
+class RDSConf():
+    connection_conf: RDSConfig
+    delay_hrs: float = 3.0
+    fetcher: Optional[RDSFetcherConf] = None
+    id_fetcher: Optional[dict[str, RDSFetcherConf]] = None
+
+
+if __name__ == "__main__":
+    from numalogic.udfs._config import load_pipeline_conf
+
+    config = load_pipeline_conf(
+        "/Users/skondakindi/Desktop/codebase/ml/numalogic/tests/resources/rds_trainer_config.yaml")
+    print(config)

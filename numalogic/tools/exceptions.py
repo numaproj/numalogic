@@ -107,6 +107,12 @@ class DataFormatError(Exception):
 
 
 class DruidFetcherError(Exception):
-    """Base class for all exceptions raised by the PrometheusFetcher class."""
+    """Base class for all exceptions raised by the DruidFetcher class."""
+
+    pass
+
+
+class RDSFetcherError(Exception):
+    """Base class for all exceptions raised by the RDSFetcher class."""
 
     pass
