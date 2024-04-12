@@ -7,7 +7,10 @@ from numalogic.connectors._config import (
     DruidConf,
     DruidFetcherConf,
     ConnectorType,
+    RDSConf,
+    RDSFetcherConf
 )
+from numalogic.connectors.rds import RDSFetcher
 from numalogic.connectors.prometheus import PrometheusFetcher
 
 __all__ = [
@@ -18,8 +21,10 @@ __all__ = [
     "DruidFetcherConf",
     "ConnectorType",
     "PrometheusFetcher",
+    "RDSFetcher",
+    "RDSConf",
+    "RDSFetcherConf"
 ]
-
 
 if find_spec("pydruid"):
     from numalogic.connectors.druid import DruidFetcher  # noqa: F401
