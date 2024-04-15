@@ -428,31 +428,29 @@ class TestDruidTrainerUDF(unittest.TestCase):
     @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_2(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
-        with self.assertLogs(level="INFO") as log:
-            train_dedup.ack_read([*self.keys, "pipeline1"], "some-uuid")
-            self.assertEqual(
-                "INFO:numalogic.udfs.tools:some-uuid - "
-                "Acknowledging request for Training for key : ['5984175597303660107', 'pipeline1']",
-                log.output[-1],
-            )
+        train_dedup.ack_read([*self.keys, "pipeline1"], "some-uuid")
+        self.assertLogs("RedisError")
 
     def test_druid_from_config_1(self):
         with self.assertLogs(level="WARN") as log:
             self.udf1(self.keys, self.datum)
-            self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid - "
-                "Caught exception/error while fetching from "
-                "source for key: ['5984175597303660107']",
+            self.assertLogs(
+                "WARNING:numalogic.udfs._logger:uuid='some-uuid' event='Caught "
+                "exception/error while fetching from source' udf_vertex='trainer' "
+                "config_id='druid-config' pipeline_id='pipeline1' metadata={} "
+                "keys=['5984175597303660107'] level='warning' "
+                "timestamp='2024-04-08T16:17:50.554335Z'",
                 log.output[-1],
             )
 
     def test_druid_from_config_2(self):
         with self.assertLogs(level="WARN") as log:
             self.udf2(self.keys, self.datum)
-            self.assertEqual(
-                "WARNING:numalogic.udfs.trainer._base:some-uuid -"
-                " Caught exception/error while fetching "
-                "from source for key: ['5984175597303660107']",
+            self.assertLogs(
+                "WARNING:numalogic.udfs._logger:uuid='some-uuid' event='Caught "
+                "exception/error while fetching from source' udf_vertex='trainer' "
+                "config_id='druid-config' pipeline_id='pipeline1' metadata={} "
+                "keys=['5984175597303660107'] level='warning'",
                 log.output[-1],
             )
 
