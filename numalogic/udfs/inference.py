@@ -1,4 +1,3 @@
-import logging
 import os
 import time
 from dataclasses import replace
@@ -15,6 +14,7 @@ from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._logger import configure_logger, log_data_payload_values
 from numalogic.udfs._metrics import (
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
@@ -30,7 +30,7 @@ from numalogic.udfs.tools import (
     get_static_thresh_message,
 )
 
-_LOGGER = logging.getLogger(__name__)
+_struct_log = configure_logger()
 
 # TODO: move to config
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
@@ -104,9 +104,11 @@ class InferenceUDF(NumalogicUDF):
             Messages instance
         """
         _start_time = time.perf_counter()
+        log = _struct_log.bind(udf_vertex=self._vtx)
 
         # Construct payload object
-        payload = StreamPayload(**orjson.loads(datum.value))
+        json_data_payload = orjson.loads(datum.value)
+        payload = StreamPayload(**json_data_payload)
         _metric_label_values = (
             payload.metadata["numalogic_opex_tags"]["source"],
             self._vtx,
@@ -115,15 +117,11 @@ class InferenceUDF(NumalogicUDF):
             payload.pipeline_id,
         )
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
-        _LOGGER.debug(
-            "%s - Received Msg: { CompositeKeys: %s, Metrics: %s }",
-            payload.uuid,
-            payload.composite_keys,
-            payload.metrics,
-        )
 
         _stream_conf = self.get_stream_conf(payload.config_id)
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
+
+        log = log_data_payload_values(log, json_data_payload)
 
         artifact_data, payload = _load_artifact(
             skeys=[_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)],
@@ -139,6 +137,7 @@ class InferenceUDF(NumalogicUDF):
             msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
             if _conf.numalogic_conf.score.adjust:
                 msgs.append(get_static_thresh_message(keys, payload))
+            log.exception("Artifact model not loaded!")
             return msgs
 
         # Perform inference
@@ -147,11 +146,10 @@ class InferenceUDF(NumalogicUDF):
             _update_info_metric(x_inferred, payload.metrics, _metric_label_values)
         except RuntimeError:
             _increment_counter(counter=RUNTIME_ERROR_COUNTER, labels=_metric_label_values)
-            _LOGGER.exception(
-                "%s - Runtime inference error! Keys: %s, Metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metrics,
+            log.exception(
+                "Runtime inference error!",
+                keys=payload.composite_keys,
+                metrics=payload.metrics,
             )
             # Send training request if inference fails
             msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
@@ -176,21 +174,17 @@ class InferenceUDF(NumalogicUDF):
         )
         # Send trainer message if artifact is stale
         if status == Status.ARTIFACT_STALE:
+            log.info("Inference artifact found is stale")
             msgs.append(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 
-        _LOGGER.info(
-            "%s - Successfully inferred: { CompositeKeys: %s, Metrics: %s }",
-            payload.uuid,
-            payload.composite_keys,
-            payload.metrics,
-        )
         _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
         msgs.append(Message(keys=keys, value=payload.to_json(), tags=["postprocess"]))
 
-        _LOGGER.debug(
-            "%s - Time taken in inference: %.4f sec",
-            payload.uuid,
-            time.perf_counter() - _start_time,
+        log.info(
+            "Successfully inferred!",
+            keys=payload.composite_keys,
+            metrics=payload.metrics,
+            execution_time_ms=round((time.perf_counter() - _start_time) * 1000, 4),
         )
         return msgs
 
@@ -214,11 +208,5 @@ class InferenceUDF(NumalogicUDF):
         ) == "registry" and self.model_registry.is_artifact_stale(
             artifact_data, _conf.numalogic_conf.trainer.retrain_freq_hr
         ):
-            _LOGGER.info(
-                "%s - Inference artifact found is stale, Keys: %s, Metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metrics,
-            )
             return True
         return False

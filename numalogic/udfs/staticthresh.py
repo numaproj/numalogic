@@ -1,4 +1,3 @@
-import logging
 import os
 
 from orjson import orjson
@@ -10,11 +9,12 @@ from numalogic.tools.aggregators import aggregate_window, aggregate_features
 from numalogic.udfs import NumalogicUDF, PipelineConf
 import numpy.typing as npt
 
+from numalogic.udfs._logger import configure_logger, log_data_payload_values
 from numalogic.udfs.entities import StreamPayload, OutputPayload
 
 
 SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
-_LOGGER = logging.getLogger(__name__)
+_struct_log = configure_logger()
 
 
 class StaticThresholdUDF(NumalogicUDF):
@@ -41,14 +41,16 @@ class StaticThresholdUDF(NumalogicUDF):
         -------
         Messages instance
         """
-        payload = StreamPayload(**orjson.loads(datum.value))
+        json_data_payload = orjson.loads(datum.value)
+        payload = StreamPayload(**json_data_payload)
         conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
         adjust_conf = conf.numalogic_conf.score.adjust
 
+        log = _struct_log.bind(udf_vertex=self._vtx)
+        log = log_data_payload_values(log, json_data_payload)
+
         if not adjust_conf:
-            _LOGGER.warning(
-                "%s - No score adjust config found for config_id: %s, pipeline_id: %s",
-            )
+            log.warning("No score adjust config found")
             return Messages(Message.to_drop())
 
         try:
@@ -58,10 +60,7 @@ class StaticThresholdUDF(NumalogicUDF):
             )
             y_unified = self.compute_unified_score(y_features, adjust_conf.feature_agg)
         except RuntimeError:
-            _LOGGER.exception(
-                "%s - Error occurred while computing static anomaly scores",
-                payload.uuid,
-            )
+            log.exception("Error occurred while computing static anomaly scores")
             return Messages(Message.to_drop())
 
         out_payload = OutputPayload(
@@ -74,12 +73,11 @@ class StaticThresholdUDF(NumalogicUDF):
             data=self._additional_scores(adjust_conf, y_features, y_unified),
             metadata=payload.metadata,
         )
-        _LOGGER.info(
-            "%s - Sending output payload, Keys: %s, Score: %s, Feature Scores: %s",
-            out_payload.uuid,
-            out_payload.composite_keys,
-            y_unified,
-            y_features,
+        log.info(
+            "Sending output payload",
+            keys=out_payload.composite_keys,
+            y_unified=y_unified,
+            y_features=y_features,
         )
         return Messages(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 

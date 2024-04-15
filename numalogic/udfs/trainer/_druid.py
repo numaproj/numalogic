@@ -1,4 +1,3 @@
-import logging
 import time
 from typing import Optional
 
@@ -9,6 +8,7 @@ from numalogic.connectors import DruidFetcherConf
 from numalogic.tools.exceptions import ConfigNotFoundError, DruidFetcherError
 from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._logger import configure_logger
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs._metrics import (
     FETCH_EXCEPTION_COUNTER,
@@ -19,7 +19,7 @@ from numalogic.udfs._metrics import (
 )
 from numalogic.udfs.trainer._base import TrainerUDF
 
-_LOGGER = logging.getLogger(__name__)
+_struct_log = configure_logger()
 
 
 class DruidTrainerUDF(TrainerUDF):
@@ -92,6 +92,7 @@ class DruidTrainerUDF(TrainerUDF):
             Dataframe
         """
         _start_time = time.perf_counter()
+        log = _struct_log.bind(udf_vertex=self._vtx)
 
         _metric_label_values = (
             payload.composite_keys,
@@ -132,7 +133,7 @@ class DruidTrainerUDF(TrainerUDF):
                 counter=FETCH_EXCEPTION_COUNTER,
                 labels=_metric_label_values,
             )
-            _LOGGER.exception("%s - Error while fetching data from druid", payload.uuid)
+            log.exception("Error while fetching data from druid")
             return None
         _end_time = time.perf_counter() - _start_time
         _add_summary(
@@ -141,12 +142,16 @@ class DruidTrainerUDF(TrainerUDF):
             data=_end_time,
         )
 
-        _LOGGER.debug(
-            "%s - Time taken to fetch data: %.3f sec, df shape: %s",
-            payload.uuid,
-            _end_time,
-            _df.shape,
+        log.info(
+            "Fetched data from druid",
+            uuid=payload.uuid,
+            config_id=payload.config_id,
+            pipeline_id=payload.pipeline_id,
+            keys=payload.composite_keys,
+            df_shape=_df.shape,
+            execution_time_ms=round(_end_time * 1000, 4),
         )
+
         _add_summary(
             DATAFRAME_SHAPE_SUMMARY,
             labels=_metric_label_values,

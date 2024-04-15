@@ -1,4 +1,3 @@
-import logging
 import time
 from typing import Optional
 
@@ -9,8 +8,9 @@ from pynumaflow.mapper import Datum, Messages, Message
 from numalogic.tools.types import artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
+from numalogic.udfs._logger import configure_logger, log_data_payload_values
 
-_LOGGER = logging.getLogger(__name__)
+_struct_log = configure_logger()
 
 
 class PayloadTransformer(NumalogicUDF):
@@ -45,13 +45,13 @@ class PayloadTransformer(NumalogicUDF):
 
         """
         _start_time = time.perf_counter()
+        log = _struct_log.bind(udf_vertex=self._vtx)
 
         # check message sanity
         try:
             data_payload = orjson.loads(datum.value)
-            _LOGGER.info("%s - Data payload: %s", data_payload["uuid"], data_payload)
         except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
-            _LOGGER.exception("Error while decoding input json")
+            log.exception("Error while decoding input json")
             return Messages(Message.to_drop())
 
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
@@ -62,8 +62,10 @@ class PayloadTransformer(NumalogicUDF):
             data_payload["pipeline_id"] = pipeline
             messages.append(Message(keys=keys, value=orjson.dumps(data_payload)))
 
-        _LOGGER.debug(
-            "Time taken to execute Pipeline: %.4f sec",
-            time.perf_counter() - _start_time,
+        log = log_data_payload_values(log, data_payload)
+        log.info(
+            "Appended pipeline id to the payload",
+            keys=keys,
+            execution_time_ms=round((time.perf_counter() - _start_time) * 1000, 4),
         )
         return messages
