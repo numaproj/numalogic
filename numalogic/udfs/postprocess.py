@@ -1,4 +1,3 @@
-import logging
 import os
 import time
 from dataclasses import replace
@@ -22,6 +21,7 @@ from numalogic.tools.aggregators import aggregate_window, aggregate_features
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf, MLPipelineConf
+from numalogic.udfs._logger import configure_logger, log_data_payload_values
 from numalogic.udfs._metrics import (
     RUNTIME_ERROR_COUNTER,
     MSG_PROCESSED_COUNTER,
@@ -38,7 +38,7 @@ LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
 SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
 
-_LOGGER = logging.getLogger(__name__)
+_struct_log = configure_logger()
 
 
 class PostprocessUDF(NumalogicUDF):
@@ -87,9 +87,11 @@ class PostprocessUDF(NumalogicUDF):
 
         """
         _start_time = time.perf_counter()
+        log = _struct_log.bind(udf_vertex=self._vtx)
 
         # Construct payload object
-        payload = StreamPayload(**orjson.loads(datum.value))
+        json_payload = orjson.loads(datum.value)
+        payload = StreamPayload(**json_payload)
         _metric_label_values = (
             payload.composite_keys,
             self._vtx,
@@ -108,6 +110,8 @@ class PostprocessUDF(NumalogicUDF):
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
         thresh_cfg = _conf.numalogic_conf.threshold
         postprocess_cfg = _conf.numalogic_conf.postprocess
+
+        log = log_data_payload_values(log, json_payload)
 
         # load artifact
         thresh_artifact, payload = _load_artifact(
@@ -131,7 +135,7 @@ class PostprocessUDF(NumalogicUDF):
             return msgs
 
         if payload.header == Header.STATIC_INFERENCE:
-            _LOGGER.warning("Static inference not supported in postprocess yet")
+            log.warning("Static inference not supported in postprocess yet")
 
         #  Postprocess payload
         try:
@@ -153,11 +157,11 @@ class PostprocessUDF(NumalogicUDF):
 
         except RuntimeError:
             _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
-            _LOGGER.exception(
-                "%s - Runtime postprocess error! Keys: %s, Metric: %s",
-                payload.uuid,
-                payload.composite_keys,
-                payload.metrics,
+            log.exception(
+                "Runtime postprocess error!",
+                uuid=payload.uuid,
+                composite_keys=payload.composite_keys,
+                payload_metrics=payload.metrics,
             )
             # Send training request if postprocess fails
             msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
@@ -189,26 +193,23 @@ class PostprocessUDF(NumalogicUDF):
             data=out_data,
             metadata=payload.metadata,
         )
-        _LOGGER.info(
-            "%s - Successfully post-processed, Keys: %s, Score: %s, "
-            "Model Score: %s, Static Score: %s, Feature Scores: %s",
-            out_payload.uuid,
-            out_payload.composite_keys,
-            out_payload.unified_anomaly,
-            a_unified,
-            y_unified,
-            a_features.tolist(),
-        )
 
         _increment_counter(
             MSG_PROCESSED_COUNTER,
             labels=_metric_label_values,
         )
-        _LOGGER.debug(
-            "%s -  Time taken in postprocess: %.4f sec",
-            payload.uuid,
-            time.perf_counter() - _start_time,
+
+        log.info(
+            "Successfully post-processed!",
+            composite_keys=out_payload.composite_keys,
+            unified_anomaly=out_payload.unified_anomaly,
+            a_unified=a_unified,
+            y_features=y_features,
+            y_unified=y_unified,
+            a_features=a_features.tolist(),
+            execution_time_secs=round(time.perf_counter() - _start_time, 4),
         )
+
         return Messages(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 
     def _adjust_score(
@@ -245,7 +246,6 @@ class PostprocessUDF(NumalogicUDF):
 
             # Compute adjusted unified score
             a_adjusted = self.compute_adjusted_score(a_unified, y_unified)
-            _LOGGER.debug("y_unified: %s, y_features: %s", y_unified, y_features)
             return a_adjusted, y_unified, y_features
         return a_unified, None, None
 
@@ -286,10 +286,10 @@ class PostprocessUDF(NumalogicUDF):
     @staticmethod
     def _per_feature_score(feat_names: list[str], scores: NDArray[float]) -> dict[str, float]:
         if (scores_len := len(scores)) != len(feat_names):
-            _LOGGER.debug(
-                "Scores length: %s does not match feat_names: %s",
-                scores_len,
-                feat_names,
+            _struct_log.debug(
+                "Scores length does not match feat_names",
+                scores_len=scores_len,
+                feat_names=feat_names,
             )
             return {}
         return dict(zip(feat_names, scores))
@@ -322,7 +322,7 @@ class PostprocessUDF(NumalogicUDF):
             RuntimeError: If threshold model or postproc function fails
         """
         if score_conf is None:
-            _LOGGER.warning("Score config not provided, using default values")
+            _struct_log.warning("Score config not provided, using default values")
             score_conf = ScoreConf()
 
         scores = cls.compute_threshold(model, input_)  # (seqlen x nfeat)
