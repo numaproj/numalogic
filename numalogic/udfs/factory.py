@@ -37,7 +37,7 @@ class UDFFactory:
         "druidtrainer": DruidTrainerUDF,
         "promtrainer": PromTrainerUDF,
         "staticthresh": StaticThresholdUDF,
-        "rdstrainer" : RDSTrainerUDF,
+        "rdstrainer": RDSTrainerUDF,
     }
 
     @classmethod
