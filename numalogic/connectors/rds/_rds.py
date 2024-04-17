@@ -60,7 +60,11 @@ class RDSFetcher(DataFetcher):
             return pd.DataFrame()
 
         formatted_df = format_dataframe(
-            df, query=query, datetime_column_name=datetime_column_name, pivot=pivot, group_by=group_by
+            df,
+            query=query,
+            datetime_column_name=datetime_column_name,
+            pivot=pivot,
+            group_by=group_by,
         )
         _end_time = time.perf_counter() - _start_time
         _LOGGER.info("RDS Query: %s Fetch Time: %.4fs", query, _end_time)

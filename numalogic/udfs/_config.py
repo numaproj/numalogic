@@ -69,6 +69,7 @@ class PipelineConf:
         registry_conf (Optional[RegistryInfo]): The configuration for the registry.
         prometheus_conf (Optional[PrometheusConf]): The configuration for Prometheus.
         druid_conf (Optional[DruidConf]): The configuration for Druid.
+        rds_conf (Optional[RDSConf]): The configuration for RDS.
     """
 
     stream_confs: dict[str, StreamConf] = field(default_factory=dict)
@@ -112,10 +113,3 @@ def load_pipeline_conf(*paths: str) -> PipelineConf:
     schema = OmegaConf.structured(PipelineConf)
     conf = OmegaConf.merge(schema, *confs)
     return OmegaConf.to_object(conf)
-
-if __name__ == "__main__":
-    from numalogic.udfs._config import load_pipeline_conf
-
-    config = load_pipeline_conf(
-        "/Users/skondakindi/Desktop/codebase/ml/numalogic/tests/resources/rds_trainer_config.yaml")
-    print(config)

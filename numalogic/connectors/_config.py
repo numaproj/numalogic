@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Optional
 from numalogic.connectors.utils.aws.config import RDSConfig
+from numalogic.connectors.exceptions import RDSFetcherConfValidationException
 
 
 class ConnectorType(IntEnum):
@@ -55,6 +56,29 @@ class DruidFetcherConf:
 
 @dataclass
 class RDSFetcherConf:
+    """
+    RDSFetcherConf class represents the configuration for fetching data from an RDS data source.
+
+    Args:
+        datasource (str): The name of the data source.
+        dimensions (list[str]): A list of dimension column names.
+        group_by (list[str]): A list of column names to group the data by.
+        pivot (Pivot): An instance of the Pivot class representing the pivot configuration.
+        hash_query_type (bool): A boolean indicating whether to use hash query type.
+        hash_column_name (Optional[str]): The name of the hash column. (default: None)
+        datetime_column_name (str): The name of the datetime column. (default: "eventdatetime")
+        metrics (list[str]): A list of metric column names.
+
+    Methods
+    -------
+        __post_init__(): Performs post-initialization validation checks.
+
+    Raises
+    ------
+        RDSFetcherConfValidationException: If the hash_query_type is enabled
+        but hash_column_name is not provided.
+    """
+
     datasource: str
     dimensions: list[str] = field(default_factory=list)
     group_by: list[str] = field(default_factory=list)
@@ -69,7 +93,8 @@ class RDSFetcherConf:
         if self.hash_query_type:
             if not self.hash_column_name or self.hash_column_name.strip() == "":
                 raise RDSFetcherConfValidationException(
-                    "when hash_query_type is enabled, hash_column_name is required property ")
+                    "when hash_query_type is enabled, hash_column_name is required property "
+                )
 
 
 @dataclass
@@ -93,16 +118,22 @@ class DruidConf(ConnectorConf):
 
 
 @dataclass
-class RDSConf():
+class RDSConf:
+    """
+    Class representing the configuration for fetching data from an RDS data source.
+
+    Args:
+        connection_conf (RDSConfig): An instance of the RDSConfig class representing
+            the connection configuration.
+        delay_hrs (float): The delay in hours for fetching data. Defaults to 3.0.
+        fetcher (Optional[RDSFetcherConf]): An optional instance of the RDSFetcherConf class
+            representing the fetcher configuration. Defaults to None.
+        id_fetcher (Optional[dict[str, RDSFetcherConf]]): An optional dictionary mapping IDs to
+            instances of the RDSFetcherConf class representing the fetcher configuration.
+            Defaults to None.
+    """
+
     connection_conf: RDSConfig
     delay_hrs: float = 3.0
     fetcher: Optional[RDSFetcherConf] = None
     id_fetcher: Optional[dict[str, RDSFetcherConf]] = None
-
-
-if __name__ == "__main__":
-    from numalogic.udfs._config import load_pipeline_conf
-
-    config = load_pipeline_conf(
-        "/Users/skondakindi/Desktop/codebase/ml/numalogic/tests/resources/rds_trainer_config.yaml")
-    print(config)
