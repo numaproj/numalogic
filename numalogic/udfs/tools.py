@@ -339,10 +339,10 @@ class TrainMsgDeduplicator:
         ):
             _struct_log.debug(
                 "There was insufficient data for the key in the past. Retrying fetching"
-                " and training after %s secs",
-                uuid,
-                key,
-                ((min_train_records - int(_msg_train_records)) * data_freq)
+                " and training after secs",
+                uuid=uuid,
+                key=key,
+                secs=((min_train_records - int(_msg_train_records)) * data_freq)
                 - _curr_time
                 + float(_msg_read_ts),
             )
