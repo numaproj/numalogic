@@ -113,10 +113,3 @@ def load_pipeline_conf(*paths: str) -> PipelineConf:
     schema = OmegaConf.structured(PipelineConf)
     conf = OmegaConf.merge(schema, *confs)
     return OmegaConf.to_object(conf)
-
-if __name__ == "__main__":
-    from numalogic.udfs._config import load_pipeline_conf
-
-    config = load_pipeline_conf(
-        "/Users/skondakindi/Desktop/codebase/ml/numalogic/tests/resources/rds_trainer_config.yaml")
-    print(config)
