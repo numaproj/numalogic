@@ -135,7 +135,9 @@ class PreprocessUDF(NumalogicUDF):
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < _stream_conf.window_size or raw_df.shape[1] != len(_conf.metrics):
             log.critical(
-                "Dataframe shape: (%f, %f) conditions not met ", raw_df.shape[0], raw_df.shape[1]
+                "Dataframe shape conditions not met ",
+                shape0=raw_df.shape[0],
+                shape1=raw_df.shape[1],
             )
             _increment_counter(
                 counter=DATASHAPE_ERROR_COUNTER,
