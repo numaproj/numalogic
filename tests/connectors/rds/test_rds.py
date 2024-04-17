@@ -36,7 +36,7 @@ def test_execute_query(mocker):
     rds_config = RDSConfig(database_type="mysql")
     rds_fetcher = RDSFetcher(db_config=rds_config)
     mocker.patch.object(rds_fetcher.fetcher, "execute_query", return_value=DataFrame())
-    result = rds_fetcher.fetch("SELECT * FROM table", datetime_field_name="eventdatetime")
+    result = rds_fetcher.fetch("SELECT * FROM table", datetime_column_name="eventdatetime")
     assert result.empty == DataFrame().empty
 
 
