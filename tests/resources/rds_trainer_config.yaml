@@ -2,12 +2,12 @@ stream_confs:
   s2s_5x:
     config_id: "s2s_5x"
     source: "rds"
-    composite_keys: ["client_alias", "service_alias"]
+    composite_keys: [ "client_alias", "service_alias" ]
     window_size: 10
     ml_pipelines:
       s2s5x:
         pipeline_id: "s2s5x"
-        metrics: [ "5xx"]
+        metrics: [ "5xx" ]
         numalogic_conf:
           model:
             name: "VanillaAE"
@@ -39,7 +39,7 @@ stream_confs:
     ml_pipelines:
       swimlane:
         pipeline_id: "swimlane"
-        metrics: ["2xx", "4xx", "5xx"]
+        metrics: [ "2xx", "4xx", "5xx" ]
         numalogic_conf:
           model:
             name: "VanillaAE"
@@ -71,7 +71,7 @@ stream_confs:
     ml_pipelines:
       service5x:
         pipeline_id: "service5x"
-        metrics: ["5xx"]
+        metrics: [ "5xx" ]
         numalogic_conf:
           model:
             name: "VanillaAE"
@@ -103,7 +103,7 @@ stream_confs:
     ml_pipelines:
       serviceTax:
         pipeline_id: "serviceTax"
-        metrics: ["5xx"]
+        metrics: [ "5xx" ]
         numalogic_conf:
           model:
             name: "VanillaAE"
@@ -159,51 +159,18 @@ rds_conf:
       ca: "/usr/bin/ml_data/us-west-2-bundle.pem"
   id_fetcher:
     s2s_5x-s2s5x:
-      dimensions: ["client_alias", "service_alias", "http_status"]
-      aggregations:
-        sum_req_count:
-          type: doubleSum
-          fieldName: sum_req_count
-      pivot:
-        columns: ["http_status"]
-        value: ["sum_req_count"]
-      datasource: "ip-apigw-telegraf-druid"
-      group_by: ["timestamp", "client_alias", "service_alias", "http_status"]
       hash_query_type: True
-
-    gwswimlane-swimlane:
-      dimensions: [ "authtype", "slane" ,"http_status"]
-      aggregations:
-        sum_req_count:
-          type: doubleSum
-          fieldName: sum_req_count
+      hash_column_name: hash_assetid_pluginassetid_iname
+      dimensions: [ "client_alias", "service_alias", "http_status" ]
+      metrics : ["sum_req_count"]
+      datetime_column_name: "eventdatetime"
+      datasource: "tech-ip-customer-interaction-metrics"
+      group_by: [ "eventdatetime", "ciStatus" ]
       pivot:
-        columns: ["http_status"]
-        value: ["sum_req_count"]
-      datasource: "ip-apigw-telegraf-druid"
-      group_by: ["timestamp", "authtype", "slane", "http_status"]
-      hash_query_type: False
+        columns: [ "ciStatus" ]
 
-    service5x-service5x:
-      dimensions: ["service_alias", "http_status"]
-      aggregations:
-        sum_req_count:
-          type: doubleSum
-          fieldName: sum_req_count
-      pivot:
-        columns: ["http_status"]
-        value: ["sum_req_count"]
-      datasource: "ip-apigw-telegraf-druid"
-      group_by: ["timestamp", "service_alias", "http_status"]
 
-    service_tax-serviceTax:
-      dimensions: ["service_alias", "http_status"]
-      aggregations:
-        sum_req_count:
-          type: doubleSum
-          fieldName: sum_req_count
-      pivot:
-        columns: ["http_status"]
-        value: ["sum_req_count"]
-      datasource: "ip-apigw-telegraf-druid"
-      group_by: ["timestamp", "service_alias", "http_status"]
+
+
+
+
