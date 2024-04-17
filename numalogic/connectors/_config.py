@@ -57,11 +57,19 @@ class DruidFetcherConf:
 class RDSFetcherConf:
     datasource: str
     dimensions: list[str] = field(default_factory=list)
-    aggregations: dict = field(default_factory=dict)
     group_by: list[str] = field(default_factory=list)
     pivot: Pivot = field(default_factory=lambda: Pivot())
-    granularity: str = "minute"
-    hash_query_type: bool = True
+    hash_query_type: bool = field(default=True)
+    hash_column_name: Optional[str] = field(default_factory=str)
+    datetime_column_name: str = "eventdatetime"
+    # metric column names
+    metrics: list[str] = field(default_factory=list)
+
+    def __post_init__(self):
+        if self.hash_query_type:
+            if not self.hash_column_name or self.hash_column_name.strip() == "":
+                raise RDSFetcherConfValidationException(
+                    "when hash_query_type is enabled, hash_column_name is required property ")
 
 
 @dataclass
