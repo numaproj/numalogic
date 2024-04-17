@@ -167,7 +167,7 @@ def _load_artifact(
         payload.pipeline_id,
     )
 
-    log = _struct_log.bind(
+    logger = _struct_log.bind(
         uuid=payload.uuid, skeys=skeys, dkeys=dkeys, payload_metrics=payload.metrics
     )
 
@@ -177,11 +177,11 @@ def _load_artifact(
         key = ":".join(dkeys)
         if key in artifact_version:
             version_to_load = artifact_version[key]
-            log.debug("Found version info for keys")
+            logger.debug("Found version info for keys")
         else:
-            log.debug("Could not find what version of model to load")
+            logger.debug("Could not find what version of model to load")
     else:
-        log.debug(
+        logger.debug(
             "No version info passed on! Loading latest artifact version, "
             "if one present in the registry"
         )
@@ -195,19 +195,19 @@ def _load_artifact(
             )
     except RedisRegistryError:
         _increment_counter(REDIS_ERROR_COUNTER, labels=_metric_label_values)
-        log.warning("Error while fetching artifact")
+        logger.warning("Error while fetching artifact")
         return None, payload
 
     except Exception:
         _increment_counter(EXCEPTION_COUNTER, labels=_metric_label_values)
-        log.exception("Unhandled exception while fetching artifact")
+        logger.exception("Unhandled exception while fetching artifact")
         return None, payload
     else:
-        log = log.bind(
+        logger = logger.bind(
             artifact_source=artifact_data.extras.get("source"),
             artifact_version=artifact_data.extras.get("version"),
         )
-        log.debug("Loaded Model!")
+        logger.debug("Loaded Model!")
         _increment_counter(
             counter=SOURCE_COUNTER,
             labels=(artifact_data.extras.get("source"), *_metric_label_values),

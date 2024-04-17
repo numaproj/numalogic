@@ -87,7 +87,7 @@ class PostprocessUDF(NumalogicUDF):
 
         """
         _start_time = time.perf_counter()
-        log = _struct_log.bind(udf_vertex=self._vtx)
+        logger = _struct_log.bind(udf_vertex=self._vtx)
 
         # Construct payload object
         json_payload = orjson.loads(datum.value)
@@ -111,7 +111,7 @@ class PostprocessUDF(NumalogicUDF):
         thresh_cfg = _conf.numalogic_conf.threshold
         postprocess_cfg = _conf.numalogic_conf.postprocess
 
-        log = log_data_payload_values(log, json_payload)
+        logger = log_data_payload_values(logger, json_payload)
 
         # load artifact
         thresh_artifact, payload = _load_artifact(
@@ -135,7 +135,7 @@ class PostprocessUDF(NumalogicUDF):
             return msgs
 
         if payload.header == Header.STATIC_INFERENCE:
-            log.warning("Static inference not supported in postprocess yet")
+            logger.warning("Static inference not supported in postprocess yet")
 
         #  Postprocess payload
         try:
@@ -157,7 +157,7 @@ class PostprocessUDF(NumalogicUDF):
 
         except RuntimeError:
             _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
-            log.exception(
+            logger.exception(
                 "Runtime postprocess error!",
                 uuid=payload.uuid,
                 composite_keys=payload.composite_keys,
@@ -199,7 +199,7 @@ class PostprocessUDF(NumalogicUDF):
             labels=_metric_label_values,
         )
 
-        log.info(
+        logger.info(
             "Successfully post-processed!",
             composite_keys=out_payload.composite_keys,
             unified_anomaly=out_payload.unified_anomaly,

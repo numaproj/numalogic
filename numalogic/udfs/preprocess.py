@@ -101,20 +101,20 @@ class PreprocessUDF(NumalogicUDF):
 
         """
         _start_time = time.perf_counter()
-        log = _struct_log.bind(udf_vertex=self._vtx)
+        logger = _struct_log.bind(udf_vertex=self._vtx)
 
         # check message sanity
         try:
             data_payload = orjson.loads(datum.value)
         except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
-            log.exception("Error while decoding input json")
+            logger.exception("Error while decoding input json")
             return Messages(Message.to_drop())
 
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
         _conf = _stream_conf.ml_pipelines[data_payload.get("pipeline_id", "default")]
         raw_df, timestamps = get_df(data_payload=data_payload, stream_conf=_stream_conf)
 
-        log = log_data_payload_values(log, data_payload)
+        logger = log_data_payload_values(logger, data_payload)
 
         source = NUMALOGIC_METRICS
         if (
@@ -134,7 +134,7 @@ class PreprocessUDF(NumalogicUDF):
         _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
         # Drop message if dataframe shape conditions are not met
         if raw_df.shape[0] < _stream_conf.window_size or raw_df.shape[1] != len(_conf.metrics):
-            log.critical("Dataframe shape conditions not met ", raw_df_shape=raw_df.shape)
+            logger.critical("Dataframe shape conditions not met ", raw_df_shape=raw_df.shape)
             _increment_counter(
                 counter=DATASHAPE_ERROR_COUNTER,
                 labels=_metric_label_values,
@@ -166,12 +166,12 @@ class PreprocessUDF(NumalogicUDF):
             if preproc_artifact:
                 preproc_clf = preproc_artifact.artifact
                 payload = replace(payload, status=Status.ARTIFACT_FOUND)
-                log = log.bind(artifact_source=preproc_artifact.extras.get("source"))
+                logger = logger.bind(artifact_source=preproc_artifact.extras.get("source"))
             else:
                 msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
                 if _conf.numalogic_conf.score.adjust:
                     msgs.append(get_static_thresh_message(keys, payload))
-                log.exception("Artifact model not loaded!")
+                logger.exception("Artifact model not loaded!")
                 return msgs
         # Model will not be in registry
         else:
@@ -179,7 +179,7 @@ class PreprocessUDF(NumalogicUDF):
             _increment_counter(SOURCE_COUNTER, labels=("config", *_metric_label_values))
             preproc_clf = self._load_model_from_config(_conf.numalogic_conf.preprocess)
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
-            log = log.bind(model_from_config=preproc_clf)
+            logger = logger.bind(model_from_config=preproc_clf)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
 
@@ -195,7 +195,7 @@ class PreprocessUDF(NumalogicUDF):
                 status=Status.ARTIFACT_FOUND,
                 header=Header.MODEL_INFERENCE,
             )
-            log.info(
+            logger.info(
                 "Successfully preprocessed!",
                 keys=keys,
                 payload_metrics=payload.metrics,
@@ -207,7 +207,7 @@ class PreprocessUDF(NumalogicUDF):
                 counter=RUNTIME_ERROR_COUNTER,
                 labels=_metric_label_values,
             )
-            log.exception(
+            logger.exception(
                 "Runtime preprocess error!",
                 status=Status.RUNTIME_ERROR,
                 payload_metrics=payload.metrics,
