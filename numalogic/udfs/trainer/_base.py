@@ -151,7 +151,7 @@ class TrainerUDF(NumalogicUDF):
             Messages instance (no forwarding)
         """
         _start_time = time.perf_counter()
-        log = _struct_log.bind(udf_vertex=self._vtx)
+        logger = _struct_log.bind(udf_vertex=self._vtx)
 
         # Construct payload object
         json_payload = orjson.loads(datum.value)
@@ -171,7 +171,7 @@ class TrainerUDF(NumalogicUDF):
             labels=[self._vtx, *_metric_label_values],
         )
 
-        log = log_data_payload_values(log, json_payload)
+        logger = log_data_payload_values(logger, json_payload)
 
         # set the retry and retrain_freq
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
@@ -200,7 +200,7 @@ class TrainerUDF(NumalogicUDF):
                 counter=MSG_DROPPED_COUNTER,
                 labels=(self._vtx, *_metric_label_values),
             )
-            log.warning(
+            logger.warning(
                 "Caught exception/error while fetching from source",
                 uuid=payload.uuid,
                 keys=payload.composite_keys,
@@ -210,7 +210,7 @@ class TrainerUDF(NumalogicUDF):
 
         # Check if data is sufficient
         if not self._is_data_sufficient(payload, df):
-            log.warning(
+            logger.warning(
                 "Insufficient data found",
                 uuid=payload.uuid,
                 keys=payload.composite_keys,
@@ -226,7 +226,7 @@ class TrainerUDF(NumalogicUDF):
             )
             return Messages(Message.to_drop())
 
-        log.debug("Data fetched", uuid=payload.uuid, shape=df.shape)
+        logger.debug("Data fetched", uuid=payload.uuid, shape=df.shape)
 
         # Construct feature array
         x_train, nan_counter, inf_counter = self.get_feature_arr(df, _conf.metrics)
@@ -264,14 +264,14 @@ class TrainerUDF(NumalogicUDF):
             model_registry=self.model_registry,
             payload=payload,
             vertex_name=self._vtx,
-            log=log,
+            logger=logger,
         )
         if self.train_msg_deduplicator.ack_train(
             key=[*payload.composite_keys, payload.pipeline_id], uuid=payload.uuid
         ):
-            log.info("Model trained and saved successfully", uuid=payload.uuid)
+            logger.info("Model trained and saved successfully", uuid=payload.uuid)
 
-        log.debug(
+        logger.debug(
             "Time taken in trainer", execution_time_secs=round(time.perf_counter() - _start_time, 4)
         )
         _increment_counter(
@@ -303,7 +303,7 @@ class TrainerUDF(NumalogicUDF):
         model_registry,
         payload: TrainerPayload,
         vertex_name: str,
-        log,
+        logger,
     ) -> None:
         """
         Save artifacts.
@@ -335,10 +335,14 @@ class TrainerUDF(NumalogicUDF):
                 counter=REDIS_ERROR_COUNTER,
                 labels=(vertex_name, ":".join(payload.composite_keys), payload.config_id),
             )
-            log.exception("Error while saving artifact with skeys", uuid=payload.uuid, skeys=skeys)
+            logger.exception(
+                "Error while saving artifact with skeys", uuid=payload.uuid, skeys=skeys
+            )
 
         else:
-            log.info("Artifact saved with with versions", uuid=payload.uuid, version_dict=ver_dict)
+            logger.info(
+                "Artifact saved with with versions", uuid=payload.uuid, version_dict=ver_dict
+            )
 
     def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
         _conf = self.get_ml_pipeline_conf(
