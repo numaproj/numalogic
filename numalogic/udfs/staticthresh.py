@@ -46,11 +46,11 @@ class StaticThresholdUDF(NumalogicUDF):
         conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
         adjust_conf = conf.numalogic_conf.score.adjust
 
-        log = _struct_log.bind(udf_vertex=self._vtx)
-        log = log_data_payload_values(log, json_data_payload)
+        logger = _struct_log.bind(udf_vertex=self._vtx)
+        logger = log_data_payload_values(logger, json_data_payload)
 
         if not adjust_conf:
-            log.warning("No score adjust config found")
+            logger.warning("No score adjust config found")
             return Messages(Message.to_drop())
 
         try:
@@ -60,7 +60,7 @@ class StaticThresholdUDF(NumalogicUDF):
             )
             y_unified = self.compute_unified_score(y_features, adjust_conf.feature_agg)
         except RuntimeError:
-            log.exception("Error occurred while computing static anomaly scores")
+            logger.exception("Error occurred while computing static anomaly scores")
             return Messages(Message.to_drop())
 
         out_payload = OutputPayload(
@@ -73,7 +73,7 @@ class StaticThresholdUDF(NumalogicUDF):
             data=self._additional_scores(adjust_conf, y_features, y_unified),
             metadata=payload.metadata,
         )
-        log.info(
+        logger.info(
             "Sending output payload",
             keys=out_payload.composite_keys,
             y_unified=y_unified,

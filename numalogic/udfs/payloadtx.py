@@ -45,13 +45,13 @@ class PayloadTransformer(NumalogicUDF):
 
         """
         _start_time = time.perf_counter()
-        log = _struct_log.bind(udf_vertex=self._vtx)
+        logger = _struct_log.bind(udf_vertex=self._vtx)
 
         # check message sanity
         try:
             data_payload = orjson.loads(datum.value)
         except (orjson.JSONDecodeError, KeyError):  # catch json decode error only
-            log.exception("Error while decoding input json")
+            logger.exception("Error while decoding input json")
             return Messages(Message.to_drop())
 
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
@@ -62,8 +62,8 @@ class PayloadTransformer(NumalogicUDF):
             data_payload["pipeline_id"] = pipeline
             messages.append(Message(keys=keys, value=orjson.dumps(data_payload)))
 
-        log = log_data_payload_values(log, data_payload)
-        log.info(
+        logger = log_data_payload_values(logger, data_payload)
+        logger.info(
             "Appended pipeline id to the payload",
             keys=keys,
             execution_time_ms=round((time.perf_counter() - _start_time) * 1000, 4),
