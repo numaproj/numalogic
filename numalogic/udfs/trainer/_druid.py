@@ -92,7 +92,7 @@ class DruidTrainerUDF(TrainerUDF):
             Dataframe
         """
         _start_time = time.perf_counter()
-        log = _struct_log.bind(udf_vertex=self._vtx)
+        logger = _struct_log.bind(udf_vertex=self._vtx)
 
         _metric_label_values = (
             payload.composite_keys,
@@ -133,7 +133,7 @@ class DruidTrainerUDF(TrainerUDF):
                 counter=FETCH_EXCEPTION_COUNTER,
                 labels=_metric_label_values,
             )
-            log.exception("Error while fetching data from druid")
+            logger.exception("Error while fetching data from druid")
             return None
         _end_time = time.perf_counter() - _start_time
         _add_summary(
@@ -142,7 +142,7 @@ class DruidTrainerUDF(TrainerUDF):
             data=_end_time,
         )
 
-        log.info(
+        logger.info(
             "Fetched data from druid",
             uuid=payload.uuid,
             config_id=payload.config_id,

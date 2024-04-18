@@ -104,7 +104,7 @@ class InferenceUDF(NumalogicUDF):
             Messages instance
         """
         _start_time = time.perf_counter()
-        log = _struct_log.bind(udf_vertex=self._vtx)
+        logger = _struct_log.bind(udf_vertex=self._vtx)
 
         # Construct payload object
         json_data_payload = orjson.loads(datum.value)
@@ -121,7 +121,7 @@ class InferenceUDF(NumalogicUDF):
         _stream_conf = self.get_stream_conf(payload.config_id)
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
 
-        log = log_data_payload_values(log, json_data_payload)
+        logger = log_data_payload_values(logger, json_data_payload)
 
         artifact_data, payload = _load_artifact(
             skeys=[_ckey for _, _ckey in zip(_stream_conf.composite_keys, payload.composite_keys)],
@@ -137,7 +137,7 @@ class InferenceUDF(NumalogicUDF):
             msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
             if _conf.numalogic_conf.score.adjust:
                 msgs.append(get_static_thresh_message(keys, payload))
-            log.exception("Artifact model not loaded!")
+            logger.exception("Artifact model not loaded!")
             return msgs
 
         # Perform inference
@@ -146,7 +146,7 @@ class InferenceUDF(NumalogicUDF):
             _update_info_metric(x_inferred, payload.metrics, _metric_label_values)
         except RuntimeError:
             _increment_counter(counter=RUNTIME_ERROR_COUNTER, labels=_metric_label_values)
-            log.exception(
+            logger.exception(
                 "Runtime inference error!",
                 keys=payload.composite_keys,
                 metrics=payload.metrics,
@@ -174,13 +174,13 @@ class InferenceUDF(NumalogicUDF):
         )
         # Send trainer message if artifact is stale
         if status == Status.ARTIFACT_STALE:
-            log.info("Inference artifact found is stale")
+            logger.info("Inference artifact found is stale")
             msgs.append(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
 
         _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
         msgs.append(Message(keys=keys, value=payload.to_json(), tags=["postprocess"]))
 
-        log.info(
+        logger.info(
             "Successfully inferred!",
             keys=payload.composite_keys,
             metrics=payload.metrics,
