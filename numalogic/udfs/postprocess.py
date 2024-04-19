@@ -139,18 +139,13 @@ class PostprocessUDF(NumalogicUDF):
 
         #  Postprocess payload
         try:
-            # Compute anomaly scores per feature
-            a_features = self.compute(
+            # Compute anomaly scores
+            a_unified, a_features = self.compute(
                 model=thresh_artifact.artifact,
                 input_=payload.get_data(),
                 score_conf=_conf.numalogic_conf.score,
                 postproc_tx=postproc_tx,
             )  # (nfeat,)
-
-            # Compute unified score
-            a_unified = self.compute_unified_score(
-                a_features, feat_agg_conf=_conf.numalogic_conf.score.feature_agg
-            )
 
             # Calculate adjusted unified score
             a_adjusted, y_unified, y_features = self._adjust_score(_conf, a_unified, payload)
@@ -302,7 +297,7 @@ class PostprocessUDF(NumalogicUDF):
         postproc_tx=None,
         score_conf: Optional[ScoreConf] = None,
         **_,
-    ) -> NDArray[float]:
+    ) -> tuple[float, NDArray[float]]:
         """
         Compute thresholding, window aggregation followed by postprocess.
 
@@ -315,7 +310,7 @@ class PostprocessUDF(NumalogicUDF):
 
         Returns
         -------
-        Output data of shape (n_features, )
+        Tuple of combined/unified score (float), and feature scores of shape (n_features,)
 
         Raises
         ------
@@ -325,13 +320,23 @@ class PostprocessUDF(NumalogicUDF):
             _struct_log.warning("Score config not provided, using default values")
             score_conf = ScoreConf()
 
-        scores = cls.compute_threshold(model, input_)  # (seqlen x nfeat)
-        win_scores = cls.compute_feature_scores(
-            scores, win_agg_conf=score_conf.window_agg
+        thresh_scores = cls.compute_threshold(model, input_)  # (seqlen x nfeat)
+
+        # Aggregate over the sequence length
+        raw_scores = cls.compute_feature_scores(
+            thresh_scores, win_agg_conf=score_conf.window_agg
         )  # (nfeat,)
+
+        # Aggregate over the features
+        unified_raw_score = cls.compute_unified_score(raw_scores, score_conf.feature_agg)  # float
+
         if postproc_tx:
-            win_scores = cls.compute_postprocess(postproc_tx, win_scores)  # (nfeat,)
-        return win_scores  # (nfeat, )
+            # Postprocess the raw scores
+            feature_scores = cls.compute_postprocess(postproc_tx, raw_scores)  # (nfeat,)
+            unified_score = cls.compute_postprocess(postproc_tx, unified_raw_score)  # float
+            return unified_score, feature_scores
+
+        return unified_raw_score, raw_scores
 
     @classmethod
     def compute_threshold(cls, model: artifact_t, input_: NDArray[float]) -> NDArray[float]:

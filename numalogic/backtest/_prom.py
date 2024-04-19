@@ -30,7 +30,9 @@ from numalogic.config import (
     PreprocessFactory,
     PostprocessFactory,
     ThresholdFactory,
+    AggregatorConf,
 )
+from numalogic.config._config import AggMethod
 from numalogic.connectors import ConnectorType
 from numalogic.connectors.prometheus import PrometheusFetcher
 from numalogic.tools.data import StreamingDataset, inverse_window
@@ -238,6 +240,8 @@ class PromBacktester:
 
         x_recon = np.zeros((len(ds), self.seq_len, n_feat), dtype=np.float32)
         raw_scores = np.zeros((len(ds), self.seq_len, n_feat), dtype=np.float32)
+        unified_raw_scores = np.zeros((len(ds), 1), dtype=np.float32)
+
         feature_scores = np.zeros((len(ds), n_feat), dtype=np.float32)
         unified_scores = np.zeros((len(ds), 1), dtype=np.float32)
 
@@ -253,12 +257,17 @@ class PromBacktester:
 
             winscores = postproc_udf.compute_feature_scores(
                 raw_scores[idx], self.nlconf.score.window_agg
+            )  # (nfeat,)
+
+            unified_raw_scores[idx] = postproc_udf.compute_unified_score(
+                winscores,
+                AggregatorConf(method=AggMethod.MEAN),
             )
 
             feature_scores[idx] = postproc_udf.compute_postprocess(postproc_func, winscores)
 
-            unified_scores[idx] = postproc_udf.compute_unified_score(
-                feature_scores[idx], self.nlconf.score.feature_agg
+            unified_scores[idx] = postproc_udf.compute_postprocess(
+                postproc_func, unified_raw_scores[idx]
             )
 
         x_recon = self.window_inverse(x_recon)

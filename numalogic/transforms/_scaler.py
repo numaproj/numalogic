@@ -11,12 +11,15 @@
 
 
 import logging
+from typing import Optional
 
 import numpy as np
 import numpy.typing as npt
+from sklearn.preprocessing import MinMaxScaler
 from typing_extensions import Self
 
 from numalogic.base import BaseTransformer
+from numalogic.transforms._stateless import DataClipper
 
 LOGGER = logging.getLogger(__name__)
 
@@ -69,3 +72,39 @@ class TanhScaler(BaseTransformer):
     def _check_if_constant(self, x: npt.NDArray[float]) -> None:
         delta = np.max(x, axis=0) - np.min(x, axis=0)
         self._std[delta < self._eps] = 1.0
+
+
+class PercentileScaler(BaseTransformer):
+    """
+    Scales the data based on the percentiles of the data.
+
+    Args:
+    -----
+        max_percentile: float, optional
+            The upper percentile to clip the data.
+            Default is 90.
+        min_percentile: float, optional
+            The lower percentile to clip the data.
+            If None, minimum value of the data is used.
+            Default is None.
+    """
+
+    def __init__(self, max_percentile: float = 95, min_percentile: Optional[float] = None):
+        self._max_px = max_percentile
+        self._min_px = min_percentile
+        self.tx = MinMaxScaler()
+
+    def fit(self, x: npt.NDArray[float]) -> Self:
+        data_max_px = np.percentile(x, self._max_px, axis=0)
+        if self._min_px is None:
+            data_min_px = np.min(x, axis=0)
+        else:
+            data_min_px = np.percentile(x, self._min_px, axis=0)
+        x_clipped = DataClipper(lower=data_min_px, upper=data_max_px).transform(x)
+        return self.tx.fit(x_clipped)
+
+    def fit_transform(self, x: npt.NDArray[float], y=None, **_):
+        return self.fit(x).transform(x)
+
+    def transform(self, x: npt.NDArray[float]) -> npt.NDArray[float]:
+        return self.tx.transform(x)

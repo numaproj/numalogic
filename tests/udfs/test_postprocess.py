@@ -173,5 +173,6 @@ def test_postprocess_runtime_err_02(udf, mocker, bad_artifact):
 
 
 def test_compute(udf, artifact):
-    x_inferred = udf.compute(artifact.artifact, np.asarray(DATA["data"]))
+    y_unified, x_inferred = udf.compute(artifact.artifact, np.asarray(DATA["data"]))
+    assert isinstance(y_unified, float)
     assert x_inferred.shape == (2,)
