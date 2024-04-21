@@ -10,6 +10,7 @@
 # limitations under the License.
 
 import numpy as np
+import pandas as pd
 
 from numalogic.base import StatelessTransformer
 from numalogic.tools.exceptions import InvalidDataShapeError
@@ -86,24 +87,20 @@ class ExpMovingAverage(StatelessTransformer):
     Args:
     ----
         beta: how much weight to give to the previous weighted average
-        bias_correction: flag to perform bias correction (default: true)
-
-    Note: this only supports single feature input array.
 
     Raises
     ------
         ValueError: if beta is not between 0 and 1
     """
 
-    __slots__ = ("beta", "bias_correction")
+    __slots__ = ("alpha",)
 
-    def __init__(self, beta: float, bias_correction: bool = True):
+    def __init__(self, beta: float = 0.5):
         if beta <= 0.0 or beta >= 1.0:
             raise ValueError("beta only accepts values between 0 and 1 (not inclusive)")
-        self.beta = beta
-        self.bias_correction = bias_correction
+        self.alpha = 1.0 - beta
 
-    def transform(self, input_: npt.NDArray[float], **__):
+    def transform(self, input_: npt.NDArray[float], **__) -> npt.NDArray[float]:
         r"""Returns transformed output.
 
         Args:
@@ -114,32 +111,5 @@ class ExpMovingAverage(StatelessTransformer):
         ------
             InvalidDataShapeError: if input array is not single featured
         """
-        _allow_only_single_feature(input_)
-
-        # alpha is the weight given to the latest element
-        alpha = 1.0 - self.beta
-        n = len(input_)
-
-        theta = input_.reshape(-1, 1)
-        theta_tril = np.multiply(theta.T, np.tril(np.ones((n, n))))
-        powers = np.arange(1, n + 1).reshape(-1, 1)
-
-        # Calculate increasing powers of beta of the form,
-        # [beta, beta**2, .., beta**n]
-        beta_powers = np.power(self.beta, powers)
-
-        # Calculate the array of reciprocals of beta powers of form,
-        # [beta**(-1), beta**(-2), .., beta**(-n)]
-        beta_arr_inv = np.reciprocal(beta_powers)
-
-        # Calculate the summation of the ratio between (theta(i) / beta**i),
-        # [ theta(1)/beta, sum(theta(1)/beta, theta(2)/beta**2), .., ]
-        theta_beta_ratio = theta_tril @ beta_arr_inv
-
-        # Elemental multiply with beta powers
-        exp_avg = alpha * np.multiply(beta_powers, theta_beta_ratio)
-        if not self.bias_correction:
-            return exp_avg
-
-        # Calculate array of 1 / (1 - beta**i) values
-        return np.divide(exp_avg, 1.0 - beta_powers)
+        x_df = pd.DataFrame(input_)
+        return x_df.ewm(alpha=self.alpha).mean().to_numpy(dtype=np.float32)

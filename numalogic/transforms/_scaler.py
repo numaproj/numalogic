@@ -82,24 +82,52 @@ class PercentileScaler(BaseTransformer):
     -----
         max_percentile: float, optional
             The upper percentile to clip the data.
-            Default is 90.
+            Default is 99.
         min_percentile: float, optional
             The lower percentile to clip the data.
             If None, minimum value of the data is used.
             Default is None.
     """
 
-    def __init__(self, max_percentile: float = 95, min_percentile: Optional[float] = None):
+    def __init__(self, max_percentile: float = 99, min_percentile: Optional[float] = None, eps: float = 1e-2):
         self._max_px = max_percentile
         self._min_px = min_percentile
         self.tx = MinMaxScaler()
 
+        self._data_pth_max = None
+        self._data_pth_min = None
+        self._eps = eps
+
+    @property
+    def data_pth_max(self) -> float:
+        return self._data_pth_max
+
+    @property
+    def data_pth_min(self) -> float:
+        return self._data_pth_min
+
     def fit(self, x: npt.NDArray[float]) -> Self:
         data_max_px = np.percentile(x, self._max_px, axis=0)
+        data_max = np.max(x, axis=0)
+
         if self._min_px is None:
             data_min_px = np.min(x, axis=0)
         else:
             data_min_px = np.percentile(x, self._min_px, axis=0)
+
+        p_ranges = data_max_px - data_min_px
+
+        for idx, _range in enumerate(p_ranges):
+            if _range <= self._eps:
+                LOGGER.warning(
+                    "Max and Min percentile difference is less than "
+                    "epsilon: %s for column %s", self._eps, idx
+                )
+                data_max_px[idx] = data_max[idx]
+
+        self._data_pth_max = data_max_px
+        self._data_pth_min = data_min_px
+
         x_clipped = DataClipper(lower=data_min_px, upper=data_max_px).transform(x)
         return self.tx.fit(x_clipped)
 
