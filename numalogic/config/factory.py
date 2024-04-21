@@ -52,6 +52,7 @@ class PreprocessFactory(_ObjectFactory):
         DifferenceTransform,
         FlattenVector,
         PercentileScaler,
+        ExpMovingAverage
     )
 
     _CLS_MAP: ClassVar[dict] = {
@@ -67,6 +68,7 @@ class PreprocessFactory(_ObjectFactory):
         "DifferenceTransform": DifferenceTransform,
         "FlattenVector": FlattenVector,
         "PercentileScaler": PercentileScaler,
+        "ExpMovingAverage": ExpMovingAverage
     }
 
     def get_pipeline_instance(self, objs_info: list[ModelInfo]):
@@ -84,9 +86,9 @@ class PreprocessFactory(_ObjectFactory):
 class PostprocessFactory(_ObjectFactory):
     """Factory class to create postprocess instances."""
 
-    from numalogic.transforms import TanhNorm, ExpMovingAverage
+    from numalogic.transforms import TanhNorm, ExpMovingAverage, SigmoidNorm
 
-    _CLS_MAP: ClassVar[dict] = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage}
+    _CLS_MAP: ClassVar[dict] = {"TanhNorm": TanhNorm, "ExpMovingAverage": ExpMovingAverage, "SigmoidNorm": SigmoidNorm}
 
 
 class ThresholdFactory(_ObjectFactory):
