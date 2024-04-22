@@ -111,5 +111,6 @@ class ExpMovingAverage(StatelessTransformer):
         ------
             InvalidDataShapeError: if input array is not single featured
         """
-        x_df = pd.DataFrame(input_)
-        return x_df.ewm(alpha=self.alpha).mean().to_numpy(dtype=np.float32)
+        x_df = pd.DataFrame(input_, dtype=np.float32, copy=True)
+        x_smoothed = x_df.ewm(alpha=self.alpha).mean().to_numpy(dtype=np.float32)
+        return np.ascontiguousarray(x_smoothed, dtype=np.float32)

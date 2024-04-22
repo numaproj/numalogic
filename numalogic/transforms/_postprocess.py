@@ -51,7 +51,7 @@ class TanhNorm(StatelessTransformer):
 
 
 class SigmoidNorm(StatelessTransformer):
-    def __init__(self, scale_factor: float = 10., smooth_factor: float = 0.5):
+    def __init__(self, scale_factor: float = 10.0, smooth_factor: float = 0.5):
         super().__init__()
         self.scale_factor = scale_factor
         self.smooth_factor = smooth_factor

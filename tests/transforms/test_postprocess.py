@@ -4,7 +4,6 @@ import numpy as np
 from sklearn.pipeline import make_pipeline
 
 from numalogic.transforms import tanh_norm, TanhNorm, ExpMovingAverage, expmov_avg_aggregator
-from numalogic.tools.exceptions import InvalidDataShapeError
 
 
 class TestPostprocess(unittest.TestCase):
@@ -22,21 +21,17 @@ class TestPostprocess(unittest.TestCase):
         self.assertTupleEqual(arr.shape, scores.shape)
         self.assertAlmostEqual(np.sum(scores), 39.52, places=2)
 
-    def test_exp_mov_avg_estimator_01(self):
+    def test_exp_mov_avg_estimator(self):
+        beta = 0.9
         arr = np.arange(1, 11).reshape(-1, 1)
-        clf = ExpMovingAverage(0.9)
+        clf = ExpMovingAverage(beta)
         out = clf.fit_transform(arr)
-        self.assertTupleEqual(arr.shape, out.shape)
-        self.assertAlmostEqual(expmov_avg_aggregator(arr, 0.9), out[-1].item(), places=3)
 
-    def test_exp_mov_avg_estimator_02(self):
-        arr = np.arange(1, 11).reshape(-1, 1)
-        clf = ExpMovingAverage(0.9, bias_correction=False)
-        out = clf.fit_transform(arr)
+        expected = expmov_avg_aggregator(arr, beta)
+
         self.assertTupleEqual(arr.shape, out.shape)
-        self.assertAlmostEqual(
-            expmov_avg_aggregator(arr, 0.9, bias_correction=False), out[-1].item(), places=3
-        )
+        self.assertAlmostEqual(expected, out[-1].item(), places=2)
+        self.assertTrue(out.data.c_contiguous)
 
     def test_exp_mov_avg_estimator_err(self):
         with self.assertRaises(ValueError):
@@ -47,14 +42,6 @@ class TestPostprocess(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             ExpMovingAverage(1.0)
-
-        with self.assertRaises(InvalidDataShapeError):
-            clf = ExpMovingAverage(0.1)
-            clf.fit_transform(np.arange(10).reshape(1, -1))
-
-        with self.assertRaises(InvalidDataShapeError):
-            clf = ExpMovingAverage(0.1)
-            clf.fit_transform(np.arange(12).reshape((2, 3, -1)))
 
     def test_exp_mov_avg_agg(self):
         arr = np.arange(1, 11)

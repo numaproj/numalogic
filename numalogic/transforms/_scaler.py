@@ -89,7 +89,9 @@ class PercentileScaler(BaseTransformer):
             Default is None.
     """
 
-    def __init__(self, max_percentile: float = 99, min_percentile: Optional[float] = None, eps: float = 1e-2):
+    def __init__(
+        self, max_percentile: float = 99, min_percentile: Optional[float] = None, eps: float = 1e-2
+    ):
         self._max_px = max_percentile
         self._min_px = min_percentile
         self.tx = MinMaxScaler()
@@ -120,8 +122,9 @@ class PercentileScaler(BaseTransformer):
         for idx, _range in enumerate(p_ranges):
             if _range <= self._eps:
                 LOGGER.warning(
-                    "Max and Min percentile difference is less than "
-                    "epsilon: %s for column %s", self._eps, idx
+                    "Max and Min percentile difference is less than " "epsilon: %s for column %s",
+                    self._eps,
+                    idx,
                 )
                 data_max_px[idx] = data_max[idx]
 

@@ -39,5 +39,5 @@ __all__ = [
     "DifferenceTransform",
     "FlattenVector",
     "PercentileScaler",
-    "SigmoidNorm"
+    "SigmoidNorm",
 ]
