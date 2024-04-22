@@ -295,7 +295,7 @@ class TrainMsgDeduplicator:
                 key=key,
             )
             return False
-        _struct_log.debug("Acknowledging insufficient data for the key", uuid, key)
+        _struct_log.debug("Acknowledging insufficient data for the key", uuid=uuid, key=key)
         return True
 
     def ack_read(
