@@ -137,9 +137,14 @@ class PromBacktester:
         x_train = df_train.to_numpy(dtype=np.float32)
         LOGGER.info("Training data shape: %s", x_train.shape)
 
+        if self.nlconf.trainer.transforms:
+            train_txs = PreprocessFactory().get_pipeline_instance(self.nlconf.trainer.transforms)
+        else:
+            train_txs = None
         artifacts = UDFFactory.get_udf_cls("promtrainer").compute(
             model=ModelFactory().get_instance(self.nlconf.model),
             input_=x_train,
+            trainer_transform=train_txs,
             preproc_clf=PreprocessFactory().get_pipeline_instance(self.nlconf.preprocess),
             threshold_clf=ThresholdFactory().get_instance(self.nlconf.threshold),
             numalogic_cfg=self.nlconf,
