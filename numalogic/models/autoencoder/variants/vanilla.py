@@ -59,7 +59,7 @@ class _Encoder(nn.Module):
             layers.extend(
                 [
                     nn.Linear(start_layersize, lsize),
-                    nn.BatchNorm1d(self.n_features),
+                    # nn.BatchNorm1d(self.n_features),
                     nn.Tanh(),
                     nn.Dropout(p=self.dropout_p),
                 ]
@@ -69,8 +69,10 @@ class _Encoder(nn.Module):
         layers.extend(
             [
                 nn.Linear(start_layersize, layersizes[-1]),
-                nn.BatchNorm1d(self.n_features),
-                nn.ReLU(),
+                # nn.BatchNorm1d(self.n_features),
+                # nn.ReLU(),
+                nn.Tanh(),
+                nn.Dropout(p=self.dropout_p),
             ]
         )
         return layers
@@ -120,7 +122,7 @@ class _Decoder(nn.Module):
             layers.extend(
                 [
                     nn.Linear(layersizes[idx], layersizes[idx + 1]),
-                    nn.BatchNorm1d(self.n_features),
+                    # nn.BatchNorm1d(self.n_features),
                     nn.Tanh(),
                     nn.Dropout(p=self.dropout_p),
                 ]
@@ -190,14 +192,14 @@ class VanillaAE(BaseAE):
         decoded = self.decoder(encoded)
         return encoded, torch.swapdims(decoded, 1, 2)
 
-    def _get_reconstruction_loss(self, batch: Tensor):
+    def _get_reconstruction_loss(self, batch: Tensor, reduction="mean") -> Tensor:
         _, recon = self.forward(batch)
-        return self.criterion(batch, recon)
+        return 0.5 * self.criterion(batch, recon, reduction=reduction)
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
         """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
-        return self.criterion(batch, recon, reduction="none")
+        return 0.5 * self.criterion(batch, recon, reduction="none")
 
 
 class SparseVanillaAE(VanillaAE):
