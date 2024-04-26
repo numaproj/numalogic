@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional
 import pandas as pd
-from numalogic.connectors.utils.aws.config import DatabaseServiceProvider, RDSConfig
+from numalogic.connectors.utils.aws.config import DatabaseServiceProvider, RDSConnectionConfig
 from numalogic.connectors.utils.aws.boto3_client_manager import Boto3ClientManager
 import logging
 from numalogic.connectors._config import Pivot
@@ -65,12 +65,12 @@ class RDSBase(metaclass=ABCMeta):
     connection, and executing queries.
 
     Args:
-        - db_config (RDSConfig): The configuration object for the RDS connection.
+        - db_config (RDSConnectionConfig): The configuration object for the RDS connection.
         - kwargs (dict): Additional keyword arguments.
 
     """
 
-    def __init__(self, db_config: RDSConfig, **kwargs):
+    def __init__(self, db_config: RDSConnectionConfig, **kwargs):
         self.kwargs = kwargs
         self.db_config = db_config
         self.connection = None

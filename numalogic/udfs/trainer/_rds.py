@@ -46,23 +46,20 @@ def get_hash_based_query(config_id: str, filter_keys=list[str], filter_values=li
 
     filter_pairs = dict(zip(filter_keys, filter_values))
     filter_pairs["config_id"] = config_id
-    hash_keys_sorted = sorted(filter_pairs.keys())
+    to_be_hashed_list = [filter_pairs.get(key, "").strip() for key in sorted(filter_pairs.keys())]
 
-    to_be_hashed_list = []
-    for key in hash_keys_sorted:
-        to_be_hashed_list.append(filter_pairs[key].strip())
     str_to_be_hashed = "".join(to_be_hashed_list)
     result = hashlib.md5(("".join(str_to_be_hashed)).encode(), usedforsecurity=False)
-    hash = result.hexdigest()
+    hash_ = result.hexdigest()
     _LOGGER.info(
         "get_hash_based_query: str_to_be_hashed: %s , "
         "to_be_hashed_list: %s, filter_pairs: %s, hash:%s",
         str_to_be_hashed,
         to_be_hashed_list,
         filter_pairs,
-        hash,
+        hash_,
     )
-    return hash
+    return hash_
 
 
 def build_query(
@@ -118,12 +115,14 @@ def build_query(
 
     select_columns = [datetime_column_name, *dimensions, *metrics]
     if hash_query_type:
-        hash = get_hash_based_query(config_id, filter_keys=filter_keys, filter_values=filter_values)
+        hash_ = get_hash_based_query(
+            config_id, filter_keys=filter_keys, filter_values=filter_values
+        )
 
         return f"""
         select {', '.join(select_columns)}
         from {datasource}
-        where {intervals} and {hash_column_name} = '{hash}'
+        where {intervals} and {hash_column_name} = '{hash_}'
         """
 
     raise RDSFetcherError("RDS trainer is setup to support hash based query type only")

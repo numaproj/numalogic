@@ -3,14 +3,14 @@ from unittest.mock import patch
 import pytest
 from pandas import DataFrame
 
-from numalogic.connectors.utils.aws.config import RDSConfig
+from numalogic.connectors.utils.aws.config import RDSConnectionConfig
 from numalogic.connectors.rds._rds import RDSFetcher
 import pandas as pd
 
 
 @pytest.fixture(autouse=True)
 def mock_db_config():
-    return RDSConfig()
+    return RDSConnectionConfig()
 
 
 @pytest.fixture(autouse=True)
@@ -33,7 +33,7 @@ def test_fetch(mocker, data_fetcher):
 
 
 def test_execute_query(mocker):
-    rds_config = RDSConfig(database_type="mysql")
+    rds_config = RDSConnectionConfig(database_type="mysql")
     rds_fetcher = RDSFetcher(db_config=rds_config)
     mocker.patch.object(rds_fetcher.fetcher, "execute_query", return_value=DataFrame())
     result = rds_fetcher.fetch("SELECT * FROM table", datetime_column_name="eventdatetime")
@@ -41,7 +41,7 @@ def test_execute_query(mocker):
 
 
 def test_rds_fetcher_fetch():
-    rds_config = RDSConfig(database_type="mysql")
+    rds_config = RDSConnectionConfig(database_type="mysql")
     rds_fetcher = RDSFetcher(db_config=rds_config)
     with patch.object(rds_fetcher.fetcher, "execute_query") as mock_query:
         mock_query.return_value = pd.DataFrame({"test": [1, 2, 3]})

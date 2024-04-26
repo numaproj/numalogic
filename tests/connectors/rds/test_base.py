@@ -5,12 +5,17 @@ import pytest
 from pandas import DataFrame, to_datetime
 
 from numalogic.connectors._config import Pivot
-from numalogic.connectors.rds._base import RDSBase, RDSConfig, Boto3ClientManager, format_dataframe
+from numalogic.connectors.rds._base import (
+    RDSBase,
+    RDSConnectionConfig,
+    Boto3ClientManager,
+    format_dataframe,
+)
 
 mock_rds_base = create_autospec(RDSBase)
 
 
-# Mock RDSConfig for testing
+# Mock RDSConnectionConfig for testing
 class TestRDSBase(RDSBase):
     def get_connection(self):
         super().get_connection()
@@ -25,7 +30,7 @@ class TestRDSBase(RDSBase):
 
 @pytest.fixture(autouse=True)
 def mock_db_config():
-    mock_db_config = RDSConfig()
+    mock_db_config = RDSConnectionConfig()
     mock_db_config.database_type = "db_type"
     return mock_db_config
 
