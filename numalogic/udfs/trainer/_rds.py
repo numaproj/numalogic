@@ -233,8 +233,8 @@ class RDSTrainerUDF(TrainerUDF):
                 config_id=_config_id,
                 filter_keys=_stream_conf.composite_keys,
                 filter_values=payload.composite_keys,
-                hours=10240,
-                delay=3.0,
+                hours=_conf.numalogic_conf.trainer.train_hours,
+                delay=self.dataconn_conf.delay_hrs,
                 reference_dt=datetime.now(),
             )
             _df = self.data_fetcher.fetch(
