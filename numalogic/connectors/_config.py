@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from enum import IntEnum
 from typing import Optional
-from numalogic.connectors.utils.aws.config import RDSConfig
+from numalogic.connectors.utils.aws.config import RDSConnectionConfig
 from numalogic.connectors.exceptions import RDSFetcherConfValidationException
 
 
@@ -123,8 +123,8 @@ class RDSConf:
     Class representing the configuration for fetching data from an RDS data source.
 
     Args:
-        connection_conf (RDSConfig): An instance of the RDSConfig class representing
-            the connection configuration.
+        connection_conf (RDSConnectionConfig): An instance of the RDSConnectionConfig class
+        representing the connection configuration.
         delay_hrs (float): The delay in hours for fetching data. Defaults to 3.0.
         fetcher (Optional[RDSFetcherConf]): An optional instance of the RDSFetcherConf class
             representing the fetcher configuration. Defaults to None.
@@ -133,7 +133,7 @@ class RDSConf:
             Defaults to None.
     """
 
-    connection_conf: RDSConfig
+    connection_conf: RDSConnectionConfig
     delay_hrs: float = 3.0
     fetcher: Optional[RDSFetcherConf] = None
     id_fetcher: Optional[dict[str, RDSFetcherConf]] = None
