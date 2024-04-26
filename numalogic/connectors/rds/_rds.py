@@ -2,7 +2,7 @@ from typing import Optional
 from numalogic.connectors._base import DataFetcher
 from numalogic.connectors._config import Pivot
 from numalogic.connectors.rds._base import format_dataframe
-from numalogic.connectors.utils.aws.config import RDSConfig
+from numalogic.connectors.utils.aws.config import RDSConnectionConfig
 import logging
 import pandas as pd
 from numalogic.connectors.rds.db.factory import RdsFactory
@@ -19,12 +19,12 @@ class RDSFetcher(DataFetcher):
 
     Attributes
     ----------
-        db_config (RDSConfig): The configuration object for the RDS instance.
+        db_config (RDSConnectionConfig): The configuration object for the RDS instance.
         fetcher (db.CLASS_TYPE): The fetcher object for the specific database type.
 
     """
 
-    def __init__(self, db_config: RDSConfig):
+    def __init__(self, db_config: RDSConnectionConfig):
         super().__init__(db_config.endpoint)
         self.db_config = db_config
         factory_object = RdsFactory()

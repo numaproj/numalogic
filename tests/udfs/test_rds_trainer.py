@@ -1,5 +1,5 @@
 import pytest
-from numalogic.tools.exceptions import RDSFetcherError
+from numalogic.tools.exceptions import RDSFetcherError, ConfigNotFoundError
 from numalogic.udfs.trainer._rds import RDSTrainerUDF, build_query, get_hash_based_query
 import re
 from datetime import datetime
@@ -53,6 +53,12 @@ def mock_pipeline_conf():
 
 
 @pytest.fixture()
+def mock_pipeline_conf_id_fetcher():
+    pipeline_conf = f"{TESTS_DIR}/udfs/resources/rds_trainer_config_fetcher_conf1.yaml"
+    return load_pipeline_conf(pipeline_conf)
+
+
+@pytest.fixture()
 def mock_RDS_trainer_UDF(mock_pipeline_conf):
     return RDSTrainerUDF(mock_redis_client, mock_pipeline_conf)
 
@@ -101,10 +107,28 @@ def test_build_query(mock_trainer_payload, mock_pipeline_conf):
         )
 
 
-# @patch.object(RDSFetcher, "fetch", Mock(return_value=mock_rds_fetch_data))
 def test_rds_trainer(mock_trainer_payload, mock_pipeline_conf, mock_RDS_trainer_UDF):
     with patch.object(mock_RDS_trainer_UDF.data_fetcher, "fetch", new=mock_rds_fetch_data):
         actual_df = mock_RDS_trainer_UDF.fetch_data(mock_trainer_payload)
         actual_df_count_dict = actual_df.count().to_dict()
         expected_df_count_dict = {"degraded": 4986, "failed": 5000, "success": 5000}
         assert actual_df_count_dict == expected_df_count_dict
+
+
+def test_rds_trainer_register_rds_fetcher_conf(
+    mock_trainer_payload, mock_pipeline_conf_id_fetcher, mock_redis_client
+):
+    mock_RDS_trainer_UDF_obj = RDSTrainerUDF(mock_redis_client, mock_pipeline_conf_id_fetcher)
+    mock_RDS_trainer_UDF_obj.register_rds_fetcher_conf(
+        "fciPluginAppInteractions", "metrics", mock_RDS_trainer_UDF
+    )
+
+    assert mock_RDS_trainer_UDF_obj.pl_conf.rds_conf.connection_conf.database_username == "root"
+
+
+def test_get_rds_fetcher_conf(
+    mock_trainer_payload, mock_pipeline_conf_id_fetcher, mock_redis_client
+):
+    mock_RDS_trainer_UDF_obj = RDSTrainerUDF(mock_redis_client, mock_pipeline_conf_id_fetcher)
+    with pytest.raises(ConfigNotFoundError):
+        mock_RDS_trainer_UDF_obj.get_rds_fetcher_conf("fciPluginAppInteractions", "metrics1")
