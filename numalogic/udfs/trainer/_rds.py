@@ -41,9 +41,6 @@ def get_hash_based_query(config_id: str, filter_keys=list[str], filter_values=li
     - RDSFetcherError: If the length of filter_keys and filter_values is not equal.
 
     """
-    if len(filter_keys) != len(filter_values):
-        raise RDSFetcherError("filter_keys and filter_values length are not equal")
-
     filter_pairs = dict(zip(filter_keys, filter_values))
     filter_pairs["config_id"] = config_id
     to_be_hashed_list = [filter_pairs.get(key, "").strip() for key in sorted(filter_pairs.keys())]
@@ -125,7 +122,7 @@ def build_query(
         where {intervals} and {hash_column_name} = '{hash_}'
         """
 
-    raise RDSFetcherError("RDS trainer is setup to support hash based query type only")
+    raise NotImplementedError("RDS trainer is setup to support hash based query type only")
 
 
 class RDSTrainerUDF(TrainerUDF):
@@ -221,21 +218,22 @@ class RDSTrainerUDF(TrainerUDF):
                 f" pipeline_id: {_pipeline_id}!"
             )
 
+        query = build_query(
+            datasource=_fetcher_conf.datasource,
+            dimensions=_fetcher_conf.dimensions,
+            metrics=_fetcher_conf.metrics,
+            datetime_column_name=_fetcher_conf.datetime_column_name,
+            hash_query_type=_fetcher_conf.hash_query_type,
+            hash_column_name=_fetcher_conf.hash_column_name,
+            config_id=_config_id,
+            filter_keys=_stream_conf.composite_keys,
+            filter_values=payload.composite_keys,
+            hours=_conf.numalogic_conf.trainer.train_hours,
+            delay=self.dataconn_conf.delay_hrs,
+            reference_dt=datetime.now(),
+        )
+
         try:
-            query = build_query(
-                datasource=_fetcher_conf.datasource,
-                dimensions=_fetcher_conf.dimensions,
-                metrics=_fetcher_conf.metrics,
-                datetime_column_name=_fetcher_conf.datetime_column_name,
-                hash_query_type=_fetcher_conf.hash_query_type,
-                hash_column_name=_fetcher_conf.hash_column_name,
-                config_id=_config_id,
-                filter_keys=_stream_conf.composite_keys,
-                filter_values=payload.composite_keys,
-                hours=_conf.numalogic_conf.trainer.train_hours,
-                delay=self.dataconn_conf.delay_hrs,
-                reference_dt=datetime.now(),
-            )
             _df = self.data_fetcher.fetch(
                 query=query,
                 datetime_column_name=_fetcher_conf.datetime_column_name,
