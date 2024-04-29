@@ -5,4 +5,6 @@ from numalogic.connectors._config import RDSFetcherConf
 
 def test_RDSFetcherConf_post_init_exception():
     with pytest.raises(RDSFetcherConfValidationException):
-        RDSFetcherConf(datasource="test", hash_query_type=True)
+        RDSFetcherConf(
+            dimensions=[], metrics=[], datasource="test", hash_query_type=True, hash_column_name=""
+        )

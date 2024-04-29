@@ -80,14 +80,14 @@ class RDSFetcherConf:
     """
 
     datasource: str
-    dimensions: list[str] = field(default_factory=list)
+    dimensions: list[str]
+    # metric column names
+    metrics: list[str]
     group_by: list[str] = field(default_factory=list)
     pivot: Pivot = field(default_factory=lambda: Pivot())
-    hash_query_type: bool = field(default=True)
-    hash_column_name: str = field(default="")
+    hash_query_type: bool = True
+    hash_column_name: str = "model_md5_hash"
     datetime_column_name: str = "eventdatetime"
-    # metric column names
-    metrics: list[str] = field(default_factory=list)
 
     def __post_init__(self):
         if self.hash_query_type:
