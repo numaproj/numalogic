@@ -84,7 +84,7 @@ def mock_pipeline_conf_id_fetcher():
 
 
 @pytest.fixture()
-def mock_RDS_trainer_UDF(mock_pipeline_conf):
+def mock_RDS_trainer_UDF(mock_pipeline_conf, mock_redis_client):
     return RDSTrainerUDF(mock_redis_client, mock_pipeline_conf)
 
 
@@ -460,10 +460,8 @@ def test_TrainMsgDeduplicator_exception_1(mocker, caplog, payload):
     caplog.set_level(logging.INFO)
     mocker.patch("redis.Redis.hset", Mock(side_effect=RedisError))
     train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
-
     keys = payload["composite_keys"]
     train_dedup.ack_read([*keys, "pipeline1"], "some-uuid")
-
     assert "RedisError" in caplog.text
     train_dedup.ack_train([*keys, "pipeline1"], "some-uuid")
     assert "RedisError" in caplog.text
