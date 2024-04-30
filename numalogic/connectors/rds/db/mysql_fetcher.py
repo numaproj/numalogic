@@ -7,7 +7,7 @@ import pymysql
 import pandas as pd
 import logging
 
-from numalogic.connectors.utils.aws.config import DatabaseTypes, RDSConfig
+from numalogic.connectors.utils.aws.config import DatabaseTypes, RDSConnectionConfig
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,8 +16,8 @@ class MysqlFetcher(RDSBase):
     """
     class that inherits from RDSBase. It is used to fetch data from a MySQL database.
 
-    - __init__(self, db_config: RDSConfig, **kwargs): Initializes the MysqlFetcher object with
-    the given RDSConfig and additional keyword arguments.
+    - __init__(self, db_config: RDSConnectionConfig, **kwargs): Initializes the MysqlFetcher object
+     with the given RDSConnectionConfig and additional keyword arguments.
 
     The MysqlFetcher class is designed to be used as a base class for fetching data from a MySQL
     database. It provides methods for establishing a connection, executing queries,
@@ -27,7 +27,7 @@ class MysqlFetcher(RDSBase):
 
     database_type = DatabaseTypes.MYSQL
 
-    def __init__(self, db_config: RDSConfig, **kwargs):
+    def __init__(self, db_config: RDSConnectionConfig, **kwargs):
         super().__init__(db_config)
         self.db_config = db_config
         self.kwargs = kwargs
@@ -44,8 +44,8 @@ class MysqlFetcher(RDSBase):
         ------
             None
 
-        Notes: - If SSL/TLS is enabled and configured in the RDSConfig object, the connection
-        will be established with SSL/TLS. - If SSL/TLS is not enabled or configured,
+        Notes: - If SSL/TLS is enabled and configured in the RDSConnectionConfig object,
+        the connection will be established with SSL/TLS. - If SSL/TLS is not enabled or configured,
         the connection will be established without SSL/TLS.
 
         """
