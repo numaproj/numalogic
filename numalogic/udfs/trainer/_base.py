@@ -129,7 +129,8 @@ class TrainerUDF(NumalogicUDF):
 
         if threshold_clf:
             threshold_clf.fit(train_reconerr)
-            logger.debug("Fit data using threshold model")
+            if logger:
+                logger.debug("Fit data using threshold model")
             dict_artifacts["threshold_clf"] = KeyedArtifact(
                 dkeys=[numalogic_cfg.threshold.name],
                 artifact=threshold_clf,
