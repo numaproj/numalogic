@@ -37,8 +37,15 @@ class Pivot:
 
 
 @dataclass
+class FilterConf:
+    inclusion_filters: Optional[list[dict]] = None
+    exclusion_filters: Optional[list[dict]] = None
+
+
+@dataclass
 class DruidFetcherConf:
     datasource: str
+    static_filters: Optional[FilterConf] = None
     dimensions: list[str] = field(default_factory=list)
     aggregations: dict = field(default_factory=dict)
     group_by: list[str] = field(default_factory=list)
