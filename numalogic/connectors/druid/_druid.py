@@ -198,11 +198,10 @@ class DruidFetcher(DataFetcher):
         if pivot:
             pivoted_frames = []
             for column in pivot.columns:
-                _df = df.pivot_table(
+                _df = df.pivot(
                     index=pivot.index,
                     columns=[column],
                     values=pivot.value,
-                    aggfunc={'count': 'sum'}
                 )
                 pivoted_frames.append(_df)
 
@@ -304,11 +303,10 @@ class DruidFetcher(DataFetcher):
         if pivot:
             pivoted_frames = []
             for column in pivot.columns:
-                _df = df.pivot_table(
+                _df = df.pivot(
                     index=pivot.index,
                     columns=[column],
                     values=pivot.value,
-                    aggfunc={'count': 'sum'}
                 )
                 pivoted_frames.append(_df)
 
