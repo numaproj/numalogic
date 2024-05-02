@@ -79,6 +79,7 @@ class TrainerUDF(NumalogicUDF):
         trainer_transform: Optional[artifact_t] = None,
         threshold_clf: Optional[artifact_t] = None,
         numalogic_cfg: Optional[NumalogicConf] = None,
+        logger=None,
     ) -> dict[str, KeyedArtifact]:
         """
         Train the model on the given input data.
@@ -128,7 +129,7 @@ class TrainerUDF(NumalogicUDF):
 
         if threshold_clf:
             threshold_clf.fit(train_reconerr)
-            _struct_log.debug("Fit data using threshold model")
+            logger.debug("Fit data using threshold model")
             dict_artifacts["threshold_clf"] = KeyedArtifact(
                 dkeys=[numalogic_cfg.threshold.name],
                 artifact=threshold_clf,
@@ -255,6 +256,7 @@ class TrainerUDF(NumalogicUDF):
             trainer_transform=trainer_transform,
             threshold_clf=thresh_clf,
             numalogic_cfg=_conf.numalogic_conf,
+            logger=logger,
         )
         # Save artifacts
 
