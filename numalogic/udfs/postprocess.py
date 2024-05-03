@@ -122,7 +122,9 @@ class PostprocessUDF(NumalogicUDF):
             load_latest=LOAD_LATEST,
             vertex=self._vtx,
         )
-        postproc_tx = self.postproc_factory.get_instance(postprocess_cfg)
+        postproc_tx = (
+            self.postproc_factory.get_instance(postprocess_cfg) if postprocess_cfg else None
+        )
 
         if thresh_artifact is None:
             payload = replace(

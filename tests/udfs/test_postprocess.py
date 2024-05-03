@@ -14,6 +14,7 @@ from pynumaflow.mapper import Datum
 from numalogic._constants import TESTS_DIR
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.registry import RedisRegistry, ArtifactData
+from numalogic.transforms import TanhNorm
 from numalogic.udfs import PipelineConf
 from numalogic.udfs.entities import Header, TrainerPayload, Status, OutputPayload
 from numalogic.udfs.postprocess import PostprocessUDF
@@ -172,7 +173,12 @@ def test_postprocess_runtime_err_02(udf, mocker, bad_artifact):
     assert msgs[1].tags == ["staticthresh"]
 
 
-def test_compute(udf, artifact):
+def test_compute_without_postproc(udf, artifact):
     y_unified, x_inferred = udf.compute(artifact.artifact, np.asarray(DATA["data"]))
+    assert isinstance(y_unified, float)
+    assert x_inferred.shape == (2,)
+
+def test_compute_with_postproc(udf, artifact):
+    y_unified, x_inferred = udf.compute(artifact.artifact, np.asarray(DATA["data"]), postproc_tx=TanhNorm())
     assert isinstance(y_unified, float)
     assert x_inferred.shape == (2,)
