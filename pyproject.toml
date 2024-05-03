@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.9.1a8"
+version = "0.9.1a9"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]

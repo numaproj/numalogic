@@ -109,7 +109,7 @@ def mock_group_by_multi_column(mocker):
                     "env": "prod",
                     "status": 200,
                     "http_status": "2xx",
-                    "count": 20
+                    "count": 20,
                 },
                 "timestamp": "2023-09-06T07:50:00.000Z",
                 "version": "v1",
@@ -120,8 +120,7 @@ def mock_group_by_multi_column(mocker):
                     "env": "prod",
                     "status": 500,
                     "http_status": "5xx",
-                    "count": 10
-
+                    "count": 10,
                 },
                 "timestamp": "2023-09-06T07:53:00.000Z",
                 "version": "v1",

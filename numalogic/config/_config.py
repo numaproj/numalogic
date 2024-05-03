@@ -157,7 +157,7 @@ class NumalogicConf:
     trainer: TrainerConf = field(default_factory=TrainerConf)
     preprocess: list[ModelInfo] = field(default_factory=list)
     threshold: ModelInfo = field(default_factory=lambda: ModelInfo(name="StdDevThreshold"))
-    postprocess: ModelInfo = field(
+    postprocess: Optional[ModelInfo] = field(
         default_factory=lambda: ModelInfo(name="TanhNorm", stateful=False)
     )
     score: ScoreConf = field(default_factory=lambda: ScoreConf())
