@@ -178,7 +178,10 @@ def test_compute_without_postproc(udf, artifact):
     assert isinstance(y_unified, float)
     assert x_inferred.shape == (2,)
 
+
 def test_compute_with_postproc(udf, artifact):
-    y_unified, x_inferred = udf.compute(artifact.artifact, np.asarray(DATA["data"]), postproc_tx=TanhNorm())
+    y_unified, x_inferred = udf.compute(
+        artifact.artifact, np.asarray(DATA["data"]), postproc_tx=TanhNorm()
+    )
     assert isinstance(y_unified, float)
     assert x_inferred.shape == (2,)
