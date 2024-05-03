@@ -195,12 +195,18 @@ class DruidFetcher(DataFetcher):
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
 
-        if pivot and pivot.columns:
-            df = df.pivot(
-                index=pivot.index,
-                columns=pivot.columns,
-                values=pivot.value,
-            )
+        # TODO: performance review
+        if pivot:
+            pivoted_frames = []
+            for column in pivot.columns:
+                _df = df.pivot(
+                    index=pivot.index,
+                    columns=[column],
+                    values=pivot.value,
+                )
+                pivoted_frames.append(_df)
+
+            df = pd.concat(pivoted_frames, axis=1, join="outer")
             df.columns = df.columns.map("{0[1]}".format)
             df.reset_index(inplace=True)
 
@@ -273,7 +279,7 @@ class DruidFetcher(DataFetcher):
                     datasource=datasource,
                     dimensions=dimensions,
                     filter_pairs=filter_pairs,
-                    static_filter=static_filter,
+                    static_filters=static_filter,
                     granularity=granularity,
                     hours=min(chunked_hours, hours - hours_elapsed),
                     delay=delay,
@@ -295,12 +301,17 @@ class DruidFetcher(DataFetcher):
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
 
-        if pivot and pivot.columns:
-            df = df.pivot(
-                index=pivot.index,
-                columns=pivot.columns,
-                values=pivot.value,
-            )
+        if pivot:
+            pivoted_frames = []
+            for column in pivot.columns:
+                _df = df.pivot(
+                    index=pivot.index,
+                    columns=[column],
+                    values=pivot.value,
+                )
+                pivoted_frames.append(_df)
+
+            df = pd.concat(pivoted_frames, axis=1, join="outer")
             df.columns = df.columns.map("{0[1]}".format)
             df.reset_index(inplace=True)
 
