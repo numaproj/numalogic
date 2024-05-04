@@ -195,8 +195,6 @@ class DruidFetcher(DataFetcher):
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
 
-
-        print(df)
         # TODO: performance review
         if pivot:
             pivoted_frames = []
