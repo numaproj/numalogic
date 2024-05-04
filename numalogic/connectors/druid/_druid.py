@@ -195,14 +195,17 @@ class DruidFetcher(DataFetcher):
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
 
+
+        print(df)
         # TODO: performance review
         if pivot:
             pivoted_frames = []
             for column in pivot.columns:
-                _df = df.pivot(
+                _df = df.pivot_table(
                     index=pivot.index,
                     columns=[column],
                     values=pivot.value,
+                    aggfunc="sum"
                 )
                 pivoted_frames.append(_df)
 
@@ -304,10 +307,11 @@ class DruidFetcher(DataFetcher):
         if pivot:
             pivoted_frames = []
             for column in pivot.columns:
-                _df = df.pivot(
+                _df = df.pivot_table(
                     index=pivot.index,
                     columns=[column],
                     values=pivot.value,
+                    aggfunc="sum"
                 )
                 pivoted_frames.append(_df)
 
