@@ -15,7 +15,7 @@ from pydruid.utils.dimensions import DimensionSpec
 from pydruid.utils.filters import Filter
 
 from numalogic._constants import TESTS_DIR
-from numalogic.connectors._config import Pivot
+from numalogic.connectors._config import Pivot, FilterConf
 from numalogic.connectors.druid import (
     DruidFetcher,
     make_filter_pairs,
@@ -109,6 +109,7 @@ def mock_group_by_multi_column(mocker):
                     "env": "prod",
                     "status": 200,
                     "http_status": "2xx",
+                    "gw_gen": "T",
                     "count": 20,
                 },
                 "timestamp": "2023-09-06T07:50:00.000Z",
@@ -120,6 +121,7 @@ def mock_group_by_multi_column(mocker):
                     "env": "prod",
                     "status": 500,
                     "http_status": "5xx",
+                    "gw_gen": "T",
                     "count": 10,
                 },
                 "timestamp": "2023-09-06T07:53:00.000Z",
@@ -293,18 +295,20 @@ def test_chunked_fetch_err(get_args):
 def test_multi_column_pivot(setup, mock_group_by_multi_column):
     start, end, fetcher = setup
     _out = fetcher.fetch(
-        filter_keys=["service_alias"],
-        filter_values=["identity.authn.signin"],
-        dimensions=["http_status", "status"],
+        filter_keys=["authtype", "slane"],
+        filter_values=["browserUserAgent", "sw1"],
+        dimensions=["http_status", "status", "gw_gen"],
         datasource="ip-apigw-telegraf-druid",
         aggregations={"count": aggregators.doublesum("count")},
-        group_by=["timestamp", "http_status", "status"],
+        group_by=["timestamp", "http_status", "status", "gw_gen"],
         hours=2,
         pivot=Pivot(
             index="timestamp",
-            columns=["http_status", "status"],
+            columns=["http_status", "status", "gw_gen"],
             value=["count"],
+            agg=["sum", "sum", "count"]
         ),
+
     )
     print(_out)
-    assert (2, 5) == _out.shape
+    assert (2, 6) == _out.shape

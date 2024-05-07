@@ -198,12 +198,12 @@ class DruidFetcher(DataFetcher):
         # TODO: performance review
         if pivot:
             pivoted_frames = []
-            for column in pivot.columns:
+            for idx, column in enumerate(pivot.columns):
                 _df = df.pivot_table(
                     index=pivot.index,
                     columns=[column],
                     values=pivot.value,
-                    aggfunc="sum"
+                    aggfunc=pivot.agg[idx]
                 )
                 pivoted_frames.append(_df)
 
@@ -304,12 +304,12 @@ class DruidFetcher(DataFetcher):
 
         if pivot:
             pivoted_frames = []
-            for column in pivot.columns:
+            for idx, column in enumerate(pivot.columns):
                 _df = df.pivot_table(
                     index=pivot.index,
                     columns=[column],
                     values=pivot.value,
-                    aggfunc="sum"
+                    aggfunc=pivot.agg[idx]
                 )
                 pivoted_frames.append(_df)
 
