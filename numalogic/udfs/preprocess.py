@@ -179,7 +179,6 @@ class PreprocessUDF(NumalogicUDF):
             _increment_counter(SOURCE_COUNTER, labels=("config", *_metric_label_values))
             preproc_clf = self._load_model_from_config(_conf.numalogic_conf.preprocess)
             payload = replace(payload, status=Status.ARTIFACT_FOUND)
-            logger = logger.bind(model_from_config=preproc_clf)
         try:
             x_scaled = self.compute(model=preproc_clf, input_=payload.get_data())
 
