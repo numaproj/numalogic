@@ -15,7 +15,7 @@ from pydruid.utils.dimensions import DimensionSpec
 from pydruid.utils.filters import Filter
 
 from numalogic._constants import TESTS_DIR
-from numalogic.connectors._config import Pivot, FilterConf
+from numalogic.connectors._config import Pivot
 from numalogic.connectors.druid import (
     DruidFetcher,
     make_filter_pairs,
