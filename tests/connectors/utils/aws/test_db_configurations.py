@@ -22,7 +22,7 @@ def test_load_db_conf_file_not_exists(mock_load):
         db_configuration.load_db_conf(path)
 
 
-def test_RDSConfig_defaults():
-    config = db_configuration.RDSConfig()
+def test_RDSConnectionConfig_defaults():
+    config = db_configuration.RDSConnectionConfig()
     assert config.aws_region == ""
     assert config.aws_rds_use_iam is False

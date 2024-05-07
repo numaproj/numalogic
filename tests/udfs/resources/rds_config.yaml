@@ -1,0 +1,108 @@
+stream_confs:
+  rds-config:
+    config_id: "rds-config"
+    source: "rds"
+    composite_keys: [ 'service-mesh', '1', '2' ]
+    window_size: 20
+    ml_pipelines:
+      pipeline1:
+        pipeline_id: "pipeline1"
+        metrics: [ "col1" , "col2" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 20
+              n_features: 1
+          preprocess:
+            - name: "FlattenVector"
+              stateful: false
+              conf:
+                n_features: 2
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          score:
+            feature_agg:
+              method: MAX
+            adjust:
+              upper_limits:
+                "col1": 23
+          trainer:
+            train_hours: 3
+            min_train_size: 100
+            transforms:
+              - name: DataClipper
+                conf:
+                  lower: [0.0, -inf]
+                  upper: [0.0, inf]
+            pltrainer_conf:
+              accelerator: cpu
+              max_epochs: 5
+      pipeline2:
+        pipeline_id: "pipeline2"
+        metrics: [ "col1" , "col2" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 2
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          score:
+            feature_agg:
+              method: MEAN
+            adjust:
+              upper_limits:
+                "col1": 20
+                "col2": 18
+
+
+redis_conf:
+  url: "isbsvc-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-e2e.svc"
+  port: 26379
+  expiry: 360
+  master_name: "mymaster"
+
+
+rds_conf:
+  connection_conf:
+    aws_assume_role_arn: "arn:aws:iam::123456789:role/ml_iam_role"
+    aws_assume_role_session_name: "ml_pipeline_reader"
+    endpoint: "localhost1"
+    port: 3306
+    database_name: "ml_poc"
+    database_username: "root"
+    database_password: "admin123"
+    database_connection_timeout: 10
+    database_type: "mysql"
+    database_provider: "rds"
+    aws_region: "us-west-2"
+    aws_rds_use_iam: False
+    ssl_enabled: False
+    ssl:
+      ca: "/usr/bin/ml_data/us-west-2-bundle.pem"
+  id_fetcher:
+    rds-config-pipeline1:
+      dimensions : [ "col1" ]
+      metrics : ["count"]
+      datasource: "table-name"
+      group_by: [ "timestamp", "cistatus" ]
+      pivot:
+        columns: [ "col2" ]
+      datetime_column_name: "timestamp"
+      hash_query_type: True
+      hash_column_name: model_md5_hash

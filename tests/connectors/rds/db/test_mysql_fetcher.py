@@ -1,13 +1,13 @@
 import pymysql
 import pytest
 from unittest.mock import Mock, patch, MagicMock
-from numalogic.connectors.utils.aws.config import DatabaseTypes, RDSConfig
+from numalogic.connectors.utils.aws.config import DatabaseTypes, RDSConnectionConfig
 from numalogic.connectors.rds.db.mysql_fetcher import MysqlFetcher
 
 
 @pytest.fixture
 def mock_db_config():
-    db_config = RDSConfig(
+    db_config = RDSConnectionConfig(
         endpoint="localhost",
         port=3306,
         database_username="username",
@@ -35,7 +35,7 @@ def mock_db_config():
 
 @pytest.fixture
 def mock_db_config_ssl_disabled():
-    db_config = RDSConfig(
+    db_config = RDSConnectionConfig(
         endpoint="localhost",
         port=3306,
         database_username="username",
@@ -58,7 +58,7 @@ def mock_db_config_ssl_disabled():
 
 @pytest.fixture
 def setup_fetcher():
-    rds_config = Mock()  # Assuming that your RDSConfig class behaves like a normal python object
+    rds_config = Mock()
     kwargs = {"key": "value"}
     return MysqlFetcher(rds_config, **kwargs)
 

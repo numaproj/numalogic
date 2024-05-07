@@ -178,7 +178,7 @@ class RegistryFactory(_ObjectFactory):
 class ConnectorFactory(_ObjectFactory):
     """Factory class for data connectors."""
 
-    _CLS_SET: ClassVar[frozenset] = frozenset({"PrometheusFetcher", "DruidFetcher"})
+    _CLS_SET: ClassVar[frozenset] = frozenset({"PrometheusFetcher", "DruidFetcher", "RDSFetcher"})
 
     @classmethod
     def get_cls(cls, name: str):
