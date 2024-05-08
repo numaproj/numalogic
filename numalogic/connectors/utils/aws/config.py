@@ -98,7 +98,7 @@ class RDBMSConfig:
 
 
 @dataclass
-class RDSConfig(AWSConfig, RDBMSConfig):
+class RDSConnectionConfig(AWSConfig, RDBMSConfig):
     """
     Class representing the configuration for an RDS (Relational Database Service) instance.
 

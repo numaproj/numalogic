@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from typing import Optional
 import pandas as pd
-from numalogic.connectors.utils.aws.config import DatabaseServiceProvider, RDSConfig
+from numalogic.connectors.utils.aws.config import DatabaseServiceProvider, RDSConnectionConfig
 from numalogic.connectors.utils.aws.boto3_client_manager import Boto3ClientManager
 import logging
 from numalogic.connectors._config import Pivot
@@ -13,7 +13,7 @@ _LOGGER = logging.getLogger(__name__)
 def format_dataframe(
     df: pd.DataFrame,
     query: str,
-    datetime_field_name: str,
+    datetime_column_name: str,
     group_by: Optional[list[str]] = None,
     pivot: Optional[Pivot] = None,
 ) -> pd.DataFrame:
@@ -26,7 +26,7 @@ def format_dataframe(
         The input DataFrame to be formatted.
     query : str
         The SQL query used to retrieve the data.
-    datetime_field_name : str
+    datetime_column_name : str
         The name of the datetime field in the DataFrame.
     group_by : Optional[list[str]], optional
         A list of column names to group the DataFrame by, by default None.
@@ -40,8 +40,8 @@ def format_dataframe(
 
     """
     _start_time = time.perf_counter()
-    df["timestamp"] = pd.to_datetime(df[datetime_field_name]).astype("int64") // 10**6
-    df.drop(columns=datetime_field_name, inplace=True)
+    df["timestamp"] = pd.to_datetime(df[datetime_column_name]).astype("int64") // 10**6
+    df.drop(columns=datetime_column_name, inplace=True)
     if group_by:
         df = df.groupby(by=group_by).sum().reset_index()
 
@@ -65,12 +65,12 @@ class RDSBase(metaclass=ABCMeta):
     connection, and executing queries.
 
     Args:
-        - db_config (RDSConfig): The configuration object for the RDS connection.
+        - db_config (RDSConnectionConfig): The configuration object for the RDS connection.
         - kwargs (dict): Additional keyword arguments.
 
     """
 
-    def __init__(self, db_config: RDSConfig, **kwargs):
+    def __init__(self, db_config: RDSConnectionConfig, **kwargs):
         self.kwargs = kwargs
         self.db_config = db_config
         self.connection = None

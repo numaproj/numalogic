@@ -213,6 +213,7 @@ class PostprocessUDF(NumalogicUDF):
             y_features=y_features,
             y_unified=y_unified,
             a_features=a_features.tolist(),
+            artifact_versions=payload.artifact_versions,
             execution_time_secs=round(time.perf_counter() - _start_time, 4),
         )
 
