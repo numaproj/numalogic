@@ -306,9 +306,8 @@ def test_multi_column_pivot(setup, mock_group_by_multi_column):
             index="timestamp",
             columns=["http_status", "status", "gw_gen"],
             value=["count"],
-            agg=["sum", "sum", "count"]
+            agg=["sum", "sum", "count"],
         ),
-
     )
     print(_out)
     assert (2, 6) == _out.shape

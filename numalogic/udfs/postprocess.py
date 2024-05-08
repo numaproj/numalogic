@@ -153,7 +153,7 @@ class PostprocessUDF(NumalogicUDF):
             payload = replace(
                 payload,
                 metadata={
-                    "threshold": float(thresh_artifact.artifact.threshold),
+                    "threshold": thresh_artifact.artifact.threshold,
                     **payload.metadata,
                 },
             )

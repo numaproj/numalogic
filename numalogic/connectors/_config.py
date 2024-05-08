@@ -34,7 +34,7 @@ class Pivot:
     index: str = "timestamp"
     columns: list[str] = field(default_factory=list)
     value: list[str] = field(default_factory=lambda: ["count"])
-    agg:  list[str] = field(default_factory=lambda : ["sum"])
+    agg: list[str] = field(default_factory=lambda: ["sum"])
 
 
 @dataclass
