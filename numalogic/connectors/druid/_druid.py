@@ -49,7 +49,7 @@ def _make_static_filters(filters: FilterConf) -> Filter:
         filter_list.append(_combine_in_filters(filters.inclusion_filters))
     if filters.exclusion_filters:
         filter_list.append(_combine_ex_filters(filters.exclusion_filters))
-    return Filter(type="and", fields=[filter_list])
+    return Filter(type="and", fields=filter_list)
 
 
 def build_params(
@@ -85,17 +85,14 @@ def build_params(
     Returns: a dict of parameters
 
     """
-    _filter_list = [
-        Filter(
-            type="and",
-            fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
-        )
-    ]
+    _filter = Filter(
+        type="and",
+        fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
+    )
     if static_filters:
         _LOGGER.debug("Static Filters are present!")
-        _filter_list.append(_make_static_filters(static_filters))
-
-    _filter = Filter(type="and", fields=_filter_list)
+        _static_filters = _make_static_filters(static_filters)
+        _filter = Filter(type="and", fields=[_static_filters, _filter])
 
     reference_dt = reference_dt or datetime.now(pytz.utc)
     end_dt = reference_dt - timedelta(hours=delay)
