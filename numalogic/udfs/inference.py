@@ -84,7 +84,7 @@ class InferenceUDF(NumalogicUDF):
         model.eval()
         try:
             with torch.no_grad():
-                recon_err = model._get_reconstruction_loss(x, reduction="none")
+                recon_err = model.get_reconstruction_loss(x, reduction="none")
         except Exception as err:
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)

@@ -313,7 +313,7 @@ class TransformerAE(BaseAE):
         dim_feedforward: int = 2048,
         dropout: float = 0.1,
         activation: nn.Module = nn.ReLU(),
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.n_features = n_features
@@ -348,7 +348,7 @@ class TransformerAE(BaseAE):
         decoded = self.decoder(batch, encoded)
         return encoded, decoded
 
-    def _get_reconstruction_loss(self, batch):
+    def get_reconstruction_loss(self, batch):
         _, recon = self.forward(batch)
         x = batch.view(-1, self.n_features, self.seq_len)
         return self.criterion(x, recon)
@@ -400,7 +400,7 @@ class SparseTransformerAE(TransformerAE):
         _dim = 0 if rho_hat.dim() == 1 else 1
         return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
 
-    def _get_reconstruction_loss(self, batch):
+    def get_reconstruction_loss(self, batch):
         latent, recon = self.forward(batch)
         x = batch.view(-1, self.n_features, self.seq_len)
         loss = self.criterion(x, recon)

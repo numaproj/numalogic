@@ -20,8 +20,8 @@ from numalogic.models.autoencoder.base import BaseAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
 
 
-class _Encoder(nn.Module):
-    r"""Encoder module for the autoencoder module.
+class _VanillaEncoder(nn.Module):
+    r"""Encoder module for the VanillaAE.
 
     Args:
     ----
@@ -32,11 +32,19 @@ class _Encoder(nn.Module):
 
     """
 
-    def __init__(self, seq_len: int, n_features: int, layersizes: Sequence[int], dropout_p: float):
+    def __init__(
+        self,
+        seq_len: int,
+        n_features: int,
+        layersizes: Sequence[int],
+        dropout_p: float,
+        batchnorm: bool,
+    ):
         super().__init__()
         self.seq_len = seq_len
         self.n_features = n_features
         self.dropout_p = dropout_p
+        self.bnorm = batchnorm
 
         layers = self._construct_layers(layersizes)
         self.encoder = nn.Sequential(*layers)
@@ -56,25 +64,17 @@ class _Encoder(nn.Module):
         start_layersize = self.seq_len
 
         for lsize in layersizes[:-1]:
-            layers.extend(
-                [
-                    nn.Linear(start_layersize, lsize),
-                    # nn.BatchNorm1d(self.n_features),
-                    nn.Tanh(),
-                    nn.Dropout(p=self.dropout_p),
-                ]
-            )
+            _l = [nn.Linear(start_layersize, lsize)]
+            if self.bnorm:
+                _l.append(nn.BatchNorm1d(self.n_features))
+            layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
             start_layersize = lsize
 
-        layers.extend(
-            [
-                nn.Linear(start_layersize, layersizes[-1]),
-                # nn.BatchNorm1d(self.n_features),
-                # nn.ReLU(),
-                nn.Tanh(),
-                nn.Dropout(p=self.dropout_p),
-            ]
-        )
+        _l = [nn.Linear(start_layersize, layersizes[-1])]
+        if self.bnorm:
+            _l.append(nn.BatchNorm1d(self.n_features))
+        layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
+
         return layers
 
     def forward(self, x: Tensor) -> Tensor:
@@ -93,11 +93,19 @@ class _Decoder(nn.Module):
 
     """
 
-    def __init__(self, seq_len: int, n_features: int, layersizes: Sequence[int], dropout_p: float):
+    def __init__(
+        self,
+        seq_len: int,
+        n_features: int,
+        layersizes: Sequence[int],
+        dropout_p: float,
+        batchnorm: bool,
+    ):
         super().__init__()
         self.seq_len = seq_len
         self.n_features = n_features
         self.dropout_p = dropout_p
+        self.bnorm = batchnorm
 
         layers = self._construct_layers(layersizes)
         self.decoder = nn.Sequential(*layers)
@@ -119,14 +127,10 @@ class _Decoder(nn.Module):
         layers = nn.ModuleList()
 
         for idx, _ in enumerate(layersizes[:-1]):
-            layers.extend(
-                [
-                    nn.Linear(layersizes[idx], layersizes[idx + 1]),
-                    # nn.BatchNorm1d(self.n_features),
-                    nn.Tanh(),
-                    nn.Dropout(p=self.dropout_p),
-                ]
-            )
+            _l = [nn.Linear(layersizes[idx], layersizes[idx + 1])]
+            if self.bnorm:
+                _l.append(nn.BatchNorm1d(self.n_features))
+            layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
 
         layers.append(nn.Linear(layersizes[-1], self.seq_len))
         return layers
@@ -137,11 +141,13 @@ class VanillaAE(BaseAE):
 
     Args:
     ----
-        signal_len: sequence length / window length
+        seq_len: sequence length / window length
         n_features: num of features
         encoder_layersizes: encoder layer size (default = Sequence[int] = (16, 8))
         decoder_layersizes: decoder layer size (default = Sequence[int] = (8, 16))
         dropout_p: the dropout value (default=0.25)
+        batchnorm: Flag to enable batch normalization (default=False)
+        **kwargs: BaseAE kwargs
     """
 
     def __init__(
@@ -151,6 +157,7 @@ class VanillaAE(BaseAE):
         encoder_layersizes: Sequence[int] = (16, 8),
         decoder_layersizes: Sequence[int] = (8, 16),
         dropout_p: float = 0.25,
+        batchnorm: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -164,17 +171,19 @@ class VanillaAE(BaseAE):
                 f"does not match first layersize of decoder: {decoder_layersizes[0]}"
             )
 
-        self.encoder = _Encoder(
+        self.encoder = _VanillaEncoder(
             seq_len=seq_len,
             n_features=n_features,
             layersizes=encoder_layersizes,
             dropout_p=dropout_p,
+            batchnorm=batchnorm,
         )
         self.decoder = _Decoder(
             seq_len=seq_len,
             n_features=n_features,
             layersizes=decoder_layersizes,
             dropout_p=dropout_p,
+            batchnorm=batchnorm,
         )
 
         self.encoder.apply(self.init_weights)
@@ -183,7 +192,7 @@ class VanillaAE(BaseAE):
     @staticmethod
     def init_weights(m: nn.Module) -> None:
         """Initialize the parameters in the model."""
-        if type(m) == nn.Linear:
+        if isinstance(m, nn.Linear):
             nn.init.xavier_normal_(m.weight)
 
     def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
@@ -192,14 +201,40 @@ class VanillaAE(BaseAE):
         decoded = self.decoder(encoded)
         return encoded, torch.swapdims(decoded, 1, 2)
 
-    def _get_reconstruction_loss(self, batch: Tensor, reduction="mean") -> Tensor:
-        _, recon = self.forward(batch)
-        return 0.5 * self.criterion(batch, recon, reduction=reduction)
-
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
         """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
-        return 0.5 * self.criterion(batch, recon, reduction="none")
+        return self.criterion(batch, recon, reduction="none")
+
+
+class _SparseVanillaEncoder(_VanillaEncoder):
+    def _construct_layers(self, layersizes: Sequence[int]) -> nn.ModuleList:
+        r"""Utility function to generate a simple feedforward network layer.
+
+        Args:
+        ----
+            layersizes: layer size
+
+        Returns
+        -------
+            A simple feedforward network layer of type nn.ModuleList
+        """
+        layers = nn.ModuleList()
+        start_layersize = self.seq_len
+
+        for lsize in layersizes[:-1]:
+            _l = [nn.Linear(start_layersize, lsize)]
+            if self.bnorm:
+                _l.append(nn.BatchNorm1d(self.n_features))
+            layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
+            start_layersize = lsize
+
+        _l = [nn.Linear(start_layersize, layersizes[-1])]
+        if self.bnorm:
+            _l.append(nn.BatchNorm1d(self.n_features))
+        layers.extend([*_l, nn.ReLU()])
+
+        return layers
 
 
 class SparseVanillaAE(VanillaAE):
@@ -214,13 +249,45 @@ class SparseVanillaAE(VanillaAE):
 
     Args:
     ----
+        seq_len: sequence length / window length
+        n_features: num of features
+        encoder_layersizes: encoder layer size (default = Sequence[int] = (16, 8))
+        decoder_layersizes: decoder layer size (default = Sequence[int] = (8, 16))
+        dropout_p: the dropout value (default=0.25)
+        batchnorm: Flag to enable batch normalization (default=False)
         beta: Regularization factor (Defaults to 1e-3)
         rho: Sparsity parameter value (Defaults to 0.05)
-        **kwargs: VanillaAE kwargs
+        **kwargs: BaseAE kwargs
     """
 
-    def __init__(self, beta=1e-3, rho=0.05, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        seq_len: int,
+        n_features: int = 1,
+        encoder_layersizes: Sequence[int] = (16, 8),
+        decoder_layersizes: Sequence[int] = (8, 16),
+        dropout_p: float = 0.25,
+        batchnorm: bool = True,
+        beta=1e-3,
+        rho=0.05,
+        **kwargs,
+    ):
+        super().__init__(
+            seq_len,
+            n_features=n_features,
+            encoder_layersizes=encoder_layersizes,
+            decoder_layersizes=decoder_layersizes,
+            dropout_p=dropout_p,
+            batchnorm=batchnorm,
+            **kwargs,
+        )
+        self.encoder = _SparseVanillaEncoder(
+            seq_len=seq_len,
+            n_features=n_features,
+            layersizes=encoder_layersizes,
+            dropout_p=dropout_p,
+            batchnorm=batchnorm,
+        )
         self.beta = beta
         self.rho = rho
 
@@ -243,9 +310,9 @@ class SparseVanillaAE(VanillaAE):
         )
         return torch.sum(torch.clamp(kl_loss, max=1.0))
 
-    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
+    def get_reconstruction_loss(self, batch: Tensor, reduction="mean") -> Tensor:
         latent, recon = self.forward(batch)
-        loss = self.criterion(batch, recon)
+        loss = self.criterion(batch, recon, reduction=reduction)
         penalty = self.kl_divergence(latent)
         return loss + (self.beta * penalty)
 

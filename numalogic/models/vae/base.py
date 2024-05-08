@@ -47,17 +47,16 @@ class BaseVAE(TorchModel):
         optimizer = optim.Adam(self.parameters(), lr=self._lr, weight_decay=self.weight_decay)
         return {"optimizer": optimizer}
 
-    def recon_loss(self, batch: Tensor, recon: Tensor, reduction: str = "sum"):
+    def get_reconstruction_loss(self, batch: Tensor, reduction: str = "sum"):
+        _, recon = self.forward(batch)
         return self.criterion(batch, recon, reduction=reduction)
 
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
         """Validation step for the model."""
-        p, recon = self.forward(batch)
-        loss = self.recon_loss(batch, recon)
+        loss = self.get_reconstruction_loss(batch)
         self.log("val_loss", loss)
         return loss
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0) -> Tensor:
         """Prediction step for the model."""
-        p, recon = self.forward(batch)
-        return self.recon_loss(batch, recon, reduction="none")
+        return self.get_reconstruction_loss(batch, reduction="none")

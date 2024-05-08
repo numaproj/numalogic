@@ -232,7 +232,7 @@ class Conv1dVAE(BaseVAE):
         """Training step for the model."""
         p, recon = self.forward(batch)
         kld_loss = self.kld_loss(p)
-        recon_loss = self.recon_loss(batch, recon)
+        recon_loss = self.criterion(batch, recon, reduction="sum")
         train_loss = recon_loss + (self.beta * kld_loss)
         self.log_dict(
             {

@@ -51,6 +51,9 @@ class OutDataFrames:
     thresh_out: pd.DataFrame
     postproc_out: pd.DataFrame
     unified_out: pd.DataFrame
+    static_out: Optional[pd.DataFrame] = None
+    static_features: Optional[pd.DataFrame] = None
+    adjusted_unified: Optional[pd.DataFrame] = None
 
 
 class PromBacktester:
@@ -288,7 +291,7 @@ class PromBacktester:
             [np.full((len(x_test) - len(ds), 1), fill_value=np.nan), unified_scores]
         )
 
-        return self._construct_output(
+        out_dfs = self._construct_output(
             df_test,
             preproc_out=x_scaled,
             nn_out=x_recon,
@@ -296,6 +299,16 @@ class PromBacktester:
             postproc_out=feature_scores,
             unified_out=unified_scores,
         )
+        if self.nlconf.score.adjust:
+            static_scores = self.generate_static_scores(df_test)
+            out_dfs.static_out = static_scores["static_unified"]
+            out_dfs.static_features = static_scores["static_features"]
+
+            out_dfs.adjusted_unified = pd.concat(
+                [out_dfs.unified_out, out_dfs.static_out], axis=1
+            ).max(axis=1)
+
+        return out_dfs
 
     def generate_static_scores(self, df: pd.DataFrame) -> pd.DataFrame:
         if not self.nlconf.score.adjust:
@@ -319,12 +332,12 @@ class PromBacktester:
             )
         feature_scores = np.vstack(
             [
-                np.full((self.seq_len - 1, len(metrics)), fill_value=np.nan),
+                np.full((len(x_test) - len(ds), len(metrics)), fill_value=np.nan),
                 feature_scores,
             ]
         )
         unified_scores = np.vstack(
-            [np.full((self.seq_len - 1, 1), fill_value=np.nan), unified_scores]
+            [np.full((len(x_test) - len(ds), 1), fill_value=np.nan), unified_scores]
         )
         dfs = {
             "input": df,
