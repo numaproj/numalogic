@@ -24,7 +24,7 @@ RUN apt-get update \
 WORKDIR /app
 COPY poetry.lock pyproject.toml ./
 
-RUN poetry install --without dev --no-root --extras "${INSTALL_EXTRAS}"  \
+RUN poetry install --without dev --no-root --extras "redis druid rds"  \
     && poetry run pip install --no-cache-dir "torch>=2.0,<3.0" --index-url https://download.pytorch.org/whl/cpu \
     && poetry run pip install --no-cache-dir "lightning[pytorch]" \
     && rm -rf $POETRY_CACHE_DIR \
