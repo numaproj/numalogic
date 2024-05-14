@@ -30,9 +30,7 @@ from numalogic.config import (
     PreprocessFactory,
     PostprocessFactory,
     ThresholdFactory,
-    AggregatorConf,
 )
-from numalogic.config._config import AggMethod
 from numalogic.connectors import ConnectorType
 from numalogic.connectors.prometheus import PrometheusFetcher
 from numalogic.tools.data import StreamingDataset, inverse_window
@@ -269,7 +267,7 @@ class PromBacktester:
 
             unified_raw_scores[idx] = postproc_udf.compute_unified_score(
                 winscores,
-                AggregatorConf(method=AggMethod.MEAN),
+                feat_agg_conf=self.nlconf.score.feature_agg,
             )
 
             feature_scores[idx] = postproc_udf.compute_postprocess(postproc_func, winscores)

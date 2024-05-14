@@ -72,7 +72,7 @@ def expmov_avg_aggregator(
 
 
 class ExpMovingAverage(StatelessTransformer):
-    r"""Calculate the exponential moving averages for a vector.
+    r"""Calculate the exponentially weighted moving averages for per feature column.
 
     This transformation returns an array where each element "n"
     is given by the expression:
@@ -80,9 +80,6 @@ class ExpMovingAverage(StatelessTransformer):
     V(n) = (1 - beta) * beta**n * sum(x(i)/beta**i)   [for i = 1 to i = n]
 
     "1.0 - beta" denotes the weight given to the latest element.
-
-    Without bias correction, early values can tend more towards zero, since V(0) = 0
-    Bias correction helps inhibit this issue by dividing with (1 - beta**i)
 
     Args:
     ----
