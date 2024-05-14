@@ -265,7 +265,7 @@ def test_model_pass_error_01(udf, udf_args, mocker):
         RedisRegistry,
         "load",
         return_value=ArtifactData(
-            artifact=VanillaAE(seq_len=12, n_features=1),
+            artifact=VanillaAE(seq_len=10, n_features=1),
             extras=dict(version="0", timestamp=time.time(), source="registry"),
             metadata={},
         ),
@@ -282,7 +282,7 @@ def test_model_pass_error_02(udf_with_adjust, udf_args, mocker):
         RedisRegistry,
         "load",
         return_value=ArtifactData(
-            artifact=VanillaAE(seq_len=12, n_features=1),
+            artifact=VanillaAE(seq_len=10, n_features=1),
             extras=dict(version="0", timestamp=time.time(), source="registry"),
             metadata={},
         ),

@@ -36,11 +36,19 @@ class Pivot:
     index: str = "timestamp"
     columns: list[str] = field(default_factory=list)
     value: list[str] = field(default_factory=lambda: ["count"])
+    agg: list[str] = field(default_factory=lambda: ["sum"])
+
+
+@dataclass
+class FilterConf:
+    inclusion_filters: Optional[list[dict]] = None
+    exclusion_filters: Optional[list[dict]] = None
 
 
 @dataclass
 class DruidFetcherConf:
     datasource: str
+    static_filters: Optional[FilterConf] = None
     dimensions: list[str] = field(default_factory=list)
     aggregations: dict = field(default_factory=dict)
     group_by: list[str] = field(default_factory=list)

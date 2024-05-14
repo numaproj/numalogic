@@ -33,6 +33,7 @@ from numalogic.udfs._metrics import (
 )
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
+import torch
 
 _struct_log = configure_logger()
 
@@ -121,8 +122,12 @@ class TrainerUDF(NumalogicUDF):
             model, train_dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
         )
         train_reconerr = trainer.predict(
-            model, dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size)
-        ).numpy()
+            model,
+            dataloaders=DataLoader(train_ds, batch_size=trainer_cfg.batch_size),
+            unbatch=False,
+        )
+        train_reconerr = torch.mean(train_reconerr, dim=1).numpy()
+
         dict_artifacts["inference"] = KeyedArtifact(
             dkeys=[numalogic_cfg.model.name], artifact=model, stateful=numalogic_cfg.model.stateful
         )
@@ -235,12 +240,12 @@ class TrainerUDF(NumalogicUDF):
         _add_summary(
             summary=NAN_SUMMARY,
             labels=_metric_label_values,
-            data=nan_counter,
+            data=np.sum(nan_counter),
         )
         _add_summary(
             summary=INF_SUMMARY,
             labels=_metric_label_values,
-            data=inf_counter,
+            data=np.sum(inf_counter),
         )
 
         # Initialize artifacts
@@ -366,7 +371,7 @@ class TrainerUDF(NumalogicUDF):
         raw_df: pd.DataFrame,
         metrics: list[str],
         fill_value: float = 0.0,
-    ) -> tuple[npt.NDArray[float], float, float]:
+    ) -> tuple[npt.NDArray[float], pd.Series, pd.Series]:
         """
         Get feature array from the raw dataframe.
 
@@ -381,14 +386,15 @@ class TrainerUDF(NumalogicUDF):
             nan_counter: Number of nan values
             inf_counter: Number of inf values
         """
-        nan_counter = 0
-        for col in metrics:
+        nan_counter = np.zeros(len(metrics), dtype=int)
+        inf_counter = np.zeros(len(metrics), dtype=int)
+        for idx, col in enumerate(metrics):
             if col not in raw_df.columns:
                 raw_df[col] = fill_value
-                nan_counter += len(raw_df)
+                nan_counter[idx] += len(raw_df)
         feat_df = raw_df[metrics]
-        nan_counter += raw_df.isna().sum().all()
-        inf_counter = np.isinf(feat_df).sum().all()
+        nan_counter += feat_df.isna().sum()
+        inf_counter = np.isinf(feat_df).sum()
         feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
         return feat_df.to_numpy(dtype=np.float32), nan_counter, inf_counter
 

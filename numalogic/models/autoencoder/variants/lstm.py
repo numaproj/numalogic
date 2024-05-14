@@ -107,7 +107,7 @@ class LSTMAE(BaseAE):
         embedding_dim: int,
         encoder_layers: int = 1,
         decoder_layers: int = 1,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
@@ -146,7 +146,7 @@ class LSTMAE(BaseAE):
         decoded = self.decoder(encoded)
         return encoded, decoded
 
-    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
+    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0) -> Tensor:
         """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
         return self.criterion(batch, recon, reduction="none")
@@ -166,7 +166,7 @@ class SparseLSTMAE(LSTMAE):
     ----
         beta: regularization parameter (Defaults to 1e-3)
         rho: sparsity parameter value (Defaults to 0.05)
-        **kwargs: VanillaAE kwargs
+        **kwargs: LSTMAE kwargs
     """
 
     def __init__(self, beta=1e-3, rho=0.05, *args, **kwargs):
@@ -192,7 +192,7 @@ class SparseLSTMAE(LSTMAE):
         _dim = 0 if rho_hat.dim() == 1 else 1
         return kl_loss(torch.log_softmax(rho_hat, dim=_dim), torch.softmax(rho, dim=_dim))
 
-    def _get_reconstruction_loss(self, batch):
+    def get_reconstruction_loss(self, batch: Tensor, reduction="mean") -> Tensor:
         latent, recon = self.forward(batch)
         loss = self.criterion(batch, recon)
         penalty = self.kl_divergence(latent)

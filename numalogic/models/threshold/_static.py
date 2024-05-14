@@ -121,4 +121,6 @@ class SigmoidThreshold(BaseThresholdModel):
         with values being anomaly scores.
         """
         self._validate_input(x)
-        return self.score_limit / (1.0 + np.exp(-self.coeff * (x.copy() - self.upper_limits)))
+        exp_arg = -self.coeff * (x - self.upper_limits)
+        exp_arg = np.clip(exp_arg, -88.72, 88.72)
+        return self.score_limit / (1.0 + np.exp(exp_arg))

@@ -10,7 +10,7 @@ from pydruid.utils.dimensions import DimensionSpec
 from pydruid.utils.filters import Filter
 
 from numalogic.connectors._base import DataFetcher
-from numalogic.connectors._config import Pivot
+from numalogic.connectors._config import Pivot, FilterConf
 from typing import Optional, Final
 
 from numalogic.tools.exceptions import DruidFetcherError
@@ -34,6 +34,24 @@ def make_filter_pairs(filter_keys: list[str], filter_values: list[str]) -> dict[
     return dict(zip(filter_keys, filter_values))
 
 
+def _combine_in_filters(filters_list) -> Filter:
+    return Filter(type="and", fields=[Filter(**item) for item in filters_list])
+
+
+def _combine_ex_filters(filters_list) -> Filter:
+    filters = _combine_in_filters(filters_list)
+    return Filter(type="not", field=filters)
+
+
+def _make_static_filters(filters: FilterConf) -> Filter:
+    filter_list = []
+    if filters.inclusion_filters:
+        filter_list.append(_combine_in_filters(filters.inclusion_filters))
+    if filters.exclusion_filters:
+        filter_list.append(_combine_ex_filters(filters.exclusion_filters))
+    return Filter(type="and", fields=filter_list)
+
+
 def build_params(
     datasource: str,
     dimensions: list[str],
@@ -41,6 +59,7 @@ def build_params(
     granularity: str,
     hours: float,
     delay: float,
+    static_filters: Optional[FilterConf] = None,
     aggregations: Optional[list[str]] = None,
     post_aggregations: Optional[list[str]] = None,
     reference_dt: Optional[datetime] = None,
@@ -52,6 +71,7 @@ def build_params(
         dimensions: The dimensions to group by
         filter_pairs: Indicates which rows of
           data to include in the query
+        static_filters: Static filters passed from config
         granularity: Time bucket to aggregate data by hour, day, minute, etc.,
         hours: Hours from now to skip training.
         delay: Added delay to the fetch query from current time.
@@ -69,6 +89,11 @@ def build_params(
         type="and",
         fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
     )
+    if static_filters:
+        _LOGGER.debug("Static Filters are present!")
+        _static_filters = _make_static_filters(static_filters)
+        _filter = Filter(type="and", fields=[_static_filters, _filter])
+
     reference_dt = reference_dt or datetime.now(pytz.utc)
     end_dt = reference_dt - timedelta(hours=delay)
     _LOGGER.debug("Querying with end_dt: %s, that is with delay of %s hrs", end_dt, delay)
@@ -118,6 +143,7 @@ class DruidFetcher(DataFetcher):
         dimensions: list[str],
         delay: float = 3.0,
         granularity: str = "minute",
+        static_filters: Optional[FilterConf] = None,
         aggregations: Optional[dict] = None,
         post_aggregations: Optional[dict] = None,
         group_by: Optional[list[str]] = None,
@@ -135,6 +161,7 @@ class DruidFetcher(DataFetcher):
             dimensions: The dimensions to group by
             delay: Added delay to the fetch query from current time.
             granularity: Time bucket to aggregate data by hour, day, minute, etc.
+            static_filters: user defined filters
             aggregations: A map from aggregator name to one of the
                 ``pydruid.utils.aggregators`` e.g., ``doublesum``
             post_aggregations: postaggregations map
@@ -152,6 +179,7 @@ class DruidFetcher(DataFetcher):
             datasource=datasource,
             dimensions=dimensions,
             filter_pairs=filter_pairs,
+            static_filters=static_filters,
             granularity=granularity,
             hours=hours,
             delay=delay,
@@ -169,12 +197,16 @@ class DruidFetcher(DataFetcher):
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
 
-        if pivot and pivot.columns:
-            df = df.pivot(
-                index=pivot.index,
-                columns=pivot.columns,
-                values=pivot.value,
-            )
+        # TODO: performance review
+        if pivot:
+            pivoted_frames = []
+            for idx, column in enumerate(pivot.columns):
+                _df = df.pivot_table(
+                    index=pivot.index, columns=[column], values=pivot.value, aggfunc=pivot.agg[idx]
+                )
+                pivoted_frames.append(_df)
+
+            df = pd.concat(pivoted_frames, axis=1, join="outer")
             df.columns = df.columns.map("{0[1]}".format)
             df.reset_index(inplace=True)
 
@@ -193,6 +225,7 @@ class DruidFetcher(DataFetcher):
         dimensions: list[str],
         delay: float = 3.0,
         granularity: str = "minute",
+        static_filter: Optional[FilterConf] = None,
         aggregations: Optional[dict] = None,
         post_aggregations: Optional[dict] = None,
         group_by: Optional[list[str]] = None,
@@ -213,6 +246,7 @@ class DruidFetcher(DataFetcher):
             granularity: Time bucket to aggregate data by hour, day, minute, etc.
             aggregations: A map from aggregator name to one of the
                 ``pydruid.utils.aggregators`` e.g., ``doublesum``
+            static_filter: user defined filters
             post_aggregations: postaggregations map
             group_by: List of columns to group by
             pivot: Pivot configuration
@@ -245,6 +279,7 @@ class DruidFetcher(DataFetcher):
                     datasource=datasource,
                     dimensions=dimensions,
                     filter_pairs=filter_pairs,
+                    static_filters=static_filter,
                     granularity=granularity,
                     hours=min(chunked_hours, hours - hours_elapsed),
                     delay=delay,
@@ -259,21 +294,22 @@ class DruidFetcher(DataFetcher):
         _LOGGER.debug("Fetching data concurrently with %s threads", max_threads)
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
             futures = [executor.submit(self._fetch, **params) for params in qparams]
-            for future in futures:
-                chunked_dfs.append(future.result())
-
+            chunked_dfs.extend(future.result() for future in futures)
         df = pd.concat(chunked_dfs, axis=0, ignore_index=True)
         df["timestamp"] = pd.to_datetime(df["timestamp"]).astype("int64") // 10**6
 
         if group_by:
             df = df.groupby(by=group_by).sum().reset_index()
 
-        if pivot and pivot.columns:
-            df = df.pivot(
-                index=pivot.index,
-                columns=pivot.columns,
-                values=pivot.value,
-            )
+        if pivot:
+            pivoted_frames = []
+            for idx, column in enumerate(pivot.columns):
+                _df = df.pivot_table(
+                    index=pivot.index, columns=[column], values=pivot.value, aggfunc=pivot.agg[idx]
+                )
+                pivoted_frames.append(_df)
+
+            df = pd.concat(pivoted_frames, axis=1, join="outer")
             df.columns = df.columns.map("{0[1]}".format)
             df.reset_index(inplace=True)
 
