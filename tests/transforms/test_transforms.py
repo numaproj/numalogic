@@ -2,7 +2,12 @@ import warnings
 
 import numpy as np
 import pytest
-from numpy.testing import assert_almost_equal, assert_array_less, assert_array_equal
+from numpy.testing import (
+    assert_almost_equal,
+    assert_array_less,
+    assert_array_equal,
+    assert_allclose,
+)
 from sklearn.pipeline import make_pipeline
 
 from numalogic.base import StatelessTransformer
@@ -14,6 +19,7 @@ from numalogic.transforms import (
     GaussianNoiseAdder,
     DifferenceTransform,
     FlattenVector,
+    PercentileScaler,
 )
 
 RNG = np.random.default_rng(42)
@@ -171,3 +177,12 @@ def test_flattenvector():
 
     assert data.shape[1] == 1
     assert clf.inverse_transform(data).shape[1] == 2
+
+
+def test_percentile_scaler():
+    x = np.abs(RNG.random((10, 3)))
+    tx = PercentileScaler(max_percentile=99, eps=1e-6)
+    x_ = tx.fit_transform(x)
+    assert x.shape == x_.shape
+    assert_allclose(tx.data_pth_max, np.percentile(x, 99, axis=0))
+    assert_allclose(tx.data_pth_min, np.min(x, axis=0))
