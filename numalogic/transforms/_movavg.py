@@ -104,9 +104,9 @@ class ExpMovingAverage(StatelessTransformer):
         ----
             input_: input column vector
 
-        Raises
-        ------
-            InvalidDataShapeError: if input array is not single featured
+        Returns
+        -------
+            Transformed output
         """
         x_df = pd.DataFrame(input_, dtype=np.float32, copy=True)
         x_smoothed = x_df.ewm(alpha=self.alpha).mean().to_numpy(dtype=np.float32)
