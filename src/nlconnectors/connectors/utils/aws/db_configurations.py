@@ -2,12 +2,12 @@ import logging
 
 from numalogic.tools.exceptions import ConfigNotFoundError
 from omegaconf import OmegaConf
-from connectors import RDSConfig
+from numalogic.connectors.utils.aws.config import RDSConnectionConfig
 
 _LOGGER = logging.getLogger(__name__)
 
 
-def load_db_conf(*paths: str) -> RDSConfig:
+def load_db_conf(*paths: str) -> RDSConnectionConfig:
     """
     Load database configuration from one or more YAML files.
 
@@ -38,6 +38,6 @@ def load_db_conf(*paths: str) -> RDSConfig:
         _err_msg = f"None of the given conf paths exist: {paths}"
         raise ConfigNotFoundError(_err_msg)
 
-    schema = OmegaConf.structured(RDSConfig)
+    schema = OmegaConf.structured(RDSConnectionConfig)
     conf = OmegaConf.merge(schema, *confs)
     return OmegaConf.to_object(conf)

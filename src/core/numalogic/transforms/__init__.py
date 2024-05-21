@@ -14,7 +14,7 @@ Module to provide timeseries transformations needed for preprocessing,
 feature engineering and postprocessing.
 """
 
-from numalogic.transforms._scaler import TanhScaler
+from numalogic.transforms._scaler import TanhScaler, PercentileScaler
 from numalogic.transforms._stateless import (
     LogTransformer,
     StaticPowerTransformer,
@@ -24,7 +24,7 @@ from numalogic.transforms._stateless import (
     FlattenVector,
 )
 from numalogic.transforms._movavg import ExpMovingAverage, expmov_avg_aggregator
-from numalogic.transforms._postprocess import TanhNorm, tanh_norm
+from numalogic.transforms._postprocess import TanhNorm, tanh_norm, SigmoidNorm
 
 __all__ = [
     "TanhScaler",
@@ -38,4 +38,6 @@ __all__ = [
     "GaussianNoiseAdder",
     "DifferenceTransform",
     "FlattenVector",
+    "PercentileScaler",
+    "SigmoidNorm",
 ]

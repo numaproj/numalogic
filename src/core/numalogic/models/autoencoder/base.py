@@ -12,10 +12,10 @@
 
 from typing import Any
 
-import torch.nn.functional as F
 from torch import Tensor, optim
 
 from numalogic.base import TorchModel
+from numalogic.tools.loss import get_loss_fn
 
 
 class BaseAE(TorchModel):
@@ -41,18 +41,8 @@ class BaseAE(TorchModel):
         super().__init__()
         self.lr = lr
         self.optim_algo = optim_algo
-        self.criterion = self.init_criterion(loss_fn)
+        self.criterion = get_loss_fn(loss_fn)
         self.weight_decay = weight_decay
-
-    @staticmethod
-    def init_criterion(loss_fn: str):
-        if loss_fn == "huber":
-            return F.huber_loss
-        if loss_fn == "l1":
-            return F.l1_loss
-        if loss_fn == "mse":
-            return F.mse_loss
-        raise NotImplementedError(f"Unsupported loss function provided: {loss_fn}")
 
     def init_optimizer(self, optim_algo: str):
         if optim_algo == "adam":
@@ -67,9 +57,9 @@ class BaseAE(TorchModel):
         """Method to configure the batch shape for each type of model architecture."""
         return x
 
-    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
+    def get_reconstruction_loss(self, batch: Tensor, reduction="mean") -> Tensor:
         _, recon = self.forward(batch)
-        return self.criterion(batch, recon)
+        return self.criterion(batch, recon, reduction=reduction)
 
     def reconstruction(self, batch: Tensor) -> Tensor:
         _, recon = self.forward(batch)
@@ -80,11 +70,11 @@ class BaseAE(TorchModel):
         return {"optimizer": optimizer}
 
     def training_step(self, batch: Tensor, batch_idx: int) -> Tensor:
-        recon_loss = self._get_reconstruction_loss(batch)
+        recon_loss = self.get_reconstruction_loss(batch)
         self.log("train_loss", recon_loss, on_epoch=True, on_step=False)
         return recon_loss
 
     def validation_step(self, batch: Tensor, batch_idx: int) -> Tensor:
-        recon_loss = self._get_reconstruction_loss(batch)
+        recon_loss = self.get_reconstruction_loss(batch)
         self.log("val_loss", recon_loss)
         return recon_loss

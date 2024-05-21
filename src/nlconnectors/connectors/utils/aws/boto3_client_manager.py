@@ -2,9 +2,9 @@ import boto3
 from boto3 import Session
 import logging
 
-from connectors import DatabaseServiceProvider, RDSConfig
-from connectors import UnRecognizedAWSClientException
-from connectors import STSClientManager
+from numalogic.connectors.utils.aws.config import DatabaseServiceProvider, RDSConnectionConfig
+from numalogic.connectors.utils.aws.exceptions import UnRecognizedAWSClientException
+from numalogic.connectors.utils.aws.sts_client_manager import STSClientManager
 
 logging.basicConfig(level=logging.INFO)
 _LOGGER = logging.getLogger(__name__)
@@ -30,7 +30,7 @@ class Boto3ClientManager:
     methods.
     """
 
-    def __init__(self, configurations: RDSConfig):
+    def __init__(self, configurations: RDSConnectionConfig):
         self.rds_client = None
         self.athena_client = None
         self.configurations = configurations

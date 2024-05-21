@@ -48,3 +48,13 @@ class TanhNorm(StatelessTransformer):
 
     def transform(self, input_: npt.NDArray[float], **__) -> npt.NDArray[float]:
         return tanh_norm(input_, scale_factor=self.scale_factor, smooth_factor=self.smooth_factor)
+
+
+class SigmoidNorm(StatelessTransformer):
+    def __init__(self, scale_factor: float = 10.0, smooth_factor: float = 0.5):
+        super().__init__()
+        self.scale_factor = scale_factor
+        self.smooth_factor = smooth_factor
+
+    def transform(self, x: npt.NDArray[float], **__) -> npt.NDArray[float]:
+        return self.scale_factor / (1.0 + np.exp(5 - (self.smooth_factor * x)))

@@ -3,7 +3,7 @@ from connectors import (
     AWSConfig,
     SSLConfig,
     RDBMSConfig,
-    RDSConfig,
+    RDSConnectionConfig,
 )
 
 
@@ -39,7 +39,7 @@ def test_rdbms_config():
 
 
 def test_rds_config():
-    rds = RDSConfig(
+    rds = RDSConnectionConfig(
         aws_assume_role_arn="arn:aws:iam::123456789012:role/roleName",
         aws_assume_role_session_name="Session",
         aws_region="us-west-2",

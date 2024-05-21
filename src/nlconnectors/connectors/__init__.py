@@ -7,6 +7,8 @@ from connectors import (
     DruidConf,
     DruidFetcherConf,
     ConnectorType,
+    RDSConf,
+    RDSFetcherConf,
 )
 from connectors import PrometheusFetcher
 
@@ -18,8 +20,15 @@ __all__ = [
     "DruidFetcherConf",
     "ConnectorType",
     "PrometheusFetcher",
+    "RDSFetcher",
+    "RDSConf",
+    "RDSFetcherConf",
 ]
 
+if find_spec("boto3"):
+    from numalogic.connectors.rds import RDSFetcher  # noqa: F401
+
+    __all__.append("RDSFetcher")
 
 if find_spec("pydruid"):
     from connectors import DruidFetcher  # noqa: F401

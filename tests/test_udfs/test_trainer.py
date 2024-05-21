@@ -425,6 +425,15 @@ class TestDruidTrainerUDF(unittest.TestCase):
         train_dedup.ack_insufficient_data([*self.keys, "pipeline1"], "some-uuid", train_records=180)
         self.assertLogs("RedisError")
 
+    @patch("redis.Redis.hset", Mock(side_effect=mock_druid_fetch_data()))
+    def test_TrainMsgDeduplicator_insufficent_data(self):
+        with self.assertLogs(level="DEBUG") as log:
+            train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
+            train_dedup.ack_insufficient_data(
+                [*self.keys, "pipeline1"], "some-uuid", train_records=180
+            )
+        self.assertLogs("Acknowledging insufficient data for the key", log.output[-1])
+
     @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_2(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)

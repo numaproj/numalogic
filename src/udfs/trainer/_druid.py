@@ -120,6 +120,7 @@ class DruidTrainerUDF(TrainerUDF):
                 datasource=_fetcher_conf.datasource,
                 filter_keys=_stream_conf.composite_keys,
                 filter_values=payload.composite_keys,
+                static_filters=_fetcher_conf.static_filters,
                 dimensions=list(_fetcher_conf.dimensions),
                 delay=self.dataconn_conf.delay_hrs,
                 granularity=_fetcher_conf.granularity,

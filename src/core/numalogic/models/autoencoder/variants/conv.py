@@ -202,6 +202,7 @@ class Conv1dAE(BaseAE):
         dec_activation: The final activation for the decoder
                         Supported values include: ("sigmoid", "tanh", "relu")
                         If None then no output activation is added
+        **kwargs: BaseAE kwargs
 
     Note: Length of list/tuple of enc_channels and enc_kernel_sizes must be equal
     """
@@ -284,10 +285,6 @@ class Conv1dAE(BaseAE):
         batch = self.configure_shape(batch)
         return self.encoder(batch)
 
-    def _get_reconstruction_loss(self, batch: Tensor) -> Tensor:
-        _, recon = self.forward(batch)
-        return self.criterion(batch, recon)
-
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0) -> Tensor:
         """Returns reconstruction for streaming input."""
         recon = self.reconstruction(batch)
@@ -308,7 +305,7 @@ class SparseConv1dAE(Conv1dAE):
     ----
         beta: Penalty factor (Defaults to 1e-3)
         rho: Sparsity parameter value (Defaults to 0.05)
-        **kwargs: VanillaAE kwargs
+        **kwargs: Conv1dAE kwargs
     """
 
     def __init__(self, beta: float = 1e-3, rho: float = 0.05, *args, **kwargs):
@@ -335,7 +332,7 @@ class SparseConv1dAE(Conv1dAE):
         )
         return torch.sum(torch.clamp(kl_loss, max=1.0))
 
-    def _get_reconstruction_loss(self, batch) -> Tensor:
+    def get_reconstruction_loss(self, batch: Tensor, reduction="mean") -> Tensor:
         latent, recon = self.forward(batch)
         loss = self.criterion(batch, recon)
         penalty = self.kl_divergence(latent)

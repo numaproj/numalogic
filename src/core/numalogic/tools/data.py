@@ -191,7 +191,7 @@ class StreamingDataset(IterableDataset):
             return np.stack(output)
         if idx >= len(self):
             raise IndexError(f"{idx} out of bound!")
-        return self._data[idx : idx + self._seq_len]
+        return self._data[(idx * self._stride) : (idx * self._stride) + self._seq_len]
 
 
 class StreamingDataLoader(DataLoader):

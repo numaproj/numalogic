@@ -96,6 +96,45 @@ def mock_group_by_doubles_sketch(mocker):
     mocker.patch.object(PyDruid, "groupby", side_effect=group_by)
 
 
+@pytest.fixture
+def mock_group_by_multi_column(mocker):
+    """Creates a Mock for PyDruid's groupby method for doubles sketch."""
+
+    def group_by(*_, **__):
+        """Mock group by response for doubles sketch from druid."""
+        result = [
+            {
+                "event": {
+                    "service_alias": "identity.authn.signin",
+                    "env": "prod",
+                    "status": 200,
+                    "http_status": "2xx",
+                    "gw_gen": "T",
+                    "count": 20,
+                },
+                "timestamp": "2023-09-06T07:50:00.000Z",
+                "version": "v1",
+            },
+            {
+                "event": {
+                    "service_alias": "identity.authn.signin",
+                    "env": "prod",
+                    "status": 500,
+                    "http_status": "5xx",
+                    "gw_gen": "T",
+                    "count": 10,
+                },
+                "timestamp": "2023-09-06T07:53:00.000Z",
+                "version": "v1",
+            },
+        ]
+        query = pydruid.query.Query(query_dict={}, query_type="groupBy")
+        query.parse(json.dumps(result))
+        return query
+
+    mocker.patch.object(PyDruid, "groupby", side_effect=group_by)
+
+
 def test_fetch(setup, mock_group_by):
     start, end, fetcher = setup
     _out = fetcher.fetch(
@@ -251,3 +290,24 @@ def test_chunked_fetch_err(get_args):
             **get_args,
             chunked_hours=0,
         )
+
+
+def test_multi_column_pivot(setup, mock_group_by_multi_column):
+    start, end, fetcher = setup
+    _out = fetcher.fetch(
+        filter_keys=["authtype", "slane"],
+        filter_values=["browserUserAgent", "sw1"],
+        dimensions=["http_status", "status", "gw_gen"],
+        datasource="ip-apigw-telegraf-druid",
+        aggregations={"count": aggregators.doublesum("count")},
+        group_by=["timestamp", "http_status", "status", "gw_gen"],
+        hours=2,
+        pivot=Pivot(
+            index="timestamp",
+            columns=["http_status", "status", "gw_gen"],
+            value=["count"],
+            agg=["sum", "sum", "count"],
+        ),
+    )
+    print(_out)
+    assert (2, 6) == _out.shape
