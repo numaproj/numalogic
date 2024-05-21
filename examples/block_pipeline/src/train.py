@@ -12,7 +12,7 @@ from numalogic.blocks import (
 from numalogic.models.autoencoder.variants import SparseVanillaAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.udfs import NumalogicUDF
-from numalogic.registry import RedisRegistry
+from registry import RedisRegistry
 from numalogic.transforms import TanhNorm
 from pynumaflow.function import Datum, Messages, Message
 from sklearn.preprocessing import StandardScaler
@@ -23,7 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class Train(NumalogicUDF):
-    """UDF to train the model and save it to the registry."""
+    """UDF to train the model and save it to the test_registry."""
 
     ttl_cache = TTLCache(maxsize=16, ttl=60)
 
@@ -35,7 +35,7 @@ class Train(NumalogicUDF):
         self._model_key = "sparsevanillae"
 
     def exec(self, keys: list[str], datum: Datum) -> Messages:
-        """The train function here trains the model and saves it to the registry."""
+        """The train function here trains the model and saves it to the test_registry."""
         # Check if a training message has been received very recently
         if self._model_key in self.ttl_cache:
             return Messages(Message.to_drop())
@@ -56,9 +56,9 @@ class Train(NumalogicUDF):
         )
         block_pl.fit(data)
 
-        # Save the model to the registry
+        # Save the model to the test_registry
         block_pl.save(skeys=["blockpl"], dkeys=["sparsevanillae"])
-        _LOGGER.info("Model saved to registry")
+        _LOGGER.info("Model saved to test_registry")
 
         # Train vertex is the last vertex in the pipeline
         return Messages(Message.to_drop())

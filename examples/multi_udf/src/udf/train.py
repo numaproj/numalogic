@@ -8,7 +8,7 @@ from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.models.autoencoder.variants import Conv1dAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.udfs import NumalogicUDF
-from numalogic.registry import MLflowRegistry
+from registry import MLflowRegistry
 from numalogic.tools.data import TimeseriesDataModule
 from numalogic.transforms import LogTransformer
 from pynumaflow.function import Datum, Messages, Message
@@ -24,7 +24,7 @@ MAX_EPOCHS = int(os.getenv("MAX_EPOCHS", "50"))
 
 
 class Trainer(NumalogicUDF):
-    """UDF to train the model and save it in the registry."""
+    """UDF to train the model and save it in the test_registry."""
 
     ttl_cache = cachetools.TTLCache(maxsize=128, ttl=120 * 60)
 
@@ -36,7 +36,7 @@ class Trainer(NumalogicUDF):
     def _save_artifact(
         self, model, skeys: list[str], dkeys: list[str], _: Optional[TimeseriesTrainer] = None
     ) -> None:
-        """Saves the model in the registry."""
+        """Saves the model in the test_registry."""
         self.registry.save(skeys=skeys, dkeys=dkeys, artifact=model)
 
     @staticmethod
@@ -55,7 +55,7 @@ class Trainer(NumalogicUDF):
         """
         The train function here receives data from inference step.
         This step preprocesses, trains and saves a 1-D
-        Convolution AE model into the registry.
+        Convolution AE model into the test_registry.
 
         For more information about the arguments, refer:
         https://github.com/numaproj/numaflow-python/blob/main/pynumaflow/function/_dtypes.py
@@ -92,7 +92,7 @@ class Trainer(NumalogicUDF):
         # Train the threshold model
         thresh_clf = self._fit_threshold(train_reconerr.numpy())
 
-        # Save to registry
+        # Save to test_registry
         self._save_artifact(model, ["ae"], ["model"], trainer)
         self._save_artifact(thresh_clf, ["thresh_clf"], ["model"])
         LOGGER.info("%s - Model Saving complete", payload.uuid)
