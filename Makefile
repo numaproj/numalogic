@@ -1,12 +1,3 @@
-# Check Python
-PYTHON:=$(shell command -v python 2> /dev/null)
-ifndef PYTHON
-PYTHON:=$(shell command -v python3 2> /dev/null)
-endif
-ifndef PYTHON
-$(error "Python is not available, please install.")
-endif
-
 clean:
 	@rm -rf build dist .eggs *.egg-info
 	@rm -rf .benchmarks .coverage coverage.xml htmlcov report.xml .tox
@@ -23,7 +14,7 @@ lint: format
 
 # install all dependencies
 setup:
-	poetry install --with dev,torch,jupyter --all-extras
+	pip install -v -e '.[dev,jupyter]' --config-settings editable_mode=strict
 
 # test your application (tests in the tests/ directory)
 test:

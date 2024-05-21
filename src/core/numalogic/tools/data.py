@@ -128,7 +128,9 @@ class StreamingDataset(IterableDataset):
         self._data = data.astype(np.float32)
         self._stride = stride
         _LOGGER.info(
-            "StreamingDataset initialized with seq_len: %s, stride: %s", self._seq_len, self._stride
+            "StreamingDataset initialized with seq_len: %s, stride: %s",
+            self._seq_len,
+            self._stride,
         )
 
     @property
@@ -192,6 +194,61 @@ class StreamingDataset(IterableDataset):
         if idx >= len(self):
             raise IndexError(f"{idx} out of bound!")
         return self._data[(idx * self._stride) : (idx * self._stride) + self._seq_len]
+
+
+class ForecastDataset(StreamingDataset):
+    """
+    A Dataset for generating sequences for forecasting tasks.
+
+    Args:
+    ----
+        data: A numpy array containing the input data in the shape of (batch, num_features).
+        seq_len: Length of the sliding window sequences to be generated from the input data
+        horizon: The forecast horizon
+        stride: Stride to jump between sequences; defaults to 1
+    """
+
+    def __init__(self, data: npt.NDArray[float], seq_len: int, horizon: int, stride: int = 1):
+        super().__init__(data, seq_len, stride=stride)
+        self.horizon = horizon
+
+    def create_seq(
+        self, input_: npt.NDArray[float]
+    ) -> Generator[tuple[npt.NDArray[float], npt.NDArray[float]], None, None]:
+        r"""Yields sequences of specified length from the input data.
+
+        Args:
+        ----
+            input_: A numpy array containing the input data.
+
+        Yields
+        ------
+            A tuple of subarray of size (seq_len, num_features)
+            and forecast horizon of size (seq_len, num_features)
+            from the input data.
+        """
+        idx = 0
+        while idx < len(self._data) - self._seq_len - self.horizon + 1:
+            yield (
+                input_[idx : idx + self._seq_len],
+                input_[idx + self._seq_len : idx + self._seq_len + self.horizon],
+            )
+            idx += self._stride
+
+    def __getitem__(self, idx: int) -> npt.NDArray[float]:
+        r"""Retrieves a sequence from the input data at the specified index."""
+        if isinstance(idx, slice):
+            raise NotImplementedError("Slicing not supported!")
+        if idx >= len(self):
+            raise IndexError(f"{idx} out of bound!")
+        return (
+            self._data[idx : idx + self._seq_len],
+            self._data[idx + self._seq_len : idx + self._seq_len + self.horizon],
+        )
+
+    def __len__(self) -> int:
+        r"""Returns the number of sequences that can be generated from the input data."""
+        return (len(self._data) - self._seq_len - self.horizon) // self._stride + 1
 
 
 class StreamingDataLoader(DataLoader):
