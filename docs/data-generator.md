@@ -11,7 +11,7 @@ Using the synthetic data, we can:
 ### Generate multivariate timeseries
 
 ```python
-from src.core.numalogic.synthetic import SyntheticTSGenerator
+from numalogic.synthetic import SyntheticTSGenerator
 
 ts_generator = SyntheticTSGenerator(
     seq_len=8000,
@@ -49,7 +49,7 @@ Now, once we generate the synthetic data like above, we can inject anomalies int
 You can also use `anomaly_ratio` to adjust the ratio of anomalous data points  wrt number of samples.
 
 ```python
-from src.core.numalogic.synthetic import AnomalyGenerator
+from numalogic.synthetic import AnomalyGenerator
 
 # columns to inject anomalies
 injected_cols = ["s1", "s2"]

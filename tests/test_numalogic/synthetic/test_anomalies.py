@@ -2,7 +2,7 @@ import unittest
 
 from matplotlib import pyplot as plt
 
-from src.core.numalogic.synthetic import AnomalyGenerator, SyntheticTSGenerator
+from numalogic.synthetic import AnomalyGenerator, SyntheticTSGenerator
 
 
 class TestAnomalyGenerator(unittest.TestCase):

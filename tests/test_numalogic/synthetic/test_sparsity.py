@@ -1,7 +1,7 @@
 import copy
 import unittest
 
-from src.core.numalogic.synthetic import SyntheticTSGenerator, SparsityGenerator
+from numalogic.synthetic import SyntheticTSGenerator, SparsityGenerator
 
 
 class Testsparsity(unittest.TestCase):

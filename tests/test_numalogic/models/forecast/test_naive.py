@@ -1,6 +1,6 @@
 import unittest
 
-from src.core.numalogic.synthetic import SyntheticTSGenerator
+from numalogic.synthetic import SyntheticTSGenerator
 from numalogic.models.forecast.variants import (
     BaselineForecaster,
     SeasonalNaiveForecaster,
