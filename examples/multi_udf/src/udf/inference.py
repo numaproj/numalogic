@@ -4,7 +4,7 @@ import os
 import numpy.typing as npt
 from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.udfs import NumalogicUDF
-from numalogic.registry import MLflowRegistry, ArtifactData
+from registry import MLflowRegistry, ArtifactData
 from numalogic.tools.data import StreamingDataset
 from pynumaflow.function import Messages, Message, Datum
 from torch.utils.data import DataLoader
@@ -27,7 +27,7 @@ class Inference(NumalogicUDF):
         self.registry = MLflowRegistry(tracking_uri=TRACKING_URI)
 
     def load_model(self) -> ArtifactData:
-        """Loads the model from the registry."""
+        """Loads the model from the test_registry."""
         return self.registry.load(skeys=["ae"], dkeys=["model"])
 
     @staticmethod
@@ -43,7 +43,7 @@ class Inference(NumalogicUDF):
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         Here inference is done on the data, given, the ML model is present
-        in the registry. If a model does not exist, the payload is flagged for training.
+        in the test_registry. If a model does not exist, the payload is flagged for training.
         It then passes to the threshold vertex.
 
         For more information about the arguments, refer:
