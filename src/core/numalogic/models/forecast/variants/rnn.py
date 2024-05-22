@@ -53,7 +53,7 @@ class GRUForecaster(pl.LightningModule):
         self.log("train_loss", loss, on_epoch=True, on_step=False)
         return loss
 
-    def predict_step(self, batch: tuple[Tensor, Tensor], batch_idx: int | None) -> Tensor:
+    def predict_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> Tensor:
         x, y = batch
         return self.forward(x)
 
@@ -111,6 +111,6 @@ class GRUIntervalForecaster(pl.LightningModule):
         self.log("train_loss", loss, on_epoch=True, on_step=False)
         return loss
 
-    def predict_step(self, batch: tuple[Tensor, Tensor], batch_idx: int | None) -> Tensor:
+    def predict_step(self, batch: tuple[Tensor, Tensor], batch_idx: int) -> Tensor:
         x, y = batch
         return self.forward(x)
