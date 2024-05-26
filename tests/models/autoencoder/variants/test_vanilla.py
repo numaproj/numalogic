@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from numalogic._constants import TESTS_DIR
 from numalogic.tools.data import StreamingDataset, TimeseriesDataModule
 from numalogic.tools.trainer import TimeseriesTrainer
-from numalogic.models.autoencoder.variants.vanilla import VanillaAE, SparseVanillaAE
+from numalogic.models.autoencoder.variants.vanilla import VanillaAE, SparseVanillaAE, MultichannelAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
 
 ROOT_DIR = os.path.join(TESTS_DIR, "resources", "data")
@@ -49,6 +49,30 @@ class TESTVanillaAE(unittest.TestCase):
         model = SparseVanillaAE(
             seq_len=SEQ_LEN, n_features=self.X_train.shape[1], loss_fn="l1", optim_algo="adagrad"
         )
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
+        trainer = TimeseriesTrainer(fast_dev_run=True, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = TimeseriesTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
+        self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
+
+    def test_multichannel_encoderinfo(self):
+        model = MultichannelAE(seq_len=SEQ_LEN, n_channels=2, encoderinfo=True)
+
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
+        trainer = TimeseriesTrainer(fast_dev_run=True, enable_progress_bar=True)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = TimeseriesTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
+        self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
+
+    def test_multichannel_no_encoderinfo(self):
+        model = MultichannelAE(seq_len=SEQ_LEN, n_channels=2, encoderinfo=False)
+
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = TimeseriesTrainer(fast_dev_run=True, enable_progress_bar=True)
         trainer.fit(model, datamodule=datamodule)
