@@ -210,8 +210,8 @@ class VanillaAE(BaseAE):
 
 
 class MultichannelAE(BaseAE):
-    r"""Multichannel Autoencoder model based on the vanilla encoder and decoder. Each channel is an isolated
-        neural network
+    r"""Multichannel Autoencoder model based on the vanilla encoder and decoder.
+        Each channel is an isolated neural network.
 
     Args:
     ----
@@ -221,7 +221,8 @@ class MultichannelAE(BaseAE):
         decoder_layersizes: decoder layer size (default = Sequence[int] = (8, 16))
         dropout_p: the dropout value (default=0.25)
         batchnorm: Flag to enable batch normalization (default=False)
-        encoderinfo: Flag to enable returning encoder information in the "forward" step (default=False)
+        encoderinfo: Flag to enable returning encoder information in the "forward" step
+                    (default=False)
         **kwargs: BaseAE kwargs
     """
 
