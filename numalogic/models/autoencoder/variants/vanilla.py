@@ -226,15 +226,15 @@ class MultichannelAE(BaseAE):
     """
 
     def __init__(
-            self,
-            seq_len: int,
-            n_channels: int,
-            encoder_layersizes: Sequence[int] = (16, 8),
-            decoder_layersizes: Sequence[int] = (8, 16),
-            dropout_p: float = 0.25,
-            batchnorm: bool = False,
-            encoderinfo: bool = False,
-            **kwargs,
+        self,
+        seq_len: int,
+        n_channels: int,
+        encoder_layersizes: Sequence[int] = (16, 8),
+        decoder_layersizes: Sequence[int] = (8, 16),
+        dropout_p: float = 0.25,
+        batchnorm: bool = False,
+        encoderinfo: bool = False,
+        **kwargs,
     ):
         super().__init__(**kwargs)
         self.seq_len = seq_len
