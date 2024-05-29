@@ -27,14 +27,13 @@ def cd(newdir):
 
 pkg_name = os.getenv("PKG_NAME", "numalogic")
 if pkg_name == "numalogic":
-    with cd("src/core"):
+    with cd("libs/core"):
         setup()
-
-elif pkg_name == "connectors":
-    setup_module = _load_py_module(
-        name="connectors_setup", location="src/test_connectors/__setup__.py"
-    )
-elif pkg_name == "registry":
-    setup_module = _load_py_module(name="registry_setup", location="src/test_registry/__setup__.py")
+elif pkg_name == "nlconnectors":
+    with cd("libs/connectors"):
+        setup()
+elif pkg_name == "nlregistry":
+    with cd("libs/registry"):
+        setup()
 else:
     raise ValueError(f"Invalid package name {pkg_name}")
