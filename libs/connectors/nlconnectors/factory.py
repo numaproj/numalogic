@@ -7,9 +7,7 @@ from numalogic.tools.exceptions import UnknownConfigArgsError
 class ConnectorFactory(_ObjectFactory):
     """Factory class for data test_connectors."""
 
-    _CLS_SET: ClassVar[frozenset] = frozenset(
-        {"PrometheusFetcher", "DruidFetcher", "RDSFetcher"}
-    )
+    _CLS_SET: ClassVar[frozenset] = frozenset({"PrometheusFetcher", "DruidFetcher", "RDSFetcher"})
 
     @classmethod
     def get_cls(cls, name: str):

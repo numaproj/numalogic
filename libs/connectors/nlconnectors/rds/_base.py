@@ -40,9 +40,7 @@ def format_dataframe(
 
     """
     _start_time = time.perf_counter()
-    df["timestamp"] = (
-        pd.to_datetime(df[datetime_column_name]).astype("int64") // 10**6
-    )
+    df["timestamp"] = pd.to_datetime(df[datetime_column_name]).astype("int64") // 10**6
     df.drop(columns=datetime_column_name, inplace=True)
     if group_by:
         df = df.groupby(by=group_by).sum().reset_index()

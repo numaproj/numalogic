@@ -157,9 +157,7 @@ class MLflowRegistry(ArtifactManager):
         model_key = self.construct_key(skeys, dkeys)
 
         if (latest and version) or (not latest and not version):
-            raise ValueError(
-                "Either One of 'latest' or 'version' needed in load method call"
-            )
+            raise ValueError("Either One of 'latest' or 'version' needed in load method call")
 
         try:
             if latest:
@@ -167,30 +165,20 @@ class MLflowRegistry(ArtifactManager):
                 if cached_artifact:
                     _LOGGER.debug("Found cached artifact for key: %s", model_key)
                     return cached_artifact
-                version_info = self.client.get_latest_versions(
-                    model_key, stages=[self.model_stage]
-                )
+                version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
                 if not version_info:
-                    raise ModelVersionError(
-                        "Model version missing for key = %s" % model_key
-                    )
+                    raise ModelVersionError("Model version missing for key = %s" % model_key)
                 version_info = version_info[-1]
             else:
                 version_info = self.client.get_model_version(model_key, version)
-            model, metadata = self.__load_artifacts(
-                skeys, dkeys, version_info, artifact_type
-            )
+            model, metadata = self.__load_artifacts(skeys, dkeys, version_info, artifact_type)
         except RestException as mlflow_err:
             return self.__log_mlflow_err(mlflow_err, model_key)
         except ModelVersionError:
-            _LOGGER.exception(
-                "No Model found found in model stage: %s", self.model_stage
-            )
+            _LOGGER.exception("No Model found found in model stage: %s", self.model_stage)
             return None
         except Exception:
-            _LOGGER.exception(
-                "Unexpected error while Registry loading with key: %s", model_key
-            )
+            _LOGGER.exception("Unexpected error while Registry loading with key: %s", model_key)
             return None
         else:
             artifact_data = ArtifactData(
@@ -243,9 +231,7 @@ class MLflowRegistry(ArtifactManager):
                 mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
         except Exception:
-            _LOGGER.exception(
-                "Unhandled error when saving a model with key: %s", model_key
-            )
+            _LOGGER.exception("Unhandled error when saving a model with key: %s", model_key)
             return None
         else:
             _LOGGER.info("Successfully inserted model %s to Mlflow", model_key)
@@ -322,9 +308,7 @@ class MLflowRegistry(ArtifactManager):
             # only keep "models_to_retain" number of models.
             self.__delete_stale_models(skeys=skeys, dkeys=dkeys)
         except RestException:
-            _LOGGER.exception(
-                "Error when transitioning a model: %s to different stage", model_name
-            )
+            _LOGGER.exception("Error when transitioning a model: %s to different stage", model_name)
             return None
         else:
             _LOGGER.info("Successfully transitioned model to Production stage")
@@ -332,9 +316,7 @@ class MLflowRegistry(ArtifactManager):
 
     def __delete_stale_models(self, skeys: KEYS, dkeys: KEYS):
         model_name = self.construct_key(skeys, dkeys)
-        list_model_versions = list(
-            self.client.search_model_versions(f"name='{model_name}'")
-        )
+        list_model_versions = list(self.client.search_model_versions(f"name='{model_name}'"))
         if len(list_model_versions) > self.models_to_retain:
             models_to_delete = list_model_versions[self.models_to_retain :]
             for stale_model in models_to_delete:
@@ -346,9 +328,7 @@ class MLflowRegistry(ArtifactManager):
     ) -> tuple[artifact_t, dict[str, Any]]:
         model_key = self.construct_key(skeys, dkeys)
         handler = self.handler_from_type(artifact_type)
-        model = handler.load_model(
-            model_uri=f"models:/{model_key}/{version_info.version}"
-        )
+        model = handler.load_model(model_uri=f"models:/{model_key}/{version_info.version}")
         _LOGGER.info("Successfully loaded model %s from Mlflow", model_key)
 
         run_info = mlflow.get_run(version_info.run_id)

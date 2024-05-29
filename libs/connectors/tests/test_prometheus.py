@@ -227,9 +227,7 @@ class TestPrometheusFetcher(unittest.TestCase):
             filters={"namespace": "sandbox-numalogic-demo"},
         )
         self.assertEqual(df.shape, (2, 1))
-        self.assertListEqual(
-            df.columns.to_list(), ["namespace_asset_pod_cpu_utilization"]
-        )
+        self.assertListEqual(df.columns.to_list(), ["namespace_asset_pod_cpu_utilization"])
         self.assertEqual(df.index.name, "timestamp")
 
     @patch.object(
@@ -314,18 +312,14 @@ class TestPrometheusFetcher(unittest.TestCase):
                 filters={"namespace": "sandbox-numalogic-demo"},
             )
 
-    @patch.object(
-        PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_query_range())
-    )
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_query_range()))
     def test_fetch_raw(self):
         df = self.fetcher.raw_fetch(
             query='namespace_asset_pod_cpu_utilization{namespace="sandbox-numalogic-demo"}',
             start=datetime.now() - timedelta(hours=1),
         )
         self.assertEqual(df.shape, (2, 1))
-        self.assertListEqual(
-            df.columns.to_list(), ["namespace_asset_pod_cpu_utilization"]
-        )
+        self.assertListEqual(df.columns.to_list(), ["namespace_asset_pod_cpu_utilization"])
         self.assertEqual(df.index.name, "timestamp")
 
     @patch.object(
@@ -473,9 +467,7 @@ class TestPrometheusFetcher(unittest.TestCase):
                 end=datetime.now() - timedelta(hours=2),
             )
 
-    @patch.object(
-        PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_no_metric())
-    )
+    @patch.object(PrometheusFetcher, "_api_query_range", Mock(return_value=_mock_no_metric()))
     def test_no_metric_name_err(self):
         with self.assertRaises(PrometheusInvalidResponseError):
             self.fetcher.raw_fetch(

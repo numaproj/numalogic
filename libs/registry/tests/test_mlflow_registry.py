@@ -60,18 +60,14 @@ class TestMLflow(unittest.TestCase):
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch)
     @patch("mlflow.log_param", mock_log_state_dict)
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch(
         "mlflow.tracking.MlflowClient.transition_model_version_stage",
         mock_transition_stage,
     )
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
-    @patch(
-        "mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version
-    )
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version)
     def test_save_model(self):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
@@ -102,9 +98,7 @@ class TestMLflow(unittest.TestCase):
         self.assertEqual(mock_status, status.status)
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch("mlflow.log_params", {"lr": 0.01})
     @patch(
@@ -128,9 +122,7 @@ class TestMLflow(unittest.TestCase):
         self.assertIsInstance(data.artifact, VanillaAE)
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch(
         "mlflow.tracking.MlflowClient.transition_model_version_stage",
@@ -299,11 +291,7 @@ class TestMLflow(unittest.TestCase):
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
     @patch(
         "mlflow.tracking.MlflowClient.transition_model_version_stage",
-        Mock(
-            side_effect=RestException(
-                {"error_code": ErrorCode.Name(RESOURCE_LIMIT_EXCEEDED)}
-            )
-        ),
+        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_LIMIT_EXCEEDED)})),
     )
     def test_transition_stage_fail(self):
         fake_skeys = ["Fakemodel_"]
@@ -330,9 +318,7 @@ class TestMLflow(unittest.TestCase):
             ml.load(skeys=fake_skeys, dkeys=fake_dkeys, artifact_type="somerandom")
             self.assertTrue(log.output)
 
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch)
     @patch("mlflow.log_params", mock_log_state_dict)
@@ -382,17 +368,11 @@ class TestMLflow(unittest.TestCase):
             ml.save(skeys=fake_skeys, dkeys=fake_dkeys, artifact=self.model)
             self.assertTrue(log.output)
 
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch(
         "mlflow.tracking.MlflowClient.get_latest_versions",
-        Mock(
-            side_effect=RestException(
-                {"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)}
-            )
-        ),
+        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)})),
     )
     @patch(
         "mlflow.tracking.MlflowClient.get_run",
@@ -405,17 +385,11 @@ class TestMLflow(unittest.TestCase):
         data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
         self.assertIsNone(data)
 
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch(
         "mlflow.tracking.MlflowClient.get_latest_versions",
-        Mock(
-            side_effect=RestException(
-                {"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)}
-            )
-        ),
+        Mock(side_effect=RestException({"error_code": ErrorCode.Name(RESOURCE_DOES_NOT_EXIST)})),
     )
     @patch(
         "mlflow.tracking.MlflowClient.get_run",
@@ -428,9 +402,7 @@ class TestMLflow(unittest.TestCase):
         self.assertIsNone(ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch"))
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch("mlflow.log_params", {"lr": 0.01})
     @patch(
@@ -451,9 +423,7 @@ class TestMLflow(unittest.TestCase):
         self.assertTrue(ml.is_artifact_stale(data, 12))
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch("mlflow.log_params", {"lr": 0.01})
     @patch(
@@ -487,16 +457,12 @@ class TestMLflow(unittest.TestCase):
     def test_cache(self):
         cache_registry = LocalLRUCache()
         registry = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
-        registry._save_in_cache(
-            "key", ArtifactData(artifact=self.model, extras={}, metadata={})
-        )
+        registry._save_in_cache("key", ArtifactData(artifact=self.model, extras={}, metadata={}))
         self.assertIsNotNone(registry._load_from_cache("key"))
         self.assertIsNotNone(registry._clear_cache("key"))
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch())
-    @patch(
-        "mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict()))
-    )
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch("mlflow.log_params", {"lr": 0.01})
     @patch(

@@ -161,9 +161,7 @@ def test_fetch_double_sketch(setup, mock_group_by_doubles_sketch):
         filter_values=["accounting.core.qbowebapp"],
         dimensions=["assetAlias", "env"],
         datasource="coredevx-rum-perf-metrics",
-        aggregations={
-            "agg0": _agg.quantiles_doubles_sketch("valuesDoublesSketch", "agg0", 256)
-        },
+        aggregations={"agg0": _agg.quantiles_doubles_sketch("valuesDoublesSketch", "agg0", 256)},
         post_aggregations={
             "postAgg0": _post_agg.QuantilesDoublesSketchToQuantile(
                 output_name="agg0", field=postaggregator.Field("agg0"), fraction=0.9

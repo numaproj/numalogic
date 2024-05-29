@@ -274,9 +274,7 @@ class TestDynamoDBRegistry(unittest.TestCase):
 
         try:
             self.registry.load(skeys, dkeys, latest=True, version="1")
-            self.fail(
-                "Should have raised ValueError, you cannot have both latest=True and version"
-            )
+            self.fail("Should have raised ValueError, you cannot have both latest=True and version")
         except ValueError:
             pass
 

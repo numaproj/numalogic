@@ -61,9 +61,7 @@ def mock_db_config_ssl_disabled():
 
 @pytest.fixture
 def setup_fetcher():
-    rds_config = (
-        Mock()
-    )  # Assuming that your RDSConfig class behaves like a normal python object
+    rds_config = Mock()  # Assuming that your RDSConfig class behaves like a normal python object
     kwargs = {"key": "value"}
     return MysqlFetcher(rds_config, **kwargs)
 

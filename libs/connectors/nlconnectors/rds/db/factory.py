@@ -31,6 +31,4 @@ class RdsFactory:
 
             return MysqlFetcher
 
-        raise UnRecognizedDatabaseTypeException(
-            f"database_type: {database_type} is not supported"
-        )
+        raise UnRecognizedDatabaseTypeException(f"database_type: {database_type} is not supported")

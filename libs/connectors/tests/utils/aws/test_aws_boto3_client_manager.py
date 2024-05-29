@@ -106,9 +106,7 @@ def test_get_client_unrecognized(boto3_client_manager_mock):
 
 
 def test_get_client_rds(boto3_client_manager_mock, rds_client_mock, boto3_session_mock):
-    boto3_client_manager_mock.get_boto3_session = MagicMock(
-        return_value=boto3_session_mock
-    )
+    boto3_client_manager_mock.get_boto3_session = MagicMock(return_value=boto3_session_mock)
     boto3_session_mock.client.return_value = rds_client_mock
 
     rds_client = boto3_client_manager_mock.get_client("rds")
@@ -120,12 +118,8 @@ def test_get_client_rds(boto3_client_manager_mock, rds_client_mock, boto3_sessio
     assert rds_client == rds_client_mock
 
 
-def test_get_client_athena(
-    boto3_client_manager_mock, athena_client_mock, boto3_session_mock
-):
-    boto3_client_manager_mock.get_boto3_session = MagicMock(
-        return_value=boto3_session_mock
-    )
+def test_get_client_athena(boto3_client_manager_mock, athena_client_mock, boto3_session_mock):
+    boto3_client_manager_mock.get_boto3_session = MagicMock(return_value=boto3_session_mock)
     boto3_session_mock.client.return_value = athena_client_mock
 
     boto3_client_manager_mock.get_client("athena")

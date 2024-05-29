@@ -13,9 +13,7 @@ from numalogic.tools.exceptions import ConfigError
 
 class TestArtifactCache(unittest.TestCase):
     def test_cache(self):
-        cache_reg = ArtifactCache(
-            cachesize=2, ttl=2, jitter_sec=180, jitter_steps_sec=2
-        )
+        cache_reg = ArtifactCache(cachesize=2, ttl=2, jitter_sec=180, jitter_steps_sec=2)
         with self.assertRaises(NotImplementedError):
             cache_reg.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         with self.assertRaises(NotImplementedError):
@@ -32,19 +30,11 @@ class TestLocalLRUCache(unittest.TestCase):
         cache.clear()
 
     def test_cache_size(self):
-        cache_registry = LocalLRUCache(
-            cachesize=2, ttl=1, jitter_sec=0, jitter_steps_sec=0
-        )
-        cache_registry.save(
-            "m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={})
-        )
+        cache_registry = LocalLRUCache(cachesize=2, ttl=1, jitter_sec=0, jitter_steps_sec=0)
+        cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         time.sleep(1)
-        cache_registry.save(
-            "m2", ArtifactData(VanillaAE(12, 1), metadata={}, extras={})
-        )
-        cache_registry.save(
-            "m3", ArtifactData(VanillaAE(14, 1), metadata={}, extras={})
-        )
+        cache_registry.save("m2", ArtifactData(VanillaAE(12, 1), metadata={}, extras={}))
+        cache_registry.save("m3", ArtifactData(VanillaAE(14, 1), metadata={}, extras={}))
         self.assertIsNone(cache_registry.load("m1"))
         self.assertIsInstance(cache_registry.load("m2"), ArtifactData)
         self.assertEqual(4, cache_registry.cachesize)
@@ -63,28 +53,20 @@ class TestLocalLRUCache(unittest.TestCase):
         )
 
         loaded_artifact = cache_registry.load("m1")
-        self.assertDictEqual(
-            {"version": "2", "source": "cache"}, loaded_artifact.extras
-        )
+        self.assertDictEqual({"version": "2", "source": "cache"}, loaded_artifact.extras)
 
     def test_cache_ttl(self):
         ts = "2021-01-01 00:00:00"
         with freeze_time(ts):
-            cache_registry = LocalLRUCache(
-                cachesize=2, ttl=1, jitter_sec=0, jitter_steps_sec=0
-            )
-            cache_registry.save(
-                "m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={})
-            )
+            cache_registry = LocalLRUCache(cachesize=2, ttl=1, jitter_sec=0, jitter_steps_sec=0)
+            cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
             self.assertIsInstance(cache_registry.load("m1"), ArtifactData)
             time.sleep(1)
             self.assertIsNone(cache_registry.load("m1"))
 
     def test_singleton(self):
         cache_registry_1 = LocalLRUCache(cachesize=2, ttl=1)
-        cache_registry_1.save(
-            "m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={})
-        )
+        cache_registry_1.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         self.assertIsInstance(cache_registry_1.load("m1"), ArtifactData)
 
         cache_registry_2 = LocalLRUCache(cachesize=3, ttl=3)
@@ -92,17 +74,13 @@ class TestLocalLRUCache(unittest.TestCase):
 
     def test_delete(self):
         cache_registry = LocalLRUCache(cachesize=2, ttl=1)
-        cache_registry.save(
-            "m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={})
-        )
+        cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         cache_registry.delete("m1")
         self.assertIsNone(cache_registry.load("m1"))
 
     def test_clear(self):
         cache_registry = LocalLRUCache(cachesize=2, ttl=1)
-        cache_registry.save(
-            "m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={})
-        )
+        cache_registry.save("m1", ArtifactData(VanillaAE(10, 1), metadata={}, extras={}))
         cache_registry.clear()
         self.assertIsNone(cache_registry.load("m1"))
 

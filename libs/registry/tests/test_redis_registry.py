@@ -27,9 +27,7 @@ class TestRedisRegistry(unittest.TestCase):
         cls.skeys = ["test"]
         cls.dkeys = ["error"]
         server = fakeredis.FakeServer()
-        cls.redis_client = fakeredis.FakeStrictRedis(
-            server=server, decode_responses=False
-        )
+        cls.redis_client = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
 
     def setUp(self):
         self.cache = LocalLRUCache(cachesize=4, ttl=1)
@@ -137,9 +135,7 @@ class TestRedisRegistry(unittest.TestCase):
         version = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
-        data = self.registry.load(
-            skeys=self.skeys, dkeys=self.dkeys, version=version, latest=False
-        )
+        data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys, version=version, latest=False)
         self.assertIsNotNone(data.artifact)
         self.assertIsNone(data.metadata)
         self.assertEqual(data.extras["version"], version)
@@ -147,26 +143,20 @@ class TestRedisRegistry(unittest.TestCase):
     def test_check_if_model_stale_true(self):
         delta = datetime.now() - timedelta(days=5)
         with freeze_time(delta):
-            self.registry.save(
-                skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-            )
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
         data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         self.assertTrue(self.registry.is_artifact_stale(data, 12))
 
     def test_check_if_model_stale_false(self):
         delta = datetime.now()
         with freeze_time(delta):
-            self.registry.save(
-                skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-            )
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
         with freeze_time(delta + timedelta(hours=7)):
             data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
             self.assertFalse(self.registry.is_artifact_stale(data, 8))
 
     def test_check_if_model_stale_err(self):
-        self.registry.save(
-            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-        )
+        self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
         data = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         data.extras = None
         with self.assertRaises(RedisRegistryError):
@@ -178,9 +168,7 @@ class TestRedisRegistry(unittest.TestCase):
 
     def test_load_model_with_wrong_version(self):
         with self.assertRaises(ModelKeyNotFound):
-            self.registry.load(
-                skeys=self.skeys, dkeys=self.dkeys, version=str(100), latest=False
-            )
+            self.registry.load(skeys=self.skeys, dkeys=self.dkeys, version=str(100), latest=False)
 
     def test_load_model_when_no_model(self):
         with self.assertRaises(ModelKeyNotFound):
@@ -188,9 +176,7 @@ class TestRedisRegistry(unittest.TestCase):
 
     def test_load_latest_model_twice(self):
         with freeze_time(datetime.now() - timedelta(days=5)):
-            self.registry.save(
-                skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-            )
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
 
         artifact_data_1 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
         artifact_data_2 = self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
@@ -229,9 +215,7 @@ class TestRedisRegistry(unittest.TestCase):
         old_version = self.registry.save(
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
-        self.registry.save(
-            skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-        )
+        self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
 
         artifact_data_1 = self.registry.load(
             skeys=self.skeys, dkeys=self.dkeys, latest=False, version=old_version
@@ -247,24 +231,18 @@ class TestRedisRegistry(unittest.TestCase):
             skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
         )
         with self.assertRaises(ModelKeyNotFound):
-            self.registry.delete(
-                skeys=self.skeys, dkeys=self.dkeys, version=str(version)
-            )
+            self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version=str(version))
             self.registry.load(skeys=self.skeys, dkeys=self.dkeys)
 
     def test_delete_model_not_in_registry(self):
         with self.assertRaises(ModelKeyNotFound):
-            self.registry.save(
-                skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-            )
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
             self.registry.delete(skeys=self.skeys, dkeys=self.dkeys, version=str(8))
 
     @patch("redis.Redis.set", Mock(side_effect=ConnectionError))
     def test_exception_call1(self):
         with self.assertRaises(RedisRegistryError):
-            self.registry.save(
-                skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model
-            )
+            self.registry.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.pytorch_model)
 
     @patch("redis.Redis.get", Mock(side_effect=InvalidResponse))
     def test_exception_call2(self):
@@ -281,7 +259,5 @@ class TestRedisRegistry(unittest.TestCase):
         with self.assertRaises(RedisRegistryError):
             self.registry.save_multiple(
                 skeys=self.skeys,
-                dict_artifacts={
-                    "AE": KeyedArtifact(dkeys=self.dkeys, artifact=VanillaAE(10))
-                },
+                dict_artifacts={"AE": KeyedArtifact(dkeys=self.dkeys, artifact=VanillaAE(10))},
             )

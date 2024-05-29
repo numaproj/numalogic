@@ -142,9 +142,7 @@ class RedisRegistry(ArtifactManager):
 
     def _clear_cache(self, key: Optional[str] = None) -> Optional[ArtifactData]:
         if self.cache_registry:
-            return (
-                self.cache_registry.delete(key) if key else self.cache_registry.clear()
-            )
+            return self.cache_registry.delete(key) if key else self.cache_registry.clear()
         return None
 
     def __get_artifact_data(
@@ -156,9 +154,7 @@ class RedisRegistry(ArtifactManager):
             artifact_version,
             artifact_timestamp,
             serialized_metadata,
-        ) = self.client.hmget(
-            name=model_key, keys=["artifact", "version", "timestamp", "metadata"]
-        )
+        ) = self.client.hmget(name=model_key, keys=["artifact", "version", "timestamp", "metadata"])
         deserialized_artifact = loads(serialized_artifact)
         deserialized_metadata = None
         if serialized_metadata:
@@ -196,17 +192,13 @@ class RedisRegistry(ArtifactManager):
         if not self.client.exists(latest_key):
             raise ModelKeyNotFound(f"latest key: {latest_key}, Not Found !!!")
         model_key = self.client.get(latest_key)
-        _LOGGER.debug(
-            "latest key, %s, is pointing to the key : %s", latest_key, model_key
-        )
+        _LOGGER.debug("latest key, %s, is pointing to the key : %s", latest_key, model_key)
         artifact, _ = self.__load_version_artifact(
             version=self.get_version(model_key.decode()), key=key
         )
         return artifact, False
 
-    def __load_version_artifact(
-        self, version: str, key: str
-    ) -> tuple[ArtifactData, bool]:
+    def __load_version_artifact(self, version: str, key: str) -> tuple[ArtifactData, bool]:
         version_key = self.__construct_version_key(key, version)
         cached_artifact = self._load_from_cache(version_key)
         if cached_artifact:
@@ -227,9 +219,7 @@ class RedisRegistry(ArtifactManager):
         new_version_key = self.__construct_version_key(key, version)
         latest_key = self.__construct_latest_key(key)
         pipe.set(name=latest_key, value=new_version_key)
-        _LOGGER.debug(
-            "Setting latest key : %s ,to this new key = %s", latest_key, new_version_key
-        )
+        _LOGGER.debug("Setting latest key : %s ,to this new key = %s", latest_key, new_version_key)
         serialized_metadata = orjson.dumps(metadata) if metadata else b""
         serialized_artifact = dumps(deserialized_object=artifact)
         _cur_ts = int(time.time())
@@ -238,9 +228,7 @@ class RedisRegistry(ArtifactManager):
             mapping={
                 "artifact": serialized_artifact,
                 "version": version,
-                "timestamp": _apply_jitter(
-                    _cur_ts, self.jitter_sec, self.jitter_steps_sec
-                ),
+                "timestamp": _apply_jitter(_cur_ts, self.jitter_sec, self.jitter_steps_sec),
                 "metadata": serialized_metadata,
             },
         )
@@ -277,9 +265,7 @@ class RedisRegistry(ArtifactManager):
             RedisRegistryError: If any redis error occurs.
         """
         if (latest and version) or (not latest and not version):
-            raise ValueError(
-                "Either One of 'latest' or 'version' needed in load method call"
-            )
+            raise ValueError("Either One of 'latest' or 'version' needed in load method call")
         key = self.construct_key(skeys, dkeys)
         try:
             if latest:
@@ -303,9 +289,7 @@ class RedisRegistry(ArtifactManager):
                         self.__construct_version_key(key, version),
                         key,
                     )
-                    self._save_in_cache(
-                        self.__construct_version_key(key, version), artifact_data
-                    )
+                    self._save_in_cache(self.__construct_version_key(key, version), artifact_data)
             return artifact_data
 
     def save(
@@ -343,9 +327,7 @@ class RedisRegistry(ArtifactManager):
                 version_key = self.client.get(name=latest_key)
                 version = int(self.get_version(version_key.decode())) + 1
             _redis_pipe = (
-                self.client.pipeline(transaction=self.transactional)
-                if _pipe is None
-                else _pipe
+                self.client.pipeline(transaction=self.transactional) if _pipe is None else _pipe
             )
             new_version_key = self.__save_artifact(
                 pipe=_redis_pipe,
@@ -360,9 +342,7 @@ class RedisRegistry(ArtifactManager):
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:
-            _LOGGER.info(
-                "Model with the key = %s, saved successfully.", new_version_key
-            )
+            _LOGGER.info("Model with the key = %s, saved successfully.", new_version_key)
             return str(version)
 
     def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> None:
@@ -419,9 +399,7 @@ class RedisRegistry(ArtifactManager):
         stale_ts = (datetime.now() - timedelta(hours=freq_hr)).timestamp()
         return stale_ts > artifact_ts
 
-    def __update_metadata(
-        self, skeys: KEYS, dict_artifacts: dict[str, KeyedArtifact], metadata
-    ):
+    def __update_metadata(self, skeys: KEYS, dict_artifacts: dict[str, KeyedArtifact], metadata):
         try:
             with self.client.pipeline(transaction=self.transactional) as pipe:
                 pipe.multi()
@@ -468,9 +446,7 @@ class RedisRegistry(ArtifactManager):
                 dict_artifacts=dict_artifacts,
                 metadata={**{"artifact_versions": dict_model_ver}, **metadata},
             )
-            _LOGGER.info(
-                "Successfully saved all the artifacts with: %s", dict_model_ver
-            )
+            _LOGGER.info("Successfully saved all the artifacts with: %s", dict_model_ver)
         except RedisError as err:
             raise RedisRegistryError(f"{err.__class__.__name__} raised") from err
         else:

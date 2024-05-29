@@ -1,4 +1,3 @@
-from unittest.mock import patch
 import pytest
 import nlconnectors.utils.aws.db_configurations as db_configuration
 from nlconnectors.constants import TESTS_DIR

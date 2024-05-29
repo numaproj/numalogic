@@ -49,7 +49,7 @@ class TimeseriesTrainer(Trainer):
         enable_checkpointing: bool = False,
         enable_progress_bar: bool = False,
         enable_model_summary: bool = False,
-        **trainer_kw
+        **trainer_kw,
     ):
         if not sys.warnoptions:
             warnings.simplefilter("ignore", category=UserWarning)
@@ -64,7 +64,7 @@ class TimeseriesTrainer(Trainer):
             enable_checkpointing=enable_checkpointing,
             enable_progress_bar=enable_progress_bar,
             enable_model_summary=enable_model_summary,
-            **trainer_kw
+            **trainer_kw,
         )
 
     def predict(self, model: Optional[LightningModule] = None, unbatch=True, **kwargs) -> Tensor:

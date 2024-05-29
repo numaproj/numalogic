@@ -21,9 +21,7 @@ _MAX_CONCURRENCY: Final[int] = 16
 
 
 # TODO: pass dictionary of keys and values as dict
-def make_filter_pairs(
-    filter_keys: list[str], filter_values: list[str]
-) -> dict[str, str]:
+def make_filter_pairs(filter_keys: list[str], filter_values: list[str]) -> dict[str, str]:
     """
 
     Args:
@@ -89,10 +87,7 @@ def build_params(
     """
     _filter = Filter(
         type="and",
-        fields=[
-            Filter(type="selector", dimension=k, value=v)
-            for k, v in filter_pairs.items()
-        ],
+        fields=[Filter(type="selector", dimension=k, value=v) for k, v in filter_pairs.items()],
     )
     if static_filters:
         _LOGGER.debug("Static Filters are present!")
@@ -101,16 +96,12 @@ def build_params(
 
     reference_dt = reference_dt or datetime.now(pytz.utc)
     end_dt = reference_dt - timedelta(hours=delay)
-    _LOGGER.debug(
-        "Querying with end_dt: %s, that is with delay of %s hrs", end_dt, delay
-    )
+    _LOGGER.debug("Querying with end_dt: %s, that is with delay of %s hrs", end_dt, delay)
 
     start_dt = end_dt - timedelta(hours=hours)
 
     intervals = [f"{start_dt.isoformat()}/{end_dt.isoformat()}"]
-    dimension_specs = map(
-        lambda d: DimensionSpec(dimension=d, output_name=d), dimensions
-    )
+    dimension_specs = map(lambda d: DimensionSpec(dimension=d, output_name=d), dimensions)
 
     return {
         "datasource": datasource,

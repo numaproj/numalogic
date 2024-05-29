@@ -101,8 +101,7 @@ def test_format_dataframe():
     df = format_dataframe(df, query, datetime_field_name)
     print(df.to_json())
     assert (
-        df["timestamp"]
-        == to_datetime(expected_df["eventdatetime"]).astype("int64") // 10**6
+        df["timestamp"] == to_datetime(expected_df["eventdatetime"]).astype("int64") // 10**6
     ).all()
 
 
@@ -180,8 +179,6 @@ def test_format_dataframe_pivot():
     group_by = ["timestamp", "ciStatus"]
     pivot = Pivot()
     pivot.columns = ["ciStatus"]
-    df = format_dataframe(
-        df, query, datetime_field_name, group_by=group_by, pivot=pivot
-    )
+    df = format_dataframe(df, query, datetime_field_name, group_by=group_by, pivot=pivot)
     expected = [{"degraded": 8, "failed": 8, "success": 5, "timestamp": 1708527420000}]
     assert df.to_dict(orient="records") == expected

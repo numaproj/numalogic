@@ -36,9 +36,7 @@ class _ObjectFactory:
         try:
             return cls._CLS_MAP[name]
         except KeyError:
-            raise UnknownConfigArgsError(
-                f"Invalid name provided for factory: {name}"
-            ) from None
+            raise UnknownConfigArgsError(f"Invalid name provided for factory: {name}") from None
 
 
 class PreprocessFactory(_ObjectFactory):

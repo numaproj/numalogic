@@ -27,18 +27,14 @@ def test_sts_client_manager(boto3_client_mock):
     mock_sts_client.assume_role.assert_called_once_with(
         RoleArn=role_arn, RoleSessionName=role_session_name, DurationSeconds=3600
     )
-    assert (
-        manager.credentials == mock_sts_client.assume_role.return_value["Credentials"]
-    )
+    assert manager.credentials == mock_sts_client.assume_role.return_value["Credentials"]
 
     # Test is_token_about_to_expire
     assert manager.is_token_about_to_expire() is False
 
     # Test get_credentials
     credentials = manager.get_credentials(role_arn, role_session_name)
-    assert (
-        manager.credentials == mock_sts_client.assume_role.return_value["Credentials"]
-    )
+    assert manager.credentials == mock_sts_client.assume_role.return_value["Credentials"]
     assert credentials == mock_sts_client.assume_role.return_value["Credentials"]
 
     # Test renew of credentials

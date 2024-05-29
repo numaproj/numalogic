@@ -32,9 +32,7 @@ class TestOptionalDependencies(unittest.TestCase):
         server = fakeredis.FakeServer()
         redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
         with self.assertRaises(ImportError):
-            model_factory.get_cls("RedisRegistry")(
-                redis_cli, **self.regconf.extra_param
-            )
+            model_factory.get_cls("RedisRegistry")(redis_cli, **self.regconf.extra_param)
 
     @patch("nlregistry.factory.getattr", side_effect=AttributeError)
     def test_not_installed_dep_02(self, _):
@@ -44,9 +42,7 @@ class TestOptionalDependencies(unittest.TestCase):
         server = fakeredis.FakeServer()
         redis_cli = fakeredis.FakeStrictRedis(server=server, decode_responses=False)
         with self.assertRaises(ImportError):
-            model_factory.get_instance(self.regconf)(
-                redis_cli, **self.regconf.extra_param
-            )
+            model_factory.get_instance(self.regconf)(redis_cli, **self.regconf.extra_param)
 
     def test_unknown_registry(self):
         from nlregistry.factory import RegistryFactory

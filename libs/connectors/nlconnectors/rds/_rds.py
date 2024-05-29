@@ -28,9 +28,7 @@ class RDSFetcher(DataFetcher):
         super().__init__(db_config.endpoint)
         self.db_config = db_config
         factory_object = RdsFactory()
-        self.fetcher = factory_object.get_db_handler(db_config.database_type.lower())(
-            db_config
-        )
+        self.fetcher = factory_object.get_db_handler(db_config.database_type.lower())(db_config)
         _LOGGER.info("Executing for database type: %s", self.fetcher.database_type)
 
     def fetch(

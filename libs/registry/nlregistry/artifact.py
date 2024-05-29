@@ -74,7 +74,7 @@ class ArtifactManager(Generic[KEYS, A_D]):
         skeys: KEYS,
         dkeys: KEYS,
         artifact: Union[artifact_t, state_dict_t],
-        **metadata: META_VT
+        **metadata: META_VT,
     ) -> Any:
         r"""Saves the artifact into mlflow test_registry and updates version.
 

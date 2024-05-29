@@ -48,17 +48,13 @@ class AWSConnector:
         if new_session:
             self.session = None
 
-        if (not self.session) or (
-            time.time() - self.sess_start_time > self.__STS_RESET_SECS
-        ):
+        if (not self.session) or (time.time() - self.sess_start_time > self.__STS_RESET_SECS):
             self.session = self._get_sts_session()
             self.sess_start_time = time.time()
         return self.session
 
     def _get_sts_session(self):
-        _LOGGER.info(
-            "Getting session with role: %s and region: %s", self.role, self.region
-        )
+        _LOGGER.info("Getting session with role: %s and region: %s", self.role, self.region)
         assumed_role_object = boto3.client("sts").assume_role(
             RoleArn=self.role, RoleSessionName="AssumeRoleSession1"
         )
@@ -243,9 +239,7 @@ class DynamoDBRegistry(ArtifactManager):
             ArtifactData instance.
         """
         if (latest and version) or (not latest and not version):
-            raise ValueError(
-                "Either One of 'latest' or 'version' needed in load method call"
-            )
+            raise ValueError("Either One of 'latest' or 'version' needed in load method call")
 
         table = self.connector.get_resource().Table(self.table_name)
         part_key = self.construct_key(skeys)
@@ -369,9 +363,7 @@ class DynamoDBRegistry(ArtifactManager):
             raise DynamoDBRegistryError(f"{err.__class__.__name__} raised") from err
         return response
 
-    def delete(
-        self, skeys: KEYS, dkeys: KEYS, version: str
-    ) -> Optional[dict[str, Any]]:
+    def delete(self, skeys: KEYS, dkeys: KEYS, version: str) -> Optional[dict[str, Any]]:
         """
         Deletes the artifact from dynamodb.
         Args:
@@ -393,9 +385,7 @@ class DynamoDBRegistry(ArtifactManager):
             if version == artifact_data.extras.get("version"):
                 # Find if an older version exists
                 prev_version = str(int(version) - 1)
-                artifact_data_prev = self.load(
-                    skeys, dkeys, latest=False, version=prev_version
-                )
+                artifact_data_prev = self.load(skeys, dkeys, latest=False, version=prev_version)
                 if artifact_data_prev and prev_version != "0":
                     # Update the zeroth record pointer to the previous version
                     prev_item = self._pack_artifact_data(

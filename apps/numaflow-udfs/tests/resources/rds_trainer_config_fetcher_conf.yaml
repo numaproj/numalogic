@@ -36,7 +36,7 @@ stream_confs:
                 retry_sec: 600
                 pltrainer_conf:
                   max_epochs: 40
-    
+
 redis_conf:
   url: "isbsvc-fci-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-prd.svc"
   port: 26379
@@ -77,4 +77,3 @@ rds_conf:
     datetime_column_name: "eventdatetime"
     hash_query_type: True
     hash_column_name: model_md5_hash
-

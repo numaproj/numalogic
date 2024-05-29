@@ -23,9 +23,7 @@ def test_init(data_fetcher, mock_db_config):
 
 
 def test_fetch(mocker, data_fetcher):
-    mock_data = pd.DataFrame(
-        data={"col1": ["value1", "value2"], "col2": ["value3", "value4"]}
-    )
+    mock_data = pd.DataFrame(data={"col1": ["value1", "value2"], "col2": ["value3", "value4"]})
 
     mocker.patch.object(RDSFetcher, "fetch", return_value=mock_data)
 
@@ -38,9 +36,7 @@ def test_execute_query(mocker):
     rds_config = RDSConfig(database_type="mysql")
     rds_fetcher = RDSFetcher(db_config=rds_config)
     mocker.patch.object(rds_fetcher.fetcher, "execute_query", return_value=DataFrame())
-    result = rds_fetcher.fetch(
-        "SELECT * FROM table", datetime_column_name="eventdatetime"
-    )
+    result = rds_fetcher.fetch("SELECT * FROM table", datetime_column_name="eventdatetime")
     assert result.empty == DataFrame().empty
 
 
