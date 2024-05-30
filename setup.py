@@ -29,10 +29,10 @@ pkg_name = os.getenv("PKG_NAME", "numalogic")
 if pkg_name == "numalogic":
     with cd("libs/core"):
         setup()
-elif pkg_name == "nlconnectors":
+elif pkg_name == "numalogic-connectors":
     with cd("libs/connectors"):
         setup()
-elif pkg_name == "nlregistry":
+elif pkg_name == "numalogic-registry":
     with cd("libs/registry"):
         setup()
 else:

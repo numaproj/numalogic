@@ -3,8 +3,8 @@ requires = ["setuptools >= 61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "nlconnectors"
-version = "0.10.1a0"
+name = "numalogic-connectors"
+version = "0.11a0"
 description = "Data Connectors for Numalogic."
 authors = [
     {name = "Numalogic Developers"}
