@@ -1,0 +1,30 @@
+model:
+  name: "SparseVanillaAE"
+  conf:
+    seq_len: 20
+    n_features: 1
+    encoder_layersizes:
+      - 16
+      - 8
+    decoder_layersizes:
+      - 8
+      - 16
+    dropout_p: 0.25
+trainer:
+  pltrainer_conf:
+    max_epochs: 40
+preprocess:
+  - name: "LogTransformer"
+    stateful: false
+    conf:
+      add_factor: 3
+  - name: "StandardScaler"
+    conf:
+      with_mean: False
+threshold:
+  name: "StdDevThreshold"
+postprocess:
+  name: "TanhNorm"
+  stateful: false
+  conf:
+    scale_factor: 5
