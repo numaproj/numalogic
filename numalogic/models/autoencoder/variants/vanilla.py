@@ -19,6 +19,8 @@ from torch.distributions import kl_divergence, Bernoulli
 from numalogic.models.autoencoder.base import BaseAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
 
+EMPTY_TENSOR = torch.empty(0)
+
 
 class _VanillaEncoder(nn.Module):
     r"""Encoder module for the VanillaAE.
@@ -200,6 +202,103 @@ class VanillaAE(BaseAE):
         encoded = self.encoder(batch)
         decoded = self.decoder(encoded)
         return encoded, torch.swapdims(decoded, 1, 2)
+
+    def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
+        """Returns reconstruction for streaming input."""
+        recon = self.reconstruction(batch)
+        return self.criterion(batch, recon, reduction="none")
+
+
+class MultichannelAE(BaseAE):
+    r"""Multichannel Vanilla Autoencoder model based on the vanilla encoder and decoder.
+        Each channel is an isolated neural network.
+
+    Args:
+    ----
+        seq_len: sequence length / window length
+        n_channels: num of channels, each channel is a separate neural network
+        encoder_layersizes: encoder layer size (default = Sequence[int] = (16, 8))
+        decoder_layersizes: decoder layer size (default = Sequence[int] = (8, 16))
+        dropout_p: the dropout value (default=0.25)
+        batchnorm: Flag to enable batch normalization (default=False)
+        encoderinfo: Flag to enable returning encoder information in the "forward" step
+                    (default=False)
+        **kwargs: BaseAE kwargs
+    """
+
+    def __init__(
+        self,
+        seq_len: int,
+        n_channels: int,
+        encoder_layersizes: Sequence[int] = (16, 8),
+        decoder_layersizes: Sequence[int] = (8, 16),
+        dropout_p: float = 0.25,
+        batchnorm: bool = False,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.seq_len = seq_len
+        self.dropout_prob = dropout_p
+        self.n_channels = n_channels
+        # The number of features per channel default to 1 in this architecture
+        self.n_features = 1
+
+        if encoder_layersizes[-1] != decoder_layersizes[0]:
+            raise LayerSizeMismatchError(
+                f"Last layersize of encoder: {encoder_layersizes[-1]} "
+                f"does not match first layersize of decoder: {decoder_layersizes[0]}"
+            )
+
+        for i in range(self.n_channels):
+            encoder = _VanillaEncoder(
+                seq_len=seq_len,
+                n_features=self.n_features,
+                layersizes=encoder_layersizes,
+                dropout_p=dropout_p,
+                batchnorm=batchnorm,
+            )
+            decoder = _Decoder(
+                seq_len=seq_len,
+                n_features=self.n_features,
+                layersizes=decoder_layersizes,
+                dropout_p=dropout_p,
+                batchnorm=batchnorm,
+            )
+
+            encoder.apply(self.init_weights)
+            decoder.apply(self.init_weights)
+            setattr(self, f"channel_encoder{i}", encoder)
+            setattr(self, f"channel_decoder{i}", decoder)
+
+    @staticmethod
+    def init_weights(m: nn.Module) -> None:
+        """Initialize the parameters in the model."""
+        if isinstance(m, nn.Linear):
+            nn.init.xavier_normal_(m.weight)
+
+    def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
+        encoded_all, decoded_all = [], []
+        batch = torch.swapdims(batch, 1, 2)
+
+        for i in range(self.n_channels):
+            encoder = getattr(self, f"channel_encoder{i}")
+            decoder = getattr(self, f"channel_decoder{i}")
+
+            batch_channel = batch[:, [i]]
+
+            encoded = encoder(batch_channel)
+            decoded = decoder(encoded)
+
+            encoded_all.append(encoded)
+            decoded_all.append(decoded)
+
+        encoded_all = torch.stack(encoded_all, dim=-1)
+        encoded_all = torch.squeeze(encoded_all, 1)
+
+        decoded_all = torch.stack(decoded_all, dim=-1)
+        decoded_all = torch.squeeze(decoded_all, 1)
+
+        return encoded_all, decoded_all
 
     def predict_step(self, batch: Tensor, batch_idx: int, dataloader_idx: int = 0):
         """Returns reconstruction for streaming input."""
