@@ -2,7 +2,7 @@
 # builder: install needed dependencies and setup virtual environment
 ####################################################################################################
 
-ARG PYTHON_VERSION=3.11
+ARG PYTHON_VERSION=3.12
 FROM python:${PYTHON_VERSION}-slim-bookworm AS builder
 
 ARG POETRY_VERSION=1.6
