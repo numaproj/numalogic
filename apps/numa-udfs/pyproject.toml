@@ -9,11 +9,11 @@ packages = [{include = "src"}]
 [tool.poetry.dependencies]
 python = "~3.11"
 #numalogic = "~0.11.0"
-numalogic = {path = "../../dist/numalogic-0.11a0-py3-none-any.whl"}
+numalogic = {path = "numalogic-0.11a0-py3-none-any.whl"}
 #numalogic-connectors = "*"
-numalogic-connectors = {path = "../../libs/connectors/dist/numalogic_connectors-0.11a0-py3-none-any.whl"}
+numalogic-connectors = {path = "numalogic_connectors-0.11a0-py3-none-any.whl"}
 #numalogic-registry = "*"
-numalogic-registry = {path = "../../libs/registry/dist/numalogic_registry-0.11a0-py3-none-any.whl"}
+numalogic-registry = {path = "numalogic_registry-0.11a0-py3-none-any.whl"}
 pynumaflow = "~0.6"
 structlog = "^24.1.0"
 prometheus_client = "^0.18.0"

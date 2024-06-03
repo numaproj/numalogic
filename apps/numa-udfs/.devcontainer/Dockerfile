@@ -15,7 +15,10 @@ ENV POETRY_NO_INTERACTION=1 \
     POETRY_HOME="/opt/poetry" \
     PATH="$POETRY_HOME/bin:$PATH"
 
-RUN pip install --no-cache-dir poetry==$POETRY_VERSION
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y build-essential \
+    && apt-get clean && rm -rf /var/lib/apt/lists/* \
+    && pip install --no-cache-dir poetry==$POETRY_VERSION
 
 WORKDIR /app
 
@@ -33,13 +36,7 @@ RUN poetry install --without dev --no-root  \
 ####################################################################################################
 # runtime: used for running the udf vertices
 ####################################################################################################
-FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
-
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y dumb-init \
-    && apt-get clean && rm -rf /var/lib/apt/lists/* \
-    && apt-get purge -y --auto-remove
-
+FROM python:${PYTHON_VERSION}-bookworm AS runtime
 
 ENV VIRTUAL_ENV=/app/.venv
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}

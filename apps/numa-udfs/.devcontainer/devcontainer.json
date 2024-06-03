@@ -1,0 +1,7 @@
+{
+	"name": "Numalogic UDFs",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": "..",
+	},
+}
