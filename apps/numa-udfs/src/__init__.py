@@ -2,7 +2,7 @@ import logging
 from logging import config as logconf
 import os
 
-from src.constants import BASE_DIR
+from src.constants import SRC_DIR, LOG_CONF_PATH
 from src._base import NumalogicUDF
 from src._config import StreamConf, PipelineConf, MLPipelineConf, load_pipeline_conf
 from src.factory import UDFFactory, ServerFactory
@@ -16,7 +16,7 @@ from src.trainer import TrainerUDF, PromTrainerUDF, DruidTrainerUDF, RDSTrainerU
 def set_logger() -> None:
     """Sets the logger for the UDFs."""
     logconf.fileConfig(
-        fname=os.path.join(BASE_DIR, "log.conf"),
+        fname=LOG_CONF_PATH,
         disable_existing_loggers=False,
     )
     if os.getenv("DEBUG", "false").lower() == "true":

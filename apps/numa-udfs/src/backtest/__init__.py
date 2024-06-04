@@ -1,3 +1,5 @@
+# TODO move this subpackage to numalogic core library
+
 from importlib.util import find_spec
 from src.backtest._prom import PromBacktester, OutDataFrames
 

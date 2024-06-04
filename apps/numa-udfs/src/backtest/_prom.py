@@ -22,7 +22,7 @@ import torch
 from numpy.typing import NDArray
 from omegaconf import OmegaConf
 
-from src.constants import BASE_DIR
+from src.constants import SRC_DIR
 from src.backtest._constants import DEFAULT_SEQUENCE_LEN
 from numalogic.config import (
     NumalogicConf,
@@ -37,7 +37,7 @@ from numalogic.tools.data import StreamingDataset, inverse_window
 from numalogic.tools.types import artifact_t
 from src import UDFFactory, StreamConf, MLPipelineConf
 
-DEFAULT_OUTPUT_DIR = os.path.join(BASE_DIR, ".btoutput")
+DEFAULT_OUTPUT_DIR = os.path.join(SRC_DIR, ".btoutput")
 LOGGER = logging.getLogger(__name__)
 
 
