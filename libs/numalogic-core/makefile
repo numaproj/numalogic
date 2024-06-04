@@ -7,7 +7,7 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	black libs/ apps/ examples/ tests/
+	black numalogic/ tests/
 
 lint: format
 	ruff check --fix .
