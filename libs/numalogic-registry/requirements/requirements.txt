@@ -1,0 +1,4 @@
+numalogic
+redis[hiredis]>=4.0
+mlflow-skinny>2.0
+boto3>=1.20

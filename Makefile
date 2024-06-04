@@ -7,14 +7,15 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	poetry run black numalogic/ examples/ tests/
+	black libs/ apps/ examples/ tests/
 
 lint: format
-	poetry run ruff check --fix .
+	ruff check --fix .
 
-# install all dependencies
 setup:
-	pip install -v -e '.[dev,jupyter]' --config-settings editable_mode=strict
+	PKG_NAME=numalogic pip install -v -e '.[dev,jupyter]' --config-settings editable_mode=strict
+	PKG_NAME=numalogic-connectors pip install -v -e '.[dev]' --config-settings editable_mode=strict
+	PKG_NAME=numalogic-registry pip install -v -e '.[dev]' --config-settings editable_mode=strict
 
 # test your application (tests in the tests/ directory)
 test:
