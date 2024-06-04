@@ -28,7 +28,7 @@ COPY numalogic_connectors-0.11a0-py3-none-any.whl /app
 
 COPY poetry.lock pyproject.toml ./
 
-RUN poetry install --without dev --no-root  \
+RUN poetry install --with dev  \
     && rm -rf $POETRY_CACHE_DIR \
     && pip cache purge \
     && apt-get purge -y --auto-remove build-essential
