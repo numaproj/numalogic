@@ -1,0 +1,5 @@
+jupyter>=1.0
+ipykernel>=6.15
+ipympl>=0.9
+ipython-autotime>=0.3
+black[jupyter]
