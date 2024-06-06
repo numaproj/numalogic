@@ -22,7 +22,7 @@ jobs:
       - uses: chartboost/ruff-action@v1
         with:
           src: '.'
-          args: 'check -v --config pyproject.toml'
+          args: 'check -v --config libs/numalogic-core/pyproject.toml'
           version: 0.4.7
   numalogic-connectors:
     name: numalogic-connectors
