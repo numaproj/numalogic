@@ -19,6 +19,8 @@ jobs:
         with:
           options: "--check --verbose"
           version: "~= 23.3"
+      - name: Echo
+        run: pwd
       - uses: chartboost/ruff-action@v1
         with:
           src: '.'
