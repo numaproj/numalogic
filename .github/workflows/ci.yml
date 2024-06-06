@@ -50,9 +50,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: 'pip'
       - name: Install dependencies
-        run: |
-          pip install ../numalogic-core
-          pip install -r requirements/requirements.txt
+        run: make setup
       - name: Echo
         run: pwd
       - name: Run tests
