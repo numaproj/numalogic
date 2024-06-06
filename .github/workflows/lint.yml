@@ -19,13 +19,20 @@ jobs:
         with:
           options: "--check --verbose"
           version: "~= 23.3"
-      - name: Echo
-        run: pwd
-      - uses: chartboost/ruff-action@v1
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          src: '.'
-          args: 'check -v --config libs/numalogic-core/pyproject.toml'
-          version: 0.4.7
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          pip install ruff==0.4.7
+          ruff check -v .
+#      - uses: chartboost/ruff-action@v1
+#        with:
+#          src: '.'
+#          args: 'check -v --config libs/numalogic-core/pyproject.toml'
+#          version: 0.4.7
   numalogic-connectors:
     name: numalogic-connectors
     runs-on: ubuntu-latest
