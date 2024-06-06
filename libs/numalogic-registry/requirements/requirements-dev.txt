@@ -7,3 +7,4 @@ ruff>=0.0.275
 pre-commit>=3.3
 pytest-mock>=3.12
 torchinfo
+freezegun>=1.4
