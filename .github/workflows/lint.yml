@@ -7,20 +7,48 @@ on:
     branches: [ "main", "release/*" ]
 
 jobs:
-  black:
-    name: Black format
+  numalogic-core:
+    name: numalogic-core
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-core
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: psf/black@stable
         with:
           options: "--check --verbose"
           version: "~= 23.3"
-
-  ruff:
+      - uses: chartboost/ruff-action@v1
+        with:
+          version: "0.0.275"
+  numalogic-connectors:
+    name: numalogic-connectors
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-connectors
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+          version: "~= 23.3"
+      - uses: chartboost/ruff-action@v1
+        with:
+          version: "0.0.275"
+  numalogic-registry:
+    name: numalogic-registry
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-registry
+    steps:
+      - uses: actions/checkout@v4
+      - uses: psf/black@stable
+        with:
+          options: "--check --verbose"
+          version: "~= 23.3"
       - uses: chartboost/ruff-action@v1
         with:
           version: "0.0.275"
