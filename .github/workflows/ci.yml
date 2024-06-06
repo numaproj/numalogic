@@ -21,7 +21,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
-      working-directory: ./libs/numalogic_core
+      working-directory: ./libs/numalogic-core
       run: |
         pip install -r requirements/requirements.txt
         pip install -r requirements/requirements-dev.txt
