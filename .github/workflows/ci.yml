@@ -23,8 +23,8 @@ jobs:
     - name: Install dependencies
       working-directory: ./libs/numalogic_core
       run: |
-          pip install -r requirements/requirements.txt
-	      pip install -r requirements/requirements-dev.txt
+        pip install -r requirements/requirements.txt
+        pip install -r requirements/requirements-dev.txt
     - name: Run tests
       working-directory: ./libs/numalogic_core
       run: make test
