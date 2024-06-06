@@ -85,9 +85,9 @@ class DynamoDBRegistry(ArtifactManager):
     Examples
     --------
     >>> from numalogic.models.autoencoder.variants import VanillaAE
-    >>> from numalogic.test_registry import DynamoDBRegistry
+    >>> from nlregistry import DynamoDBRegistry
     >>> ...
-    >>> test_registry = DynamoDBRegistry(table="mytable", role="arn:aws:iam::1234567890:role/role-name")
+    >>> test_registry = DynamoDBRegistry(table="mytable", role="arn:aws:iam::123:role/name")
     >>> skeys, dkeys = ("mymetric", "ae"), ("vanilla", "seq10")
     >>> model = VanillaAE(seq_len=10)
     >>> test_registry.save(skeys, dkeys, artifact=model, **{'lr': 0.01})

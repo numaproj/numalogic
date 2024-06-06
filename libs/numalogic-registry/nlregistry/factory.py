@@ -20,7 +20,8 @@ class RegistryFactory(_ObjectFactory):
         except AttributeError as err:
             if object_info.name in self._CLS_SET:
                 raise ImportError(
-                    "Please install the required dependencies for the test_registry you want to use."
+                    "Please install the required dependencies for the test_registry "
+                    "you want to use."
                 ) from err
             raise UnknownConfigArgsError(
                 f"Invalid model info instance provided: {object_info}"
@@ -36,7 +37,8 @@ class RegistryFactory(_ObjectFactory):
         except AttributeError as err:
             if name in cls._CLS_SET:
                 raise ImportError(
-                    "Please install the required dependencies for the test_registry you want to use."
+                    "Please install the required dependencies for the test_registry "
+                    "you want to use."
                 ) from err
             raise UnknownConfigArgsError(
                 f"Invalid name provided for RegistryFactory: {name}"

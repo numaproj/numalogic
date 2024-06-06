@@ -140,7 +140,9 @@ class MLflowRegistry(ArtifactManager):
         version: Optional[str] = None,
         artifact_type: str = "pytorch",
     ) -> Optional[ArtifactData]:
-        """Load the artifact from the test_registry. The artifact is loaded from the cache if available.
+        """Load the artifact from the test_registry.
+
+        The artifact is loaded from the cache if available.
 
         Args:
         ----
@@ -167,7 +169,7 @@ class MLflowRegistry(ArtifactManager):
                     return cached_artifact
                 version_info = self.client.get_latest_versions(model_key, stages=[self.model_stage])
                 if not version_info:
-                    raise ModelVersionError("Model version missing for key = %s" % model_key)
+                    raise ModelVersionError(f"Model version missing for key = {model_key}")
                 version_info = version_info[-1]
             else:
                 version_info = self.client.get_model_version(model_key, version)

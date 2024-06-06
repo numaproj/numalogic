@@ -241,10 +241,13 @@ class RedisRegistry(ArtifactManager):
         latest: bool = True,
         version: Optional[str] = None,
     ) -> Optional[ArtifactData]:
-        """Loads the artifact from redis test_registry. Either latest or version (one of the arguments)
-         is needed to load the respective artifact.
+        """Loads the artifact from redis test_registry.
 
-         If cache test_registry is provided, it will first check the cache test_registry for the artifact.
+        Either latest or version (one of the arguments)
+        is needed to load the respective artifact.
+
+         If cache test_registry is provided, it will first check the cache
+         test_registry for the artifact.
          If latest is passed, latest key is saved otherwise version call saves the respective
          version artifact in cache.
 
