@@ -6,6 +6,8 @@ from nlconnectors.exceptions import RDSFetcherConfValidationException
 
 
 class ConnectorType(IntEnum):
+    """Enum for connector types."""
+
     redis = 0
     prometheus = 1
     druid = 2
@@ -14,11 +16,15 @@ class ConnectorType(IntEnum):
 
 @dataclass
 class ConnectorConf:
+    """Base class for connector configuration."""
+
     url: str
 
 
 @dataclass
 class PrometheusConf(ConnectorConf):
+    """Prometheus' configuration class."""
+
     pushgateway: str = ""
     scrape_interval: int = 30
     return_labels: list[str] = field(default_factory=list)
@@ -26,6 +32,8 @@ class PrometheusConf(ConnectorConf):
 
 @dataclass
 class RedisConf(ConnectorConf):
+    """Redis' configuration class."""
+
     port: int
     expiry: int = 300
     master_name: str = "mymaster"
@@ -33,6 +41,8 @@ class RedisConf(ConnectorConf):
 
 @dataclass
 class Pivot:
+    """Pivot configuration for Druid fetcher."""
+
     index: str = "timestamp"
     columns: list[str] = field(default_factory=list)
     value: list[str] = field(default_factory=lambda: ["count"])
@@ -41,12 +51,16 @@ class Pivot:
 
 @dataclass
 class FilterConf:
+    """Filter configuration for Druid fetcher."""
+
     inclusion_filters: Optional[list[dict]] = None
     exclusion_filters: Optional[list[dict]] = None
 
 
 @dataclass
 class DruidFetcherConf:
+    """Druid fetcher configuration."""
+
     datasource: str
     static_filters: Optional[FilterConf] = None
     dimensions: list[str] = field(default_factory=list)
