@@ -19,4 +19,4 @@ setup:
 
 # test your application (tests in the tests/ directory)
 test:
-	poetry run pytest -v tests/
+	pytest -v tests/
