@@ -27,30 +27,6 @@ classifiers = [
 requires-python = ">= 3.9"
 dynamic = ["dependencies", "optional-dependencies"]
 
-#    "requests>=2.0",
-#    "orjson>=3.9",
-#    "pydruid>=0.6",
-#    "boto3>=1.20",
-#    "PyMySQL>=1.0",
-#    "redis[hiredis]>=5.0",
-#    "omegaconf>=2.3",
-#]
-
-#[project.optional-dependencies]
-#dev = [
-#    "moto>=4.1",
-#    "black>23.0",
-#    "pytest>=7.0",
-#    "pytest-cov>=4.0",
-#    "ruff>=0.0.275",
-#    "pre-commit>=3.3",
-#    "pytest-mock>=3.12",
-#    "freezegun>=1.2",
-#    "deepdiff>=6.5.0",
-#    "fakeredis>=2.10",
-#]
-
-
 [project.urls]
 Repository = "https://github.com/numaproj/numalogic"
 Documentation = "https://numalogic.numaproj.io/"
@@ -60,3 +36,22 @@ Homepage = "https://numalogic.numaproj.io/"
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements/requirements.txt"]}
 optional-dependencies = {dev = { file = ["requirements/requirements-dev.txt"] }}
+
+[tool.ruff]
+line-length = 100
+src = ["numalogic-connectors", "tests"]
+lint.select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q", "PLR", "D"]
+lint.ignore = ["TRY003", "TRY301", "RUF100", "D100", "D104", "PLR2004", "D102", "D401", "D107", "D205", "D105", "PLW0603", "PLR0915", "UP035"]
+target-version = "py39"
+show-fixes = true
+output-format = "full"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D101", "D103"]
+
+[tool.ruff.lint.pylint]
+max-args = 15
+max-statements = 30
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
