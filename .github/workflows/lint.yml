@@ -21,6 +21,7 @@ jobs:
           version: "~= 23.3"
       - uses: chartboost/ruff-action@v1
         with:
+          src: '.'
           version: 0.4.7
   numalogic-connectors:
     name: numalogic-connectors

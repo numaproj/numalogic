@@ -63,6 +63,7 @@ exclude = '''
 
 [tool.ruff]
 line-length = 100
+src = ["numalogic", "tests"]
 include = ["pyproject.toml", "numalogic/**/*.py", "tests/**/*.py"]
 lint.select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q", "PLR", "D"]
 lint.ignore = ["TRY003", "TRY301", "RUF100", "D100", "D104", "PLR2004", "D102", "D401", "D107", "D205", "D105", "PLW0603", "PLR0915", "UP035"]
