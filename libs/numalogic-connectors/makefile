@@ -7,7 +7,7 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	black libs/ apps/ examples/ tests/
+	black nlconnectors/ tests/
 
 lint: format
 	ruff check --fix .
@@ -19,4 +19,4 @@ setup:
 
 # test your application (tests in the tests/ directory)
 test:
-	poetry run pytest -v tests/
+	pytest -v tests/

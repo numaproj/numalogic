@@ -8,7 +8,7 @@ on:
 
 jobs:
   numaloigic-core:
-    name: Python version
+    name: numalogic-core
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -17,7 +17,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
@@ -29,3 +29,25 @@ jobs:
     - name: Run tests
       working-directory: ./libs/numalogic-core
       run: make test
+  numalogic-connectors:
+    name: numalogic-conectors
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.10", "3.11" ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install dependencies
+        working-directory: ./libs/numalogic-connectors
+        run: |
+          pip install ../numalogic-core
+          pip install -r requirements/requirements.txt
+      - name: Run tests
+        working-directory: ./libs/numalogic-connectors
+        run: make test
