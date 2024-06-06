@@ -7,16 +7,16 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	black libs/ apps/ examples/ tests/
+	black nlregistry/ tests/
 
 lint: format
 	ruff check --fix .
 
 setup:
-	pip install -e ../numalogic-core
+	pip install ../numalogic-core
 	pip install -r requirements/requirements.txt
 	pip install -r requirements/requirements-dev.txt
 
 # test your application (tests in the tests/ directory)
 test:
-	poetry run pytest -v tests/
+	pytest -v tests/
