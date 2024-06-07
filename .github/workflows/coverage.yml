@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Codecov numalogic-core
+    name: numalogic-core
     runs-on: ubuntu-latest
     defaults:
       run:
