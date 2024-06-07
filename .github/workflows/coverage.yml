@@ -27,7 +27,7 @@ jobs:
         pip install -r requirements/requirements-dev.txt
 
     - name: Run Coverage
-      run: pytest --cov-report=xml --cov=numalogic-core --cov-config .coveragerc tests/ -sq
+      run: pytest --cov-report=xml --cov=numalogic --cov-config .coveragerc tests/ -sq
 
     - name: Upload Coverage
       uses: codecov/codecov-action@v4
