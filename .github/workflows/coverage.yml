@@ -51,10 +51,7 @@ jobs:
           cache: 'pip'
       - name: Install dependencies
         working-directory: ./libs/numalogic-connectors
-        run: |
-          pip install -r requirements/requirements.txt
-          pip install -r requirements/requirements-dev.txt
-
+        run: make setup
       - name: Run Coverage
         run: pytest --cov-report=xml --cov=numalogic-connectors --cov-config .coveragerc tests/ -sq
 
@@ -80,10 +77,7 @@ jobs:
           cache: 'pip'
       - name: Install dependencies
         working-directory: ./libs/numalogic-registry
-        run: |
-          pip install -r requirements/requirements.txt
-          pip install -r requirements/requirements-dev.txt
-
+        run: make setup
       - name: Run Coverage
         run: pytest --cov-report=xml --cov=numalogic-registry --cov-config .coveragerc tests/ -sq
 
