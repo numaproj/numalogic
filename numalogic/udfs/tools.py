@@ -273,7 +273,7 @@ class TrainMsgDeduplicator:
                 msg_train_records=_msg_train_records,
             )
 
-    def ack_insufficient_data(self, key: KEYS, uuid: str, train_records: int) -> bool:
+    def ack_insufficient_data(self, logger, key: KEYS, uuid: str, train_records: int) -> bool:
         """
         Acknowledge the insufficient data message. Retry training after certain period of a time.
         Args:
@@ -289,17 +289,18 @@ class TrainMsgDeduplicator:
         try:
             self.client.hset(name=_key, key="_msg_train_records", value=str(train_records))
         except Exception:
-            _struct_log.exception(
+            logger.exception(
                 "Problem while updating _msg_train_records information for the key",
                 uuid=uuid,
                 key=key,
             )
             return False
-        _struct_log.debug("Acknowledging insufficient data for the key", uuid=uuid, key=key)
+        logger.debug("Acknowledging insufficient data for the key", uuid=uuid, key=key)
         return True
 
     def ack_read(
         self,
+        logger,
         key: KEYS,
         uuid: str,
         retrain_freq: int = 24,
@@ -337,7 +338,7 @@ class TrainMsgDeduplicator:
             and _curr_time - float(_msg_read_ts)
             < (min_train_records - int(_msg_train_records)) * data_freq
         ):
-            _struct_log.debug(
+            logger.debug(
                 "There was insufficient data for the key in the past. Retrying fetching"
                 " and training after secs",
                 uuid=uuid,
@@ -351,14 +352,12 @@ class TrainMsgDeduplicator:
 
         # Check if the model is being trained by another process
         if _msg_read_ts and time.time() - float(_msg_read_ts) < retry:
-            _struct_log.debug(
-                "Model with key is being trained by another process", uuid=uuid, key=key
-            )
+            logger.debug("Model with key is being trained by another process", uuid=uuid, key=key)
             return False
 
         # This check is needed if there is backpressure in the pipeline
         if _msg_train_ts and time.time() - float(_msg_train_ts) < retrain_freq * 60 * 60:
-            _struct_log.debug(
+            logger.debug(
                 "Model was saved for the key in less than retrain_freq hrs, skipping training",
                 uuid=uuid,
                 key=key,
@@ -368,16 +367,16 @@ class TrainMsgDeduplicator:
         try:
             self.client.hset(name=_key, key="_msg_read_ts", value=str(time.time()))
         except Exception:
-            _struct_log.exception(
+            logger.exception(
                 "Problem while updating msg_read_ts information for the key",
                 uuid=uuid,
                 key=key,
             )
             return False
-        _struct_log.debug("Acknowledging request for Training for key", uuid=uuid, key=key)
+        logger.debug("Acknowledging request for Training for key", uuid=uuid, key=key)
         return True
 
-    def ack_train(self, key: KEYS, uuid: str) -> bool:
+    def ack_train(self, logger, key: KEYS, uuid: str) -> bool:
         """
         Acknowledge the train message is trained and saved. Return True when
                 _msg_train_ts is updated.
@@ -393,13 +392,13 @@ class TrainMsgDeduplicator:
         try:
             self.client.hset(name=_key, key="_msg_train_ts", value=str(time.time()))
         except Exception:
-            _struct_log.exception(
+            logger.exception(
                 "Problem while updating msg_train_ts information for the key",
                 uuid=uuid,
                 key=key,
             )
             return False
-        _struct_log.debug("Acknowledging model saving complete for the key", uuid=uuid, key=key)
+        logger.debug("Acknowledging model saving complete for the key", uuid=uuid, key=key)
         return True
 
 
