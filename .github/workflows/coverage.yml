@@ -37,6 +37,7 @@ jobs:
         fail_ci_if_error: true
         verbose: true
         working-directory: ./libs/numalogic-core
+        name: numalogic-core
   numalogic-connectors:
     name: numalogic-connectors
     runs-on: ubuntu-latest
@@ -54,7 +55,7 @@ jobs:
         working-directory: ./libs/numalogic-connectors
         run: make setup
       - name: Run Coverage
-        run: pytest --cov-report=xml --cov=numalogic-connectors --cov-config .coveragerc tests/ -sq
+        run: pytest --cov-report=xml --cov=nlconnectors --cov-config .coveragerc tests/ -sq
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
@@ -63,6 +64,8 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: true
           verbose: true
+          working-directory: ./libs/numalogic-connectors
+          name: numalogic-connectors
   numalogic-registry:
     name: numalogic-registry
     runs-on: ubuntu-latest
@@ -80,7 +83,7 @@ jobs:
         working-directory: ./libs/numalogic-registry
         run: make setup
       - name: Run Coverage
-        run: pytest --cov-report=xml --cov=numalogic-registry --cov-config .coveragerc tests/ -sq
+        run: pytest --cov-report=xml --cov=nlregistry --cov-config .coveragerc tests/ -sq
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v4
@@ -89,3 +92,5 @@ jobs:
           files: ./coverage.xml
           fail_ci_if_error: true
           verbose: true
+          working-directory: ./libs/numalogic-registry
+          name: numalogic-registry
