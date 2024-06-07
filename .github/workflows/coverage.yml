@@ -8,35 +8,26 @@ on:
 
 jobs:
   build:
-    name: Codecov
+    name: Codecov numalogic-core
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.9"]
-
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-core
     steps:
-    - uses: actions/checkout@v3
-
-    - name: Install poetry
-      run: pipx install poetry==1.6.1
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'poetry'
-
+        python-version: 3.9
+        cache: 'pip'
     - name: Install dependencies
+      working-directory: ./libs/numalogic-core
       run: |
-        poetry env use ${{ matrix.python-version }}
-        poetry install --all-extras --with dev
-        poetry run pip install "torch<3.0" -i https://download.pytorch.org/whl/cpu
-        poetry run pip install "pytorch-lightning<3.0"
+        pip install -r requirements/requirements.txt
+        pip install -r requirements/requirements-dev.txt
 
     - name: Run Coverage
-      run: |
-        poetry run pytest --cov-report=xml --cov=numalogic --cov-config .coveragerc tests/ -sq
+      run: pytest --cov-report=xml --cov=numalogic-core --cov-config .coveragerc tests/ -sq
 
     - name: Upload Coverage
       uses: codecov/codecov-action@v4

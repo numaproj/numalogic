@@ -25,12 +25,10 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
     - name: Install dependencies
-      working-directory: ./libs/numalogic-core
       run: |
         pip install -r requirements/requirements.txt
         pip install -r requirements/requirements-dev.txt
     - name: Run tests
-      working-directory: ./libs/numalogic-core
       run: make test
   numalogic-connectors:
     name: numalogic-conectors
