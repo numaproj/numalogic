@@ -1,0 +1,21 @@
+name: Numalogic Apps CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  numalogic-udfs:
+    name: numalogic-core
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/numa-udfs
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build and run dev container task
+      uses: devcontainers/ci@v0.3
+      with:
+        runCmd: pytest --cov-report=xml --cov=src tests/ -sq
