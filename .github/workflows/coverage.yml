@@ -36,6 +36,7 @@ jobs:
         files: ./coverage.xml
         fail_ci_if_error: true
         verbose: true
+        working-directory: ./libs/numalogic-core
   numalogic-connectors:
     name: numalogic-connectors
     runs-on: ubuntu-latest
