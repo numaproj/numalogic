@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  numalogic-core:
     name: numalogic-core
     runs-on: ubuntu-latest
     defaults:
@@ -36,3 +36,61 @@ jobs:
         files: ./coverage.xml
         fail_ci_if_error: true
         verbose: true
+  numalogic-connectors:
+    name: numalogic-connectors
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-connectors
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+          cache: 'pip'
+      - name: Install dependencies
+        working-directory: ./libs/numalogic-connectors
+        run: |
+          pip install -r requirements/requirements.txt
+          pip install -r requirements/requirements-dev.txt
+
+      - name: Run Coverage
+        run: pytest --cov-report=xml --cov=numalogic-connectors --cov-config .coveragerc tests/ -sq
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: true
+          verbose: true
+  numalogic-registry:
+    name: numalogic-registry
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-registry
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.9
+          cache: 'pip'
+      - name: Install dependencies
+        working-directory: ./libs/numalogic-registry
+        run: |
+          pip install -r requirements/requirements.txt
+          pip install -r requirements/requirements-dev.txt
+
+      - name: Run Coverage
+        run: pytest --cov-report=xml --cov=numalogic-registry --cov-config .coveragerc tests/ -sq
+
+      - name: Upload Coverage
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: true
+          verbose: true
