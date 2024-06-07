@@ -8,7 +8,7 @@ on:
 
 jobs:
   numalogic-udfs:
-    name: numalogic-core
+    name: numalogic-udfs
     runs-on: ubuntu-latest
     defaults:
       run:
