@@ -18,4 +18,5 @@ jobs:
     - name: Build and run dev container task
       uses: devcontainers/ci@v0.3
       with:
+        subFolder: ./apps/numa-udfs
         runCmd: pytest --cov-report=xml --cov=src tests/ -sq
