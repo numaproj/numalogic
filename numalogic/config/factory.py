@@ -51,6 +51,7 @@ class PreprocessFactory(_ObjectFactory):
         GaussianNoiseAdder,
         DifferenceTransform,
         FlattenVector,
+        FlattenVectorWithPadding,
         PercentileScaler,
         ExpMovingAverage,
     )
@@ -67,6 +68,7 @@ class PreprocessFactory(_ObjectFactory):
         "GaussianNoiseAdder": GaussianNoiseAdder,
         "DifferenceTransform": DifferenceTransform,
         "FlattenVector": FlattenVector,
+        "FlattenVectorWithPadding": FlattenVectorWithPadding,
         "PercentileScaler": PercentileScaler,
         "ExpMovingAverage": ExpMovingAverage,
     }
