@@ -35,6 +35,8 @@ orjson = "^3.9"
 pynumaflow = "~0.7.2"
 prometheus_client = "^0.18.0"
 structlog = "^24.1.0"
+numalogic-prometheus = { git = "git@github.com:numaproj/numalogic-prometheus.git", branch = "metrics" }
+
 
 # extras
 mlflow-skinny = { version = "^2.0", optional = true }

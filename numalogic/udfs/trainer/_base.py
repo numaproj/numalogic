@@ -1,3 +1,4 @@
+import os
 import time
 from dataclasses import asdict
 from typing import Optional
@@ -19,21 +20,12 @@ from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifac
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
-from numalogic.udfs._metrics import (
-    REDIS_ERROR_COUNTER,
-    INSUFFICIENT_DATA_COUNTER,
-    NAN_SUMMARY,
-    INF_SUMMARY,
-    MSG_IN_COUNTER,
-    MSG_DROPPED_COUNTER,
-    MSG_PROCESSED_COUNTER,
-    UDF_TIME,
-    _increment_counter,
-    _add_summary,
-)
+from numalogic.udfs._metrics_utility import _increment_counter, _METRICS, _add_summary
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 import torch
+
+METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
 
 _struct_log = configure_logger()
 
@@ -144,7 +136,6 @@ class TrainerUDF(NumalogicUDF):
 
         return dict_artifacts
 
-    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         Main run function for the UDF.
@@ -163,19 +154,20 @@ class TrainerUDF(NumalogicUDF):
         # Construct payload object
         json_payload = orjson.loads(datum.value)
         payload = TrainerPayload(**json_payload)
-        _metric_label_values = (
-            payload.composite_keys,
-            ":".join(payload.composite_keys),
-            payload.config_id,
-            payload.pipeline_id,
-        )
+        _metric_label_values = {
+            "composite_key": ":".join(payload.composite_keys),
+            "source": ":".join(payload.composite_keys),
+            "config_id": payload.config_id,
+            "pipeline_id": payload.pipeline_id,
+        }
 
         _conf = self.get_ml_pipeline_conf(
             config_id=payload.config_id, pipeline_id=payload.pipeline_id
         )
         _increment_counter(
-            counter=MSG_IN_COUNTER,
-            labels=[self._vtx, *_metric_label_values],
+            counter=_METRICS["MSG_IN_COUNTER"],
+            labels={"vertex": self._vtx} | _metric_label_values,
+            is_enabled=METRICS_ENABLED,
         )
 
         logger = log_data_payload_values(logger, json_payload)
@@ -192,8 +184,9 @@ class TrainerUDF(NumalogicUDF):
             data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
             _increment_counter(
-                counter=MSG_DROPPED_COUNTER,
-                labels=(self._vtx, *_metric_label_values),
+                counter=_METRICS["MSG_DROPPED_COUNTER"],
+                labels={"vertex": self._vtx} | _metric_label_values,
+                is_enabled=METRICS_ENABLED,
             )
             return Messages(Message.to_drop())
 
@@ -204,8 +197,9 @@ class TrainerUDF(NumalogicUDF):
         # while fetching the data
         if df is None:
             _increment_counter(
-                counter=MSG_DROPPED_COUNTER,
-                labels=(self._vtx, *_metric_label_values),
+                counter=_METRICS["MSG_DROPPED_COUNTER"],
+                labels={"vertex": self._vtx} | _metric_label_values,
+                is_enabled=METRICS_ENABLED,
             )
             logger.warning(
                 "Caught exception/error while fetching from source",
@@ -224,12 +218,14 @@ class TrainerUDF(NumalogicUDF):
                 shape=df.shape,
             )
             _increment_counter(
-                counter=INSUFFICIENT_DATA_COUNTER,
+                counter=_METRICS["INSUFFICIENT_DATA_COUNTER"],
                 labels=_metric_label_values,
+                is_enabled=METRICS_ENABLED,
             )
             _increment_counter(
-                counter=MSG_DROPPED_COUNTER,
-                labels=(self._vtx, *_metric_label_values),
+                counter=_METRICS["MSG_DROPPED_COUNTER"],
+                labels={"vertex": self._vtx} | _metric_label_values,
+                is_enabled=METRICS_ENABLED,
             )
             return Messages(Message.to_drop())
 
@@ -238,14 +234,16 @@ class TrainerUDF(NumalogicUDF):
         # Construct feature array
         x_train, nan_counter, inf_counter = self.get_feature_arr(df, _conf.metrics)
         _add_summary(
-            summary=NAN_SUMMARY,
+            summary=_METRICS["NAN_SUMMARY"],
             labels=_metric_label_values,
             data=np.sum(nan_counter),
+            is_enabled=METRICS_ENABLED,
         )
         _add_summary(
-            summary=INF_SUMMARY,
+            summary=_METRICS["INF_SUMMARY"],
             labels=_metric_label_values,
             data=np.sum(inf_counter),
+            is_enabled=METRICS_ENABLED,
         )
 
         # Initialize artifacts
@@ -283,11 +281,9 @@ class TrainerUDF(NumalogicUDF):
             "Time taken in trainer", execution_time_secs=round(time.perf_counter() - _start_time, 4)
         )
         _increment_counter(
-            counter=MSG_PROCESSED_COUNTER,
-            labels=(
-                self._vtx,
-                *_metric_label_values,
-            ),
+            counter=_METRICS["MSG_PROCESSED_COUNTER"],
+            labels={"vertex": self._vtx} | _metric_label_values,
+            is_enabled=METRICS_ENABLED,
         )
         return Messages(Message.to_drop())
 
@@ -340,8 +336,14 @@ class TrainerUDF(NumalogicUDF):
             )
         except RedisRegistryError:
             _increment_counter(
-                counter=REDIS_ERROR_COUNTER,
-                labels=(vertex_name, ":".join(payload.composite_keys), payload.config_id),
+                counter=_METRICS["REDIS_ERROR_COUNTER"],
+                labels={
+                    "vertex": vertex_name,
+                    "composite_key": ":".join(skeys),
+                    "config_id": payload.config_id,
+                    "pipeline_id": payload.pipeline_id,
+                },
+                is_enabled=METRICS_ENABLED,
             )
             logger.exception(
                 "Error while saving artifact with skeys", uuid=payload.uuid, skeys=skeys

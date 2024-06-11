@@ -10,9 +10,10 @@ from numalogic.udfs import NumalogicUDF, PipelineConf
 import numpy.typing as npt
 
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
+from numalogic.udfs._metrics_utility import _increment_counter, _METRICS
 from numalogic.udfs.entities import StreamPayload, OutputPayload
 
-
+METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
 SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
 _struct_log = configure_logger()
 
@@ -45,7 +46,18 @@ class StaticThresholdUDF(NumalogicUDF):
         payload = StreamPayload(**json_data_payload)
         conf = self.get_ml_pipeline_conf(payload.config_id, payload.pipeline_id)
         adjust_conf = conf.numalogic_conf.score.adjust
-
+        _metric_label_values = {
+            "source": ":".join(payload.composite_keys),
+            "vertex": self._vtx,
+            "composite_key": ":".join(payload.composite_keys),
+            "config_id": payload.config_id,
+            "pipeline_id": payload.pipeline_id,
+        }
+        _increment_counter(
+            counter=_METRICS["MSG_IN_COUNTER"],
+            labels=_metric_label_values,
+            is_enabled=METRICS_ENABLED,
+        )
         logger = _struct_log.bind(udf_vertex=self._vtx)
         logger = log_data_payload_values(logger, json_data_payload)
 
@@ -61,6 +73,9 @@ class StaticThresholdUDF(NumalogicUDF):
             y_unified = self.compute_unified_score(y_features, adjust_conf.feature_agg)
         except RuntimeError:
             logger.exception("Error occurred while computing static anomaly scores")
+            _increment_counter(
+                _METRICS["RUNTIME_ERROR_COUNTER"], _metric_label_values, is_enabled=METRICS_ENABLED
+            )
             return Messages(Message.to_drop())
 
         out_payload = OutputPayload(
@@ -78,6 +93,11 @@ class StaticThresholdUDF(NumalogicUDF):
             keys=out_payload.composite_keys,
             y_unified=y_unified,
             y_features=y_features,
+        )
+        _increment_counter(
+            counter=_METRICS["MSG_PROCESSED_COUNTER"],
+            labels=_metric_label_values,
+            is_enabled=METRICS_ENABLED,
         )
         return Messages(Message(keys=keys, value=out_payload.to_json(), tags=["output"]))
 

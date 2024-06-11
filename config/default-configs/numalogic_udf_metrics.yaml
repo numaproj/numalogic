@@ -1,0 +1,158 @@
+numalogic_metrics:
+  - type: Gauge
+    metrics:
+      - name: RECORDED_DATA_GAUGE
+        description: Gauge metric to observe the mean value of the window
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          metric_name: ""
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+  - type: Info
+    metrics:
+      - name: MODEL_INFO
+        description: Model Info
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          "composite_key" : ""
+          "config_id" : ""
+          "pipeline_id": ""
+  - type: Summary
+    metrics:
+      - name: FETCH_TIME_SUMMARY
+        description: Train Data Fetch time
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: NAN_SUMMARY
+        description: Summary of NaN values
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: INF_SUMMARY
+        description: Summary of Inf values
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: DATAFRAME_SHAPE_SUMMARY
+        description: Summary of Dataframe shape
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+            composite_key: ""
+            config_id: ""
+            pipeline_id: ""
+  - type: Counter
+    metrics:
+      - name: MSG_IN_COUNTER
+        description: Count msgs flowing in
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: MSG_DROPPED_COUNTER
+        description: Count msgs dropped
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: MSG_PROCESSED_COUNTER
+        description: Count msgs processed
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: SOURCE_COUNTER
+        description: Count artifact source (registry or cache) calls
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          artifact_source: ""
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: INSUFFICIENT_DATA_COUNTER
+        description: Count insufficient data while Training
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: MODEL_STATUS_COUNTER
+        description: Count model status
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          status: ""
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: DATASHAPE_ERROR_COUNTER
+        description: Count datashape errors
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: REDIS_ERROR_COUNTER
+        description: Count redis errors
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: EXCEPTION_COUNTER
+        description: Count exceptions
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: RUNTIME_ERROR_COUNTER
+        description: Count runtime errors
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          vertex: ""
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
+      - name: FETCH_EXCEPTION_COUNTER
+        description: Count exceptions during train data fetch calls
+        static_label_pairs:
+          source: "numalogic_udf_metrics"
+        label_pairs:
+          composite_key: ""
+          config_id: ""
+          pipeline_id: ""
