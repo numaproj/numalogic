@@ -188,6 +188,8 @@ class FlattenVectorWithPadding(StatelessTransformer):
         self.padding_with = padding_with
 
         self.padding_features = list(set(features) - set(flatten_features))
+        if not self.padding_features:
+            raise ValueError("At least one feature should be left for padding.")
         self.flatten_indexes = self._feature_indexes(features, self.flatten_features)
         self.padding_indexes = self._feature_indexes(features, self.padding_features)
 
