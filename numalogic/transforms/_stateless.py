@@ -169,6 +169,15 @@ class FlattenVectorWithPadding(StatelessTransformer):
 
     """
 
+    __slots__ = (
+        "features",
+        "flatten_features",
+        "padding_with",
+        "padding_features",
+        "flatten_indexes",
+        "padding_indexes",
+    )
+
     @staticmethod
     def _feature_indexes(features_all: list[str], features: list[str]) -> list[int]:
         return [features_all.index(f) for f in features]
