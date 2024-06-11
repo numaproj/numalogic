@@ -58,20 +58,8 @@ class TESTVanillaAE(unittest.TestCase):
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
         self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
 
-    def test_multichannel_encoderinfo(self):
-        model = MultichannelAE(seq_len=SEQ_LEN, n_channels=2, encoderinfo=True)
-
-        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
-        trainer = TimeseriesTrainer(fast_dev_run=True, enable_progress_bar=True)
-        trainer.fit(model, datamodule=datamodule)
-
-        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
-        stream_trainer = TimeseriesTrainer()
-        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
-        self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
-
-    def test_multichannel_no_encoderinfo(self):
-        model = MultichannelAE(seq_len=SEQ_LEN, n_channels=2, encoderinfo=False)
+    def test_multichannel(self):
+        model = MultichannelAE(seq_len=SEQ_LEN, n_channels=2)
 
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = TimeseriesTrainer(fast_dev_run=True, enable_progress_bar=True)

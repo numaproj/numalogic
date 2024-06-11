@@ -51,6 +51,7 @@ class PreprocessFactory(_ObjectFactory):
         GaussianNoiseAdder,
         DifferenceTransform,
         FlattenVector,
+        FlattenVectorWithPadding,
         PercentileScaler,
         ExpMovingAverage,
     )
@@ -67,6 +68,7 @@ class PreprocessFactory(_ObjectFactory):
         "GaussianNoiseAdder": GaussianNoiseAdder,
         "DifferenceTransform": DifferenceTransform,
         "FlattenVector": FlattenVector,
+        "FlattenVectorWithPadding": FlattenVectorWithPadding,
         "PercentileScaler": PercentileScaler,
         "ExpMovingAverage": ExpMovingAverage,
     }
@@ -123,6 +125,7 @@ class ModelFactory(_ObjectFactory):
     from numalogic.models.autoencoder.variants import (
         VanillaAE,
         SparseVanillaAE,
+        MultichannelAE,
         Conv1dAE,
         SparseConv1dAE,
         LSTMAE,
@@ -135,6 +138,7 @@ class ModelFactory(_ObjectFactory):
     _CLS_MAP: ClassVar[dict] = {
         "VanillaAE": VanillaAE,
         "SparseVanillaAE": SparseVanillaAE,
+        "MultichannelAE": MultichannelAE,
         "Conv1dAE": Conv1dAE,
         "SparseConv1dAE": SparseConv1dAE,
         "LSTMAE": LSTMAE,

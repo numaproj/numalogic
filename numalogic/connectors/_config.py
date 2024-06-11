@@ -52,7 +52,7 @@ class DruidFetcherConf:
     dimensions: list[str] = field(default_factory=list)
     aggregations: dict = field(default_factory=dict)
     group_by: list[str] = field(default_factory=list)
-    pivot: Pivot = field(default_factory=lambda: Pivot())
+    pivot: Optional[Pivot] = field(default_factory=lambda: Pivot())
     granularity: str = "minute"
 
     def __post_init__(self):
@@ -92,7 +92,7 @@ class RDSFetcherConf:
     # metric column names
     metrics: list[str]
     group_by: list[str] = field(default_factory=list)
-    pivot: Pivot = field(default_factory=lambda: Pivot())
+    pivot: Optional[Pivot] = field(default_factory=lambda: Pivot())
     hash_query_type: bool = True
     hash_column_name: str = "model_md5_hash"
     datetime_column_name: str = "eventdatetime"

@@ -210,7 +210,7 @@ class VanillaAE(BaseAE):
 
 
 class MultichannelAE(BaseAE):
-    r"""Multichannel Autoencoder model based on the vanilla encoder and decoder.
+    r"""Multichannel Vanilla Autoencoder model based on the vanilla encoder and decoder.
         Each channel is an isolated neural network.
 
     Args:
@@ -234,14 +234,12 @@ class MultichannelAE(BaseAE):
         decoder_layersizes: Sequence[int] = (8, 16),
         dropout_p: float = 0.25,
         batchnorm: bool = False,
-        encoderinfo: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
         self.seq_len = seq_len
         self.dropout_prob = dropout_p
         self.n_channels = n_channels
-        self.encoderinfo = encoderinfo
         # The number of features per channel default to 1 in this architecture
         self.n_features = 1
 
@@ -291,16 +289,11 @@ class MultichannelAE(BaseAE):
             encoded = encoder(batch_channel)
             decoded = decoder(encoded)
 
-            if self.encoderinfo:
-                encoded_all.append(encoded)
+            encoded_all.append(encoded)
             decoded_all.append(decoded)
 
-        if self.encoderinfo:
-            # Stack the encoded outputs of all channels when required
-            encoded_all = torch.stack(encoded_all, dim=-1)
-            encoded_all = torch.squeeze(encoded_all, 1)
-        else:
-            encoded_all = EMPTY_TENSOR
+        encoded_all = torch.stack(encoded_all, dim=-1)
+        encoded_all = torch.squeeze(encoded_all, 1)
 
         decoded_all = torch.stack(decoded_all, dim=-1)
         decoded_all = torch.squeeze(decoded_all, 1)

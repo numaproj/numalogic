@@ -32,14 +32,14 @@ class TestUDFFactory(unittest.TestCase):
 class TestServerFactory(unittest.TestCase):
     def test_get_cls(self):
         server_cls = ServerFactory.get_server_cls("sync")
-        self.assertEqual(server_cls.__name__, "Mapper")
+        self.assertEqual(server_cls.__name__, "MapServer")
 
     def test_get_cls_err(self):
         with self.assertRaises(ValueError):
             ServerFactory.get_server_cls("some_server")
 
     def test_get_instance(self):
-        server = ServerFactory.get_server_instance("multiproc", handler=lambda x: x)
+        server = ServerFactory.get_server_instance("multiproc", mapper_instance=lambda x: x)
         self.assertIsInstance(server, ServerFactory.get_server_cls("multiproc"))
 
 
