@@ -19,8 +19,6 @@ from torch.distributions import kl_divergence, Bernoulli
 from numalogic.models.autoencoder.base import BaseAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
 
-EMPTY_TENSOR = torch.empty(0)
-
 
 class _VanillaEncoder(nn.Module):
     r"""Encoder module for the VanillaAE.
@@ -221,8 +219,6 @@ class MultichannelAE(BaseAE):
         decoder_layersizes: decoder layer size (default = Sequence[int] = (8, 16))
         dropout_p: the dropout value (default=0.25)
         batchnorm: Flag to enable batch normalization (default=False)
-        encoderinfo: Flag to enable returning encoder information in the "forward" step
-                    (default=False)
         **kwargs: BaseAE kwargs
     """
 

@@ -7,7 +7,7 @@ from torch import nn, Tensor
 from torch.distributions import MultivariateNormal, kl_divergence
 
 from numalogic.models.vae.base import BaseVAE
-from numalogic.models.vae.layer import CausalConvBlock
+from numalogic.tools.layer import CausalConvBlock
 from numalogic.tools.exceptions import ModelInitializationError
 
 _DEFAULT_KERNEL_SIZE: Final[int] = 3

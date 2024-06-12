@@ -1,3 +1,5 @@
+import math
+import torch
 from torch import nn, Tensor
 import torch.nn.functional as F
 
@@ -60,3 +62,34 @@ class CausalConvBlock(nn.Module):
 
     def forward(self, input_: Tensor) -> Tensor:
         return self.relu(self.bnorm(self.conv(input_)))
+
+
+class MultiChannelLinear(nn.Module):
+    def __init__(
+        self, in_features: int, out_features: int, n_channels: int, device=None, dtype=None
+    ):
+        factory_kwargs = {"device": device, "dtype": dtype}
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.n_channels = n_channels
+
+        self.weight = nn.Parameter(
+            torch.empty((n_channels, in_features, out_features), **factory_kwargs)
+        )
+        self.bias = nn.Parameter(torch.empty((n_channels, 1, out_features), **factory_kwargs))
+        self.reset_parameters()
+
+    def reset_parameters(self) -> None:
+        nn.init.kaiming_uniform_(self.weight, a=math.sqrt(5))
+        fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.weight)
+        bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+        nn.init.uniform_(self.bias, -bound, bound)
+
+    def forward(self, x):
+        x = torch.swapdims(x, 0, 1)
+        output = torch.bmm(x, self.weight) + self.bias
+        return torch.swapdims(output, 0, 1)
+
+    def extra_repr(self) -> str:
+        return f"in_features={self.in_features}, out_features={self.out_features}, n_channels={self.n_channels}"
