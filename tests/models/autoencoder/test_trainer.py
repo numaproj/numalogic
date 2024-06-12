@@ -13,7 +13,6 @@ from numalogic.tools.trainer import TimeseriesTrainer
 from numalogic.models.autoencoder.variants import (
     Conv1dAE,
     LSTMAE,
-    SparseVanillaAE,
     TransformerAE,
     SparseConv1dAE,
     VanillaAE,

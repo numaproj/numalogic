@@ -125,8 +125,8 @@ class _Decoder(nn.Module):
 
 
 class VanillaICAE(BaseAE):
-    r"""Vanilla Autoencoder model with Independent isolated Channels based on the vanilla encoder and decoder.
-        Each channel is an isolated neural network.
+    r"""Vanilla Autoencoder model with Independent isolated Channels based
+    on the vanilla encoder and decoder. Each channel is an isolated neural network.
 
     Args:
     ----
