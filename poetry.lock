@@ -3116,7 +3116,7 @@ setuptools = "^70.0.0"
 type = "git"
 url = "git@github.com:numaproj/numalogic-prometheus.git"
 reference = "metrics"
-resolved_reference = "81de2c7f6648934bca324f1ab35b4ab50eb4aaa6"
+resolved_reference = "e02f957916757fd785d217abbd72399b465898f2"
 
 [[package]]
 name = "numba"
