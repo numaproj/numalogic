@@ -65,6 +65,18 @@ class CausalConvBlock(nn.Module):
 
 
 class MultiChannelLinear(nn.Module):
+    """
+    Linear layer that treats each feature as independent isolated channels.
+
+    Args:
+    ----
+        in_features: num of input features
+        out_features: num of output features
+        n_channels: num of channels
+        device: device to run on
+        dtype: datatype to use
+    """
+
     def __init__(
         self, in_features: int, out_features: int, n_channels: int, device=None, dtype=None
     ):
@@ -92,4 +104,7 @@ class MultiChannelLinear(nn.Module):
         return torch.swapdims(output, 0, 1)
 
     def extra_repr(self) -> str:
-        return f"in_features={self.in_features}, out_features={self.out_features}, n_channels={self.n_channels}"
+        return (
+            f"in_features={self.in_features}, out_features={self.out_features}, "
+            f"n_channels={self.n_channels}"
+        )
