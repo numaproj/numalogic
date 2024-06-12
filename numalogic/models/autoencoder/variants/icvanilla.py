@@ -178,12 +178,6 @@ class VanillaICAE(BaseAE):
         self.encoder.apply(self.init_weights)
         self.decoder.apply(self.init_weights)
 
-    @staticmethod
-    def init_weights(m: nn.Module) -> None:
-        """Initialize the parameters in the model."""
-        if isinstance(m, nn.Linear):
-            nn.init.xavier_normal_(m.weight)
-
     def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
         batch = torch.swapdims(batch, 1, 2)
         encoded = self.encoder(batch)
