@@ -21,13 +21,16 @@ from fakeredis import FakeStrictRedis, FakeServer
 from pynumaflow.mapper import Datum
 from orjson import orjson
 from omegaconf import OmegaConf
-from numalogic.udfs import StreamConf, PipelineConf, MLPipelineConf
+from numalogic.udfs import StreamConf, PipelineConf, MLPipelineConf, MetricsSingleton
 from numalogic.config import NumalogicConf, ModelInfo
 from numalogic.config import TrainerConf, LightningTrainerConf
 import time
 from freezegun import freeze_time
 
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
+MetricsSingleton().load_metrics(
+    config_file_path=f"{TESTS_DIR}/udfs/resources/numalogic_udf_metrics.yaml"
+)
 
 
 # @pytest.fixture

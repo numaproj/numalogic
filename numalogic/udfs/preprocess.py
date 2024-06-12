@@ -16,7 +16,7 @@ from numalogic.registry import LocalLRUCache
 from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
-from numalogic.udfs._metrics_utility import _increment_counter, _METRICS
+from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import Status, Header
 from numalogic.udfs.tools import (
     make_stream_payload,
@@ -123,7 +123,7 @@ class PreprocessUDF(NumalogicUDF):
         }
 
         _increment_counter(
-            counter=_METRICS["MSG_IN_COUNTER"],
+            counter="MSG_IN_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )
@@ -131,12 +131,12 @@ class PreprocessUDF(NumalogicUDF):
         if raw_df.shape[0] < _stream_conf.window_size or raw_df.shape[1] != len(_conf.metrics):
             logger.critical("Dataframe shape conditions not met ", raw_df_shape=raw_df.shape)
             _increment_counter(
-                counter=_METRICS["DATASHAPE_ERROR_COUNTER"],
+                counter="DATASHAPE_ERROR_COUNTER",
                 labels=_metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
             _increment_counter(
-                counter=_METRICS["MSG_DROPPED_COUNTER"],
+                counter="MSG_DROPPED_COUNTER",
                 labels=_metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
@@ -174,7 +174,7 @@ class PreprocessUDF(NumalogicUDF):
         else:
             # Load configuration for the config_id
             _increment_counter(
-                _METRICS["SOURCE_COUNTER"],
+                "SOURCE_COUNTER",
                 labels=({"artifact_source": "config"} | _metric_label_values),
                 is_enabled=METRICS_ENABLED,
             )
@@ -204,7 +204,7 @@ class PreprocessUDF(NumalogicUDF):
             )
         except RuntimeError:
             _increment_counter(
-                counter=_METRICS["RUNTIME_ERROR_COUNTER"],
+                counter="RUNTIME_ERROR_COUNTER",
                 labels=_metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
@@ -227,7 +227,7 @@ class PreprocessUDF(NumalogicUDF):
             return msgs
 
         _increment_counter(
-            counter=_METRICS["MSG_PROCESSED_COUNTER"],
+            counter="MSG_PROCESSED_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )

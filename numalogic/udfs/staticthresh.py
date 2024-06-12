@@ -10,7 +10,7 @@ from numalogic.udfs import NumalogicUDF, PipelineConf
 import numpy.typing as npt
 
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
-from numalogic.udfs._metrics_utility import _increment_counter, _METRICS
+from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, OutputPayload
 
 METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
@@ -54,7 +54,7 @@ class StaticThresholdUDF(NumalogicUDF):
             "pipeline_id": payload.pipeline_id,
         }
         _increment_counter(
-            counter=_METRICS["MSG_IN_COUNTER"],
+            counter="MSG_IN_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )
@@ -74,7 +74,7 @@ class StaticThresholdUDF(NumalogicUDF):
         except RuntimeError:
             logger.exception("Error occurred while computing static anomaly scores")
             _increment_counter(
-                _METRICS["RUNTIME_ERROR_COUNTER"], _metric_label_values, is_enabled=METRICS_ENABLED
+                "RUNTIME_ERROR_COUNTER", _metric_label_values, is_enabled=METRICS_ENABLED
             )
             return Messages(Message.to_drop())
 
@@ -95,7 +95,7 @@ class StaticThresholdUDF(NumalogicUDF):
             y_features=y_features,
         )
         _increment_counter(
-            counter=_METRICS["MSG_PROCESSED_COUNTER"],
+            counter="MSG_PROCESSED_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )

@@ -6,10 +6,13 @@ from orjson import orjson
 import pytest
 
 from numalogic._constants import TESTS_DIR
-from numalogic.udfs import PipelineConf
+from numalogic.udfs import PipelineConf, MetricsSingleton
 from numalogic.udfs.payloadtx import PayloadTransformer
 from tests.udfs.utility import input_json_from_file
 
+MetricsSingleton().load_metrics(
+    config_file_path=f"{TESTS_DIR}/udfs/resources/numalogic_udf_metrics.yaml"
+)
 logging.basicConfig(level=logging.DEBUG)
 KEYS = ["service-mesh", "1", "2"]
 DATUM = input_json_from_file(os.path.join(TESTS_DIR, "udfs", "resources", "data", "stream.json"))

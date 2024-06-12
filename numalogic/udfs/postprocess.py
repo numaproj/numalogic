@@ -22,7 +22,7 @@ from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf, MLPipelineConf
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
-from numalogic.udfs._metrics_utility import _increment_counter, _METRICS
+from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, Header, Status, OutputPayload
 from numalogic.udfs.tools import _load_artifact, get_trainer_message, get_static_thresh_message
 
@@ -94,7 +94,7 @@ class PostprocessUDF(NumalogicUDF):
             "pipeline_id": payload.pipeline_id,
         }
         _increment_counter(
-            counter=_METRICS["MSG_IN_COUNTER"],
+            counter="MSG_IN_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )
@@ -157,7 +157,7 @@ class PostprocessUDF(NumalogicUDF):
 
         except RuntimeError:
             _increment_counter(
-                _METRICS["RUNTIME_ERROR_COUNTER"], _metric_label_values, is_enabled=METRICS_ENABLED
+                "RUNTIME_ERROR_COUNTER", _metric_label_values, is_enabled=METRICS_ENABLED
             )
             logger.exception(
                 "Runtime postprocess error!",
@@ -197,7 +197,7 @@ class PostprocessUDF(NumalogicUDF):
         )
 
         _increment_counter(
-            _METRICS["MSG_PROCESSED_COUNTER"],
+            "MSG_PROCESSED_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )

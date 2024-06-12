@@ -10,7 +10,7 @@ from numalogic.tools.types import artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
-from numalogic.udfs._metrics_utility import _increment_counter, _METRICS
+from numalogic.udfs._metrics_utility import _increment_counter
 
 METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
 
@@ -65,7 +65,7 @@ class PayloadTransformer(NumalogicUDF):
             "pipeline_id": data_payload["pipeline_id"],
         }
         _increment_counter(
-            counter=_METRICS["MSG_IN_COUNTER"],
+            counter="MSG_IN_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )
@@ -84,7 +84,7 @@ class PayloadTransformer(NumalogicUDF):
             execution_time_ms=round((time.perf_counter() - _start_time) * 1000, 4),
         )
         _increment_counter(
-            counter=_METRICS["MSG_PROCESSED_COUNTER"],
+            counter="MSG_PROCESSED_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )

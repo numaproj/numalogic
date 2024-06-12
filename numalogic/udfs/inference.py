@@ -16,7 +16,7 @@ from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
-from numalogic.udfs._metrics_utility import _increment_counter, _METRICS
+from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, Status
 from numalogic.udfs.tools import (
     _load_artifact,
@@ -111,7 +111,7 @@ class InferenceUDF(NumalogicUDF):
             "pipeline_id": payload.pipeline_id,
         }
         _increment_counter(
-            counter=_METRICS["MSG_IN_COUNTER"],
+            counter="MSG_IN_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )
@@ -144,7 +144,7 @@ class InferenceUDF(NumalogicUDF):
             _update_info_metric(x_inferred, payload.metrics, _metric_label_values)
         except RuntimeError:
             _increment_counter(
-                counter=_METRICS["RUNTIME_ERROR_COUNTER"],
+                counter="RUNTIME_ERROR_COUNTER",
                 labels=_metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
@@ -180,7 +180,7 @@ class InferenceUDF(NumalogicUDF):
             msgs.append(get_trainer_message(keys, _stream_conf, payload, **_metric_label_values))
 
         _increment_counter(
-            counter=_METRICS["MSG_PROCESSED_COUNTER"],
+            counter="MSG_PROCESSED_COUNTER",
             labels=_metric_label_values,
             is_enabled=METRICS_ENABLED,
         )

@@ -20,7 +20,7 @@ from numalogic.tools.types import redis_client_t, artifact_t, KEYS, KeyedArtifac
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
-from numalogic.udfs._metrics_utility import _increment_counter, _METRICS, _add_summary
+from numalogic.udfs._metrics_utility import _increment_counter, _add_summary
 from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 import torch
@@ -165,7 +165,7 @@ class TrainerUDF(NumalogicUDF):
             config_id=payload.config_id, pipeline_id=payload.pipeline_id
         )
         _increment_counter(
-            counter=_METRICS["MSG_IN_COUNTER"],
+            counter="MSG_IN_COUNTER",
             labels={"vertex": self._vtx} | _metric_label_values,
             is_enabled=METRICS_ENABLED,
         )
@@ -184,7 +184,7 @@ class TrainerUDF(NumalogicUDF):
             data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
         ):
             _increment_counter(
-                counter=_METRICS["MSG_DROPPED_COUNTER"],
+                counter="MSG_DROPPED_COUNTER",
                 labels={"vertex": self._vtx} | _metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
@@ -197,7 +197,7 @@ class TrainerUDF(NumalogicUDF):
         # while fetching the data
         if df is None:
             _increment_counter(
-                counter=_METRICS["MSG_DROPPED_COUNTER"],
+                counter="MSG_DROPPED_COUNTER",
                 labels={"vertex": self._vtx} | _metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
@@ -218,12 +218,12 @@ class TrainerUDF(NumalogicUDF):
                 shape=df.shape,
             )
             _increment_counter(
-                counter=_METRICS["INSUFFICIENT_DATA_COUNTER"],
+                counter="INSUFFICIENT_DATA_COUNTER",
                 labels=_metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
             _increment_counter(
-                counter=_METRICS["MSG_DROPPED_COUNTER"],
+                counter="MSG_DROPPED_COUNTER",
                 labels={"vertex": self._vtx} | _metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
@@ -234,13 +234,13 @@ class TrainerUDF(NumalogicUDF):
         # Construct feature array
         x_train, nan_counter, inf_counter = self.get_feature_arr(df, _conf.metrics)
         _add_summary(
-            summary=_METRICS["NAN_SUMMARY"],
+            summary="NAN_SUMMARY",
             labels=_metric_label_values,
             data=np.sum(nan_counter),
             is_enabled=METRICS_ENABLED,
         )
         _add_summary(
-            summary=_METRICS["INF_SUMMARY"],
+            summary="INF_SUMMARY",
             labels=_metric_label_values,
             data=np.sum(inf_counter),
             is_enabled=METRICS_ENABLED,
@@ -281,7 +281,7 @@ class TrainerUDF(NumalogicUDF):
             "Time taken in trainer", execution_time_secs=round(time.perf_counter() - _start_time, 4)
         )
         _increment_counter(
-            counter=_METRICS["MSG_PROCESSED_COUNTER"],
+            counter="MSG_PROCESSED_COUNTER",
             labels={"vertex": self._vtx} | _metric_label_values,
             is_enabled=METRICS_ENABLED,
         )
@@ -336,7 +336,7 @@ class TrainerUDF(NumalogicUDF):
             )
         except RedisRegistryError:
             _increment_counter(
-                counter=_METRICS["REDIS_ERROR_COUNTER"],
+                counter="REDIS_ERROR_COUNTER",
                 labels={
                     "vertex": vertex_name,
                     "composite_key": ":".join(skeys),

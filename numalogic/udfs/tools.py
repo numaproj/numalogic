@@ -15,7 +15,7 @@ from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import KEYS, redis_client_t
 from numalogic.udfs._config import StreamConf
 from numalogic.udfs._logger import configure_logger
-from numalogic.udfs._metrics_utility import _set_gauge, _increment_counter, _add_info, _METRICS
+from numalogic.udfs._metrics_utility import _set_gauge, _increment_counter, _add_info
 from numalogic.udfs.entities import StreamPayload, TrainerPayload
 
 METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
@@ -69,7 +69,7 @@ def _update_info_metric(data: np.ndarray, metric_names: Sequence[str], labels: d
         raise ValueError("Data Shape and metric name length do not match")
     for _data, _metric_name in zip(metric_mean, metric_names):
         _set_gauge(
-            gauge=_METRICS["RECORDED_DATA_GAUGE"],
+            gauge="RECORDED_DATA_GAUGE",
             labels=(labels | {"metric_name": _metric_name}),
             data=_data,
             is_enabled=METRICS_ENABLED,
@@ -174,14 +174,14 @@ def _load_artifact(
             )
     except RedisRegistryError:
         _increment_counter(
-            _METRICS["REDIS_ERROR_COUNTER"], labels=_metric_label_values, is_enabled=METRICS_ENABLED
+            "REDIS_ERROR_COUNTER", labels=_metric_label_values, is_enabled=METRICS_ENABLED
         )
         logger.warning("Error while fetching artifact")
         return None, payload
 
     except Exception:
         _increment_counter(
-            _METRICS["EXCEPTION_COUNTER"], labels=_metric_label_values, is_enabled=METRICS_ENABLED
+            "EXCEPTION_COUNTER", labels=_metric_label_values, is_enabled=METRICS_ENABLED
         )
         logger.exception("Unhandled exception while fetching artifact")
         return None, payload
@@ -192,12 +192,12 @@ def _load_artifact(
         )
         logger.debug("Loaded Model!")
         _increment_counter(
-            counter=_METRICS["SOURCE_COUNTER"],
+            counter="SOURCE_COUNTER",
             labels=({"artifact_source": artifact_data.extras.get("source")} | _metric_label_values),
             is_enabled=METRICS_ENABLED,
         )
         _add_info(
-            info=_METRICS["MODEL_INFO"],
+            info="MODEL_INFO",
             labels={
                 "source": payload.metadata["numalogic_opex_tags"]["source"],
                 "composite_key": ":".join(skeys),
@@ -402,7 +402,7 @@ def get_trainer_message(
     )
     if metric_values:
         _increment_counter(
-            counter=_METRICS["MODEL_STATUS_COUNTER"],
+            counter="MODEL_STATUS_COUNTER",
             labels={"status": payload.status} | metric_values,
             is_enabled=METRICS_ENABLED,
         )

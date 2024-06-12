@@ -12,7 +12,7 @@ from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._logger import configure_logger
 from numalogic.udfs.entities import TrainerPayload
-from numalogic.udfs._metrics_utility import _increment_counter, _METRICS, _add_summary
+from numalogic.udfs._metrics_utility import _increment_counter, _add_summary
 from numalogic.udfs.trainer._base import TrainerUDF
 
 METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
@@ -86,7 +86,7 @@ class PromTrainerUDF(TrainerUDF):
             )
         except PrometheusFetcherError:
             _increment_counter(
-                counter=_METRICS["FETCH_EXCEPTION_COUNTER"],
+                counter="FETCH_EXCEPTION_COUNTER",
                 labels=_metric_label_values,
                 is_enabled=METRICS_ENABLED,
             )
@@ -94,7 +94,7 @@ class PromTrainerUDF(TrainerUDF):
             return None
         _end_time = time.perf_counter() - _start_time
         _add_summary(
-            _METRICS["FETCH_TIME_SUMMARY"],
+            "FETCH_TIME_SUMMARY",
             labels=_metric_label_values,
             data=_end_time,
             is_enabled=METRICS_ENABLED,
@@ -109,7 +109,7 @@ class PromTrainerUDF(TrainerUDF):
             execution_time_ms=round(_end_time * 1000, 4),
         )
         _add_summary(
-            _METRICS["DATAFRAME_SHAPE_SUMMARY"],
+            "DATAFRAME_SHAPE_SUMMARY",
             labels=_metric_label_values,
             data=_df.shape[0],
             is_enabled=METRICS_ENABLED,

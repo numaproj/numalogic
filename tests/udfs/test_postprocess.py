@@ -15,10 +15,13 @@ from numalogic._constants import TESTS_DIR
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.transforms import TanhNorm
-from numalogic.udfs import PipelineConf
+from numalogic.udfs import PipelineConf, MetricsSingleton
 from numalogic.udfs.entities import Header, TrainerPayload, Status, OutputPayload
 from numalogic.udfs.postprocess import PostprocessUDF
 
+MetricsSingleton().load_metrics(
+    config_file_path=f"{TESTS_DIR}/udfs/resources/numalogic_udf_metrics.yaml"
+)
 logging.basicConfig(level=logging.DEBUG)
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
 KEYS = ["service-mesh", "1", "2"]
