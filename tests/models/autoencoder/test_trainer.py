@@ -16,6 +16,7 @@ from numalogic.models.autoencoder.variants import (
     SparseVanillaAE,
     TransformerAE,
     SparseConv1dAE,
+    VanillaAE,
 )
 from numalogic.tools.data import TimeseriesDataModule, StreamingDataset
 
@@ -93,7 +94,7 @@ class TestAutoencoderTrainer(unittest.TestCase):
         self.assertTupleEqual(self.x_test.shape, y_test.size())
 
     def test_trainer_04(self):
-        model = SparseVanillaAE(seq_len=SEQ_LEN, n_features=self.x_train.shape[1])
+        model = VanillaAE(seq_len=SEQ_LEN, n_features=self.x_train.shape[1], batchnorm=True)
         datamodule = TimeseriesDataModule(SEQ_LEN, self.x_train, batch_size=BATCH_SIZE)
         trainer = TimeseriesTrainer(
             accelerator=ACCELERATOR, max_epochs=EPOCHS, barebones=True, logger=False

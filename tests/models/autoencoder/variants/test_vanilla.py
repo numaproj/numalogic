@@ -75,8 +75,19 @@ class TESTVanillaAE(unittest.TestCase):
         test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
         self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
 
-    def test_vanilla_ic(self):
-        model = VanillaICAE(seq_len=SEQ_LEN, n_features=2)
+    def test_vanilla_ic_01(self):
+        model = VanillaICAE(seq_len=SEQ_LEN, n_channels=2)
+        datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
+        trainer = TimeseriesTrainer(fast_dev_run=True, deterministic=True)
+        trainer.fit(model, datamodule=datamodule)
+
+        streamloader = DataLoader(StreamingDataset(self.X_val, SEQ_LEN), batch_size=BATCH_SIZE)
+        stream_trainer = TimeseriesTrainer()
+        test_reconerr = stream_trainer.predict(model, dataloaders=streamloader, unbatch=False)
+        self.assertTupleEqual((229, SEQ_LEN, self.X_train.shape[1]), test_reconerr.size())
+
+    def test_vanilla_ic_02(self):
+        model = VanillaICAE(seq_len=SEQ_LEN, n_channels=2, batchnorm=True, loss_fn="mse")
         datamodule = TimeseriesDataModule(SEQ_LEN, self.X_train, batch_size=BATCH_SIZE)
         trainer = TimeseriesTrainer(fast_dev_run=True, deterministic=True)
         trainer.fit(model, datamodule=datamodule)

@@ -64,7 +64,7 @@ class CausalConvBlock(nn.Module):
         return self.relu(self.bnorm(self.conv(input_)))
 
 
-class MultiChannelLinear(nn.Module):
+class IndependentChannelLinear(nn.Module):
     """
     Linear layer that treats each feature as independent isolated channels.
 
@@ -72,7 +72,7 @@ class MultiChannelLinear(nn.Module):
     ----
         in_features: num of input features
         out_features: num of output features
-        n_channels: num of channels
+        n_channels: num of independent channels
         device: device to run on
         dtype: datatype to use
     """

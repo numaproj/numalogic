@@ -5,7 +5,7 @@ from torch import nn, Tensor
 
 from numalogic.models.autoencoder.base import BaseAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
-from numalogic.tools.layer import MultiChannelLinear
+from numalogic.tools.layer import IndependentChannelLinear
 
 
 class _VanillaEncoder(nn.Module):
@@ -52,13 +52,13 @@ class _VanillaEncoder(nn.Module):
         start_layersize = self.seq_len
 
         for lsize in layersizes[:-1]:
-            _l = [MultiChannelLinear(start_layersize, lsize, self.n_features)]
+            _l = [IndependentChannelLinear(start_layersize, lsize, self.n_features)]
             if self.bnorm:
                 _l.append(nn.BatchNorm1d(self.n_features))
             layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
             start_layersize = lsize
 
-        _l = [MultiChannelLinear(start_layersize, layersizes[-1], self.n_features)]
+        _l = [IndependentChannelLinear(start_layersize, layersizes[-1], self.n_features)]
         if self.bnorm:
             _l.append(nn.BatchNorm1d(self.n_features))
         layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
@@ -115,23 +115,23 @@ class _Decoder(nn.Module):
         layers = nn.ModuleList()
 
         for idx, _ in enumerate(layersizes[:-1]):
-            _l = [MultiChannelLinear(layersizes[idx], layersizes[idx + 1], self.n_features)]
+            _l = [IndependentChannelLinear(layersizes[idx], layersizes[idx + 1], self.n_features)]
             if self.bnorm:
                 _l.append(nn.BatchNorm1d(self.n_features))
             layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
 
-        layers.append(MultiChannelLinear(layersizes[-1], self.seq_len, self.n_features))
+        layers.append(IndependentChannelLinear(layersizes[-1], self.seq_len, self.n_features))
         return layers
 
 
 class VanillaICAE(BaseAE):
-    r"""Multichannel Vanilla Autoencoder model based on the vanilla encoder and decoder.
+    r"""Vanilla Autoencoder model with Independent isolated Channels based on the vanilla encoder and decoder.
         Each channel is an isolated neural network.
 
     Args:
     ----
         seq_len: sequence length / window length
-        n_features: num of features/channel, each channel is a separate neural network
+        n_channels: num of features/channel, each channel is a separate neural network
         encoder_layersizes: encoder layer size (default = Sequence[int] = (16, 8))
         decoder_layersizes: decoder layer size (default = Sequence[int] = (8, 16))
         dropout_p: the dropout value (default=0.25)
@@ -142,7 +142,7 @@ class VanillaICAE(BaseAE):
     def __init__(
         self,
         seq_len: int,
-        n_features: int = 1,
+        n_channels: int = 1,
         encoder_layersizes: Sequence[int] = (16, 8),
         decoder_layersizes: Sequence[int] = (8, 16),
         dropout_p: float = 0.25,
@@ -152,7 +152,7 @@ class VanillaICAE(BaseAE):
         super().__init__(**kwargs)
         self.seq_len = seq_len
         self.dropout_prob = dropout_p
-        self.n_features = n_features
+        self.n_channels = n_channels
 
         if encoder_layersizes[-1] != decoder_layersizes[0]:
             raise LayerSizeMismatchError(
@@ -162,14 +162,14 @@ class VanillaICAE(BaseAE):
 
         self.encoder = _VanillaEncoder(
             seq_len=seq_len,
-            n_features=n_features,
+            n_features=n_channels,
             layersizes=encoder_layersizes,
             dropout_p=dropout_p,
             batchnorm=batchnorm,
         )
         self.decoder = _Decoder(
             seq_len=seq_len,
-            n_features=n_features,
+            n_features=n_channels,
             layersizes=decoder_layersizes,
             dropout_p=dropout_p,
             batchnorm=batchnorm,
