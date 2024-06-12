@@ -175,9 +175,6 @@ class VanillaICAE(BaseAE):
             batchnorm=batchnorm,
         )
 
-        self.encoder.apply(self.init_weights)
-        self.decoder.apply(self.init_weights)
-
     def forward(self, batch: Tensor) -> tuple[Tensor, Tensor]:
         batch = torch.swapdims(batch, 1, 2)
         encoded = self.encoder(batch)
