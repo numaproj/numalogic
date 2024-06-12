@@ -19,10 +19,10 @@ from numalogic.config import (
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
-from numalogic.udfs import StreamConf, InferenceUDF, MLPipelineConf, MetricsSingleton
+from numalogic.udfs import StreamConf, InferenceUDF, MLPipelineConf, MetricsLoader
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload
 
-MetricsSingleton().load_metrics(
+MetricsLoader().load_metrics(
     config_file_path=f"{TESTS_DIR}/udfs/resources/numalogic_udf_metrics.yaml"
 )
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
@@ -175,6 +175,7 @@ def test_inference_cache(udf, udf_args, mocker):
         ),
     )
     msgs = udf(*udf_args)
+    print(MetricsLoader().get_metrics())
     assert len(msgs) == 1
     payload = StreamPayload(**orjson.loads(msgs[0].value))
     assert Header.MODEL_INFERENCE == payload.header

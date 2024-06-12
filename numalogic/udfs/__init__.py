@@ -5,7 +5,7 @@ import os
 from numalogic._constants import BASE_DIR
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import StreamConf, PipelineConf, MLPipelineConf, load_pipeline_conf
-from numalogic.udfs._metrics_utility import MetricsSingleton
+from numalogic.udfs._metrics_utility import MetricsLoader
 from numalogic.udfs.factory import UDFFactory, ServerFactory
 from numalogic.udfs.payloadtx import PayloadTransformer
 from numalogic.udfs.inference import InferenceUDF
@@ -26,7 +26,7 @@ def set_logger() -> None:
 
 def set_metrics(conf_file: str) -> None:
     """Sets the metrics for the UDFs."""
-    MetricsSingleton().load_metrics(config_file_path=conf_file)
+    MetricsLoader().load_metrics(config_file_path=conf_file)
 
 
 __all__ = [
@@ -47,5 +47,5 @@ __all__ = [
     "ServerFactory",
     "set_logger",
     "set_metrics",
-    "MetricsSingleton",
+    "MetricsLoader",
 ]

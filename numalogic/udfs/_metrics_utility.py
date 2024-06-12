@@ -1,7 +1,12 @@
-from typing import Optional, Any
+from typing import Optional, Any, TypeVar
 
+from numalogic import LOGGER
+from numalogic.tools.types import Singleton
+from numaprom.monitoring.metrics import BaseMetric
 from numaprom.monitoring.utility import get_metric
 from omegaconf import OmegaConf
+
+metrics_t = TypeVar("metrics_t", bound=BaseMetric, covariant=True)
 
 
 def create_metrics_from_config_file(config_file_path: str) -> dict[str, Any]:
@@ -20,7 +25,7 @@ def create_metrics_from_config_file(config_file_path: str) -> dict[str, Any]:
     return metrics
 
 
-class MetricsSingleton:
+class MetricsLoader(metaclass=Singleton):
     _instance = None
     _metrics = None
 
@@ -35,8 +40,11 @@ class MetricsSingleton:
                 raise ValueError("file path is required to load metrics")
             self._metrics = create_metrics_from_config_file(config_file_path)
 
-    def get_metrics(self) -> dict:
+    def get_metrics(self) -> dict[str, metrics_t]:
         return self._metrics
+
+
+_METRICS_LOADER = MetricsLoader()
 
 
 # helper functions
@@ -51,9 +59,12 @@ def _increment_counter(
         labels: dict of label keys, value pair
         amount: Amount to increment the counter by
     """
-    _metrics = MetricsSingleton().get_metrics()
-    if is_enabled and counter in _metrics:
-        _metrics[counter].increment_counter(labels=labels, amount=amount)
+    _metrics = _METRICS_LOADER.get_metrics()
+    if is_enabled:
+        try:
+            _metrics[counter].increment_counter(labels=labels, amount=amount)
+        except KeyError:
+            LOGGER.error(f"Metric {counter} not found in metrics")
 
 
 def _add_info(info: str, labels: Optional[dict], data: dict, is_enabled=True) -> None:
@@ -65,9 +76,12 @@ def _add_info(info: str, labels: Optional[dict], data: dict, is_enabled=True) ->
         labels: dict of label keys, value pair
         data: Dictionary of data
     """
-    _metrics = MetricsSingleton().get_metrics()
-    if is_enabled and info in _metrics:
-        _metrics[info].add_info(labels=labels, data=data)
+    _metrics = _METRICS_LOADER.get_metrics()
+    if is_enabled:
+        try:
+            _metrics[info].add_info(labels=labels, data=data)
+        except KeyError:
+            LOGGER.error(f"Metric {info} not found in metrics")
 
 
 def _add_summary(summary: str, labels: Optional[dict], data: float, is_enabled=True) -> None:
@@ -79,9 +93,12 @@ def _add_summary(summary: str, labels: Optional[dict], data: float, is_enabled=T
         labels: dict of labels key, value pair
         data: Summary value
     """
-    _metrics = MetricsSingleton().get_metrics()
-    if is_enabled and summary in _metrics:
-        _metrics[summary].add_observation(labels=labels, value=data)
+    _metrics = _METRICS_LOADER.get_metrics()
+    if is_enabled:
+        try:
+            _metrics[summary].add_observation(labels=labels, value=data)
+        except KeyError:
+            LOGGER.error(f"Metric {summary} not found in metrics")
 
 
 def _set_gauge(gauge: str, labels: Optional[dict], data: float, is_enabled=True) -> None:
@@ -92,6 +109,9 @@ def _set_gauge(gauge: str, labels: Optional[dict], data: float, is_enabled=True)
         labels: dict of label keys, value pair
         data: data.
     """
-    _metrics = MetricsSingleton().get_metrics()
-    if is_enabled and gauge in _metrics:
-        _metrics[gauge].set_gauge(labels=labels, data=data)
+    _metrics = _METRICS_LOADER.get_metrics()
+    if is_enabled:
+        try:
+            _metrics[gauge].set_gauge(labels=labels, data=data)
+        except KeyError:
+            LOGGER.error(f"Metric {gauge} not found in metrics")

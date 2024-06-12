@@ -13,7 +13,7 @@ from pynumaflow.mapper import Datum
 from numalogic._constants import TESTS_DIR
 from numalogic.registry import RedisRegistry
 from numalogic.tools.exceptions import ModelKeyNotFound
-from numalogic.udfs import MetricsSingleton
+from numalogic.udfs import MetricsLoader
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs.entities import Status, Header, StreamPayload, TrainerPayload
 from numalogic.udfs.preprocess import PreprocessUDF
@@ -28,7 +28,7 @@ DATUM_KW = {
     "event_time": datetime.now(),
     "watermark": datetime.now(),
 }
-MetricsSingleton().load_metrics(
+MetricsLoader().load_metrics(
     config_file_path=f"{TESTS_DIR}/udfs/resources/numalogic_udf_metrics.yaml"
 )
 

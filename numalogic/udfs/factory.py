@@ -28,7 +28,6 @@ class UDFFactory:
     from numalogic.udfs.staticthresh import StaticThresholdUDF
 
     nl_udf_t = TypeVar("nl_udf_t", bound=NumalogicUDF, covariant=True)
-
     _UDF_MAP: ClassVar[dict[str, type[NumalogicUDF]]] = {
         "mlpipeline": PayloadTransformer,
         "preprocess": PreprocessUDF,
