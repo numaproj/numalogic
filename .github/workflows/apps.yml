@@ -31,12 +31,11 @@ jobs:
         cache: 'poetry'
 
     - name: Install dependencies
-      run: |
-        poetry env use 3.11
-        poetry install --with dev
+      run: poetry install --no-root --with dev
     - name: Run Coverage
       run: |
         poetry run pytest --cov-report=xml --cov=src --cov-config .coveragerc tests/ -sq
+
     - name: Upload Coverage
       uses: codecov/codecov-action@v4
       with:
@@ -44,3 +43,5 @@ jobs:
         files: ./coverage.xml
         fail_ci_if_error: true
         verbose: true
+        working-directory: ./apps/numa-udfs
+        name: numalogic-udfs
