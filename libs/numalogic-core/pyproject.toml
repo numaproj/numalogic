@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "numalogic"
-# version = "0.12.0.dev1"
+version = "0.12.0.dev1"
 description = "Collection of operational Machine Learning models and tools."
 authors = [
     {name = "Numalogic Developers"}
@@ -25,7 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12"
 ]
 requires-python = ">= 3.9"
-dynamic = ["version", "dependencies", "optional-dependencies"]
+dynamic = ["dependencies", "optional-dependencies"]
 
 [project.urls]
 Repository = "https://github.com/numaproj/numalogic"
@@ -33,7 +33,6 @@ Documentation = "https://numalogic.numaproj.io/"
 Homepage = "https://numalogic.numaproj.io/"
 
 [tool.setuptools.dynamic]
-version = {file = "../VERSION"}
 dependencies = {file = ["requirements/requirements.txt"]}
 optional-dependencies = {dev = { file = ["requirements/requirements-dev.txt"] }, jupyter = { file = ["requirements/requirements-nb.txt"] }}
 
