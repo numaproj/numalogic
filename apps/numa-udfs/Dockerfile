@@ -27,8 +27,7 @@ COPY poetry.lock pyproject.toml ./
 
 RUN poetry install --without dev --no-root  \
     && rm -rf $POETRY_CACHE_DIR \
-    && pip cache purge \
-    && apt-get purge -y --auto-remove build-essential
+    && pip cache purge
 
 ####################################################################################################
 # runtime: used for running the udf vertices
