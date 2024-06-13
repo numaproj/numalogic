@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from omegaconf import OmegaConf
-from pynumaflow.mapper import Mapper, MultiProcMapper
+from pynumaflow.mapper import MapServer, MapMultiprocServer
 
 from src.constants import TESTS_DIR
 from numalogic.tools.exceptions import ConfigNotFoundError
@@ -18,14 +18,14 @@ class TestMainScript(unittest.TestCase):
         from src.__main__ import init_server
 
         server = init_server("preprocess", "sync")
-        self.assertIsInstance(server, Mapper)
+        self.assertIsInstance(server, MapServer)
 
     @patch.dict("os.environ", {"BASE_CONF_PATH": BASE_CONFIG_PATH, "REDIS_AUTH": REDIS_AUTH})
     def test_init_server_02(self):
         from src.__main__ import init_server
 
         server = init_server("inference", "multiproc")
-        self.assertIsInstance(server, MultiProcMapper)
+        self.assertIsInstance(server, MapMultiprocServer)
 
     def test_conf_loader(self):
         from src import load_pipeline_conf

@@ -28,7 +28,7 @@ def init_server(step: str, server_type: str):
         redis_client = get_redis_client_from_conf(pipeline_conf.redis_conf)
         udf = UDFFactory.get_udf_instance(step, r_client=redis_client, pl_conf=pipeline_conf)
 
-    return ServerFactory.get_server_instance(server_type, handler=udf)
+    return ServerFactory.get_server_instance(server_type, mapper_instance=udf)
 
 
 def start_server() -> None:

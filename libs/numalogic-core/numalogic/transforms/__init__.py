@@ -22,6 +22,7 @@ from numalogic.transforms._stateless import (
     GaussianNoiseAdder,
     DifferenceTransform,
     FlattenVector,
+    FlattenVectorWithPadding,
 )
 from numalogic.transforms._movavg import ExpMovingAverage, expmov_avg_aggregator
 from numalogic.transforms._postprocess import TanhNorm, tanh_norm, SigmoidNorm
@@ -38,6 +39,7 @@ __all__ = [
     "GaussianNoiseAdder",
     "DifferenceTransform",
     "FlattenVector",
+    "FlattenVectorWithPadding",
     "PercentileScaler",
     "SigmoidNorm",
 ]

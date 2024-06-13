@@ -94,12 +94,12 @@ class UDFFactory:
 class ServerFactory:
     """Factory class to fetch the right pynumaflow function server/mapper."""
 
-    from pynumaflow.mapper import Mapper, MultiProcMapper, AsyncMapper
+    from pynumaflow.mapper import MapServer, MapMultiprocServer, MapAsyncServer
 
     _SERVER_MAP: ClassVar[dict] = {
-        "sync": Mapper,
-        "async": AsyncMapper,
-        "multiproc": MultiProcMapper,
+        "sync": MapServer,
+        "async": MapAsyncServer,
+        "multiproc": MapMultiprocServer,
     }
 
     @classmethod
