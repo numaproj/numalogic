@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numa-udfs"
-version = "0.11a0"
+version = "0.12.0.dev0"
 description = ""
 authors = ["Avik Basu <ab93@users.noreply.github.com>"]
 readme = "README.md"
@@ -16,6 +16,7 @@ numalogic-registry = { version = "0.12.0.dev2", source = "testpypi" }
 pynumaflow = "~0.6"
 structlog = "^24.1.0"
 prometheus_client = "^0.18.0"
+orjson = "~3.9"
 
 [tool.poetry.group.dev.dependencies]
 matplotlib = "^3.4.2"
