@@ -5,35 +5,33 @@ on:
     tags:
       - v*
 jobs:
-  pypi_publish:
+  numalogic-core:
     if: github.repository == 'numaproj/numalogic'
     runs-on: ubuntu-latest
     environment: production
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [ "3.11" ]
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-core
 
-    name: Publish to PyPi
+    name: Build distribution
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Install poetry
-        run: pipx install poetry==1.6.1
-
-      - name: Set up Python ${{ matrix.python-version }}
+      - uses: actions/checkout@v5
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'poetry'
-
-      - name: Install dependencies
-        run: |
-          poetry env use ${{ matrix.python-version }}
-          poetry install
-
-      - name: Build dist
-        run: poetry build
-
+          python-version: "3.11"
+          cache: 'pip'
+      - name: Install build & twine
+        run: >-
+          pip install
+          build twine
+          --user
+      - name: Build wheel
+        run: python -m build
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-package-distributions
+          path: dist/
       - name: Publish
-        run: poetry publish -u __token__ -p ${{ secrets.PYPI_PASSWORD }}
+        run: twine upload -r testpypi -p ${{ secrets.TEST_PYPI_PASSWORD }} dist/*
