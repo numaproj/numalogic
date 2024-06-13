@@ -118,7 +118,7 @@ class PreprocessUDF(NumalogicUDF):
             "vertex": self._vtx,
             "composite_key": ":".join(keys),
             "config_id": data_payload["config_id"],
-            "pipeline_id": data_payload["pipeline_id"],
+            "pipeline_id": data_payload.get("pipeline_id", "default"),
         }
 
         _increment_counter(

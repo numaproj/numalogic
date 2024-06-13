@@ -51,11 +51,12 @@ def start_server() -> None:
 
     LOGGER.info("Running %s on %s server", step, server_type)
 
-    server = init_server(step, server_type)
-    server.start()
     if METRICS_ENABLED:
         set_metrics(conf_file=METRICS_CONF_PATH)
         start_metrics_server(METRICS_PORT)
+
+    server = init_server(step, server_type)
+    server.start()
 
 
 if __name__ == "__main__":

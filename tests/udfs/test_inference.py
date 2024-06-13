@@ -175,7 +175,6 @@ def test_inference_cache(udf, udf_args, mocker):
         ),
     )
     msgs = udf(*udf_args)
-    print(MetricsLoader().get_metrics())
     assert len(msgs) == 1
     payload = StreamPayload(**orjson.loads(msgs[0].value))
     assert Header.MODEL_INFERENCE == payload.header
