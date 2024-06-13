@@ -1,5 +1,227 @@
 # Changelog
 
+## v0.11.1 (2024-06-13)
+
+ * [8f6c8ef](https://github.com/numaproj/numalogic/commit/8f6c8efd0cc65194a672b3dabfc483babf97114d) feat: vanilla ae with independent channels  (#392)
+ * [1239acd](https://github.com/numaproj/numalogic/commit/1239acd6c951770b44e918f25cc76fd48ce7c526) Multichannel config (#390)
+ * [56a6ac1](https://github.com/numaproj/numalogic/commit/56a6ac19378ed5090db101a11418b340e6dfbf89) feat: Support Python 3.12; upgrade pynumaflow to 0.7.1 (#383)
+ * [c61f59d](https://github.com/numaproj/numalogic/commit/c61f59d43912186ca07d2d543e1bd06feeb11f06) fix: release new patch version (#385)
+ * [4122625](https://github.com/numaproj/numalogic/commit/412262538d339e17097fb215b841db9802184d60) fix: make pivot as optional (#384)
+ * [309f16a](https://github.com/numaproj/numalogic/commit/309f16a90774adc47623fed5fbb43e0c81da93e9) Added multichannel autoencoder with test cases (#382)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+ * Miroslav Boussarov
+
+## v0.11.0a0 (2024-05-31)
+
+ * [1b6511b](https://github.com/numaproj/numalogic/commit/1b6511b4986f1ce3d2d569dc35c3dc48e78742bf) feat: Support Python 3.12; upgrade pynumaflow to 0.7.1
+
+### Contributors
+
+ * Avik Basu
+
+## v0.11.0 (2024-06-10)
+
+ * [56a6ac1](https://github.com/numaproj/numalogic/commit/56a6ac19378ed5090db101a11418b340e6dfbf89) feat: Support Python 3.12; upgrade pynumaflow to 0.7.1 (#383)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.10.2 (2024-05-31)
+
+ * [c61f59d](https://github.com/numaproj/numalogic/commit/c61f59d43912186ca07d2d543e1bd06feeb11f06) fix: release new patch version (#385)
+ * [fb662db](https://github.com/numaproj/numalogic/commit/fb662db89f9e5d2ab31dd7a24bce960ce5151dcf) fix: release new patch version
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.10.1 (2024-05-31)
+
+ * [4122625](https://github.com/numaproj/numalogic/commit/412262538d339e17097fb215b841db9802184d60) fix: make pivot as optional (#384)
+ * [309f16a](https://github.com/numaproj/numalogic/commit/309f16a90774adc47623fed5fbb43e0c81da93e9) Added multichannel autoencoder with test cases (#382)
+ * [934d8cf](https://github.com/numaproj/numalogic/commit/934d8cfe28a964915545ffa262ba162c9a85612f) Feat/vanilla ae refactor (#379)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+ * Miroslav Boussarov
+
+## v0.10.0a0 (2024-05-08)
+
+ * [6f46250](https://github.com/numaproj/numalogic/commit/6f46250fae787913f01d6fe8076219a7bdbf100a) fix: filters
+ * [87c16da](https://github.com/numaproj/numalogic/commit/87c16dab543d7e0d28aabe2e7d2b094a4aa5e2da) fix: filters
+ * [bbcfd47](https://github.com/numaproj/numalogic/commit/bbcfd47c9ad7a0eba8f89428bad7b697999b199c) fix: threshold and filters
+ * [984650b](https://github.com/numaproj/numalogic/commit/984650bd3a0063cb51f1b9dfc6e1d700c6591170) feat: agg from conf for multi pivot (#378)
+ * [402aabf](https://github.com/numaproj/numalogic/commit/402aabfe19f3857e9b467e0edbfd7da2160842f2) Fix: Changing pivot to pivot_table to support aggregation (#376)
+ * [141e9a0](https://github.com/numaproj/numalogic/commit/141e9a04cf526d81a85064eac6029cecf0ad9c2f) Postproc support for None (#375)
+ * [e1ae3ee](https://github.com/numaproj/numalogic/commit/e1ae3ee2d736993d659b2c7b7112effddc340b2c) feat: multi column pivot for druid connector (#374)
+ * [98c5766](https://github.com/numaproj/numalogic/commit/98c5766edb10087f3b50224c3a5be551040bb829) Static filter (#373)
+ * [f9ebfaf](https://github.com/numaproj/numalogic/commit/f9ebfaf339b7ebb856277342554e2f1b19f0d0ff) fix: add threshold in metadata
+ * [cbf4dbd](https://github.com/numaproj/numalogic/commit/cbf4dbd1183b2412e3f248e7b06c09606639def3) try: replicate og vanilla ae
+ * [8b2e939](https://github.com/numaproj/numalogic/commit/8b2e9399a78179a741b2d4266e23868aab6dad3b) feat: enable feature transforms
+ * [eed9ad4](https://github.com/numaproj/numalogic/commit/eed9ad4f430e26e73ce86d11e4f4571d761ba3af) fix: adjust factor
+ * [9ad6d8d](https://github.com/numaproj/numalogic/commit/9ad6d8ddd168093a771a41a13432867efff99360) feat: fallback to stddev if threshold is too low
+ * [5593be3](https://github.com/numaproj/numalogic/commit/5593be3882932329d58095ade6bd4d439195ef32) fix: C contiguous error for exp mov avg tx
+ * [8321914](https://github.com/numaproj/numalogic/commit/832191478e654191f8bf8143fb0e97e2ab0d6d93) correct struct log for ack_insuf_data
+ * [b36356c](https://github.com/numaproj/numalogic/commit/b36356c656285981ac8dc12f96586182d9404906) fix: percentile scaler, exp mov avg, sigmoid norm (#369)
+ * [f7bd30b](https://github.com/numaproj/numalogic/commit/f7bd30b0c838738d7ee8321436d7707dcb7623a9) feat: add PercentileScaler
+
+### Contributors
+
+ * Avik Basu
+ * Gulshan Bhatia
+ * Kushal Batra
+ * Nandita Koppisetty
+ * s0nicboOm
+
+## v0.10.0 (2024-05-14)
+
+ * [934d8cf](https://github.com/numaproj/numalogic/commit/934d8cfe28a964915545ffa262ba162c9a85612f) Feat/vanilla ae refactor (#379)
+ * [f29f771](https://github.com/numaproj/numalogic/commit/f29f77174e59131fcf5ffad899b5123e31c288e6) Adding RDS Trainer UDF changes (#371)
+
+### Contributors
+
+ * Avik Basu
+ * Saisharath Reddy Kondakindi
+
+## v0.9.2 (2024-05-06)
+
+ * [8bba9ca](https://github.com/numaproj/numalogic/commit/8bba9caf7b6f0f5dcda3200e8941e0b044586749) Optimize UDF logs (#370)
+
+### Contributors
+
+ * Gulshan Bhatia
+
+## v0.9.1a11 (2024-05-07)
+
+ * [984650b](https://github.com/numaproj/numalogic/commit/984650bd3a0063cb51f1b9dfc6e1d700c6591170) feat: agg from conf for multi pivot (#378)
+
+### Contributors
+
+ * Nandita Koppisetty
+
+## v0.9.1a10 (2024-05-03)
+
+ * [402aabf](https://github.com/numaproj/numalogic/commit/402aabfe19f3857e9b467e0edbfd7da2160842f2) Fix: Changing pivot to pivot_table to support aggregation (#376)
+
+### Contributors
+
+ * Nandita Koppisetty
+
+## v0.9.1a9 (2024-05-03)
+
+ * [141e9a0](https://github.com/numaproj/numalogic/commit/141e9a04cf526d81a85064eac6029cecf0ad9c2f) Postproc support for None (#375)
+ * [e1ae3ee](https://github.com/numaproj/numalogic/commit/e1ae3ee2d736993d659b2c7b7112effddc340b2c) feat: multi column pivot for druid connector (#374)
+
+### Contributors
+
+ * Kushal Batra
+ * Nandita Koppisetty
+
+## v0.9.1a8 (2024-05-01)
+
+ * [98c5766](https://github.com/numaproj/numalogic/commit/98c5766edb10087f3b50224c3a5be551040bb829) Static filter (#373)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.9.1a7 (2024-04-29)
+
+ * [f9ebfaf](https://github.com/numaproj/numalogic/commit/f9ebfaf339b7ebb856277342554e2f1b19f0d0ff) fix: add threshold in metadata
+
+### Contributors
+
+ * s0nicboOm
+
+## v0.9.1a6 (2024-04-24)
+
+ * [cbf4dbd](https://github.com/numaproj/numalogic/commit/cbf4dbd1183b2412e3f248e7b06c09606639def3) try: replicate og vanilla ae
+ * [8b2e939](https://github.com/numaproj/numalogic/commit/8b2e9399a78179a741b2d4266e23868aab6dad3b) feat: enable feature transforms
+
+### Contributors
+
+ * Avik Basu
+
+## v0.9.1a5 (2024-04-23)
+
+ * [eed9ad4](https://github.com/numaproj/numalogic/commit/eed9ad4f430e26e73ce86d11e4f4571d761ba3af) fix: adjust factor
+
+### Contributors
+
+ * Avik Basu
+
+## v0.9.1a4 (2024-04-23)
+
+ * [9ad6d8d](https://github.com/numaproj/numalogic/commit/9ad6d8ddd168093a771a41a13432867efff99360) feat: fallback to stddev if threshold is too low
+
+### Contributors
+
+ * Avik Basu
+
+## v0.9.1a3 (2024-04-22)
+
+ * [5593be3](https://github.com/numaproj/numalogic/commit/5593be3882932329d58095ade6bd4d439195ef32) fix: C contiguous error for exp mov avg tx
+
+### Contributors
+
+ * Avik Basu
+
+## v0.9.1a2 (2024-04-22)
+
+ * [8321914](https://github.com/numaproj/numalogic/commit/832191478e654191f8bf8143fb0e97e2ab0d6d93) correct struct log for ack_insuf_data
+
+### Contributors
+
+ * Gulshan Bhatia
+
+## v0.9.1a1 (2024-04-22)
+
+ * [b36356c](https://github.com/numaproj/numalogic/commit/b36356c656285981ac8dc12f96586182d9404906) fix: percentile scaler, exp mov avg, sigmoid norm (#369)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.9.1a0 (2024-04-18)
+
+ * [f7bd30b](https://github.com/numaproj/numalogic/commit/f7bd30b0c838738d7ee8321436d7707dcb7623a9) feat: add PercentileScaler
+ * [6975394](https://github.com/numaproj/numalogic/commit/697539487d21549f03052de6f53082ac90259865) logging fix (#367)
+
+### Contributors
+
+ * Avik Basu
+ * Gulshan Bhatia
+
+## v0.9.1 (2024-04-17)
+
+ * [c3991bb](https://github.com/numaproj/numalogic/commit/c3991bb59544d2189b787a3a659721f98022dbf9) Refactor logging in UDFs (#356)
+ * [be29f02](https://github.com/numaproj/numalogic/commit/be29f027c9c4b5a275fd51845fa847862a280b5c) Aws connectors (#358)
+
+### Contributors
+
+ * Gulshan Bhatia
+ * Saisharath Reddy Kondakindi
+
+## v0.9.0 (2024-04-17)
+
+ * [ad20add](https://github.com/numaproj/numalogic/commit/ad20addff7789b1e03ecc1c17469dc949747b54b) fix: remove print (#363)
+ * [61f6598](https://github.com/numaproj/numalogic/commit/61f6598f39132a8bb4ee1b1844d166040483383d) feat: initial support for flattened vector in backtest (#361)
+ * [0cbaa52](https://github.com/numaproj/numalogic/commit/0cbaa52b43d3175564dc97dfdfbf0c17cfaa4f1a) feat: introduce stride in dataset (#360)
+ * [db2cc4f](https://github.com/numaproj/numalogic/commit/db2cc4fad4960e9a9e9bd289d23a54d918ff8038) feat: support for train transformers (#354)
+ * [377ada2](https://github.com/numaproj/numalogic/commit/377ada22a4fdec75b6d6dcb7bc11dbdddcccbfa1) feat: generate static scores for backtesting  (#355)
+
+### Contributors
+
+ * Avik Basu
+ * Kushal Batra
+
 ## v0.8.0 (2024-03-05)
 
  * [8dee66b](https://github.com/numaproj/numalogic/commit/8dee66bc29e9799c39da656a3beed26c28242c99) feat!: support static threshold score adjustment (#350)
