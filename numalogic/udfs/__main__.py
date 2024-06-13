@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 BASE_CONF_FILE_PATH: Final[str] = os.getenv("BASE_CONF_PATH", default=DEFAULT_BASE_CONF_PATH)
 APP_CONF_FILE_PATH: Final[str] = os.getenv("APP_CONF_PATH", default=DEFAULT_APP_CONF_PATH)
 METRICS_PORT: Final[int] = int(os.getenv("METRICS_PORT", default=DEFAULT_METRICS_PORT))
-METRICS_ENABLED: Final[bool] = bool(os.getenv("METRICS_ENABLED", default="True"))
+METRICS_ENABLED: Final[bool] = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 METRICS_CONF_PATH: Final[str] = os.getenv("METRICS_CONF_PATH", default=DEFAULT_METRICS_CONF_PATH)
 
 

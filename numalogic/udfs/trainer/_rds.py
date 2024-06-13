@@ -15,8 +15,7 @@ from numalogic.udfs.trainer._base import TrainerUDF
 from datetime import datetime, timedelta
 import pytz
 
-METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
-
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 _LOGGER = logging.getLogger(__name__)
 
 

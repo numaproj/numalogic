@@ -13,7 +13,7 @@ from numalogic.udfs._logger import configure_logger, log_data_payload_values
 from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, OutputPayload
 
-METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
 _struct_log = configure_logger()
 

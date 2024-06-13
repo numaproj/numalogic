@@ -30,7 +30,7 @@ from numalogic.udfs.tools import _load_artifact, get_trainer_message, get_static
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
-METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
 
 _struct_log = configure_logger()

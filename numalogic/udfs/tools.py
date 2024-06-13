@@ -18,7 +18,7 @@ from numalogic.udfs._logger import configure_logger
 from numalogic.udfs._metrics_utility import _set_gauge, _increment_counter, _add_info
 from numalogic.udfs.entities import StreamPayload, TrainerPayload
 
-METRICS_ENABLED = os.getenv("METRICS_ENABLED", "True").lower() == "true"
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 
 
 _struct_log = configure_logger()
