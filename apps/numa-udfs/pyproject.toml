@@ -7,12 +7,12 @@ readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "~3.11"
-#numalogic = "~0.11.0"
-numalogic = {path = "numalogic-0.11a0-py3-none-any.whl"}
-#numalogic-connectors = "*"
-numalogic-connectors = {path = "numalogic_connectors-0.11a0-py3-none-any.whl"}
-#numalogic-registry = "*"
-numalogic-registry = {path = "numalogic_registry-0.11a0-py3-none-any.whl"}
+numalogic = { version = "0.12.0.dev2", source = "testpypi" }
+# numalogic = {path = "numalogic-0.11a0-py3-none-any.whl"}
+numalogic-connectors = { version = "0.12.0.dev2", source = "testpypi" }
+# numalogic-connectors = {path = "numalogic_connectors-0.11a0-py3-none-any.whl"}
+numalogic-registry = { version = "0.12.0.dev2", source = "testpypi" }
+# numalogic-registry = {path = "numalogic_registry-0.11a0-py3-none-any.whl"}
 pynumaflow = "~0.6"
 structlog = "^24.1.0"
 prometheus_client = "^0.18.0"
@@ -32,6 +32,10 @@ moto = "~4.1"
 deepdiff = "^6.5.0"
 pytest-mock = "^3.12.0"
 
+[[tool.poetry.source]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+priority = "supplemental"
 
 [tool.black]
 line-length = 100

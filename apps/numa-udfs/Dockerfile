@@ -19,9 +19,9 @@ RUN pip install --no-cache-dir poetry==$POETRY_VERSION
 
 WORKDIR /app
 
-COPY numalogic-0.11a0-py3-none-any.whl /app
-COPY numalogic_registry-0.11a0-py3-none-any.whl /app
-COPY numalogic_connectors-0.11a0-py3-none-any.whl /app
+#COPY numalogic-0.11a0-py3-none-any.whl /app
+#COPY numalogic_registry-0.11a0-py3-none-any.whl /app
+#COPY numalogic_connectors-0.11a0-py3-none-any.whl /app
 
 COPY poetry.lock pyproject.toml ./
 
