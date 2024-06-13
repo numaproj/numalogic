@@ -19,8 +19,6 @@ from torch.distributions import kl_divergence, Bernoulli
 from numalogic.models.autoencoder.base import BaseAE
 from numalogic.tools.exceptions import LayerSizeMismatchError
 
-EMPTY_TENSOR = torch.empty(0)
-
 
 class _VanillaEncoder(nn.Module):
     r"""Encoder module for the VanillaAE.
@@ -31,7 +29,7 @@ class _VanillaEncoder(nn.Module):
         n_features: num of features
         layersizes: encoder layer size
         dropout_p: the dropout value
-
+        batchnorm: Flag to enable/diasable batch normalization
     """
 
     def __init__(
@@ -43,13 +41,13 @@ class _VanillaEncoder(nn.Module):
         batchnorm: bool,
     ):
         super().__init__()
-        self.seq_len = seq_len
+        self.input_size = seq_len * n_features
         self.n_features = n_features
         self.dropout_p = dropout_p
         self.bnorm = batchnorm
 
         layers = self._construct_layers(layersizes)
-        self.encoder = nn.Sequential(*layers)
+        self.encoder = nn.Sequential(nn.Flatten(), *layers)
 
     def _construct_layers(self, layersizes: Sequence[int]) -> nn.ModuleList:
         r"""Utility function to generate a simple feedforward network layer.
@@ -63,18 +61,18 @@ class _VanillaEncoder(nn.Module):
             A simple feedforward network layer of type nn.ModuleList
         """
         layers = nn.ModuleList()
-        start_layersize = self.seq_len
+        start_layersize = self.input_size
 
         for lsize in layersizes[:-1]:
             _l = [nn.Linear(start_layersize, lsize)]
             if self.bnorm:
-                _l.append(nn.BatchNorm1d(self.n_features))
+                _l.append(nn.BatchNorm1d(lsize))
             layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
             start_layersize = lsize
 
         _l = [nn.Linear(start_layersize, layersizes[-1])]
         if self.bnorm:
-            _l.append(nn.BatchNorm1d(self.n_features))
+            _l.append(nn.BatchNorm1d(layersizes[-1]))
         layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
 
         return layers
@@ -92,7 +90,7 @@ class _Decoder(nn.Module):
         n_features: num of features
         layersizes: decoder layer size
         dropout_p: the dropout value
-
+        batchnorm: flag to enable/disable batch normalization
     """
 
     def __init__(
@@ -104,13 +102,13 @@ class _Decoder(nn.Module):
         batchnorm: bool,
     ):
         super().__init__()
-        self.seq_len = seq_len
+        self.out_size = seq_len * n_features
         self.n_features = n_features
         self.dropout_p = dropout_p
         self.bnorm = batchnorm
 
         layers = self._construct_layers(layersizes)
-        self.decoder = nn.Sequential(*layers)
+        self.decoder = nn.Sequential(*layers, nn.Unflatten(-1, (n_features, seq_len)))
 
     def forward(self, x: Tensor) -> Tensor:
         return self.decoder(x)
@@ -131,10 +129,10 @@ class _Decoder(nn.Module):
         for idx, _ in enumerate(layersizes[:-1]):
             _l = [nn.Linear(layersizes[idx], layersizes[idx + 1])]
             if self.bnorm:
-                _l.append(nn.BatchNorm1d(self.n_features))
+                _l.append(nn.BatchNorm1d(layersizes[idx + 1]))
             layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
 
-        layers.append(nn.Linear(layersizes[-1], self.seq_len))
+        layers.append(nn.Linear(layersizes[-1], self.out_size))
         return layers
 
 
@@ -221,8 +219,6 @@ class MultichannelAE(BaseAE):
         decoder_layersizes: decoder layer size (default = Sequence[int] = (8, 16))
         dropout_p: the dropout value (default=0.25)
         batchnorm: Flag to enable batch normalization (default=False)
-        encoderinfo: Flag to enable returning encoder information in the "forward" step
-                    (default=False)
         **kwargs: BaseAE kwargs
     """
 
@@ -319,18 +315,18 @@ class _SparseVanillaEncoder(_VanillaEncoder):
             A simple feedforward network layer of type nn.ModuleList
         """
         layers = nn.ModuleList()
-        start_layersize = self.seq_len
+        start_layersize = self.input_size
 
         for lsize in layersizes[:-1]:
             _l = [nn.Linear(start_layersize, lsize)]
             if self.bnorm:
-                _l.append(nn.BatchNorm1d(self.n_features))
+                _l.append(nn.BatchNorm1d(lsize))
             layers.extend([*_l, nn.Tanh(), nn.Dropout(p=self.dropout_p)])
             start_layersize = lsize
 
         _l = [nn.Linear(start_layersize, layersizes[-1])]
         if self.bnorm:
-            _l.append(nn.BatchNorm1d(self.n_features))
+            _l.append(nn.BatchNorm1d(layersizes[-1]))
         layers.extend([*_l, nn.ReLU()])
 
         return layers
