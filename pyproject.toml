@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.11.1"
+version = "0.12.0"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -35,7 +35,7 @@ orjson = "^3.9"
 pynumaflow = "~0.7.2"
 prometheus_client = "^0.18.0"
 structlog = "^24.1.0"
-numalogic-prometheus = { git = "git@github.com:numaproj/numalogic-prometheus.git", branch = "metrics" }
+numalogic-prometheus = { path = "numalogic_prometheus-0.8.0-py3-none-any.whl" }
 
 
 # extras
