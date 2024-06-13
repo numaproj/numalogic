@@ -56,7 +56,7 @@ def get_df(
     return df[features].astype(np.float32), df["timestamp"].astype(int).tolist()
 
 
-def _update_info_metric(data: np.ndarray, metric_names: Sequence[str], labels: dict) -> None:
+def _update_gauge_metric(data: np.ndarray, metric_names: Sequence[str], labels: dict) -> None:
     """
     Utility function is used to update the gauge metric.
     Args:
@@ -70,7 +70,7 @@ def _update_info_metric(data: np.ndarray, metric_names: Sequence[str], labels: d
     for _data, _metric_name in zip(metric_mean, metric_names):
         _set_gauge(
             gauge="RECORDED_DATA_GAUGE",
-            labels=(labels | {"metric_name": _metric_name}),
+            labels=labels | {"metric_name": _metric_name},
             data=_data,
             is_enabled=METRICS_ENABLED,
         )

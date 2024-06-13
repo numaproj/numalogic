@@ -22,7 +22,7 @@ from numalogic.udfs.tools import (
     make_stream_payload,
     get_df,
     _load_artifact,
-    _update_info_metric,
+    _update_gauge_metric,
     get_trainer_message,
     get_static_thresh_message,
 )
@@ -187,7 +187,7 @@ class PreprocessUDF(NumalogicUDF):
                 payload, metrics=_get_updated_metrics(payload.metrics, x_scaled.shape)
             )
 
-            _update_info_metric(x_scaled, payload.metrics, _metric_label_values)
+            _update_gauge_metric(x_scaled, payload.metrics, _metric_label_values)
             payload = replace(
                 payload,
                 data=x_scaled,

@@ -20,7 +20,7 @@ from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, Status
 from numalogic.udfs.tools import (
     _load_artifact,
-    _update_info_metric,
+    _update_gauge_metric,
     get_trainer_message,
     get_static_thresh_message,
 )
@@ -141,7 +141,7 @@ class InferenceUDF(NumalogicUDF):
         # Perform inference
         try:
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
-            _update_info_metric(x_inferred, payload.metrics, _metric_label_values)
+            _update_gauge_metric(x_inferred, payload.metrics, _metric_label_values)
         except RuntimeError:
             _increment_counter(
                 counter="RUNTIME_ERROR_COUNTER",
