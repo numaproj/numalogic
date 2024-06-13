@@ -15,8 +15,32 @@ jobs:
         working-directory: ./apps/numa-udfs
     steps:
     - uses: actions/checkout@v4
-    - name: Build and run dev container task
-      uses: devcontainers/ci@v0.3
+#    - name: Build and run dev container task
+#      uses: devcontainers/ci@v0.3
+#      with:
+#        subFolder: ./apps/numa-udfs
+#        runCmd: pytest --cov-report=xml --cov=src tests/ -sq
+
+    - name: Install poetry
+      run: pipx install poetry==1.8
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        subFolder: ./apps/numa-udfs
-        runCmd: pytest --cov-report=xml --cov=src tests/ -sq
+        python-version: 3.11
+        cache: 'poetry'
+
+    - name: Install dependencies
+      run: |
+        poetry env use 3.11
+        poetry install --with dev
+    - name: Run Coverage
+      run: |
+        poetry run pytest --cov-report=xml --cov=src --cov-config .coveragerc tests/ -sq
+    - name: Upload Coverage
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: true
+        verbose: true
