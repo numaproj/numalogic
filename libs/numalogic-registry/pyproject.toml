@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "numalogic-registry"
-version = "0.12.0.dev1"
+version = "0.12.0.dev2"
 description = "Collection of operational Machine Learning models and tools."
 authors = [
     {name = "Numalogic Developers"}
