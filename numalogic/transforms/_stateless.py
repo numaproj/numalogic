@@ -156,3 +156,56 @@ class FlattenVector(StatelessTransformer):
 
     def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
         return X.reshape(-1, self.n_features)
+
+
+class FlattenVectorWithPadding(StatelessTransformer):
+    """A stateless transformer that flattens some of the columns and does padding on the rest.
+
+    Args:
+    ____
+        features: list of all feature names in the order of columns of the payload matrix
+        flatten_features: list of feature names to be flattened
+        padding_with: numerical value to be used for padding, default is 0
+
+    """
+
+    __slots__ = (
+        "features",
+        "flatten_features",
+        "padding_with",
+        "padding_features",
+        "flatten_indexes",
+        "padding_indexes",
+    )
+
+    @staticmethod
+    def _feature_indexes(features_all: list[str], features: list[str]) -> list[int]:
+        return [features_all.index(f) for f in features]
+
+    def __init__(self, features: list[str], flatten_features: list[str], padding_with: float = 0.0):
+        self.features = features
+        self.flatten_features = flatten_features
+        self.padding_with = padding_with
+
+        self.padding_features = list(set(features) - set(flatten_features))
+        if not self.padding_features:
+            raise ValueError("At least one feature should be left for padding.")
+        self.flatten_indexes = self._feature_indexes(features, self.flatten_features)
+        self.padding_indexes = self._feature_indexes(features, self.padding_features)
+
+    def transform(self, X: npt.NDArray[float], **__) -> npt.NDArray[float]:
+        X_flatten = X[:, self.flatten_indexes].flatten().reshape(-1, 1)
+        padding_len = X_flatten.shape[0] - X.shape[0]
+        X_padding = np.pad(
+            X[:, self.padding_indexes],
+            ((0, padding_len), (0, 0)),
+            mode="constant",
+            constant_values=self.padding_with,
+        )
+        return np.concatenate([X_flatten, X_padding], axis=1)
+
+    def inverse_transform(self, X: npt.NDArray[float]) -> npt.NDArray[float]:
+        X_flatten = X[:, 0].reshape(-1, len(self.flatten_features))
+        original_len = X.shape[0] - X_flatten.shape[0]
+        X_padding_removed = X[:original_len, 1:]
+        return np.concatenate([X_flatten, X_padding_removed], axis=1)

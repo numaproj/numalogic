@@ -51,6 +51,7 @@ class PreprocessFactory(_ObjectFactory):
         GaussianNoiseAdder,
         DifferenceTransform,
         FlattenVector,
+        FlattenVectorWithPadding,
         PercentileScaler,
         ExpMovingAverage,
     )
@@ -67,6 +68,7 @@ class PreprocessFactory(_ObjectFactory):
         "GaussianNoiseAdder": GaussianNoiseAdder,
         "DifferenceTransform": DifferenceTransform,
         "FlattenVector": FlattenVector,
+        "FlattenVectorWithPadding": FlattenVectorWithPadding,
         "PercentileScaler": PercentileScaler,
         "ExpMovingAverage": ExpMovingAverage,
     }
@@ -130,6 +132,7 @@ class ModelFactory(_ObjectFactory):
         SparseLSTMAE,
         TransformerAE,
         SparseTransformerAE,
+        VanillaICAE,
     )
     from numalogic.models.vae.variants import Conv1dVAE
 
@@ -144,6 +147,7 @@ class ModelFactory(_ObjectFactory):
         "TransformerAE": TransformerAE,
         "SparseTransformerAE": SparseTransformerAE,
         "Conv1dVAE": Conv1dVAE,
+        "VanillaICAE": VanillaICAE,
     }
 
 

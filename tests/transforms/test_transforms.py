@@ -20,6 +20,7 @@ from numalogic.transforms import (
     DifferenceTransform,
     FlattenVector,
     PercentileScaler,
+    FlattenVectorWithPadding,
 )
 
 RNG = np.random.default_rng(42)
@@ -177,6 +178,19 @@ def test_flattenvector():
 
     assert data.shape[1] == 1
     assert clf.inverse_transform(data).shape[1] == 2
+
+
+def test_flattenvector_with_padding():
+    x = RNG.random((10, 4))
+    features = ["failed", "degraded", "errorrate", "userimpact"]
+    flatten_features = ["failed", "degraded"]
+
+    clf = FlattenVectorWithPadding(features, flatten_features)
+    X_transformed = clf.transform(x)
+    assert X_transformed.shape[1] == (len(features) - len(flatten_features) + 1)
+
+    X_inverse = clf.inverse_transform(X_transformed)
+    assert X_inverse.shape == x.shape
 
 
 def test_percentile_scaler():
