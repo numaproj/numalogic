@@ -24,7 +24,6 @@ from numalogic.tools.exceptions import (
     PrometheusFetcherError,
 )
 from numalogic.udfs import StreamConf, PipelineConf, MLPipelineConf
-from numalogic.udfs._logger import configure_logger
 from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer import DruidTrainerUDF, PromTrainerUDF
 
@@ -243,10 +242,9 @@ class TestDruidTrainerUDF(unittest.TestCase):
         )
         self.udf1(self.keys, self.datum)
         ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
-        logger = configure_logger()
         with freeze_time(ts + timedelta(hours=25)):
             TrainMsgDeduplicator(REDIS_CLIENT).ack_read(
-                logger=logger, key=[*self.keys, "pipeline1"], uuid="some-uuid"
+                key=[*self.keys, "pipeline1"], uuid="some-uuid"
             )
         with freeze_time(ts + timedelta(hours=25) + timedelta(minutes=15)):
             self.udf1(self.keys, self.datum)
@@ -261,7 +259,6 @@ class TestDruidTrainerUDF(unittest.TestCase):
 
     @patch.object(DruidFetcher, "fetch", Mock(return_value=mock_druid_fetch_data()))
     def test_trainer_do_not_train_3(self):
-        logger = configure_logger()
         self.udf1.register_conf(
             "druid-config",
             StreamConf(
@@ -282,9 +279,7 @@ class TestDruidTrainerUDF(unittest.TestCase):
                 }
             ),
         )
-        TrainMsgDeduplicator(REDIS_CLIENT).ack_read(
-            logger=logger, key=[*self.keys, "pipeline1"], uuid="some-uuid"
-        )
+        TrainMsgDeduplicator(REDIS_CLIENT).ack_read(key=[*self.keys, "pipeline1"], uuid="some-uuid")
         ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
         with freeze_time(ts + timedelta(minutes=15)):
             self.udf1(self.keys, self.datum)
@@ -425,32 +420,47 @@ class TestDruidTrainerUDF(unittest.TestCase):
     @patch("redis.Redis.hset", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_1(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
-        logger = configure_logger()
-        train_dedup.ack_read(logger=logger, key=[*self.keys, "pipeline1"], uuid="some-uuid")
+        train_dedup.ack_read(key=[*self.keys, "pipeline1"], uuid="some-uuid")
         self.assertLogs("RedisError")
-        train_dedup.ack_train(logger=logger, key=[*self.keys, "pipeline1"], uuid="some-uuid")
+        train_dedup.ack_train(key=[*self.keys, "pipeline1"], uuid="some-uuid")
         self.assertLogs("RedisError")
         train_dedup.ack_insufficient_data(
-            logger=logger, key=[*self.keys, "pipeline1"], uuid="some-uuid", train_records=180
+            key=[*self.keys, "pipeline1"], uuid="some-uuid", train_records=180
         )
         self.assertLogs("RedisError")
 
     @patch("redis.Redis.hset", Mock(side_effect=mock_druid_fetch_data()))
     def test_TrainMsgDeduplicator_insufficent_data(self):
         with self.assertLogs(level="DEBUG") as log:
-            logger = configure_logger()
             train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
             train_dedup.ack_insufficient_data(
-                logger=logger, key=[*self.keys, "pipeline1"], uuid="some-uuid", train_records=180
+                key=[*self.keys, "pipeline1"], uuid="some-uuid", train_records=180
             )
-        self.assertLogs("Acknowledging insufficient data for the key", log.output[-1])
+        self.assertLogs(
+            "DEBUG:numalogic.udfs._logger:uuid='some-uuid' "
+            "event='Acknowledging insufficient data for the key' "
+            "key=['5984175597303660107', 'pipeline1'] "
+            "level='debug' timestamp='2024-06-14T19:08:23.610016Z'",
+            log.output[-1],
+        )
 
     @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
     def test_TrainMsgDeduplicator_exception_2(self):
         train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
-        logger = configure_logger()
-        train_dedup.ack_read(logger=logger, key=[*self.keys, "pipeline1"], uuid="some-uuid")
+        train_dedup.ack_read(key=[*self.keys, "pipeline1"], uuid="some-uuid")
         self.assertLogs("RedisError")
+
+    @patch("redis.Redis.hgetall", Mock(side_effect=RedisError))
+    def test_TrainMsgDeduplicator_test_debug_logs(self):
+        train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
+        with self.assertLogs(level="DEBUG") as log:
+            train_dedup.ack_read(key=[*self.keys, "pipeline1"], uuid="some-uuid")
+            self.assertLogs(
+                "DEBUG:numalogic.udfs._logger:uuid='some-uuid' "
+                "event='Acknowledging request for Training for key' key=['5984175597303660107', "
+                "'pipeline1'] level='debug' timestamp='2024-06-14T19:02:55.050604Z'",
+                log.output[-1],
+            )
 
     def test_druid_from_config_1(self):
         with self.assertLogs(level="WARN") as log:

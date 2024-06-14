@@ -184,7 +184,6 @@ class TrainerUDF(NumalogicUDF):
         retrain_freq_ts = _conf.numalogic_conf.trainer.retrain_freq_hr
         retry_ts = _conf.numalogic_conf.trainer.retry_sec
         if not self.train_msg_deduplicator.ack_read(
-            logger=logger,
             key=[*payload.composite_keys, payload.pipeline_id],
             uuid=payload.uuid,
             retrain_freq=retrain_freq_ts,
@@ -217,7 +216,7 @@ class TrainerUDF(NumalogicUDF):
             return Messages(Message.to_drop())
 
         # Check if data is sufficient
-        if not self._is_data_sufficient(payload, df, logger):
+        if not self._is_data_sufficient(payload, df):
             logger.warning(
                 "Insufficient data found",
                 uuid=payload.uuid,
@@ -276,7 +275,7 @@ class TrainerUDF(NumalogicUDF):
             logger=logger,
         )
         if self.train_msg_deduplicator.ack_train(
-            logger=logger, key=[*payload.composite_keys, payload.pipeline_id], uuid=payload.uuid
+            key=[*payload.composite_keys, payload.pipeline_id], uuid=payload.uuid
         ):
             logger.info("Model trained and saved successfully", uuid=payload.uuid)
 
@@ -353,13 +352,12 @@ class TrainerUDF(NumalogicUDF):
                 "Artifact saved with with versions", uuid=payload.uuid, version_dict=ver_dict
             )
 
-    def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame, logger) -> bool:
+    def _is_data_sufficient(self, payload: TrainerPayload, df: pd.DataFrame) -> bool:
         _conf = self.get_ml_pipeline_conf(
             config_id=payload.config_id, pipeline_id=payload.pipeline_id
         )
         if len(df) < _conf.numalogic_conf.trainer.min_train_size:
             _ = self.train_msg_deduplicator.ack_insufficient_data(
-                logger=logger,
                 key=[*payload.composite_keys, payload.pipeline_id],
                 uuid=payload.uuid,
                 train_records=len(df),

@@ -5,7 +5,6 @@ from redis import RedisError
 from numalogic.connectors import RDSFetcher
 from numalogic.connectors.utils.aws.config import RDSConnectionConfig
 from numalogic.tools.exceptions import RDSFetcherError, ConfigNotFoundError
-from numalogic.udfs._logger import configure_logger
 from numalogic.udfs.tools import TrainMsgDeduplicator
 from numalogic.udfs.trainer._rds import RDSTrainerUDF, build_query
 import re
@@ -311,11 +310,7 @@ def test_trainer_do_not_train_3(mocker, udf1, datum_mock, payload):
 
     keys = payload["composite_keys"]
 
-    logger = configure_logger()
-
-    TrainMsgDeduplicator(REDIS_CLIENT).ack_read(
-        logger=logger, key=[*keys, "pipeline1"], uuid="some-uuid"
-    )
+    TrainMsgDeduplicator(REDIS_CLIENT).ack_read(key=[*keys, "pipeline1"], uuid="some-uuid")
     ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
     with freeze_time(ts + timedelta(minutes=15)):
         udf1(keys, datum_mock)
@@ -463,27 +458,23 @@ def test_trainer_datafetcher_err_and_train(mocker, udf1, payload, datum_mock):
 
 def test_TrainMsgDeduplicator_exception_1(mocker, caplog, payload):
     caplog.set_level(logging.INFO)
-    logger = configure_logger()
     mocker.patch("redis.Redis.hset", Mock(side_effect=RedisError))
     train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
     keys = payload["composite_keys"]
-    train_dedup.ack_read(logger=logger, key=[*keys, "pipeline1"], uuid="some-uuid")
+    train_dedup.ack_read(key=[*keys, "pipeline1"], uuid="some-uuid")
     assert "RedisError" in caplog.text
-    train_dedup.ack_train(logger=logger, key=[*keys, "pipeline1"], uuid="some-uuid")
+    train_dedup.ack_train(key=[*keys, "pipeline1"], uuid="some-uuid")
     assert "RedisError" in caplog.text
-    train_dedup.ack_insufficient_data(
-        logger=logger, key=[*keys, "pipeline1"], uuid="some-uuid", train_records=180
-    )
+    train_dedup.ack_insufficient_data(key=[*keys, "pipeline1"], uuid="some-uuid", train_records=180)
     assert "RedisError" in caplog.text
 
 
 def test_TrainMsgDeduplicator_exception_2(mocker, caplog, payload):
     caplog.set_level(logging.INFO)
-    logger = configure_logger()
     mocker.patch("redis.Redis.hset", Mock(side_effect=RedisError))
     train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
     keys = payload["composite_keys"]
-    train_dedup.ack_read(logger=logger, key=[*keys, "pipeline1"], uuid="some-uuid")
+    train_dedup.ack_read(key=[*keys, "pipeline1"], uuid="some-uuid")
     assert "RedisError" in caplog.text
 
 

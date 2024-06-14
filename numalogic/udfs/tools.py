@@ -8,6 +8,7 @@ import pandas as pd
 from pandas import DataFrame
 from pynumaflow.mapper import Message
 
+
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import KEYS, redis_client_t
@@ -252,12 +253,11 @@ class TrainMsgDeduplicator:
         return f"TRAIN::{_key}"
 
     def __fetch_ts(self, uuid: str, key: str) -> _DedupMetadata:
+        logger = _struct_log.bind(uuid=uuid, key=key)
         try:
             data = self.client.hgetall(key)
         except Exception:
-            _struct_log.exception(
-                "Problem  fetching ts information for the key", uuid=uuid, key=key
-            )
+            logger.exception("Problem  fetching ts information for the key")
             return _DedupMetadata(msg_read_ts=None, msg_train_ts=None, msg_train_records=None)
         else:
             # decode the key:value pair and update the values
@@ -273,7 +273,7 @@ class TrainMsgDeduplicator:
                 msg_train_records=_msg_train_records,
             )
 
-    def ack_insufficient_data(self, logger, key: KEYS, uuid: str, train_records: int) -> bool:
+    def ack_insufficient_data(self, key: KEYS, uuid: str, train_records: int) -> bool:
         """
         Acknowledge the insufficient data message. Retry training after certain period of a time.
         Args:
@@ -286,21 +286,17 @@ class TrainMsgDeduplicator:
             bool.
         """
         _key = self.__construct_train_key(key)
+        logger = _struct_log.bind(uuid=uuid, key=key)
         try:
             self.client.hset(name=_key, key="_msg_train_records", value=str(train_records))
         except Exception:
-            logger.exception(
-                "Problem while updating _msg_train_records information for the key",
-                uuid=uuid,
-                key=key,
-            )
+            logger.exception("Problem while updating _msg_train_records information for the key")
             return False
-        logger.debug("Acknowledging insufficient data for the key", uuid=uuid, key=key)
+        logger.debug("Acknowledging insufficient data for the key")
         return True
 
     def ack_read(
         self,
-        logger,
         key: KEYS,
         uuid: str,
         retrain_freq: int = 24,
@@ -325,6 +321,7 @@ class TrainMsgDeduplicator:
         """
         _key = self.__construct_train_key(key)
         metadata = self.__fetch_ts(uuid=uuid, key=_key)
+        logger = _struct_log.bind(uuid=uuid, key=key)
         _msg_read_ts, _msg_train_ts, _msg_train_records = (
             metadata.msg_read_ts,
             metadata.msg_train_ts,
@@ -341,8 +338,6 @@ class TrainMsgDeduplicator:
             logger.debug(
                 "There was insufficient data for the key in the past. Retrying fetching"
                 " and training after secs",
-                uuid=uuid,
-                key=key,
                 secs=((min_train_records - int(_msg_train_records)) * data_freq)
                 - _curr_time
                 + float(_msg_read_ts),
@@ -352,31 +347,25 @@ class TrainMsgDeduplicator:
 
         # Check if the model is being trained by another process
         if _msg_read_ts and time.time() - float(_msg_read_ts) < retry:
-            logger.debug("Model with key is being trained by another process", uuid=uuid, key=key)
+            logger.debug("Model with key is being trained by another process")
             return False
 
         # This check is needed if there is backpressure in the pipeline
         if _msg_train_ts and time.time() - float(_msg_train_ts) < retrain_freq * 60 * 60:
             logger.debug(
                 "Model was saved for the key in less than retrain_freq hrs, skipping training",
-                uuid=uuid,
-                key=key,
                 retrain_freq=retrain_freq,
             )
             return False
         try:
             self.client.hset(name=_key, key="_msg_read_ts", value=str(time.time()))
         except Exception:
-            logger.exception(
-                "Problem while updating msg_read_ts information for the key",
-                uuid=uuid,
-                key=key,
-            )
+            logger.exception("Problem while updating msg_read_ts information for the key")
             return False
-        logger.debug("Acknowledging request for Training for key", uuid=uuid, key=key)
+        logger.debug("Acknowledging request for Training for key")
         return True
 
-    def ack_train(self, logger, key: KEYS, uuid: str) -> bool:
+    def ack_train(self, key: KEYS, uuid: str) -> bool:
         """
         Acknowledge the train message is trained and saved. Return True when
                 _msg_train_ts is updated.
@@ -389,16 +378,13 @@ class TrainMsgDeduplicator:
             bool
         """
         _key = self.__construct_train_key(key)
+        logger = _struct_log.bind(uuid=uuid, key=key)
         try:
             self.client.hset(name=_key, key="_msg_train_ts", value=str(time.time()))
         except Exception:
-            logger.exception(
-                "Problem while updating msg_train_ts information for the key",
-                uuid=uuid,
-                key=key,
-            )
+            logger.exception("Problem while updating msg_train_ts information for the key")
             return False
-        logger.debug("Acknowledging model saving complete for the key", uuid=uuid, key=key)
+        logger.debug("Acknowledging model saving complete for the key")
         return True
 
 
