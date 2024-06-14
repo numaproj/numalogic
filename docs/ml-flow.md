@@ -25,8 +25,9 @@ Here, `tracking_uri` is the uri where mlflow server is running. The `static_keys
 
 The `artifact` would be the model or transformer object that needs to be saved.
 A dictionary of metadata can also be saved along with the artifact.
+
 ```python
-from numalogic.registry import MLflowRegistry
+from registry import MLflowRegistry
 from numalogic.models.autoencoder.variants import VanillaAE
 
 model = VanillaAE(seq_len=10)
@@ -46,7 +47,7 @@ registry.save(
 Once, the models are save to MLflow, the `load` function of `MLflowRegistry` can be used to load the model.
 
 ```python
-from numalogic.registry import MLflowRegistry
+from registry import MLflowRegistry
 
 static_keys = ["model", "autoencoder"]
 dynamic_keys = ["vanilla", "seq10"]

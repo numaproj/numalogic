@@ -1,12 +1,3 @@
-# Check Python
-PYTHON:=$(shell command -v python 2> /dev/null)
-ifndef PYTHON
-PYTHON:=$(shell command -v python3 2> /dev/null)
-endif
-ifndef PYTHON
-$(error "Python is not available, please install.")
-endif
-
 clean:
 	@rm -rf build dist .eggs *.egg-info
 	@rm -rf .benchmarks .coverage coverage.xml htmlcov report.xml .tox
@@ -16,14 +7,15 @@ clean:
 	@find . -type f -name "*.py[co]" -exec rm -rf {} +
 
 format: clean
-	poetry run black numalogic/ examples/ tests/
+	black libs/ apps/ examples/ tests/
 
 lint: format
-	poetry run ruff check --fix .
+	ruff check --fix .
 
-# install all dependencies
 setup:
-	poetry install --with dev,torch,jupyter --all-extras
+	PKG_NAME=numalogic pip install -v -e '.[dev,jupyter]' --config-settings editable_mode=strict
+	PKG_NAME=numalogic-connectors pip install -v -e '.[dev]' --config-settings editable_mode=strict
+	PKG_NAME=numalogic-registry pip install -v -e '.[dev]' --config-settings editable_mode=strict
 
 # test your application (tests in the tests/ directory)
 test:
@@ -43,7 +35,7 @@ tag:
 	git tag -s -a $(VERSION) -m "Release $(VERSION)"
 
 /usr/local/bin/mkdocs:
-	$(PYTHON) -m pip install mkdocs==1.3.0 mkdocs_material==8.3.9
+	pip install mkdocs==1.3.0 mkdocs_material==8.3.9
 
 # docs
 

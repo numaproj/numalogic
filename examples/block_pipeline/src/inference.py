@@ -12,7 +12,7 @@ from numalogic.blocks import (
 from numalogic.models.autoencoder.variants import SparseVanillaAE
 from numalogic.models.threshold import StdDevThreshold
 from numalogic.udfs import NumalogicUDF
-from numalogic.registry import RedisRegistry
+from registry import RedisRegistry
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.transforms import TanhNorm
 from pynumaflow.function import Messages, Datum, Message
@@ -46,7 +46,7 @@ class Inference(NumalogicUDF):
             registry=self.registry,
         )
 
-        # Load the model from the registry
+        # Load the model from the test_registry
         try:
             block_pl.load(skeys=["blockpl"], dkeys=["sparsevanillae"])
         except RedisRegistryError as warn:

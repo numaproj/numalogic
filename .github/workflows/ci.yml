@@ -7,32 +7,73 @@ on:
     branches: [ "main", "release/*" ]
 
 jobs:
-  build:
-    name: Python version
+  numaloigic-core:
+    name: numalogic-core
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-core
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12"]
 
     steps:
     - uses: actions/checkout@v4
-
-    - name: Install poetry
-      run: pipx install poetry==1.6.1
-
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-        cache: 'poetry'
-
+        cache: 'pip'
     - name: Install dependencies
       run: |
-        poetry env use ${{ matrix.python-version }}
-        poetry install --all-extras --with dev
-        poetry run pip install "torch<3.0" -i https://download.pytorch.org/whl/cpu
-        poetry run pip install "pytorch-lightning<3.0"
-
-    - name: Test with pytest
+        pip install -r requirements/requirements.txt
+        pip install -r requirements/requirements-dev.txt
+    - name: Run tests
+      run: make test
+  numalogic-connectors:
+    name: numalogic-conectors
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-connectors
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [ "3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - name: Install dependencies
+        run: make setup
+      - name: Echo
+        run: pwd
+      - name: Run tests
+        run: make test
+  numalogic-registry:
+    name: numalogic-registry
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./libs/numalogic-registry
+    strategy:
+      fail-fast: false
+      matrix:
+          python-version: [ "3.10", "3.11", "3.12"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    - name: Install dependencies
+      working-directory: ./libs/numalogic-registry
+      run: make setup
+    - name: Run tests
+      working-directory: ./libs/numalogic-registry
       run: make test

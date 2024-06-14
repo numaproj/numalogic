@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools >= 61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "numalogic-registry"
+version = "0.12.0.dev2"
+description = "Collection of operational Machine Learning models and tools."
+authors = [
+    {name = "Numalogic Developers"}
+]
+readme = "README.md"
+maintainers = [
+    { name = "Avik Basu", email = "avikbasu93@gmail.com"},
+    { name = "Vigith Maurice", email = "vigith@gmail.com"}
+]
+classifiers = [
+    "Topic :: Software Development :: Libraries",
+    "License :: OSI Approved :: Apache Software License",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12"
+]
+requires-python = ">= 3.9"
+dynamic = ["dependencies", "optional-dependencies"]
+
+
+[project.urls]
+Repository = "https://github.com/numaproj/numalogic"
+Documentation = "https://numalogic.numaproj.io/"
+Homepage = "https://numalogic.numaproj.io/"
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements/requirements.txt"]}
+optional-dependencies = {dev = { file = ["requirements/requirements-dev.txt"] }}
+
+[tool.ruff]
+line-length = 100
+src = ["numalogic-registry", "tests"]
+lint.select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q", "PLR", "D"]
+lint.ignore = ["TRY003", "TRY301", "RUF100", "D100", "D104", "PLR2004", "D102", "D401", "D107", "D205", "D105", "PLW0603", "PLR0915", "UP035"]
+target-version = "py39"
+show-fixes = true
+output-format = "full"
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["D101", "D103"]
+
+[tool.ruff.lint.pylint]
+max-args = 15
+max-statements = 30
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"

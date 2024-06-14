@@ -1,0 +1,55 @@
+name: UDFs
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/numa-udfs
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install poetry
+      run: pipx install poetry==1.8
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+        cache: 'poetry'
+
+    - name: Install dependencies
+      run: poetry install --no-root --with dev
+    - name: Run Coverage
+      run: |
+        poetry run pytest --cov-report=xml --cov=src --cov-config .coveragerc tests/ -sq
+
+    - name: Upload Coverage
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml
+        fail_ci_if_error: true
+        verbose: true
+        working-directory: ./apps/numa-udfs
+        name: numalogic-udfs
+
+  devcontainer:
+    name: coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/numa-udfs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run dev container task
+        uses: devcontainers/ci@v0.3
+        with:
+          subFolder: ./apps/numa-udfs
+          runCmd: pytest tests/

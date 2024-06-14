@@ -1,7 +1,7 @@
 import logging
 
 from numalogic.udfs import NumalogicUDF
-from numalogic.registry import MLflowRegistry
+from registry import MLflowRegistry
 from pynumaflow.function import Messages, Message, Datum
 
 from src.utils import Payload
@@ -39,7 +39,7 @@ class Threshold(NumalogicUDF):
         # Load data and convert bytes to Payload
         payload = Payload.from_json(datum.value)
 
-        # Load the threshold model from registry
+        # Load the threshold model from test_registry
         thresh_clf_artifact = self.registry.load(
             skeys=["thresh_clf"], dkeys=["model"], artifact_type="sklearn"
         )

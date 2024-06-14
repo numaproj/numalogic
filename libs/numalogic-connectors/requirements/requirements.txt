@@ -1,0 +1,8 @@
+numalogic
+requests>=2.0
+orjson>=3.9
+pydruid>=0.6
+boto3>=1.20
+PyMySQL>=1.0
+redis[hiredis]>=5.0
+omegaconf>=2.3

@@ -1,0 +1,10 @@
+moto>=4.1
+black>23.0
+pytest>=7.0
+pytest-cov>=4.0
+ruff>=0.0.275
+pre-commit>=3.3
+pytest-mock>=3.12
+freezegun>=1.2
+deepdiff>=6.5.0
+fakeredis>=2.10

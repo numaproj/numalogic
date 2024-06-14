@@ -1,0 +1,79 @@
+stream_confs:
+  rds-config:
+    config_id: "rds-config"
+    source: "rds"
+    composite_keys: [ 'service-mesh', '1', '2' ]
+    window_size: 10
+    ml_pipelines:
+      pipeline1:
+        pipeline_id: "pipeline1"
+        metrics: [ "failed" , "degraded" ]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 2
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+            - name: "StandardScaler"
+              stateful: true
+          threshold:
+            name: "MahalanobisThreshold"
+            conf:
+              max_outlier_prob: 0.08
+          trainer:
+            train_hours: 3
+            min_train_size: 100
+            transforms:
+              - name: "DataClipper"
+                conf:
+                  lower: [0.0,0.0]
+            pltrainer_conf:
+              accelerator: cpu
+              max_epochs: 1
+
+redis_conf:
+  url: "isbsvc-fci-redis-isbs-redis-svc.oss-analytics-numalogicosamfci-usw2-prd.svc"
+  port: 26379
+  expiry: 360
+  master_name: "mymaster"
+
+registry_conf:
+  name: "RedisRegistry"
+  model_expiry_sec: 172800
+  jitter_conf:
+    jitter_sec: 900
+    jitter_steps_sec: 120
+
+rds_conf:
+  connection_conf:
+    aws_assume_role_arn: "arn:aws:iam::123456789:role/ml_iam_role"
+    aws_assume_role_session_name: "ml_pipeline_reader"
+    endpoint: "localhost1"
+    port: 3306
+    database_name: "ml_poc"
+    database_username: "root"
+    database_password: "admin123"
+    database_connection_timeout: 10
+    database_type: "mysql"
+    database_provider: "rds"
+    aws_region: "us-west-2"
+    aws_rds_use_iam: False
+    ssl_enabled: False
+    ssl:
+      ca: "/usr/bin/ml_data/us-west-2-bundle.pem"
+  id_fetcher:
+    rds-config-pipeline1:
+      dimensions: [ "cistatus" ]
+      metrics: [ "count" ]
+      datasource: "ml_poc.o11y_fci_ml"
+      group_by: [ "timestamp", "cistatus" ]
+      pivot:
+        columns: [ "cistatus" ]
+      datetime_column_name: "eventdatetime"
+      hash_query_type: True
+      hash_column_name: model_md5_hash
