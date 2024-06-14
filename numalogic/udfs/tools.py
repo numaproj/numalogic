@@ -169,7 +169,11 @@ def _load_artifact(
     )
 
     logger = _struct_log.bind(
-        uuid=payload.uuid, skeys=skeys, dkeys=dkeys, payload_metrics=payload.metrics
+        uuid=payload.uuid,
+        skeys=skeys,
+        dkeys=dkeys,
+        payload_metrics=payload.metrics,
+        udf_vertex=vertex,
     )
 
     version_to_load = "-1"
