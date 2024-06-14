@@ -1,4 +1,4 @@
-name: Numalogic Apps CI
+name: UDFs
 
 on:
   push:
@@ -7,20 +7,14 @@ on:
     branches: [ "main" ]
 
 jobs:
-  numalogic-udfs:
-    name: numalogic-udfs
+  coverage:
+    name: coverage
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: ./apps/numa-udfs
     steps:
     - uses: actions/checkout@v4
-#    - name: Build and run dev container task
-#      uses: devcontainers/ci@v0.3
-#      with:
-#        subFolder: ./apps/numa-udfs
-#        runCmd: pytest --cov-report=xml --cov=src tests/ -sq
-
     - name: Install poetry
       run: pipx install poetry==1.8
 
@@ -45,3 +39,17 @@ jobs:
         verbose: true
         working-directory: ./apps/numa-udfs
         name: numalogic-udfs
+
+  devcontainer:
+    name: coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./apps/numa-udfs
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and run dev container task
+        uses: devcontainers/ci@v0.3
+        with:
+          subFolder: ./apps/numa-udfs
+          runCmd: pytest tests/
