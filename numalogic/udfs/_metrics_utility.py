@@ -19,10 +19,7 @@ def create_metrics_from_config_file(config_file_path: str) -> dict[str, metrics_
             name = metric["name"]
             description = metric.get("description", "")
             label_pairs = metric.get("label_pairs", {})
-            static_label_pairs = metric.get("static_label_pairs", {})
-            metrics[name] = get_metric(
-                metric_type, name, description, label_pairs, static_label_pairs
-            )
+            metrics[name] = get_metric(metric_type, name, description, label_pairs)
     return metrics
 
 

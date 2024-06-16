@@ -12,6 +12,7 @@ import numpy.typing as npt
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
 from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, OutputPayload
+from numalogic.udfs.tools import _update_gauge_metric
 
 METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
@@ -70,6 +71,7 @@ class StaticThresholdUDF(NumalogicUDF):
                 input_=payload.get_data(original=True, metrics=list(adjust_conf.upper_limits)),
                 adjust_conf=adjust_conf,
             )
+            _update_gauge_metric(y_features, list(adjust_conf.upper_limits), _metric_label_values)
             y_unified = self.compute_unified_score(y_features, adjust_conf.feature_agg)
         except RuntimeError:
             logger.exception("Error occurred while computing static anomaly scores")

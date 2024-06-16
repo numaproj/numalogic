@@ -20,7 +20,6 @@ from numalogic.udfs.entities import StreamPayload, TrainerPayload
 
 METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 
-
 _struct_log = configure_logger()
 
 
@@ -56,23 +55,22 @@ def get_df(
     return df[features].astype(np.float32), df["timestamp"].astype(int).tolist()
 
 
-def _update_gauge_metric(data: np.ndarray, metric_names: Sequence[str], labels: dict) -> None:
+def _update_gauge_metric(
+    data: np.ndarray, metric_name: Sequence[str], labels: dict[str, str]
+) -> None:
     """
     Utility function is used to update the gauge metric.
     Args:
         data: data
-        metric_names: metric name in the payload
+        metric_name: metric name in the payload
         labels: labels.
     """
-    metric_mean = np.mean(data, axis=0)
-    if metric_mean.shape[0] != len(metric_names):
-        raise ValueError("Data Shape and metric name length do not match")
-    for _data, _metric_name in zip(metric_mean, metric_names):
+    for _data, _metric_name in zip(data.T, metric_name):
         _set_gauge(
             gauge="RECORDED_DATA_GAUGE",
             labels=labels | {"metric_name": _metric_name},
-            data=_data,
             is_enabled=METRICS_ENABLED,
+            data=np.mean(_data).squeeze(),
         )
 
 

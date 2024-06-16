@@ -137,7 +137,7 @@ spec:
             - name: BASE_CONF_PATH
               value: /app/config/default-configs/config.yaml
             - name: METRICS_CONF_PATH
-              value: /app/config/default-configs/metrics.yaml
+              value: /app/config/metrics-config/metrics.yaml
           image: docker.intuit.com/oss-analytics/numalogic-udfs/service/reducer:master-30d7992
           resources:
             limits:
@@ -152,6 +152,8 @@ spec:
               name: app-configs
             - mountPath: /app/config/default-configs
               name: default-configs
+            - mountPath: /app/config/metrics-config
+              name: metrics-config
         groupBy:
           keyed: true
           storage:
@@ -166,6 +168,9 @@ spec:
         - configMap:
             name: numalogic-rollouts-default-mv-configs
           name: default-configs
+        - configMap:
+            name: numalogic-udf-metrics
+          name: metrics-config
         - configMap:
             name: numalogic-rollouts-app-mv-configs
           name: app-configs
@@ -196,13 +201,13 @@ spec:
             - name: BASE_CONF_PATH
               value: /app/config/default-configs/config.yaml
             - name: METRICS_CONF_PATH
-              value: /app/config/default-configs/metrics.yaml
+              value: /app/config/metrics-config/metrics.yaml
             - name: REDIS_AUTH
               valueFrom:
                 secretKeyRef:
                   key: redis-password
                   name: isbsvc-redis-isbs-redis-auth
-          image: docker.intuit.com/quay-rmt/numaio/numalogic/udf:v0.11.0
+          image: docker.intuit.com/oss-analytics/numalogic-osam-fci/service/go-lib/source-transformer:metrics_test-9
           imagePullPolicy: Always
           resources:
             limits:
@@ -216,10 +221,15 @@ spec:
               name: app-configs
             - mountPath: /app/config/default-configs
               name: default-configs
+            - mountPath: /app/config/metrics-config
+              name: metrics-config
       volumes:
         - configMap:
             name: numalogic-rollouts-app-mv-configs
           name: app-configs
+        - configMap:
+            name: numalogic-udf-metrics
+          name: metrics-config
         - configMap:
             name: numalogic-rollouts-default-mv-configs
           name: default-configs
@@ -244,7 +254,6 @@ spec:
             - -m
             - numalogic.udfs
             - inference
-            - multiproc
           env:
             - name: NUM_CPU_MULTIPROC
               value: "4"
@@ -253,13 +262,13 @@ spec:
             - name: BASE_CONF_PATH
               value: /app/config/default-configs/config.yaml
             - name: METRICS_CONF_PATH
-              value: /app/config/default-configs/metrics.yaml
+              value: /app/config/metrics-config/metrics.yaml
             - name: REDIS_AUTH
               valueFrom:
                 secretKeyRef:
                   key: redis-password
                   name: isbsvc-redis-isbs-redis-auth
-          image: docker.intuit.com/quay-rmt/numaio/numalogic/udf:v0.11.0
+          image: docker.intuit.com/oss-analytics/numalogic-osam-fci/service/go-lib/source-transformer:metrics_test-9
           imagePullPolicy: Always
           resources:
             limits:
@@ -273,10 +282,15 @@ spec:
               name: app-configs
             - mountPath: /app/config/default-configs
               name: default-configs
+            - mountPath: /app/config/metrics-config
+              name: metrics-config
       volumes:
         - configMap:
             name: numalogic-rollouts-app-mv-configs
           name: app-configs
+        - configMap:
+            name: numalogic-udf-metrics
+          name: metrics-config
         - configMap:
             name: numalogic-rollouts-default-mv-configs
           name: default-configs
@@ -309,13 +323,13 @@ spec:
             - name: BASE_CONF_PATH
               value: /app/config/default-configs/config.yaml
             - name: METRICS_CONF_PATH
-              value: /app/config/default-configs/metrics.yaml
+              value: /app/config/metrics-config/metrics.yaml
             - name: REDIS_AUTH
               valueFrom:
                 secretKeyRef:
                   key: redis-password
                   name: isbsvc-redis-isbs-redis-auth
-          image: docker.intuit.com/quay-rmt/numaio/numalogic/udf:v0.11.0
+          image: docker.intuit.com/oss-analytics/numalogic-osam-fci/service/go-lib/source-transformer:metrics_test-9
           imagePullPolicy: Always
           resources:
             limits:
@@ -329,10 +343,15 @@ spec:
               name: app-configs
             - mountPath: /app/config/default-configs
               name: default-configs
+            - mountPath: /app/config/metrics-config
+              name: metrics-config
       volumes:
         - configMap:
             name: numalogic-rollouts-app-mv-configs
           name: app-configs
+        - configMap:
+            name: numalogic-udf-metrics
+          name: metrics-config
         - configMap:
             name: numalogic-rollouts-default-mv-configs
           name: default-configs
@@ -365,13 +384,13 @@ spec:
             - name: BASE_CONF_PATH
               value: /app/config/default-configs/config.yaml
             - name: METRICS_CONF_PATH
-              value: /app/config/default-configs/metrics.yaml
+              value: /app/config/metrics-config/metrics.yaml
             - name: REDIS_AUTH
               valueFrom:
                 secretKeyRef:
                   key: redis-password
                   name: isbsvc-redis-isbs-redis-auth
-          image: docker.intuit.com/quay-rmt/numaio/numalogic/udf:v0.11.0
+          image: docker.intuit.com/oss-analytics/numalogic-osam-fci/service/go-lib/source-transformer:metrics_test-9
           imagePullPolicy: Always
           resources:
             limits:
@@ -385,10 +404,15 @@ spec:
               name: app-configs
             - mountPath: /app/config/default-configs
               name: default-configs
+            - mountPath: /app/config/metrics-config
+              name: metrics-config
       volumes:
         - configMap:
             name: numalogic-rollouts-app-mv-configs
           name: app-configs
+        - configMap:
+            name: numalogic-udf-metrics
+          name: metrics-config
         - configMap:
             name: numalogic-rollouts-default-mv-configs
           name: default-configs
@@ -413,14 +437,13 @@ spec:
             - -m
             - numalogic.udfs
             - promtrainer
-            - multiproc
           env:
             - name: DEBUG
               value: "true"
             - name: BASE_CONF_PATH
               value: /app/config/default-configs/config.yaml
             - name: METRICS_CONF_PATH
-              value: /app/config/default-configs/metrics.yaml
+              value: /app/config/metrics-config/metrics.yaml
             - name: NUM_CPU_MULTIPROC
               value: "4"
             - name: REDIS_AUTH
@@ -428,7 +451,7 @@ spec:
                 secretKeyRef:
                   key: redis-password
                   name: isbsvc-redis-isbs-redis-auth
-          image: docker.intuit.com/quay-rmt/numaio/numalogic/udf:v0.11.0
+          image: docker.intuit.com/oss-analytics/numalogic-osam-fci/service/go-lib/source-transformer:metrics_test-9
           imagePullPolicy: Always
           resources:
             limits:
@@ -442,10 +465,15 @@ spec:
               name: app-configs
             - mountPath: /app/config/default-configs
               name: default-configs
+            - mountPath: /app/config/metrics-config
+              name: metrics-config
       volumes:
         - configMap:
             name: numalogic-rollouts-app-mv-configs
           name: app-configs
+        - configMap:
+            name: numalogic-udf-metrics
+          name: metrics-config
         - configMap:
             name: numalogic-rollouts-default-mv-configs
           name: default-configs
