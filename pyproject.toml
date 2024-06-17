@@ -35,7 +35,7 @@ orjson = "^3.9"
 pynumaflow = "~0.7.2"
 prometheus_client = "^0.18.0"
 structlog = "^24.1.0"
-numalogic-prometheus= "^0.8.1a2"
+numalogic-prometheus = { version = "^0.8", allow-prereleases = true }
 
 # extras
 mlflow-skinny = { version = "^2.0", optional = true }
