@@ -3099,13 +3099,13 @@ test = ["pytest", "pytest-console-scripts", "pytest-jupyter", "pytest-tornasync"
 
 [[package]]
 name = "numalogic-prometheus"
-version = "0.8.1a1"
+version = "0.8.1a2"
 description = "Numalogic Prometheus based tools"
 optional = false
 python-versions = "<3.13,>=3.9"
 files = [
-    {file = "numalogic_prometheus-0.8.1a1-py3-none-any.whl", hash = "sha256:4969078354d1abf0d91439355a2146e16548c1c95c9a3d2c4f968bc67e18689e"},
-    {file = "numalogic_prometheus-0.8.1a1.tar.gz", hash = "sha256:3c3385cde1488c87bd509f06088c638a4e6e89e583b648efc9d1ec7ac8f8cf28"},
+    {file = "numalogic_prometheus-0.8.1a2-py3-none-any.whl", hash = "sha256:d4b07ad03ae570d0b82f0aa652fe389b3712c8bdee17bdbb6c08a09d311c6b77"},
+    {file = "numalogic_prometheus-0.8.1a2.tar.gz", hash = "sha256:7f5467e75c6fd4afedecad81158cd1a3951765375735531fb8739e736d67443a"},
 ]
 
 [package.dependencies]
@@ -5592,4 +5592,4 @@ redis = ["redis"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9, <3.13"
-content-hash = "2c60274fdbdd4a18a01797cd031079fc9ad6522a60a6176ae638f914652ab721"
+content-hash = "95053b0c4bbd6ff724579efdb0ce9e35714f01579e3bcdfaa5f6b8cd7b4ee390"
