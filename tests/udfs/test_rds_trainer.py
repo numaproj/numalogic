@@ -310,7 +310,7 @@ def test_trainer_do_not_train_3(mocker, udf1, datum_mock, payload):
 
     keys = payload["composite_keys"]
 
-    TrainMsgDeduplicator(REDIS_CLIENT).ack_read([*keys, "pipeline1"], "some-uuid")
+    TrainMsgDeduplicator(REDIS_CLIENT).ack_read(key=[*keys, "pipeline1"], uuid="some-uuid")
     ts = datetime.strptime("2022-05-24 10:00:00", "%Y-%m-%d %H:%M:%S")
     with freeze_time(ts + timedelta(minutes=15)):
         udf1(keys, datum_mock)
@@ -461,11 +461,11 @@ def test_TrainMsgDeduplicator_exception_1(mocker, caplog, payload):
     mocker.patch("redis.Redis.hset", Mock(side_effect=RedisError))
     train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
     keys = payload["composite_keys"]
-    train_dedup.ack_read([*keys, "pipeline1"], "some-uuid")
+    train_dedup.ack_read(key=[*keys, "pipeline1"], uuid="some-uuid")
     assert "RedisError" in caplog.text
-    train_dedup.ack_train([*keys, "pipeline1"], "some-uuid")
+    train_dedup.ack_train(key=[*keys, "pipeline1"], uuid="some-uuid")
     assert "RedisError" in caplog.text
-    train_dedup.ack_insufficient_data([*keys, "pipeline1"], "some-uuid", train_records=180)
+    train_dedup.ack_insufficient_data(key=[*keys, "pipeline1"], uuid="some-uuid", train_records=180)
     assert "RedisError" in caplog.text
 
 
@@ -474,7 +474,7 @@ def test_TrainMsgDeduplicator_exception_2(mocker, caplog, payload):
     mocker.patch("redis.Redis.hset", Mock(side_effect=RedisError))
     train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
     keys = payload["composite_keys"]
-    train_dedup.ack_read([*keys, "pipeline1"], "some-uuid")
+    train_dedup.ack_read(key=[*keys, "pipeline1"], uuid="some-uuid")
     assert "RedisError" in caplog.text
 
 
