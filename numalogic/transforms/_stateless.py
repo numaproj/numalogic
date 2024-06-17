@@ -91,6 +91,12 @@ class DataClipper(StatelessTransformer):
             if len(lower) != len(upper):
                 raise ValueError("lower and upper should have the same length.")
             lower, upper = np.asarray(lower, dtype=np.float32), np.asarray(upper, dtype=np.float32)
+        elif lower is not None and upper is not None:
+            if type(lower) is not type(upper):
+                if isinstance(lower, Sequence):
+                    upper = np.asarray(upper, dtype=np.float32)
+                else:
+                    lower = np.asarray(lower, dtype=np.float32)
         if upper is not None and lower is not None and np.any(lower > upper):
             raise ValueError("lower value should be less than or equal to upper value")
         return lower, upper

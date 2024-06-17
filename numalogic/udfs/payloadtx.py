@@ -1,3 +1,4 @@
+import os
 import time
 from typing import Optional
 
@@ -9,6 +10,9 @@ from numalogic.tools.types import artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
+from numalogic.udfs._metrics_utility import _increment_counter
+
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 
 _struct_log = configure_logger()
 
@@ -54,6 +58,17 @@ class PayloadTransformer(NumalogicUDF):
             logger.exception("Error while decoding input json")
             return Messages(Message.to_drop())
 
+        _metric_label_values = {
+            "vertex": self._vtx,
+            "composite_key": ":".join(keys),
+            "config_id": data_payload["config_id"],
+            "pipeline_id": data_payload["pipeline_id"],
+        }
+        _increment_counter(
+            counter="MSG_IN_COUNTER",
+            labels=_metric_label_values,
+            is_enabled=METRICS_ENABLED,
+        )
         _stream_conf = self.get_stream_conf(data_payload["config_id"])
 
         # create a new message for each ML pipeline
@@ -67,5 +82,10 @@ class PayloadTransformer(NumalogicUDF):
             "Appended pipeline id to the payload",
             keys=keys,
             execution_time_ms=round((time.perf_counter() - _start_time) * 1000, 4),
+        )
+        _increment_counter(
+            counter="MSG_PROCESSED_COUNTER",
+            labels=_metric_label_values,
+            is_enabled=METRICS_ENABLED,
         )
         return messages

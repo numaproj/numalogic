@@ -7,6 +7,7 @@ from freezegun import freeze_time
 from orjson import orjson
 from pynumaflow.mapper import Datum
 
+from numalogic._constants import TESTS_DIR
 from numalogic.config import (
     NumalogicConf,
     ModelInfo,
@@ -18,9 +19,12 @@ from numalogic.config import (
 from numalogic.models.autoencoder.variants import VanillaAE
 from numalogic.registry import RedisRegistry, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
-from numalogic.udfs import StreamConf, InferenceUDF, MLPipelineConf
+from numalogic.udfs import StreamConf, InferenceUDF, MLPipelineConf, MetricsLoader
 from numalogic.udfs.entities import StreamPayload, Header, Status, TrainerPayload
 
+MetricsLoader().load_metrics(
+    config_file_path=f"{TESTS_DIR}/udfs/resources/numalogic_udf_metrics.yaml"
+)
 REDIS_CLIENT = FakeStrictRedis(server=FakeServer())
 KEYS = ["service-mesh", "1", "2"]
 DATUM_KW = {

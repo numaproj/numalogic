@@ -116,7 +116,6 @@ def test_dataclipper():
 
     tx1 = DataClipper(upper=0.1)
     x_ = tx1.transform(x)
-    print(x_)
 
     assert x.shape == x_.shape
     assert_array_equal(np.asarray([0.1, 0.1], dtype=np.float32), np.max(x_, axis=0))
@@ -139,9 +138,6 @@ def test_dataclipper_2():
 
     tx = DataClipper(lower=[1.0, "-inf", 0.0], upper=[1.0, "inf", 0.7])
     x_ = tx.transform(x)
-
-    print(x)
-    print(x_)
     assert x.shape == x_.shape
     assert_array_equal(np.asarray([1.0, 0, 0.7], dtype=np.float32), np.max(x_, axis=0))
 
@@ -154,6 +150,12 @@ def test_dataclipper_3():
         DataClipper(upper=[0.8, 0.1, 0.1], lower=[0.8, 0.2, 0.2])
     with pytest.raises(ValueError):
         DataClipper()
+
+
+def test_dataclipper_4():
+    np.ones((5, 2))
+    with pytest.raises(ValueError):
+        DataClipper(upper=[0.8, 0.9, 0.1], lower=2.0)
 
 
 def test_difftx():

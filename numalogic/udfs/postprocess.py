@@ -22,13 +22,7 @@ from numalogic.tools.types import redis_client_t, artifact_t
 from numalogic.udfs import NumalogicUDF
 from numalogic.udfs._config import PipelineConf, MLPipelineConf
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
-from numalogic.udfs._metrics import (
-    RUNTIME_ERROR_COUNTER,
-    MSG_PROCESSED_COUNTER,
-    MSG_IN_COUNTER,
-    UDF_TIME,
-    _increment_counter,
-)
+from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, Header, Status, OutputPayload
 from numalogic.udfs.tools import _load_artifact, get_trainer_message, get_static_thresh_message
 
@@ -36,6 +30,7 @@ from numalogic.udfs.tools import _load_artifact, get_trainer_message, get_static
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
 
 _struct_log = configure_logger()
@@ -71,7 +66,6 @@ class PostprocessUDF(NumalogicUDF):
         )
         self.postproc_factory = PostprocessFactory()
 
-    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         The postprocess function here receives data from the previous udf.
@@ -92,17 +86,17 @@ class PostprocessUDF(NumalogicUDF):
         # Construct payload object
         json_payload = orjson.loads(datum.value)
         payload = StreamPayload(**json_payload)
-        _metric_label_values = (
-            payload.composite_keys,
-            self._vtx,
-            ":".join(payload.composite_keys),
-            payload.config_id,
-            payload.pipeline_id,
-        )
-
+        _metric_label_values = {
+            "source": ":".join(payload.composite_keys),
+            "vertex": self._vtx,
+            "composite_key": ":".join(payload.composite_keys),
+            "config_id": payload.config_id,
+            "pipeline_id": payload.pipeline_id,
+        }
         _increment_counter(
-            counter=MSG_IN_COUNTER,
+            counter="MSG_IN_COUNTER",
             labels=_metric_label_values,
+            is_enabled=METRICS_ENABLED,
         )
 
         # load configs
@@ -162,7 +156,9 @@ class PostprocessUDF(NumalogicUDF):
             a_adjusted, y_unified, y_features = self._adjust_score(_conf, a_unified, payload)
 
         except RuntimeError:
-            _increment_counter(RUNTIME_ERROR_COUNTER, _metric_label_values)
+            _increment_counter(
+                "RUNTIME_ERROR_COUNTER", _metric_label_values, is_enabled=METRICS_ENABLED
+            )
             logger.exception(
                 "Runtime postprocess error!",
                 uuid=payload.uuid,
@@ -201,8 +197,9 @@ class PostprocessUDF(NumalogicUDF):
         )
 
         _increment_counter(
-            MSG_PROCESSED_COUNTER,
+            "MSG_PROCESSED_COUNTER",
             labels=_metric_label_values,
+            is_enabled=METRICS_ENABLED,
         )
 
         logger.info(

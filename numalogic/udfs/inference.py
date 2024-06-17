@@ -14,18 +14,13 @@ from numalogic.registry import LocalLRUCache, ArtifactData
 from numalogic.tools.types import artifact_t, redis_client_t
 from numalogic.udfs._base import NumalogicUDF
 from numalogic.udfs._config import PipelineConf
+
 from numalogic.udfs._logger import configure_logger, log_data_payload_values
-from numalogic.udfs._metrics import (
-    RUNTIME_ERROR_COUNTER,
-    MSG_PROCESSED_COUNTER,
-    MSG_IN_COUNTER,
-    UDF_TIME,
-    _increment_counter,
-)
+from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, Status
 from numalogic.udfs.tools import (
     _load_artifact,
-    _update_info_metric,
+    _update_gauge_metric,
     get_trainer_message,
     get_static_thresh_message,
 )
@@ -36,6 +31,7 @@ _struct_log = configure_logger()
 LOCAL_CACHE_TTL = int(os.getenv("LOCAL_CACHE_TTL", "3600"))
 LOCAL_CACHE_SIZE = int(os.getenv("LOCAL_CACHE_SIZE", "10000"))
 LOAD_LATEST = os.getenv("LOAD_LATEST", "false").lower() == "true"
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 
 
 class InferenceUDF(NumalogicUDF):
@@ -89,7 +85,6 @@ class InferenceUDF(NumalogicUDF):
             raise RuntimeError("Model forward pass failed!") from err
         return np.ascontiguousarray(recon_err).squeeze(0)
 
-    @UDF_TIME.time()
     def exec(self, keys: list[str], datum: Datum) -> Messages:
         """
         Perform inference on the input data.
@@ -108,14 +103,18 @@ class InferenceUDF(NumalogicUDF):
         # Construct payload object
         json_data_payload = orjson.loads(datum.value)
         payload = StreamPayload(**json_data_payload)
-        _metric_label_values = (
-            payload.metadata["numalogic_opex_tags"]["source"],
-            self._vtx,
-            ":".join(payload.composite_keys),
-            payload.config_id,
-            payload.pipeline_id,
+        _metric_label_values = {
+            "source": payload.metadata["numalogic_opex_tags"]["source"],
+            "vertex": self._vtx,
+            "composite_key": ":".join(payload.composite_keys),
+            "config_id": payload.config_id,
+            "pipeline_id": payload.pipeline_id,
+        }
+        _increment_counter(
+            counter="MSG_IN_COUNTER",
+            labels=_metric_label_values,
+            is_enabled=METRICS_ENABLED,
         )
-        _increment_counter(counter=MSG_IN_COUNTER, labels=_metric_label_values)
 
         _stream_conf = self.get_stream_conf(payload.config_id)
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
@@ -142,9 +141,13 @@ class InferenceUDF(NumalogicUDF):
         # Perform inference
         try:
             x_inferred = self.compute(artifact_data.artifact, payload.get_data())
-            _update_info_metric(x_inferred, payload.metrics, _metric_label_values)
+            _update_gauge_metric(x_inferred, payload.metrics, _metric_label_values)
         except RuntimeError:
-            _increment_counter(counter=RUNTIME_ERROR_COUNTER, labels=_metric_label_values)
+            _increment_counter(
+                counter="RUNTIME_ERROR_COUNTER",
+                labels=_metric_label_values,
+                is_enabled=METRICS_ENABLED,
+            )
             logger.exception(
                 "Runtime inference error!",
                 keys=payload.composite_keys,
@@ -174,9 +177,13 @@ class InferenceUDF(NumalogicUDF):
         # Send trainer message if artifact is stale
         if status == Status.ARTIFACT_STALE:
             logger.info("Inference artifact found is stale")
-            msgs.append(get_trainer_message(keys, _stream_conf, payload, *_metric_label_values))
+            msgs.append(get_trainer_message(keys, _stream_conf, payload, **_metric_label_values))
 
-        _increment_counter(counter=MSG_PROCESSED_COUNTER, labels=_metric_label_values)
+        _increment_counter(
+            counter="MSG_PROCESSED_COUNTER",
+            labels=_metric_label_values,
+            is_enabled=METRICS_ENABLED,
+        )
         msgs.append(Message(keys=keys, value=payload.to_json(), tags=["postprocess"]))
 
         logger.info(

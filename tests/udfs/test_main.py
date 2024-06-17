@@ -6,10 +6,14 @@ from pynumaflow.mapper import MapServer, MapMultiprocServer
 
 from numalogic._constants import TESTS_DIR
 from numalogic.tools.exceptions import ConfigNotFoundError
+from numalogic.udfs import MetricsLoader
 
 BASE_CONFIG_PATH = f"{TESTS_DIR}/udfs/resources/_config3.yaml"
 APP_CONFIG_PATH = f"{TESTS_DIR}/udfs/resources/_config4.yaml"
 REDIS_AUTH = "123"
+MetricsLoader().load_metrics(
+    config_file_path=f"{TESTS_DIR}/udfs/resources/numalogic_udf_metrics.yaml"
+)
 
 
 class TestMainScript(unittest.TestCase):

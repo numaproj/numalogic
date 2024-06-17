@@ -1,3 +1,4 @@
+import os
 import time
 from datetime import datetime, timedelta
 from typing import Optional
@@ -11,15 +12,10 @@ from numalogic.tools.types import redis_client_t
 from numalogic.udfs._config import PipelineConf
 from numalogic.udfs._logger import configure_logger
 from numalogic.udfs.entities import TrainerPayload
-from numalogic.udfs._metrics import (
-    DATAFRAME_SHAPE_SUMMARY,
-    FETCH_EXCEPTION_COUNTER,
-    FETCH_TIME_SUMMARY,
-    _add_summary,
-    _increment_counter,
-)
+from numalogic.udfs._metrics_utility import _increment_counter, _add_summary
 from numalogic.udfs.trainer._base import TrainerUDF
 
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
 _struct_log = configure_logger()
 
 
@@ -62,12 +58,12 @@ class PromTrainerUDF(TrainerUDF):
         _start_time = time.perf_counter()
         logger = _struct_log.bind(udf_vertex=self._vtx)
 
-        _metric_label_values = (
-            payload.composite_keys,
-            ":".join(payload.composite_keys),
-            payload.config_id,
-            payload.pipeline_id,
-        )
+        _metric_label_values = {
+            "config_id": payload.config_id,
+            "pipeline_id": payload.pipeline_id,
+            "composite_key": ":".join(payload.composite_keys),
+            "source": ":".join(payload.composite_keys),
+        }
         _stream_conf = self.get_stream_conf(payload.config_id)
         _conf = _stream_conf.ml_pipelines[payload.pipeline_id]
 
@@ -89,16 +85,18 @@ class PromTrainerUDF(TrainerUDF):
             )
         except PrometheusFetcherError:
             _increment_counter(
-                counter=FETCH_EXCEPTION_COUNTER,
+                counter="FETCH_EXCEPTION_COUNTER",
                 labels=_metric_label_values,
+                is_enabled=METRICS_ENABLED,
             )
             logger.exception("Error while fetching data from Prometheus", uuid=payload.uuid)
             return None
         _end_time = time.perf_counter() - _start_time
         _add_summary(
-            FETCH_TIME_SUMMARY,
+            "FETCH_TIME_SUMMARY",
             labels=_metric_label_values,
             data=_end_time,
+            is_enabled=METRICS_ENABLED,
         )
         logger.info(
             "Fetched data from Prometheus",
@@ -110,8 +108,9 @@ class PromTrainerUDF(TrainerUDF):
             execution_time_ms=round(_end_time * 1000, 4),
         )
         _add_summary(
-            DATAFRAME_SHAPE_SUMMARY,
+            "DATAFRAME_SHAPE_SUMMARY",
             labels=_metric_label_values,
             data=_df.shape[0],
+            is_enabled=METRICS_ENABLED,
         )
         return _df

@@ -9,10 +9,13 @@ from orjson import orjson
 from pynumaflow.mapper import Datum
 
 from numalogic._constants import TESTS_DIR
-from numalogic.udfs import PipelineConf
+from numalogic.udfs import PipelineConf, MetricsLoader
 from numalogic.udfs.entities import Status, Header, OutputPayload
 from numalogic.udfs.staticthresh import StaticThresholdUDF
 
+MetricsLoader().load_metrics(
+    config_file_path=f"{TESTS_DIR}/udfs/resources/numalogic_udf_metrics.yaml"
+)
 logging.basicConfig(level=logging.DEBUG)
 KEYS = ["service-mesh", "1", "2"]
 DATUM_KW = {

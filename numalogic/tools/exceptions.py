@@ -70,6 +70,12 @@ class RedisRegistryError(Exception):
     pass
 
 
+class MetricConfigError(Exception):
+    """Raised when a numalogic udf metric config is not valid."""
+
+    pass
+
+
 class DynamoDBRegistryError(Exception):
     """Base class for all exceptions raised by the DynamoDBRegistry class."""
 
