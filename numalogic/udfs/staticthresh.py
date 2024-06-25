@@ -14,7 +14,7 @@ from numalogic.udfs._metrics_utility import _increment_counter
 from numalogic.udfs.entities import StreamPayload, OutputPayload
 from numalogic.udfs.tools import _update_gauge_metric
 
-METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="0")))
 SCORE_PREFIX = os.getenv("SCORE_PREFIX", "unified")
 _struct_log = configure_logger()
 
