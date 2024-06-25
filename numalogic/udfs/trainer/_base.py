@@ -25,7 +25,7 @@ from numalogic.udfs.entities import TrainerPayload
 from numalogic.udfs.tools import TrainMsgDeduplicator
 import torch
 
-METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="1")))
+METRICS_ENABLED = bool(int(os.getenv("METRICS_ENABLED", default="0")))
 _struct_log = configure_logger()
 
 
