@@ -47,7 +47,7 @@ _METRICS_LOADER = MetricsLoader()
 
 # helper functions
 def _increment_counter(
-    counter: str, labels: Optional[dict], amount: int = 1, is_enabled=True
+    counter: str, labels: Optional[dict], amount: int = 1, is_enabled=False
 ) -> None:
     """
     Utility function is used to increment the counter.
@@ -69,7 +69,7 @@ def _increment_counter(
         LOGGER.error(f"Metric {counter} not found in metrics")
 
 
-def _add_info(info: str, labels: Optional[dict], data: dict, is_enabled=True) -> None:
+def _add_info(info: str, labels: Optional[dict], data: dict, is_enabled=False) -> None:
     """
     Utility function is used to add the info.
 
@@ -89,7 +89,7 @@ def _add_info(info: str, labels: Optional[dict], data: dict, is_enabled=True) ->
         LOGGER.error(f"Metric {info} not found in metrics")
 
 
-def _add_summary(summary: str, labels: Optional[dict], data: float, is_enabled=True) -> None:
+def _add_summary(summary: str, labels: Optional[dict], data: float, is_enabled=False) -> None:
     """
     Utility function is used to add the summary.
 
@@ -109,7 +109,7 @@ def _add_summary(summary: str, labels: Optional[dict], data: float, is_enabled=T
         LOGGER.error(f"Metric {summary} not found in metrics")
 
 
-def _set_gauge(gauge: str, labels: Optional[dict], data: float, is_enabled=True) -> None:
+def _set_gauge(gauge: str, labels: Optional[dict], data: float, is_enabled=False) -> None:
     """
     Utility function is used to add the info.
     Args:
