@@ -155,6 +155,7 @@ class DruidTrainerUDF(TrainerUDF):
             "DATAFRAME_SHAPE_SUMMARY",
             labels=_metric_label_values,
             data=_df.shape[0],
+            is_enabled=METRICS_ENABLED,
         )
 
         return _df
