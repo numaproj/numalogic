@@ -135,7 +135,7 @@ class InferenceUDF(NumalogicUDF):
             msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
             if _conf.numalogic_conf.score.adjust:
                 msgs.append(get_static_thresh_message(keys, payload))
-            logger.exception("Artifact model not loaded!")
+            logger.error("Artifact model not loaded!")
             return msgs
 
         # Perform inference
