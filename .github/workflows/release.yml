@@ -76,7 +76,7 @@ jobs:
             tag="$(basename $GITHUB_REF)-rds-${TAG_SUFFIX}"
           fi
 
-          image_name="${QUAYIO_ORG}/numalogic/udf:${tag}"
+          image_name="${QUAYIO_ORG}/numalogic/udf:rds-${tag}"
 
           docker buildx build --platform ${PLATFORM} --build-arg INSTALL_EXTRAS='redis rds' --output "type=image,push=true" . -t $image_name
       
