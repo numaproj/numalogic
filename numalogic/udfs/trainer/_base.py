@@ -181,6 +181,7 @@ class TrainerUDF(NumalogicUDF):
             retry=retry_ts,
             min_train_records=_conf.numalogic_conf.trainer.min_train_size,
             data_freq=_conf.numalogic_conf.trainer.data_freq_sec,
+            _force_train=payload.force_train_req,
         ):
             _increment_counter(
                 counter="MSG_DROPPED_COUNTER",

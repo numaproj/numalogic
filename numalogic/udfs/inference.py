@@ -154,7 +154,7 @@ class InferenceUDF(NumalogicUDF):
                 metrics=payload.metrics,
             )
             # Send training request if inference fails
-            msgs = Messages(get_trainer_message(keys, _stream_conf, payload))
+            msgs = Messages(get_trainer_message(keys, _stream_conf, payload, _force_train=True))
             if _conf.numalogic_conf.score.adjust:
                 msgs.append(get_static_thresh_message(keys, payload))
             return msgs
