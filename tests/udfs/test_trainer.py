@@ -429,6 +429,10 @@ class TestDruidTrainerUDF(unittest.TestCase):
         )
         self.assertLogs("RedisError")
 
+    def test_force_retrain(self):
+        train_dedup = TrainMsgDeduplicator(REDIS_CLIENT)
+        assert train_dedup.ack_read([*self.keys, "pipeline1"], uuid="some-uuid", _force_train=True)
+
     @patch("redis.Redis.hset", Mock(side_effect=mock_druid_fetch_data()))
     def test_TrainMsgDeduplicator_insufficent_data(self):
         with self.assertLogs(level="DEBUG") as log:

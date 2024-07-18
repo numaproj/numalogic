@@ -164,6 +164,23 @@ def test_inference_reg(udf, udf_args, mocker):
 
 
 @freeze_time(datetime.now() + timedelta(hours=7))
+def test_runtime_error(udf, udf_args, mocker):
+    mocker.patch.object(
+        RedisRegistry,
+        "load",
+        return_value=ArtifactData(
+            artifact=VanillaAE(seq_len=10, n_features=2),
+            extras=dict(version="0", timestamp=time.time(), source="registry"),
+            metadata={},
+        ),
+    )
+    msgs = udf(*udf_args)
+    trainer_payload = TrainerPayload(**orjson.loads(msgs[0].value))
+    assert trainer_payload.force_train_req is True
+    assert len(msgs) == 1
+
+
+@freeze_time(datetime.now() + timedelta(hours=7))
 def test_inference_cache(udf, udf_args, mocker):
     mocker.patch.object(
         RedisRegistry,

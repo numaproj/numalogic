@@ -396,7 +396,7 @@ class TrainerUDF(NumalogicUDF):
                 nan_counter[idx] += len(raw_df)
         feat_df = raw_df[metrics]
         nan_counter += feat_df.isna().sum()
-        inf_counter = np.isinf(feat_df).sum()
+        inf_counter += np.isinf(feat_df).sum()
         feat_df = feat_df.fillna(fill_value).replace([np.inf, -np.inf], fill_value)
         return feat_df.to_numpy(dtype=np.float32), nan_counter, inf_counter
 
