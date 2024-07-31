@@ -1,7 +1,12 @@
+import os
 import unittest
 
 from numalogic.synthetic.timeseries import SyntheticTSGenerator
-from numalogic.models.forecast.variants import BaselineForecaster, SeasonalNaiveForecaster
+from numalogic.models.forecast.variants import (
+    BaselineForecaster,
+    SeasonalNaiveForecaster,
+    XGBoostForecaster,
+)
 
 
 class TestBaselineForecaster(unittest.TestCase):
@@ -65,6 +70,21 @@ class TestSeasonalNaiveForecaster(unittest.TestCase):
         model.fit(self.train_df)
         with self.assertRaises(RuntimeError):
             model.predict(self.train_df)
+
+    def test_XGBForecaster(self):
+        # df.index = pd.to_datetime(df['timestamp'], unit="s")
+        # df = df.drop(columns=["timestamp"])
+        ts_generator = SyntheticTSGenerator(seq_len=7200, num_series=1, freq="T")
+        ts_df = ts_generator.gen_tseries()
+        ts_df.columns = ["value"]
+        ts_df.index.name = "timestamp"
+        forecaster = XGBoostForecaster(horizon=6, seq_len=60)
+        forecaster.fit(ts_df)
+        forecaster.save_artifacts("model.pkl")
+        forecaster_dummy = XGBoostForecaster(horizon=6, seq_len=60)
+        forecaster_dummy.load_artifacts("model.pkl")
+        os.remove("model.pkl")
+        self.assertEqual(forecaster.scaler.mean_, forecaster_dummy.scaler.mean_)
 
 
 if __name__ == "__main__":

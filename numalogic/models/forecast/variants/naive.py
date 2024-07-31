@@ -1,9 +1,12 @@
 import numpy as np
 import pandas as pd
+import torch
 from sklearn.metrics import r2_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler, FunctionTransformer
+from xgboost import XGBRegressor, callback
 
+from numalogic.models.forecast.variants.utility import preprocess_data
 from numalogic.transforms._postprocess import tanh_norm
 
 
@@ -106,3 +109,82 @@ class SeasonalNaiveForecaster:
     def r2_score(self, test_df: pd.DataFrame, multioutput="uniform_average") -> float:
         pred_df = self.predict(test_df)
         return r2_score(test_df, pred_df, multioutput=multioutput)
+
+
+class XGBoostForecaster:
+    """
+    A forecaster that uses XGBoost regressor to predict future values.
+
+    Args:
+    ____
+        horizon: number of time steps to predict into the future
+        seq_len: number of time steps to consider for prediction
+        l_rate: learning rate for the XGBoost regress
+    """
+
+    def __is_standard_scaler_fitted(self) -> bool:
+        return hasattr(self.scaler, "mean_")
+
+    def __init__(self, horizon, seq_len, l_rate=0.1):
+        self.horizon = horizon
+        self.seq_len = seq_len
+        self.learning_rate = l_rate
+        self.scaler = StandardScaler()
+        early_stop_callback = callback.EarlyStopping(
+            rounds=20, metric_name="rmse", save_best=True, maximize=False, min_delta=1e-4
+        )
+
+        self.model = XGBRegressor(
+            learning_rate=self.learning_rate,
+            n_estimators=1000,
+            booster="gbtree",
+            max_depth=7,
+            min_child_weight=1,
+            gamma=0.0,
+            subsample=0.9,
+            colsample_bytree=0.8,
+            reg_alpha=0.1,
+            nthread=4,
+            seed=27,
+            objective="reg:squarederror",
+            random_state=42,  # eval_metric = 'mae',
+            # early_stopping_rounds=20,
+            callbacks=[early_stop_callback],
+        )
+
+    def fit(self, df: pd.DataFrame):
+        train_df = df.iloc[: int(len(df) * 0.9), :]
+        val_df = df.iloc[int(len(df) * 0.9) :, :]
+        (
+            x_train,
+            y_train,
+        ) = preprocess_data(
+            df=train_df, scaler=self.scaler, seq_len=self.seq_len, horizon=self.horizon, fit=True
+        )
+        (
+            x_val,
+            y_val,
+        ) = preprocess_data(
+            df=val_df, scaler=self.scaler, seq_len=self.seq_len, horizon=self.horizon
+        )
+        self.model.fit(x_train, y_train, eval_set=[(x_val, y_val)], verbose=False)
+
+    def predict(self, df: pd.DataFrame) -> np.ndarray:
+        if not self.__is_standard_scaler_fitted():
+            raise ValueError(
+                "Standard Scaler not fitted. Please fit the model first or load the artifacts first"
+            )
+        (
+            x_test,
+            y_test,
+        ) = preprocess_data(df=df, scaler=self.scaler, seq_len=self.seq_len, horizon=self.horizon)
+        return self.model.predict(x_test)
+
+    def save_artifacts(self, path: str) -> None:
+        artifact = {"model": self.model, "scaler": self.scaler}
+        torch.save(artifact, path)
+
+    def load_artifacts(self, path: str) -> None:
+        artifact = torch.load(path)
+        self.model = artifact["model"]
+        self.scaler = artifact["scaler"]
