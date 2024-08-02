@@ -1,5 +1,5 @@
 import logging
-from typing import ClassVar
+from typing import ClassVar, Optional
 
 import numpy as np
 import pandas as pd
@@ -13,7 +13,6 @@ from numalogic.transforms._covariates import CovariatesGenerator
 _LOGGER = logging.getLogger(__name__)
 
 
-# Have a Logger defined: inform covariates, training metrics
 def _check_data_format(df) -> bool:
     if not isinstance(df, pd.DataFrame):
         raise TypeError("df should be of type pd.DataFrame")
@@ -46,11 +45,16 @@ class XGBoostForecaster:
     ]
 
     def __init__(
-        self, horizon: int, seq_len: int, regressor_params=None, early_stopping=True, val_split=0.1
+        self,
+        horizon: int,
+        seq_len: int,
+        regressor_params: Optional[dict] = None,
+        early_stopping=True,
+        val_split: float = 0.1,
     ):
         self.horizon = horizon
         self.seq_len = seq_len
-        self.val_split = 0
+        self.val_split: ClassVar = 0
         self.early_stopping = early_stopping
         if early_stopping:
             self.val_split = val_split
@@ -77,7 +81,7 @@ class XGBoostForecaster:
         if regressor_params:
             default_params.update(default_params)
 
-        self.model = XGBRegressor(**default_params)
+        self.model: ClassVar = XGBRegressor(**default_params)
 
     def prepare_data(self, x: np.array):
         """
