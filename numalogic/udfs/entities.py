@@ -49,7 +49,6 @@ class TrainerPayload(_BasePayload):
 
     metrics: list[str]
     header: Header = Header.TRAIN_REQUEST
-    force_train_req: bool = False
 
     def to_json(self):
         return orjson.dumps(self)

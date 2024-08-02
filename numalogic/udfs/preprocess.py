@@ -220,11 +220,7 @@ class PreprocessUDF(NumalogicUDF):
             )
             msgs = Messages(
                 get_trainer_message(
-                    keys=keys,
-                    stream_conf=_stream_conf,
-                    payload=payload,
-                    _force_train=True,
-                    **_metric_label_values
+                    keys=keys, stream_conf=_stream_conf, payload=payload, **_metric_label_values
                 ),
             )
             if _conf.numalogic_conf.score.adjust:

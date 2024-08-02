@@ -284,7 +284,6 @@ class TrainMsgDeduplicator:
         retry: int = 600,
         min_train_records: int = 180,
         data_freq: int = 60,
-        _force_train: bool = False,
     ) -> bool:
         """
         Acknowledge the read message. Return True when the msg has to be trained.
@@ -295,7 +294,6 @@ class TrainMsgDeduplicator:
             retry: Time difference(in secs) between triggering retraining and msg read_ack.
             min_train_records: minimum number of records required for training.
             data_freq: data granularity/frequency in secs.
-            _force_train: force training for the key.
 
         Returns
         -------
@@ -332,10 +330,6 @@ class TrainMsgDeduplicator:
         if _msg_read_ts and time.time() - float(_msg_read_ts) < retry:
             logger.debug("Model with key is being trained by another process")
             return False
-
-        if _force_train:
-            logger.debug("Forcing training for the key")
-            return True
 
         # This check is needed if there is backpressure in the pipeline
         if _msg_train_ts and time.time() - float(_msg_train_ts) < retrain_freq * 60 * 60:
@@ -379,7 +373,6 @@ def get_trainer_message(
     keys: list[str],
     stream_conf: StreamConf,
     payload: StreamPayload,
-    _force_train: bool = False,
     **metric_values: dict,
 ) -> Message:
     """
@@ -403,7 +396,6 @@ def get_trainer_message(
         metrics=payload.metrics,
         config_id=payload.config_id,
         pipeline_id=payload.pipeline_id,
-        force_train_req=_force_train,
     )
     if metric_values:
         _increment_counter(
