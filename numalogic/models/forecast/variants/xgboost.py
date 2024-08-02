@@ -1,4 +1,5 @@
 import logging
+from typing import ClassVar
 
 import numpy as np
 import pandas as pd
@@ -35,7 +36,7 @@ class XGBoostForecaster:
         regressor_params: additional parameters for the XGBoost regressor
     """
 
-    __slots__ = [
+    __slots__: ClassVar = [
         "horizon",
         "seq_len",
         "val_split",
