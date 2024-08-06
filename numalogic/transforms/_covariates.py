@@ -1,5 +1,5 @@
 import logging
-from typing import Union, Optional
+from typing import Union
 
 import numpy as np
 import pandas as pd
@@ -16,21 +16,19 @@ class CovariatesGenerator(StatelessTransformer):
 
     Args:
     ----
-        window_size: The number of time steps to consider for prediction
-        horizon: The number of time steps to predict into the future
-        features: The list of features to consider for generating covariates
+        timestamp_column_name: The name of the timestamp column
+        columns_to_preserve: The columns to preserve in the dataset
+        *covariate_attributes: The tuple of attributes to consider for generating covariates
     """
 
     def __init__(
         self,
         timestamp_column_name: str = "timestamp",
         columns_to_preserve: Union[str, list[str]] = "value",
-        covariate_attributes: Optional[list[str]] = None,
+        *covariate_attributes: tuple[str],
     ):
         self.covariate_attributes = (
-            covariate_attributes
-            if covariate_attributes is not None
-            else ["dayofweek", "month", "dayofyear"]
+            covariate_attributes if covariate_attributes else ("dayofweek", "month", "dayofyear")
         )
         self.timestamp_column_name = timestamp_column_name
         self.columns_to_preserve = columns_to_preserve

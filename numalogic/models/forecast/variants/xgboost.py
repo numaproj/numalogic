@@ -1,5 +1,4 @@
 import logging
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -48,9 +47,9 @@ class XGBoostForecaster:
         self,
         horizon: int,
         seq_len: int,
-        regressor_params: Optional[dict] = None,
         early_stopping=True,
         val_split: float = 0.1,
+        **regressor_params,
     ):
         self._horizon = horizon
         self._seq_len = seq_len
