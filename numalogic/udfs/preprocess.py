@@ -219,7 +219,9 @@ class PreprocessUDF(NumalogicUDF):
                 status=Status.RUNTIME_ERROR,
             )
             msgs = Messages(
-                get_trainer_message(keys, _stream_conf, payload, **_metric_label_values),
+                get_trainer_message(
+                    keys=keys, stream_conf=_stream_conf, payload=payload, **_metric_label_values
+                ),
             )
             if _conf.numalogic_conf.score.adjust:
                 msgs.append(get_static_thresh_message(keys, payload))

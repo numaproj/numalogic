@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "numalogic"
-version = "0.12.4"
+version = "0.12.5"
 description = "Collection of operational Machine Learning models and tools."
 authors = ["Numalogic Developers"]
 packages = [{ include = "numalogic" }]
@@ -43,6 +43,8 @@ redis = { extras = ["hiredis"], version = "^5.0", optional = true }
 boto3 = { version = "^1.24.64", optional = true }
 pydruid = { version = "^0.6", optional = true }
 PyMySQL = { version = "^1.1.0", optional = true }
+xgboost = "^2.1.0"
+u8darts = "^0.30.0"
 
 [tool.poetry.extras]
 mlflow = ["mlflow-skinny"]
@@ -109,7 +111,7 @@ exclude = '''
 line-length = 100
 src = ["numalogic", "tests"]
 select = ["E", "F", "W", "C901", "NPY", "RUF", "TRY", "G", "PLE", "PLW", "UP", "ICN", "RET", "Q", "PLR", "D"]
-ignore = ["TRY003", "TRY301", "RUF100", "D100", "D104", "PLR2004", "D102", "D401", "D107", "D205", "D105", "PLW0603", "PLR0915", "UP035"]
+ignore = ["TRY003", "TRY301", "RUF100", "D100", "D104", "PLR2004", "D102", "D401", "D107", "D205", "D105", "PLW0603", "PLR0915", "UP035", "G004"]
 target-version = "py39"
 show-fixes = true
 show-source = true

@@ -9,7 +9,6 @@ import pandas as pd
 from pandas import DataFrame
 from pynumaflow.mapper import Message
 
-
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.tools.exceptions import RedisRegistryError
 from numalogic.tools.types import KEYS, redis_client_t

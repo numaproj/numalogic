@@ -1,7 +1,10 @@
 import unittest
 
 from numalogic.synthetic.timeseries import SyntheticTSGenerator
-from numalogic.models.forecast.variants import BaselineForecaster, SeasonalNaiveForecaster
+from numalogic.models.forecast.variants import (
+    BaselineForecaster,
+    SeasonalNaiveForecaster,
+)
 
 
 class TestBaselineForecaster(unittest.TestCase):
