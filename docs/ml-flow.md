@@ -23,7 +23,7 @@ Numalogic provides `MLflowRegistry`, to save and load models to/from MLflow.
 
 Here, `tracking_uri` is the uri where mlflow server is running. The `static_keys` and `dynamic_keys` are used to form a unique key for the model.
 
-The `artifact` would be the model or transformer object that needs to be saved. Model saving also takes in 'artifact_type' which is the type of the model being saved. Currently, 'pytorch', 'sklearn' and 'pyfunc' is supported.
+The `artifact` would be the model or transformer object that needs to be saved. Artifact saving also takes in 'artifact_type' which is the type of the artifact being saved. Currently, 'pytorch', 'sklearn' and 'pyfunc' is supported.
 A dictionary of metadata can also be saved along with the artifact.
 ```python
 from numalogic.registry import MLflowRegistry
@@ -43,7 +43,7 @@ registry.save(
 
 ### Model loading
 
-Once, the models are save to MLflow, the `load` function of `MLflowRegistry` can be used to load the model. Like how the models was saved with 'artifact_type', the same type should be passed to the `load` function.
+Once, the models are save to MLflow, the `load` function of `MLflowRegistry` can be used to load the model. Like how the artifacts were saved with 'artifact_type', the same type shall be passed to the `load` function as well.
 
 ```python
 from numalogic.registry import MLflowRegistry
