@@ -34,10 +34,15 @@ class Trainer(NumalogicUDF):
         self.model_key = "ae::model"
 
     def _save_artifact(
-        self, model, skeys: list[str], dkeys: list[str], _: Optional[TimeseriesTrainer] = None
+        self,
+        model,
+        skeys: list[str],
+        dkeys: list[str],
+        artifact_type: str,
+        _: Optional[TimeseriesTrainer] = None,
     ) -> None:
         """Saves the model in the registry."""
-        self.registry.save(skeys=skeys, dkeys=dkeys, artifact=model)
+        self.registry.save(skeys=skeys, dkeys=dkeys, artifact=model, artifact_type=artifact_type)
 
     @staticmethod
     def _fit_preprocess(data: pd.DataFrame) -> npt.NDArray[float]:
@@ -93,8 +98,8 @@ class Trainer(NumalogicUDF):
         thresh_clf = self._fit_threshold(train_reconerr.numpy())
 
         # Save to registry
-        self._save_artifact(model, ["ae"], ["model"], trainer)
-        self._save_artifact(thresh_clf, ["thresh_clf"], ["model"])
+        self._save_artifact(model, ["ae"], ["model"], "pytorch", trainer)
+        self._save_artifact(thresh_clf, ["thresh_clf"], ["model"], artifact_type="sklearn")
         LOGGER.info("%s - Model Saving complete", payload.uuid)
 
         # Train is the last vertex in the graph
