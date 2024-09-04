@@ -64,7 +64,9 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        status = ml.save(skeys=skeys, dkeys=dkeys, artifact=self.model, run_id="1234")
+        status = ml.save(
+            skeys=skeys, dkeys=dkeys, artifact=self.model, run_id="1234", artifact_type="pytorch"
+        )
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
 
@@ -79,7 +81,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        status = ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
+        status = ml.save(skeys=skeys, dkeys=dkeys, artifact=model, artifact_type="sklearn")
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
 
@@ -96,7 +98,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(skeys=skeys, dkeys=dkeys, artifact=model, **{"lr": 0.01})
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model, **{"lr": 0.01}, artifact_type="pytorch")
         data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
         self.assertIsNotNone(data.metadata)
         self.assertIsInstance(data.artifact, VanillaAE)
@@ -113,7 +115,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, models_to_retain=2)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model, artifact_type="pytorch")
         data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
         self.assertEqual(data.metadata, {})
         self.assertIsInstance(data.artifact, VanillaAE)
@@ -139,8 +141,8 @@ class TestMLflow(unittest.TestCase):
         skeys = self.skeys
         dkeys = self.dkeys
         scaler = StandardScaler()
-        ml.save(skeys=skeys, dkeys=dkeys, artifact=scaler)
-        data = ml.load(skeys=skeys, dkeys=dkeys)
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=scaler, artifact_type="sklearn")
+        data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="sklearn")
         print(data)
         self.assertIsInstance(data.artifact, StandardScaler)
         self.assertEqual(data.metadata, {})
@@ -158,8 +160,8 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(skeys=skeys, dkeys=dkeys, artifact=model)
-        data = ml.load(skeys=skeys, dkeys=dkeys, version="5", latest=False)
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model, artifact_type="pytorch")
+        data = ml.load(skeys=skeys, dkeys=dkeys, version="5", latest=False, artifact_type="pytorch")
         self.assertIsInstance(data.artifact, VanillaAE)
         self.assertEqual(data.metadata, {})
 
@@ -175,7 +177,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, model_stage=ModelStage.STAGE)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.load(skeys=skeys, dkeys=dkeys)
+        ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
         self.assertRaises(ModelVersionError)
 
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
@@ -188,7 +190,7 @@ class TestMLflow(unittest.TestCase):
         skeys = self.skeys
         dkeys = self.dkeys
         with self.assertRaises(ValueError):
-            ml.load(skeys=skeys, dkeys=dkeys, latest=False)
+            ml.load(skeys=skeys, dkeys=dkeys, latest=False, artifact_type="pytorch")
 
     @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
@@ -211,7 +213,11 @@ class TestMLflow(unittest.TestCase):
         fake_dkeys = ["error"]
         ml = MLflowRegistry(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
-            ml.load(skeys=fake_skeys, dkeys=fake_dkeys, artifact_type="pytorch")
+            ml.load(
+                skeys=fake_skeys,
+                dkeys=fake_dkeys,
+                artifact_type="pytorch",
+            )
             self.assertTrue(log.output)
 
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
@@ -237,6 +243,9 @@ class TestMLflow(unittest.TestCase):
         with self.assertLogs(level="ERROR") as log:
             ml.load(skeys=fake_skeys, dkeys=fake_dkeys, artifact_type="somerandom")
             self.assertTrue(log.output)
+        with self.assertLogs(level="ERROR") as log:
+            ml.load(skeys=fake_skeys, dkeys=fake_dkeys)
+            self.assertTrue(log.output)
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
@@ -252,7 +261,7 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        ml.save(skeys=skeys, dkeys=dkeys, artifact=model, **{"lr": 0.01})
+        ml.save(skeys=skeys, dkeys=dkeys, artifact=model, artifact_type="pytorch", **{"lr": 0.01})
         ml.delete(skeys=skeys, dkeys=dkeys, version="5")
         with self.assertLogs(level="ERROR") as log:
             ml.load(skeys=skeys, dkeys=dkeys)
@@ -276,7 +285,9 @@ class TestMLflow(unittest.TestCase):
 
         ml = MLflowRegistry(TRACKING_URI)
         with self.assertLogs(level="ERROR") as log:
-            ml.save(skeys=fake_skeys, dkeys=fake_dkeys, artifact=self.model)
+            ml.save(
+                skeys=fake_skeys, dkeys=fake_dkeys, artifact=self.model, artifact_type="pytorch"
+            )
             self.assertTrue(log.output)
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
@@ -290,7 +301,11 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
-        data = ml.load(skeys=skeys, dkeys=dkeys, artifact_type="pytorch")
+        data = ml.load(
+            skeys=skeys,
+            dkeys=dkeys,
+            artifact_type="pytorch",
+        )
         self.assertIsNone(data)
 
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
@@ -317,7 +332,13 @@ class TestMLflow(unittest.TestCase):
     def test_is_model_stale_true(self):
         model = self.model
         ml = MLflowRegistry(TRACKING_URI)
-        ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=model, **{"lr": 0.01})
+        ml.save(
+            skeys=self.skeys,
+            dkeys=self.dkeys,
+            artifact=model,
+            **{"lr": 0.01},
+            artifact_type="pytorch",
+        )
         data = ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         self.assertTrue(ml.is_artifact_stale(data, 12))
 
@@ -332,7 +353,13 @@ class TestMLflow(unittest.TestCase):
     def test_is_model_stale_false(self):
         model = self.model
         ml = MLflowRegistry(TRACKING_URI)
-        ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=model, **{"lr": 0.01})
+        ml.save(
+            skeys=self.skeys,
+            dkeys=self.dkeys,
+            artifact=model,
+            **{"lr": 0.01},
+            artifact_type="pytorch",
+        )
         data = ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         with freeze_time("2022-05-24 10:30:00"):
             self.assertFalse(ml.is_artifact_stale(data, 12))
@@ -365,7 +392,13 @@ class TestMLflow(unittest.TestCase):
     def test_cache_loading(self):
         cache_registry = LocalLRUCache(ttl=50000)
         ml = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
-        ml.save(skeys=self.skeys, dkeys=self.dkeys, artifact=self.model, **{"lr": 0.01})
+        ml.save(
+            skeys=self.skeys,
+            dkeys=self.dkeys,
+            artifact=self.model,
+            **{"lr": 0.01},
+            artifact_type="pytorch",
+        )
         ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         key = MLflowRegistry.construct_key(self.skeys, self.dkeys)
         self.assertIsNotNone(ml._load_from_cache(key))

@@ -21,9 +21,7 @@ from mlflow.entities.model_registry import ModelVersion
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
-from torch import nn
 
-from numalogic.base import BaseThresholdModel, BaseTransformer
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry.artifact import ArtifactCache
 from numalogic.tools.exceptions import ModelVersionError
@@ -65,7 +63,8 @@ class MLflowRegistry(ArtifactManager):
     >>> data = [[0, 0], [0, 0], [1, 1], [1, 1]]
     >>> scaler = StandardScaler.fit(data)
     >>> registry = MLflowRegistry(tracking_uri="http://0.0.0.0:8080")
-    >>> registry.save(skeys=["model"], dkeys=["AE"], artifact=VanillaAE(10))
+    >>> registry.save(skeys=["model"], dkeys=["AE"], artifact=VanillaAE(10),
+    >>>                                                artifact_type="pytorch")
     >>> artifact_data = registry.load(skeys=["model"], dkeys=["AE"], artifact_type="pytorch")
     """
 
@@ -101,16 +100,12 @@ class MLflowRegistry(ArtifactManager):
         self.cache_registry = cache_registry
 
     @staticmethod
-    def handler_from_obj(artifact: artifact_t):
-        if isinstance(artifact, nn.Module):
-            return mlflow.pytorch
-        if isinstance(artifact, (BaseThresholdModel, BaseTransformer)):
-            return mlflow.sklearn
-        return mlflow.pyfunc
-
-    @staticmethod
     def handler_from_type(artifact_type: str):
         """Helper method to return the right handler given the artifact type."""
+        if not artifact_type:
+            raise ValueError(
+                "Artifact Type not provided. Options include: {pytorch, sklearn, pyfunc}"
+            )
         if artifact_type == "pytorch":
             return mlflow.pytorch
         if artifact_type == "sklearn":
@@ -137,9 +132,9 @@ class MLflowRegistry(ArtifactManager):
         self,
         skeys: KEYS,
         dkeys: KEYS,
+        artifact_type: Optional[str] = None,
         latest: bool = True,
         version: Optional[str] = None,
-        artifact_type: str = "pytorch",
     ) -> Optional[ArtifactData]:
         """Load the artifact from the registry. The artifact is loaded from the cache if available.
 
@@ -149,7 +144,8 @@ class MLflowRegistry(ArtifactManager):
             dkeys: Dynamic keys
             latest: Load the latest version of the model (default = True)
             version: Version of the model to load (default = None)
-            artifact_type: Type of the artifact to load (default = "pytorch").
+            artifact_type: Type of the artifact to load. Options include: pytorch, pyfunc
+                        and sklearn.
 
         Returns
         -------
@@ -205,6 +201,7 @@ class MLflowRegistry(ArtifactManager):
         dkeys: KEYS,
         artifact: artifact_t,
         run_id: Optional[str] = None,
+        artifact_type: Optional[str] = None,
         **metadata: META_VT,
     ) -> Optional[ModelVersion]:
         """Saves the artifact into mlflow registry and updates version.
@@ -216,13 +213,15 @@ class MLflowRegistry(ArtifactManager):
             artifact: primary artifact to be saved
             run_id: mlflow run id
             metadata: additional metadata surrounding the artifact that needs to be saved.
+            artifact_type: Type of the artifact to save. Options include: pytorch, pyfunc
+                            and sklearn.
 
         Returns
         -------
             mlflow ModelVersion instance
         """
         model_key = self.construct_key(skeys, dkeys)
-        handler = self.handler_from_obj(artifact)
+        handler = self.handler_from_type(artifact_type)
         try:
             mlflow.start_run(run_id=run_id)
             handler.log_model(artifact, "model", registered_model_name=model_key)
@@ -241,7 +240,7 @@ class MLflowRegistry(ArtifactManager):
     @staticmethod
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
         """Returns whether the given artifact is stale or not, i.e. if
-        more time has elasped since it was last retrained.
+        more time has elapsed since it was last retrained.
 
         Args:
         ----
