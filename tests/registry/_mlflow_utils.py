@@ -7,9 +7,10 @@ from mlflow.entities import RunData, RunInfo, Run
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.models.model import ModelInfo
 from mlflow.store.entities import PagedList
-from sklearn.ensemble import RandomForestRegressor
 from sklearn.preprocessing import StandardScaler
 from torch import tensor
+
+from numalogic.models.threshold import StdDevThreshold
 
 
 def create_model():
@@ -33,8 +34,7 @@ def create_model():
 
 
 def model_sklearn():
-    params = {"n_estimators": 5, "random_state": 42}
-    return RandomForestRegressor(**params)
+    return StdDevThreshold()
 
 
 def mock_log_state_dict(*_, **__):
