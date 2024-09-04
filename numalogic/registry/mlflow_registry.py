@@ -21,9 +21,9 @@ from mlflow.entities.model_registry import ModelVersion
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
-from sklearn.base import BaseEstimator
 from torch import nn
 
+from numalogic.base import BaseThresholdModel, BaseTransformer
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry.artifact import ArtifactCache
 from numalogic.tools.exceptions import ModelVersionError
@@ -104,7 +104,7 @@ class MLflowRegistry(ArtifactManager):
     def handler_from_obj(artifact: artifact_t):
         if isinstance(artifact, nn.Module):
             return mlflow.pytorch
-        if isinstance(artifact, BaseEstimator):
+        if isinstance(artifact, (BaseThresholdModel, BaseTransformer)):
             return mlflow.sklearn
         return mlflow.pyfunc
 
