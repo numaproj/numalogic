@@ -1,0 +1,326 @@
+stream_confs:
+  servicetoservice:
+    config_id: "servicetoservice"
+    source: "druid"
+    composite_keys: ["client_alias", "service_alias"]
+    window_size: 10
+    ml_pipelines:
+      default:
+        pipeline_id: "default"
+        metrics: [ "5xx"]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 24
+            train_hours: 240
+            batch_size: 128
+            retry_sec: 900
+  s2s_5x:
+    config_id: "s2s_5x"
+    source: "druid"
+    composite_keys: ["client_alias", "service_alias"]
+    window_size: 10
+    ml_pipelines:
+      s2s5x:
+        pipeline_id: "s2s5x"
+        metrics: [ "5xx"]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 24
+            train_hours: 240
+            batch_size: 128
+            retry_sec: 900
+  s2s_5x_ius:
+    config_id: "s2s_5x_ius"
+    source: "druid"
+    composite_keys: ["client_alias", "service_alias"]
+    window_size: 10
+    ml_pipelines:
+      s2s5x_ius:
+        pipeline_id: "s2s5x_ius"
+        metrics: [ "5xx"]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 24
+            train_hours: 240
+            batch_size: 128
+            retry_sec: 900
+
+  gwswimlane:
+    config_id: "gwswimlane"
+    source: "druid"
+    composite_keys: [ "authtype", "slane" ]
+    window_size: 10
+    ml_pipelines:
+      swimlane:
+        pipeline_id: "swimlane"
+        metrics: ["5xx"]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 24
+            train_hours: 240
+            batch_size: 128
+            retry_sec: 900
+
+  gwservice:
+    config_id: "gwservice"
+    source: "druid"
+    composite_keys: [ "service_alias" ]
+    window_size: 10
+    ml_pipelines:
+      default:
+        pipeline_id: "default"
+        metrics: ["5xx"]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 24
+            train_hours: 240
+            batch_size: 256
+            retry_sec: 900
+  service5x:
+    config_id: "service5x"
+    source: "druid"
+    composite_keys: [ "service_alias" ]
+    window_size: 10
+    ml_pipelines:
+      service5x:
+        pipeline_id: "service5x"
+        metrics: ["5xx"]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 24
+            train_hours: 240
+            batch_size: 256
+            retry_sec: 900
+  service_tax:
+    config_id: "service_tax"
+    source: "druid"
+    composite_keys: [ "service_alias" ]
+    window_size: 10
+    ml_pipelines:
+      serviceTax:
+        pipeline_id: "serviceTax"
+        metrics: ["5xx"]
+        numalogic_conf:
+          model:
+            name: "VanillaAE"
+            conf:
+              seq_len: 10
+              n_features: 1
+              loss_fn: "mse"
+          preprocess:
+            - name: "LogTransformer"
+              stateful: false
+              conf:
+                add_factor: 5
+          threshold:
+            name: "StdDevThreshold"
+            conf:
+              min_threshold: 0.1
+          trainer:
+            min_train_size: 180
+            retrain_freq_hr: 24
+            train_hours: 240
+            batch_size: 256
+            retry_sec: 900
+redis_conf:
+  url: "isbsvc-telegraf-redis-isbs-redis-svc.oss-analytics-osamonnumalogic-usw2-prd.svc"
+  port: 26379
+  expiry: 360
+  master_name: "mymaster"
+
+registry_conf:
+  name: "RedisRegistry"
+  model_expiry_sec: 864000
+  jitter_conf:
+    jitter_sec: 900
+    jitter_steps_sec: 120
+
+druid_conf:
+  url: "https://obelix.odldruid-prd.a.intuit.com/"
+  endpoint: "druid/v2"
+  id_fetcher:
+    servicetoservice-default:
+      dimensions: ["client_alias", "service_alias", "http_status"]
+      aggregations:
+        sum_req_count:
+          type: doubleSum
+          fieldName: sum_req_count
+      pivot:
+        columns: ["http_status"]
+        value: ["sum_req_count"]
+      datasource: "ip-apigw-telegraf-druid"
+      group_by: ["timestamp", "client_alias", "service_alias", "http_status"]
+
+    s2s_5x-s2s5x:
+      dimensions: ["client_alias", "service_alias", "http_status"]
+      aggregations:
+        sum_req_count:
+          type: doubleSum
+          fieldName: sum_req_count
+      pivot:
+        columns: ["http_status"]
+        value: ["sum_req_count"]
+      datasource: "ip-apigw-telegraf-druid"
+      group_by: ["timestamp", "client_alias", "service_alias", "http_status"]
+
+    s2s_5x_ius-s2s5x_ius:
+      dimensions: ["client_alias", "service_alias", "http_status"]
+      aggregations:
+        sum_req_count:
+          type: doubleSum
+          fieldName: sum_req_count
+      pivot:
+        columns: ["http_status"]
+        value: ["sum_req_count"]
+      datasource: "ip-apigw-telegraf-druid"
+      group_by: ["timestamp", "client_alias", "service_alias", "http_status"]
+
+    gwswimlane-swimlane:
+      dimensions: [ "authtype", "slane" ,"http_status"]
+      aggregations:
+        sum_req_count:
+          type: doubleSum
+          fieldName: sum_req_count
+      pivot:
+        columns: ["http_status"]
+        value: ["sum_req_count"]
+      datasource: "ip-apigw-telegraf-druid"
+      group_by: ["timestamp", "authtype", "slane", "http_status"]
+
+    gwservice-default:
+      dimensions: ["service_alias", "http_status"]
+      aggregations:
+        sum_req_count:
+          type: doubleSum
+          fieldName: sum_req_count
+      pivot:
+        columns: ["http_status"]
+        value: ["sum_req_count"]
+      datasource: "ip-apigw-telegraf-druid"
+      group_by: ["timestamp", "service_alias", "http_status"]
+
+    service5x-service5x:
+      dimensions: ["service_alias", "http_status"]
+      aggregations:
+        sum_req_count:
+          type: doubleSum
+          fieldName: sum_req_count
+        5xx_rate:
+          "type": "expression"
+          "name": "5xx_rate"
+          "fields": [ "2xx" , "4xx", "5xx"]
+          "initialValue": 0.0
+          "fold": "5xx / (2xx + 4xx + 5xx)"
+      pivot:
+        columns: ["http_status"]
+        value: ["sum_req_count"]
+      datasource: "ip-apigw-telegraf-druid"
+      group_by: ["timestamp", "service_alias", "http_status"]
+
+    service_tax-serviceTax:
+      dimensions: ["service_alias", "http_status"]
+      aggregations:
+        sum_req_count:
+          type: doubleSum
+          fieldName: sum_req_count
+      pivot:
+        columns: ["http_status"]
+        value: ["sum_req_count"]
+      datasource: "ip-apigw-telegraf-druid"
+      group_by: ["timestamp", "service_alias", "http_status"]

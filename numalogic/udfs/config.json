@@ -1,0 +1,287 @@
+{
+  "title": "StreamConf",
+  "type": "object",
+  "$defs": {
+    "AggMethod": {
+      "enum": [
+        "exp_moving_average",
+        "weighted_average",
+        "mean",
+        "max",
+        "min"
+      ],
+      "title": "AggMethod",
+      "type": "string"
+    },
+    "AggregatorConf": {
+      "properties": {
+        "method": {
+          "$ref": "#/$defs/AggMethod"
+        },
+        "conf": {
+          "title": "Conf",
+          "type": "object"
+        }
+      },
+      "required": [
+        "method"
+      ],
+      "title": "AggregatorConf",
+      "type": "object"
+    },
+    "ConnectorType": {
+      "enum": [
+        0,
+        1,
+        2
+      ],
+      "title": "ConnectorType",
+      "type": "integer"
+    },
+    "LightningTrainerConf": {
+      "properties": {
+        "accelerator": {
+          "default": "auto",
+          "title": "Accelerator",
+          "type": "string"
+        },
+        "max_epochs": {
+          "default": 50,
+          "title": "Max Epochs",
+          "type": "integer"
+        },
+        "logger": {
+          "default": true,
+          "title": "Logger",
+          "type": "boolean"
+        },
+        "log_freq": {
+          "default": 5,
+          "title": "Log Freq",
+          "type": "integer"
+        },
+        "check_val_every_n_epoch": {
+          "default": 5,
+          "title": "Check Val Every N Epoch",
+          "type": "integer"
+        },
+        "enable_checkpointing": {
+          "default": false,
+          "title": "Enable Checkpointing",
+          "type": "boolean"
+        },
+        "enable_progress_bar": {
+          "default": false,
+          "title": "Enable Progress Bar",
+          "type": "boolean"
+        },
+        "enable_model_summary": {
+          "default": true,
+          "title": "Enable Model Summary",
+          "type": "boolean"
+        }
+      },
+      "title": "LightningTrainerConf",
+      "type": "object"
+    },
+    "MLPipelineConf": {
+      "properties": {
+        "pipeline_id": {
+          "default": "default",
+          "title": "Pipeline Id",
+          "type": "string"
+        },
+        "metrics": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Metrics",
+          "type": "array"
+        },
+        "numalogic_conf": {
+          "$ref": "#/$defs/NumalogicConf"
+        }
+      },
+      "title": "MLPipelineConf",
+      "type": "object"
+    },
+    "ModelInfo": {
+      "properties": {
+        "name": {
+          "default": "???",
+          "title": "Name",
+          "type": "string"
+        },
+        "conf": {
+          "title": "Conf",
+          "type": "object"
+        },
+        "stateful": {
+          "default": true,
+          "title": "Stateful",
+          "type": "boolean"
+        }
+      },
+      "title": "ModelInfo",
+      "type": "object"
+    },
+    "NumalogicConf": {
+      "properties": {
+        "model": {
+          "$ref": "#/$defs/ModelInfo"
+        },
+        "trainer": {
+          "$ref": "#/$defs/TrainerConf"
+        },
+        "preprocess": {
+          "items": {
+            "$ref": "#/$defs/ModelInfo"
+          },
+          "title": "Preprocess",
+          "type": "array"
+        },
+        "threshold": {
+          "$ref": "#/$defs/ModelInfo"
+        },
+        "postprocess": {
+          "$ref": "#/$defs/ModelInfo"
+        },
+        "score": {
+          "$ref": "#/$defs/ScoreConf"
+        }
+      },
+      "title": "NumalogicConf",
+      "type": "object"
+    },
+    "ScoreAdjustConf": {
+      "properties": {
+        "upper_limits": {
+          "additionalProperties": {
+            "type": "number"
+          },
+          "title": "Upper Limits",
+          "type": "object"
+        },
+        "window_agg": {
+          "$ref": "#/$defs/AggregatorConf"
+        },
+        "feature_agg": {
+          "$ref": "#/$defs/AggregatorConf"
+        }
+      },
+      "title": "ScoreAdjustConf",
+      "type": "object"
+    },
+    "ScoreConf": {
+      "properties": {
+        "window_agg": {
+          "$ref": "#/$defs/AggregatorConf"
+        },
+        "feature_agg": {
+          "$ref": "#/$defs/AggregatorConf"
+        },
+        "adjust": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ScoreAdjustConf"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "title": "ScoreConf",
+      "type": "object"
+    },
+    "TrainerConf": {
+      "properties": {
+        "train_hours": {
+          "default": 192,
+          "title": "Train Hours",
+          "type": "integer"
+        },
+        "min_train_size": {
+          "default": 2000,
+          "title": "Min Train Size",
+          "type": "integer"
+        },
+        "retrain_freq_hr": {
+          "default": 24,
+          "title": "Retrain Freq Hr",
+          "type": "integer"
+        },
+        "retry_sec": {
+          "default": 600,
+          "title": "Retry Sec",
+          "type": "integer"
+        },
+        "batch_size": {
+          "default": 64,
+          "title": "Batch Size",
+          "type": "integer"
+        },
+        "data_freq_sec": {
+          "default": 60,
+          "title": "Data Freq Sec",
+          "type": "integer"
+        },
+        "max_value_map": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "number"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Max Value Map"
+        },
+        "pltrainer_conf": {
+          "$ref": "#/$defs/LightningTrainerConf"
+        }
+      },
+      "title": "TrainerConf",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "config_id": {
+      "default": "default",
+      "title": "Config Id",
+      "type": "string"
+    },
+    "source": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ConnectorType"
+        }
+      ],
+      "default": 2
+    },
+    "window_size": {
+      "default": 12,
+      "title": "Window Size",
+      "type": "integer"
+    },
+    "composite_keys": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Composite Keys",
+      "type": "array"
+    },
+    "ml_pipelines": {
+      "additionalProperties": {
+        "$ref": "#/$defs/MLPipelineConf"
+      },
+      "title": "Ml Pipelines",
+      "type": "object"
+    }
+  }
+}

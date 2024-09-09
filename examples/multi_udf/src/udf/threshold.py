@@ -1,5 +1,8 @@
 import logging
+import os
 
+from numalogic.connectors import RedisConf
+from numalogic.connectors.redis import get_redis_client_from_conf
 from numalogic.udfs import NumalogicUDF
 from numalogic.registry import MLflowRegistry
 from pynumaflow.function import Messages, Message, Datum
@@ -7,15 +10,21 @@ from pynumaflow.function import Messages, Message, Datum
 from src.utils import Payload
 
 LOGGER = logging.getLogger(__name__)
+REGISTRY = os.getenv("REGISTRY", "mlflow")
 TRACKING_URI = "http://mlflow-service.default.svc.cluster.local:5000"
+REDIS_URI = "isbsvc-redis-isbs-redis-svc.default.svc"
 
 
 class Threshold(NumalogicUDF):
     """UDF to apply thresholding to the reconstruction error returned by the autoencoder."""
 
-    def __init__(self):
+    def __init__(self, registry="mlflow"):
         super().__init__()
-        self.registry = MLflowRegistry(tracking_uri=TRACKING_URI)
+        if REGISTRY == "mlflow":
+            self.registry = MLflowRegistry(tracking_uri=TRACKING_URI)
+        if REGISTRY == "redis":
+            redis_conf = RedisConf(url=REDIS_URI, port=26379)
+            self.registry = get_redis_client_from_conf(redis_conf)
 
     @staticmethod
     def _handle_not_found(payload: Payload) -> Messages:

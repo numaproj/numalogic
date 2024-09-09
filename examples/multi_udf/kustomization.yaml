@@ -1,0 +1,8 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- https://github.intuit.com/oss-analytics/numaproj/numaflow-versions/v1.3.1?ref=main
+- https://raw.githubusercontent.com/numaproj/numaflow/stable/examples/0-isbsvc-jetstream.yaml
+- numa-redis-pl.yaml
+#- numa-mlflow-pl.yaml
+

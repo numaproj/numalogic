@@ -1,7 +1,13 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: numalogic
+---
 apiVersion: numaflow.numaproj.io/v1alpha1
 kind: Pipeline
 metadata:
   name: numalogic-simple-pipeline
+  namespace: numalogic
 spec:
   watermark:
     disabled: true
@@ -104,49 +110,43 @@ spec:
       to: out
 
 ---
-#mlflow deployment config
-apiVersion: apps/v1
-kind: Deployment
+# redis deployment config
+apiVersion: numaflow.numaproj.io/v1alpha1
+kind: InterStepBufferService
 metadata:
-  name: mlflow-sqlite
-  labels:
-    app: mlflow
+  name: redis-isbs
+  namespace: numalogic
 spec:
-  selector:
-    matchLabels:
-      app: mlflow
-  template:
-    metadata:
-      labels:
-        app: mlflow
-    spec:
-      containers:
-        - image: quay.io/numaio/numalogic/example-mlflow
-          name: mlflow
-          args:
-          - server
-          - --backend-store-uri
-          - sqlite:///mlflow.db
-          - --artifacts-destination
-          - file://app/.mlruns
-          - --serve-artifacts
-          - --host
-          - "0.0.0.0"
-          - --port
-          - "5000"
-          command:
-            - mlflow
-          ports:
-            - containerPort: 5000
----
-kind: Service
-apiVersion: v1
-metadata:
-  name: mlflow-service
-spec:
-  type: ClusterIP
-  selector:
-    app: mlflow
-  ports:
-    - port: 5000
-      targetPort: 5000
+  redis:
+    native:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/component: isbsvc
+                  numaflow.numaproj.io/isbsvc-name: redis-isbs
+              topologyKey: topology.kubernetes.io/zone
+            weight: 100
+      containerTemplate:
+        resources:
+          limits:
+            memory: 2Gi
+          requests:
+            cpu: 2
+            memory: 1Gi
+      persistence:
+        accessMode: ReadWriteOnce
+        volumeSize: 5Gi
+      priorityClassName: numalogic-priority-class
+      settings:
+        redis: |
+          min-replicas-to-write 1
+          save ""
+          appendonly yes
+          auto-aof-rewrite-percentage 100
+          auto-aof-rewrite-min-size 64mb
+          maxmemory 4096mb
+          maxmemory-policy allkeys-lru
+      version: 7.0.15

@@ -1,0 +1,359 @@
+{
+  "type": "object",
+  "properties": {
+    "config_id": {
+      "type": "string",
+      "default": "default"
+    },
+    "source": {
+      "type": "integer",
+      "enum": [
+        0,
+        1,
+        2
+      ],
+      "default": 2
+    },
+    "window_size": {
+      "type": "integer",
+      "default": 12
+    },
+    "composite_keys": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "default": []
+    },
+    "ml_pipelines": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/MLPipelineConf"
+      },
+      "default": {}
+    }
+  },
+  "description": "\n    A data class representing the configuration for a stream.\n\n    Args:\n        config_id (str): The ID of the stream configuration.\n        source (ConnectorType): The type of data source connector to be used.\n        window_size (int): The window size for stream processing. Defaults to 12.\n        composite_keys (List[str]): A list of composite keys for stream processing.\n        ml_pipelines (Dict[str, MLPipelineConf]): A dictionary of ML pipeline configurations\n    ",
+  "$schema": "http://json-schema.org/draft-06/schema#",
+  "definitions": {
+    "MLPipelineConf": {
+      "type": "object",
+      "properties": {
+        "pipeline_id": {
+          "type": "string",
+          "default": "default"
+        },
+        "metrics": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": []
+        },
+        "numalogic_conf": {
+          "$ref": "#/definitions/NumalogicConf",
+          "default": {
+            "model": {
+              "name": "???",
+              "conf": {},
+              "stateful": true
+            },
+            "trainer": {
+              "train_hours": 192,
+              "min_train_size": 2000,
+              "retrain_freq_hr": 24,
+              "retry_sec": 600,
+              "batch_size": 64,
+              "data_freq_sec": 60,
+              "max_value_map": null,
+              "pltrainer_conf": {
+                "accelerator": "auto",
+                "max_epochs": 50,
+                "logger": true,
+                "log_freq": 5,
+                "check_val_every_n_epoch": 5,
+                "enable_checkpointing": false,
+                "enable_progress_bar": false,
+                "enable_model_summary": true
+              }
+            },
+            "preprocess": [],
+            "threshold": {
+              "name": "StdDevThreshold",
+              "conf": {},
+              "stateful": true
+            },
+            "postprocess": {
+              "name": "TanhNorm",
+              "conf": {},
+              "stateful": false
+            },
+            "score": {
+              "window_agg": {
+                "method": "mean",
+                "conf": {}
+              },
+              "feature_agg": {
+                "method": "max",
+                "conf": {}
+              },
+              "adjust": null
+            }
+          }
+        }
+      },
+      "description": "\n    A data class representing the configuration for an ML pipeline.\n\n    Args:\n        pipeline_id (str): The ID of the pipeline. Defaults to \"default\".\n        metrics (List[str]): A list of metrics to be used in the pipeline.\n        numalogic_conf (NumalogicConf): The configuration for Numalogic.\n    "
+    },
+    "NumalogicConf": {
+      "type": "object",
+      "properties": {
+        "model": {
+          "$ref": "#/definitions/ModelInfo",
+          "default": {
+            "name": "???",
+            "conf": {},
+            "stateful": true
+          }
+        },
+        "trainer": {
+          "$ref": "#/definitions/TrainerConf",
+          "default": {
+            "train_hours": 192,
+            "min_train_size": 2000,
+            "retrain_freq_hr": 24,
+            "retry_sec": 600,
+            "batch_size": 64,
+            "data_freq_sec": 60,
+            "max_value_map": null,
+            "pltrainer_conf": {
+              "accelerator": "auto",
+              "max_epochs": 50,
+              "logger": true,
+              "log_freq": 5,
+              "check_val_every_n_epoch": 5,
+              "enable_checkpointing": false,
+              "enable_progress_bar": false,
+              "enable_model_summary": true
+            }
+          }
+        },
+        "preprocess": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ModelInfo"
+          },
+          "default": []
+        },
+        "threshold": {
+          "$ref": "#/definitions/ModelInfo",
+          "default": {
+            "name": "StdDevThreshold",
+            "conf": {},
+            "stateful": true
+          }
+        },
+        "postprocess": {
+          "$ref": "#/definitions/ModelInfo",
+          "default": {
+            "name": "TanhNorm",
+            "conf": {},
+            "stateful": false
+          }
+        },
+        "score": {
+          "$ref": "#/definitions/ScoreConf",
+          "default": {
+            "window_agg": {
+              "method": "mean",
+              "conf": {}
+            },
+            "feature_agg": {
+              "method": "max",
+              "conf": {}
+            },
+            "adjust": null
+          }
+        }
+      },
+      "description": "Top level config schema for numalogic."
+    },
+    "ModelInfo": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "???"
+        },
+        "conf": {
+          "type": "object",
+          "default": {}
+        },
+        "stateful": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "description": "Schema for defining the model/estimator.\n\n    Args:\n    ----\n        name: name of the model; this should map to a supported list of models\n              mentioned in the factory file\n        conf: kwargs for instantiating the model class\n        stateful: flag indicating if the model is stateful or not\n    "
+    },
+    "TrainerConf": {
+      "type": "object",
+      "properties": {
+        "train_hours": {
+          "type": "integer",
+          "default": 192
+        },
+        "min_train_size": {
+          "type": "integer",
+          "default": 2000
+        },
+        "retrain_freq_hr": {
+          "type": "integer",
+          "default": 24
+        },
+        "retry_sec": {
+          "type": "integer",
+          "default": 600
+        },
+        "batch_size": {
+          "type": "integer",
+          "default": 64
+        },
+        "data_freq_sec": {
+          "type": "integer",
+          "default": 60
+        },
+        "max_value_map": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "pltrainer_conf": {
+          "$ref": "#/definitions/LightningTrainerConf",
+          "default": {
+            "accelerator": "auto",
+            "max_epochs": 50,
+            "logger": true,
+            "log_freq": 5,
+            "check_val_every_n_epoch": 5,
+            "enable_checkpointing": false,
+            "enable_progress_bar": false,
+            "enable_model_summary": true
+          }
+        }
+      },
+      "description": "Schema for defining the trainer config."
+    },
+    "LightningTrainerConf": {
+      "type": "object",
+      "properties": {
+        "accelerator": {
+          "type": "string",
+          "default": "auto"
+        },
+        "max_epochs": {
+          "type": "integer",
+          "default": 50
+        },
+        "logger": {
+          "type": "boolean",
+          "default": true
+        },
+        "log_freq": {
+          "type": "integer",
+          "default": 5
+        },
+        "check_val_every_n_epoch": {
+          "type": "integer",
+          "default": 5
+        },
+        "enable_checkpointing": {
+          "type": "boolean",
+          "default": false
+        },
+        "enable_progress_bar": {
+          "type": "boolean",
+          "default": false
+        },
+        "enable_model_summary": {
+          "type": "boolean",
+          "default": true
+        }
+      },
+      "description": "Schema for defining the Pytorch Lightning trainer behavior.\n\n    More details on the arguments are provided here:\n    https://pytorch-lightning.readthedocs.io/en/stable/common/trainer.html#trainer-class-api\n    "
+    },
+    "ScoreConf": {
+      "type": "object",
+      "properties": {
+        "window_agg": {
+          "$ref": "#/definitions/AggregatorConf",
+          "default": {
+            "method": "mean",
+            "conf": {}
+          }
+        },
+        "feature_agg": {
+          "$ref": "#/definitions/AggregatorConf",
+          "default": {
+            "method": "max",
+            "conf": {}
+          }
+        },
+        "adjust": {
+          "$ref": "#/definitions/ScoreAdjustConf"
+        }
+      },
+      "description": "Schema for defining the scoring config.\n\n    Args:\n    ----\n        window_agg: Config for aggregation over the sliding window\n        feature_agg: Config for aggregation over the features\n        adjust: Config for adjusting the score using static threshold\n    "
+    },
+    "AggregatorConf": {
+      "type": "object",
+      "required": [
+        "method"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "exp_moving_average",
+            "weighted_average",
+            "mean",
+            "max",
+            "min"
+          ]
+        },
+        "conf": {
+          "type": "object",
+          "default": {}
+        }
+      },
+      "description": "AggregatorConf(method: numalogic.config._config.AggMethod, conf: dict[str, typing.Any] = <factory>)"
+    },
+    "ScoreAdjustConf": {
+      "type": "object",
+      "properties": {
+        "upper_limits": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          },
+          "default": {}
+        },
+        "window_agg": {
+          "$ref": "#/definitions/AggregatorConf",
+          "default": {
+            "method": "mean",
+            "conf": {}
+          }
+        },
+        "feature_agg": {
+          "$ref": "#/definitions/AggregatorConf",
+          "default": {
+            "method": "max",
+            "conf": {}
+          }
+        }
+      },
+      "description": "ScoreAdjustConf(upper_limits: dict[str, float] = <factory>, window_agg: numalogic.config._config.AggregatorConf = <factory>, feature_agg: numalogic.config._config.AggregatorConf = <factory>)"
+    }
+  }
+}

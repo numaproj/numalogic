@@ -2,9 +2,12 @@ import logging
 import os
 
 import numpy.typing as npt
+
+from numalogic.connectors import RedisConf
+from numalogic.connectors.redis import get_redis_client, get_redis_client_from_conf
 from numalogic.models.autoencoder import TimeseriesTrainer
 from numalogic.udfs import NumalogicUDF
-from numalogic.registry import MLflowRegistry, ArtifactData
+from numalogic.registry import MLflowRegistry, ArtifactData, RedisRegistry
 from numalogic.tools.data import StreamingDataset
 from pynumaflow.function import Messages, Message, Datum
 from torch.utils.data import DataLoader
@@ -13,7 +16,9 @@ from src.utils import Payload
 
 LOGGER = logging.getLogger(__name__)
 WIN_SIZE = int(os.getenv("WIN_SIZE"))
+REGISTRY = os.getenv("REGISTRY", "mlflow")
 TRACKING_URI = "http://mlflow-service.default.svc.cluster.local:5000"
+REDIS_URI = "isbsvc-redis-isbs-redis-svc.default.svc"
 
 
 class Inference(NumalogicUDF):
@@ -24,7 +29,11 @@ class Inference(NumalogicUDF):
 
     def __init__(self):
         super().__init__()
-        self.registry = MLflowRegistry(tracking_uri=TRACKING_URI)
+        if REGISTRY == "mlflow":
+            self.registry = MLflowRegistry(tracking_uri=TRACKING_URI)
+        if REGISTRY == "redis":
+            redis_conf = RedisConf(url=REDIS_URI, port=26379)
+            self.registry = get_redis_client_from_conf(redis_conf)
 
     def load_model(self) -> ArtifactData:
         """Loads the model from the registry."""
