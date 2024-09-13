@@ -17,6 +17,7 @@ from typing import Optional, Any
 
 import mlflow.pyfunc
 import mlflow.pytorch
+import mlflow.sklearn
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
