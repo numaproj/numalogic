@@ -172,7 +172,6 @@ def test_fetch_err_01(wavefront_fetcher, mocker):
 
 
 def test_fetch_err_02(wavefront_fetcher, mocker):
-
     mocker.patch.object(wavefront_fetcher, "_call_api", return_value=DUMMY_OUT_NO_TS)
 
     with pytest.raises(WavefrontFetcherError):

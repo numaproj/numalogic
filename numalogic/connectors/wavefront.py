@@ -21,7 +21,8 @@ class WavefrontFetcher(DataFetcher):
         url (str): Wavefront URL.
         api_token (str): Wavefront API token.
 
-    Raises:
+    Raises
+    ------
         ValueError: If API token is not provided.
         WavefrontFetcherError: If there is an error fetching data from Wavefront.
     """
@@ -55,7 +56,8 @@ class WavefrontFetcher(DataFetcher):
         """Validates and formats the results from the API."""
         if res.get("error_type") is not None:
             raise WavefrontFetcherError(
-                f"Error fetching data from Wavefront: {res.get('error_type')}: {res.get('error_message')}"
+                f"Error fetching data from Wavefront: "
+                f"{res.get('error_type')}: {res.get('error_message')}"
             )
         if res.get("timeseries") is None:
             raise WavefrontFetcherError("No timeseries data found for the query")
@@ -64,8 +66,7 @@ class WavefrontFetcher(DataFetcher):
             dfs.append(pd.DataFrame(ts["data"], columns=["timestamp", "value"]))
         df = pd.concat(dfs)
         df["timestamp"] = pd.to_datetime(df["timestamp"], unit="s")
-        df = df.set_index("timestamp").sort_index()
-        return df
+        return df.set_index("timestamp").sort_index()
 
     def fetch(
         self,
@@ -79,16 +80,19 @@ class WavefrontFetcher(DataFetcher):
         Fetches data from Wavefront as a single metric.
 
         Args:
-            metric (str): Metric to fetch. Example: 'system.cpu.usage'. Do not include the 'ts()' function.
+            metric (str): Metric to fetch. Example: 'system.cpu.usage'.
+                Do not include the 'ts()' function.
             start (datetime): Start time.
             filters (dict): Filters to apply to the query.
             end (datetime): End time. Set to None to fetch data until now.
             granularity (str): Granularity of the data. Default is 'm' (minute).
 
-        Returns:
+        Returns
+        -------
             Dataframe with the fetched data in the format: timestamp (index), value (column).
 
-        Raises:
+        Raises
+        ------
             WavefrontFetcherError: If there is an error fetching data from Wavefront
         """
         start = int(start.timestamp())
@@ -99,7 +103,7 @@ class WavefrontFetcher(DataFetcher):
             query = f"ts({metric}, {_filters})"
         else:
             query = f"ts({metric}"
-        LOGGER.info(f"Fetching data from Wavefront for query: {query}")
+        LOGGER.info("Fetching data from Wavefront for query: %s", query)
         res = self._call_api(query, start, end, granularity)
         return self._format_results(res.to_dict())
 
@@ -121,10 +125,12 @@ class WavefrontFetcher(DataFetcher):
             end (datetime): End time. Set to None to fetch data until now.
             granularity (str): Granularity of the data. Default is 'm' (minute).
 
-        Returns:
+        Returns
+        -------
             Dataframe with the fetched data in the format: timestamp (index), value (column).
 
-        Raises:
+        Raises
+        ------
             WavefrontFetcherError:
                 - If there is an error fetching data from Wavefront
                 - If there is a key error in the query.
@@ -139,7 +145,6 @@ class WavefrontFetcher(DataFetcher):
         ...     end=datetime.now(),
         ... )
         """
-
         start = start.timestamp()
         if end:
             end = end.timestamp()
@@ -147,8 +152,8 @@ class WavefrontFetcher(DataFetcher):
         try:
             query = query.format(**filters)
         except KeyError as key_err:
-            raise WavefrontFetcherError(f"Key error in query: {key_err}")
+            raise WavefrontFetcherError(f"Key error in query: {key_err}") from key_err
 
-        LOGGER.info(f"Fetching data from Wavefront for query: {query}")
+        LOGGER.info("Fetching data from Wavefront for query: %s", query)
         qres = self._call_api(query, start, granularity, end)
         return self._format_results(qres.to_dict())
