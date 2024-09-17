@@ -5356,6 +5356,23 @@ docs = ["furo (>=2023.7.26)", "proselint (>=0.13)", "sphinx (>=7.1.2,!=7.3)", "s
 test = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "coverage-enable-subprocess (>=1)", "flaky (>=3.7)", "packaging (>=23.1)", "pytest (>=7.4)", "pytest-env (>=0.8.2)", "pytest-freezer (>=0.4.8)", "pytest-mock (>=3.11.1)", "pytest-randomly (>=3.12)", "pytest-timeout (>=2.1)", "setuptools (>=68)", "time-machine (>=2.10)"]
 
 [[package]]
+name = "wavefront-api-client"
+version = "2.202.2"
+description = "Wavefront REST API Documentation"
+optional = false
+python-versions = "*"
+files = [
+    {file = "wavefront-api-client-2.202.2.tar.gz", hash = "sha256:2b5a5820856a85b3a79c2a825267ceb04c50f2058543f8ed710eefa46daf244b"},
+    {file = "wavefront_api_client-2.202.2-py3-none-any.whl", hash = "sha256:aac03ad91b26e8abea73b8bfc53015ad27fb2e122783db34fb4b93868739be09"},
+]
+
+[package.dependencies]
+certifi = ">=2017.4.17"
+python-dateutil = ">=2.1"
+six = ">=1.10"
+urllib3 = ">=1.23"
+
+[[package]]
 name = "wcwidth"
 version = "0.2.13"
 description = "Measures the displayed width of unicode strings in a terminal"
@@ -5660,4 +5677,4 @@ redis = ["redis"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9, <3.13"
-content-hash = "006c1d7de481e87646a35f4ef723c641206574b4e04fea4d4474c47d78162b6e"
+content-hash = "3c367e71a1173849e67aea4ebfc57e43c31e18934bc3e67750568e5bd9f2f490"
