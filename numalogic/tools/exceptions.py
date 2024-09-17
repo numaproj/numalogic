@@ -122,3 +122,9 @@ class RDSFetcherError(Exception):
     """Base class for all exceptions raised by the RDSFetcher class."""
 
     pass
+
+
+class WavefrontFetcherError(Exception):
+    """Base class for all exceptions raised by the WavefrontFetcher class."""
+
+    pass
