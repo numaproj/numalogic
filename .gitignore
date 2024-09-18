@@ -78,6 +78,8 @@ target/
 #mlflow
 /.mlruns
 *.db
+mlruns/
+mlartifacts/
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -168,5 +170,8 @@ cython_debug/
 
 # Mac related
 *.DS_Store
+
+# vscode
+.vscode/
 
 .python-version

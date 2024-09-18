@@ -18,15 +18,17 @@ from typing import Optional, Any
 import mlflow.pyfunc
 import mlflow.pytorch
 import mlflow.sklearn
+import mlflow
 from mlflow.entities.model_registry import ModelVersion
 from mlflow.exceptions import RestException
 from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
+from sortedcontainers import SortedSet
 
 from numalogic.registry import ArtifactManager, ArtifactData
 from numalogic.registry.artifact import ArtifactCache
 from numalogic.tools.exceptions import ModelVersionError
-from numalogic.tools.types import artifact_t, KEYS, META_VT
+from numalogic.tools.types import KeyedArtifact, artifact_t, KEYS, META_VT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -187,6 +189,39 @@ class MLflowRegistry(ArtifactManager):
                 self._save_in_cache(model_key, artifact_data)
             return artifact_data
 
+    def load_multiple(
+        self,
+        skeys: KEYS,
+        dkeys_list: list[list[str]],
+    ) -> Optional[dict[str, ArtifactData]]:
+        """
+        Load multiple artifacts from the registry for pyfunc models.
+        Args:
+            skeys (KEYS): The source keys of the artifacts to load.
+            dkeys_list (list[list[str]]):
+            A list of lists containing the dkeys of the artifacts to load.
+
+        Returns
+        -------
+            Optional[dict[str, ArtifactData]]: A dictionary mapping joined dynamic keys
+            to the loaded artifacts, or None if no artifacts were found.
+        """
+        dkeys = self.__get_sorted_unique_dkeys(dkeys_list)
+        loaded_model = self.load(skeys=skeys, dkeys=dkeys, artifact_type="pyfunc")
+        if loaded_model is not None:
+            metadata = loaded_model.artifact.unwrap_python_model().metadata
+            dict_artifacts = loaded_model.artifact.unwrap_python_model().dict_artifacts
+            artifacts_dict = {}
+            for artifact in dict_artifacts.values():
+                artifact_data = ArtifactData(
+                    artifact=artifact.artifact, metadata=metadata, extras=None
+                )
+                dynamic_key = ":".join(artifact.dkeys)
+                artifacts_dict[dynamic_key] = artifact_data
+        else:
+            artifacts_dict = None
+        return artifacts_dict
+
     @staticmethod
     def __log_mlflow_err(mlflow_err: RestException, model_key: str) -> None:
         if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
@@ -225,7 +260,10 @@ class MLflowRegistry(ArtifactManager):
         handler = self.handler_from_type(artifact_type)
         try:
             mlflow.start_run(run_id=run_id)
-            handler.log_model(artifact, "model", registered_model_name=model_key)
+            if artifact_type == "pyfunc":
+                handler.log_model("model", python_model=artifact, registered_model_name=model_key)
+            else:
+                handler.log_model(artifact, "model", registered_model_name=model_key)
             if metadata:
                 mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
@@ -237,6 +275,37 @@ class MLflowRegistry(ArtifactManager):
             return model_version
         finally:
             mlflow.end_run()
+
+    def save_multiple(
+        self,
+        skeys: KEYS,
+        dict_artifacts: dict[str, KeyedArtifact],
+        **metadata: META_VT,
+    ) -> Optional[ModelVersion]:
+        """
+        Saves multiple artifacts into mlflow registry. The last save stores all the
+        artifact versions in the metadata.
+
+        Args:
+        ----
+            skeys: static key fields as list/tuple of strings
+            dict_artifacts: dict of artifacts to save
+            metadata: additional metadata surrounding the artifact that needs to be saved.
+
+        Returns
+        -------
+            mlflow ModelVersion instance
+        """
+        multiple_artifacts = CompositeModels(skeys=skeys, dict_artifacts=dict_artifacts, **metadata)
+        dkeys_list = multiple_artifacts.get_dkeys_list()
+        sorted_dkeys = self.__get_sorted_unique_dkeys(dkeys_list)
+        return self.save(
+            skeys=multiple_artifacts.skeys,
+            dkeys=sorted_dkeys,
+            artifact=multiple_artifacts,
+            artifact_type="pyfunc",
+            metadata=multiple_artifacts.metadata,
+        )
 
     @staticmethod
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
@@ -338,3 +407,63 @@ class MLflowRegistry(ArtifactManager):
             version_info.version,
         )
         return model, metadata
+
+    def __get_sorted_unique_dkeys(self, dkeys_list: list[list]) -> list[str]:
+        """
+        Returns a unique sorted list of all dkeys in the stored artifacts.
+
+        Args:
+        ----
+        dkeys_list: A list of lists containing the destination keys of the artifacts.
+
+        Returns
+        -------
+        List[str]
+            A list of all unique dkeys in the stored artifacts, sorted in ascending order.
+        """
+        return list(SortedSet([dkey for dkeys in dkeys_list for dkey in dkeys]))
+
+
+class CompositeModels(mlflow.pyfunc.PythonModel):
+    """A composite model that represents multiple artifacts.
+
+    This class extends the `mlflow.pyfunc.PythonModel` class and is used to store and load
+    multiple artifacts in the MLflow registry. It provides a convenient way to manage and
+    organize multiple artifacts associated with a single model.
+
+    Args:
+        skeys (KEYS): The static keys of the artifacts.
+        dict_artifacts (dict[str, KeyedArtifact]): A dictionary mapping dynamic keys to
+            `KeyedArtifact` objects.
+        **metadata (META_VT): Additional metadata associated with the artifacts.
+
+    Methods
+    -------
+        get_dkeys_list(): Returns a list of all dynamic keys in the stored artifacts.
+
+    Attributes
+    ----------
+        skeys (KEYS): The static keys of the artifacts.
+        dict_artifacts (dict[str, KeyedArtifact]): A dictionary mapping dynamic keys to
+            `KeyedArtifact` objects.
+        metadata (META_VT): Additional metadata associated with the artifacts.
+    """
+
+    def __init__(self, skeys: KEYS, dict_artifacts: dict[str, KeyedArtifact], **metadata: META_VT):
+        self.skeys = skeys
+        self.dict_artifacts = dict_artifacts
+        self.metadata = metadata
+
+    def get_dkeys_list(self):
+        """
+        Returns a list of all dynamic keys in the stored artifacts.
+
+        Returns
+        -------
+            list[list[str]]: A list of all dynamic keys in the stored artifacts.
+        """
+        dkeys_list = []
+        artifacts = self.dict_artifacts.values()
+        for artifact in artifacts:
+            dkeys_list.append(artifact.dkeys)
+        return dkeys_list
