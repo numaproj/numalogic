@@ -11,6 +11,7 @@ from numalogic.connectors._config import (
     RDSFetcherConf,
 )
 from numalogic.connectors.prometheus import PrometheusFetcher
+from numalogic.connectors.wavefront import WavefrontFetcher
 
 __all__ = [
     "RedisConf",
@@ -23,6 +24,7 @@ __all__ = [
     "RDSFetcher",
     "RDSConf",
     "RDSFetcherConf",
+    "WavefrontFetcher",
 ]
 
 if find_spec("boto3"):
