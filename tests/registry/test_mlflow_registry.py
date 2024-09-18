@@ -15,7 +15,10 @@ from numalogic.registry import MLflowRegistry, ArtifactData, LocalLRUCache
 
 
 from numalogic.registry.mlflow_registry import ModelStage
+from numalogic.tools.types import KeyedArtifact
 from tests.registry._mlflow_utils import (
+    mock_load_model_pyfunc,
+    mock_log_model_pyfunc,
     model_sklearn,
     create_model,
     mock_log_model_pytorch,
@@ -23,6 +26,7 @@ from tests.registry._mlflow_utils import (
     mock_get_model_version,
     mock_transition_stage,
     mock_log_model_sklearn,
+    return_pyfunc_rundata,
     return_pytorch_rundata_dict,
     return_empty_rundata,
     mock_list_of_model_version,
@@ -56,21 +60,67 @@ class TestMLflow(unittest.TestCase):
         self.assertEqual("model_:nnet::error1", key)
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch)
-    @patch("mlflow.log_param", mock_log_state_dict)
+    @patch("mlflow.log_params", mock_log_state_dict)
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
-    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     def test_save_model(self):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
         status = ml.save(
-            skeys=skeys, dkeys=dkeys, artifact=self.model, run_id="1234", artifact_type="pytorch"
+            skeys=skeys,
+            dkeys=dkeys,
+            artifact=self.model,
+            run_id="1234",
+            artifact_type="pytorch",
+            **{"lr": 0.01},
         )
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
+
+    @patch("mlflow.pyfunc.log_model", mock_log_model_pyfunc)
+    @patch("mlflow.log_params", mock_log_state_dict)
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pyfunc_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    def test_save_multiple_models_pyfunc(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        status = ml.save_multiple(
+            skeys=self.skeys,
+            dict_artifacts={
+                "AE": KeyedArtifact(dkeys=["AE", "infer"], artifact=VanillaAE(10)),
+                "scaler": KeyedArtifact(dkeys=["scaler", "infer"], artifact=StandardScaler()),
+            },
+            **{"learning_rate": 0.01},
+        )
+        self.assertIsNotNone(status)
+        mock_status = "READY"
+        self.assertEqual(mock_status, status.status)
+
+    @patch("mlflow.pyfunc.log_model", mock_log_model_pyfunc)
+    @patch("mlflow.log_params", mock_log_state_dict)
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pyfunc_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.pyfunc.load_model", mock_load_model_pyfunc)
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pyfunc_rundata()))
+    def test_load_multiple_models_when_pyfunc_model_exist(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        skeys = self.skeys
+        dkeys_list = [["AE", "infer"], ["scaler", "infer"]]
+        data = ml.load_multiple(skeys=skeys, dkeys_list=dkeys_list)
+        self.assertIsNotNone(data["AE:infer"].metadata)
+        self.assertIsNotNone(data["scaler:infer"].metadata)
+        self.assertIsInstance(data, dict)
+        self.assertIsInstance(data["AE:infer"].artifact, VanillaAE)
+        self.assertIsInstance(data["scaler:infer"].artifact, StandardScaler)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
     @patch("mlflow.log_param", mock_log_state_dict)
