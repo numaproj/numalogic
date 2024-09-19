@@ -1,5 +1,154 @@
 # Changelog
 
+## v0.13.2 (2024-09-19)
+
+ * [b18b2d2](https://github.com/numaproj/numalogic/commit/b18b2d2b912b6feaa0df7324c142928413aa1b28) fix: test cases mlflow registry (#415)
+ * [ed81ef0](https://github.com/numaproj/numalogic/commit/ed81ef016ed8eba54bcc1e61bdd7ebe766becc0f) feat: wavefront fetcher (#413)
+
+### Contributors
+
+ * Avik Basu
+ * Leila Wang
+
+## v0.13.1 (2024-09-12)
+
+
+### Contributors
+
+
+## v0.13.0 (2024-09-05)
+
+ * [c4d3bcc](https://github.com/numaproj/numalogic/commit/c4d3bccf41c09ded93a227682b0890f83f7e655a) fix: support all sklearn classes (#408)
+ * [aa3b4bb](https://github.com/numaproj/numalogic/commit/aa3b4bb04f3ea114eed58a21965b446252be356e) fix: support sklearn BaseEstimators (#407)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.12.4 (2024-07-08)
+
+ * [eb9ceb1](https://github.com/numaproj/numalogic/commit/eb9ceb168fb786a31e56dae583f6cb4cf72a0d2d) Update release.yml (#403)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.12.3 (2024-07-08)
+
+ * [db9895c](https://github.com/numaproj/numalogic/commit/db9895c66516256ff332b6402523ff2bd4de0a2e) Update pyproject.toml (#402)
+ * [4bf4329](https://github.com/numaproj/numalogic/commit/4bf4329888bc8a77bde73566bb1c082a7af32329) Adding job in github workflow to build RDS image (#401)
+ * [2a44312](https://github.com/numaproj/numalogic/commit/2a44312a3f193c8576c6bc14b287e4c404ad2c54) fix for Nonetype: None in the ERROR logs (#400)
+
+### Contributors
+
+ * Gulshan Bhatia
+ * Kushal Batra
+ * Saisharath Reddy Kondakindi
+
+## v0.12.2 (2024-06-27)
+
+ * [b8b8f2b](https://github.com/numaproj/numalogic/commit/b8b8f2bc10c60c9c6d1e5468be78629277293cde) fix: bug in metric call (#398)
+
+### Contributors
+
+ * Kushal Batra
+
+## v0.12.1 (2024-06-25)
+
+ * [4b38829](https://github.com/numaproj/numalogic/commit/4b388293af928304b9ec8a0e271d09479318ad4d) fix: add test cases for payload Transformer (#397)
+ * [7fa698c](https://github.com/numaproj/numalogic/commit/7fa698c02b962fe05f1a61b2dd3e9a52467168da) Numalogic metrics (#393)
+ * [9d4ea32](https://github.com/numaproj/numalogic/commit/9d4ea327712e3b45afc1fc04830fc301e25b4fd3) fix: logger context issues (#389)
+
+### Contributors
+
+ * Gulshan Bhatia
+ * Kushal Batra
+
+## v0.12.0.dev2 (2024-06-13)
+
+ * [f7bb6a7](https://github.com/numaproj/numalogic/commit/f7bb6a7a5c656d57f3fd6f686cd1d3bed4e61720) tmp: try publish
+
+### Contributors
+
+ * Avik Basu
+
+## v0.12.0.dev1 (2024-06-13)
+
+ * [7027f0d](https://github.com/numaproj/numalogic/commit/7027f0d10cf8e08f5671a35f9b31e627b4a493f0) use individual version
+ * [326dce0](https://github.com/numaproj/numalogic/commit/326dce09a9c48e0a88436bd6d0ec1367a1cf8030) try: dynamic version
+ * [4866d1f](https://github.com/numaproj/numalogic/commit/4866d1f36da9824d00fda6f24cd8cf23882dcae1) tmp: test pypi publish for all
+ * [6321f80](https://github.com/numaproj/numalogic/commit/6321f80395299e1e1a331737a78d4f4afad39455) tmp: fix
+ * [1f7c75a](https://github.com/numaproj/numalogic/commit/1f7c75ac780ad7fa1015ab3939baa2e8993cdb7e) try: testpypi
+
+### Contributors
+
+ * Avik Basu
+
+## v0.12.0.dev0 (2024-06-13)
+
+ * [d088cb0](https://github.com/numaproj/numalogic/commit/d088cb0a0a703cc76fb0378f43075fc45f334dc6) try fix docker build error
+ * [7b2ffbb](https://github.com/numaproj/numalogic/commit/7b2ffbb3f51c72ec5ac72bab6383522cf459685a) tmp pkg wheels
+ * [3ec0831](https://github.com/numaproj/numalogic/commit/3ec0831df5015e4da1ea0cdbf17e3e30b4ee4e44) tmp: try subfolder
+ * [95f06b5](https://github.com/numaproj/numalogic/commit/95f06b5650ab19523bb182ff28f0a799f8fb72d8) try numa udf builds
+ * [c493dc5](https://github.com/numaproj/numalogic/commit/c493dc5166e5f3600f777ceb03b1ae1f5b79bef0) tmp: try
+ * [a40e2ce](https://github.com/numaproj/numalogic/commit/a40e2cea4f1610ebaf6bcf5b759cdccff6998bc6) tmp try
+ * [b9843d8](https://github.com/numaproj/numalogic/commit/b9843d874a8f025733bb778bfe92ab9683adabc3) tmp try path
+ * [baaa38f](https://github.com/numaproj/numalogic/commit/baaa38fdbab6103cdc727e769fb2d98d851376f3) try codecov fix
+ * [5a2bfc0](https://github.com/numaproj/numalogic/commit/5a2bfc0e056980ffc8722668c44f53d71c597813) try coverage for all libs
+ * [348b4dc](https://github.com/numaproj/numalogic/commit/348b4dcc0bff1573ce3471179d7b3f8d8f194cbd) try coverage fix
+ * [75a6cc5](https://github.com/numaproj/numalogic/commit/75a6cc5ed37938dc3c5d29aab2ade38a1c28972a) try: coverage
+ * [e490097](https://github.com/numaproj/numalogic/commit/e490097e145ee58ca29719082755cf2244ecbe9c) wkflw: fix mkdocs
+ * [d106fb7](https://github.com/numaproj/numalogic/commit/d106fb73cef1777462d5bb0312242e66937c3b61) registry lint
+ * [3303a7d](https://github.com/numaproj/numalogic/commit/3303a7dc8113909c9d83248dc3469258de754468) fix: precommit
+ * [e696bf0](https://github.com/numaproj/numalogic/commit/e696bf069f4c2167fbe949e5caa5c136cbaf8c33) fix: lint for connectors
+ * [b7abb0a](https://github.com/numaproj/numalogic/commit/b7abb0ae0ffd566f939f577c798d883f04732504) fix: lint
+ * [f40a658](https://github.com/numaproj/numalogic/commit/f40a658478f77ce0f3afc86ad14bae4dc7a00c27) fix: lint for all libs
+ * [290b05c](https://github.com/numaproj/numalogic/commit/290b05c197d8339afb3d43e04979811bfa8258a4) avoid ruff hook
+ * [486d5e0](https://github.com/numaproj/numalogic/commit/486d5e02e42ca5c9c124baef64d485a40698382e) debug
+ * [9b31bdb](https://github.com/numaproj/numalogic/commit/9b31bdbb159ecfcc5f0100cf7bf7c471efbaa321) files include
+ * [4814188](https://github.com/numaproj/numalogic/commit/4814188822c7c1d08a119710ef044dc992988e45) try lint
+ * [afc5a01](https://github.com/numaproj/numalogic/commit/afc5a01a7ad993652d3580874430c2c30e956450) fix lint
+ * [e54795a](https://github.com/numaproj/numalogic/commit/e54795a5227c41326036494b3a4d4d99b94cad17) tmp lint
+ * [ab68a6e](https://github.com/numaproj/numalogic/commit/ab68a6ee1b4311d90d93c78821294a52167d2d8a) verbose
+ * [ed54f8b](https://github.com/numaproj/numalogic/commit/ed54f8b036fdd80c79adc9b16fb1cf067e193319) tmp test lint
+ * [fffe0cc](https://github.com/numaproj/numalogic/commit/fffe0cca84587e1345ebb38862645c3c5f6c3d69) wkfl: lint
+ * [8992df3](https://github.com/numaproj/numalogic/commit/8992df3dae736d911e377bb4e748b633908e6bb8) fix: ruff version
+ * [2ee3f36](https://github.com/numaproj/numalogic/commit/2ee3f3673c044a01838657414e70fa5ffdabb9a7) wkflw: ruff version
+ * [4f0bc9d](https://github.com/numaproj/numalogic/commit/4f0bc9d7305587082b5c202a18bc4dff67932605) wkflw: lint
+ * [a1e5d63](https://github.com/numaproj/numalogic/commit/a1e5d63b41267f63b06296198eb21c7a11e63ab4) wkflw: dependency fix
+ * [101d175](https://github.com/numaproj/numalogic/commit/101d175aef87f7981afe0724ffd511a930e4d8be) wkflw: dependency fix
+ * [c04daeb](https://github.com/numaproj/numalogic/commit/c04daeb868298f91fb6a3fbb5ff46e7a587c761e) wkflw: registry
+ * [5b28c32](https://github.com/numaproj/numalogic/commit/5b28c32fad2464a30e67d5ba3f4cef0209924ee9) fix tests
+ * [49016bc](https://github.com/numaproj/numalogic/commit/49016bc7f626cda23635d444511d5884e5ae5b32) trying to fix tests
+ * [ec60350](https://github.com/numaproj/numalogic/commit/ec603507c98490adb6712b9586fac932a6fb2863) fix: connectors ci
+ * [a52ed60](https://github.com/numaproj/numalogic/commit/a52ed60933ebd183e6357b4c602ad9a13ecbb9ab) fix: test run
+ * [fafe46a](https://github.com/numaproj/numalogic/commit/fafe46a5c0685eedfb54258cf34dd4872cee18f7) pip cache
+ * [4bd78f6](https://github.com/numaproj/numalogic/commit/4bd78f6ee7ee3631211fd49b4a0c230dfa575e5c) fix workflow file
+ * [9267119](https://github.com/numaproj/numalogic/commit/92671198d80ee2f8cdfa9ba7136db52418e5de32) fix workflow file
+ * [e03df9a](https://github.com/numaproj/numalogic/commit/e03df9ac899e5513a1932a97fac7e768f67626c9) fix: log file
+ * [2409368](https://github.com/numaproj/numalogic/commit/24093682e1cbee5d0122691df511599d36720bd0) fix: constants
+ * [3e0aaba](https://github.com/numaproj/numalogic/commit/3e0aaba58fe5f841b1aa9f196886ded77765d36f) feat: add dev containers to numa-udf
+ * [052bf86](https://github.com/numaproj/numalogic/commit/052bf86dcd7a3314d395188308d4094467d19743) app folder refactor
+ * [e0e6700](https://github.com/numaproj/numalogic/commit/e0e670094a7cc7dada996f6d619dfb73358b0489) first refactor
+ * [f6ec6a5](https://github.com/numaproj/numalogic/commit/f6ec6a5dd0ec02f98108b992518462b7b1da4d18) fix tests for libs
+ * [8b03beb](https://github.com/numaproj/numalogic/commit/8b03beb3f5186a501b5cf9f83a505acf73392207) fix: typing
+ * [2970943](https://github.com/numaproj/numalogic/commit/2970943b304b70f2fb5f24be1d46847281f95c10) fix: add gru forecast models
+ * [4e50ba4](https://github.com/numaproj/numalogic/commit/4e50ba4615bc3045b31b36aec0a6eb1fac427d1a) chore!: initial refactor (#381)
+
+### Contributors
+
+ * Avik Basu
+
+## v0.12.0 (2024-06-17)
+
+ * [7fa698c](https://github.com/numaproj/numalogic/commit/7fa698c02b962fe05f1a61b2dd3e9a52467168da) Numalogic metrics (#393)
+ * [9d4ea32](https://github.com/numaproj/numalogic/commit/9d4ea327712e3b45afc1fc04830fc301e25b4fd3) fix: logger context issues (#389)
+
+### Contributors
+
+ * Gulshan Bhatia
+ * Kushal Batra
+
 ## v0.11.1 (2024-06-13)
 
  * [8f6c8ef](https://github.com/numaproj/numalogic/commit/8f6c8efd0cc65194a672b3dabfc483babf97114d) feat: vanilla ae with independent channels  (#392)
