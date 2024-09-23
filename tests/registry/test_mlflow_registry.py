@@ -457,6 +457,21 @@ class TestMLflow(unittest.TestCase):
         key = MLflowRegistry.construct_key(self.skeys, self.dkeys)
         self.assertIsNotNone(ml._load_from_cache(key))
 
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pyfunc_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.pyfunc.load_model", mock_load_model_pyfunc)
+    def test_cache_loading_pyfunc(self):
+        cache_registry = LocalLRUCache(ttl=50000)
+        ml = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
+        dkeys_list = [["AE", "infer"], ["scaler", "infer"]]
+        ml.load_multiple(skeys=self.skeys, dkeys_list=dkeys_list)
+        unique_sorted_dkeys = ["AE", "infer", "scaler"]
+        key = MLflowRegistry.construct_key(self.skeys, unique_sorted_dkeys)
+        self.assertIsNotNone(ml._load_from_cache(key))
+
 
 if __name__ == "__main__":
     unittest.main()

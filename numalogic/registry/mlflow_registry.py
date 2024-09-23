@@ -193,7 +193,7 @@ class MLflowRegistry(ArtifactManager):
         self,
         skeys: KEYS,
         dkeys_list: list[list[str]],
-    ) -> Optional[dict[str, ArtifactData]]:
+    ) -> Optional[ArtifactData]:
         """
         Load multiple artifacts from the registry for pyfunc models.
         Args:
@@ -203,24 +203,23 @@ class MLflowRegistry(ArtifactManager):
 
         Returns
         -------
-            Optional[dict[str, ArtifactData]]: A dictionary mapping joined dynamic keys
-            to the loaded artifacts, or None if no artifacts were found.
+            Optional[ArtifactData]: The loaded ArtifactData object if available otherwise None.
+            ArtifactData should contain a dictionary of artifacts.
         """
         dkeys = self.__get_sorted_unique_dkeys(dkeys_list)
         loaded_model = self.load(skeys=skeys, dkeys=dkeys, artifact_type="pyfunc")
         if loaded_model is not None:
-            metadata = loaded_model.artifact.unwrap_python_model().metadata
-            dict_artifacts = loaded_model.artifact.unwrap_python_model().dict_artifacts
-            artifacts_dict = {}
-            for artifact in dict_artifacts.values():
-                artifact_data = ArtifactData(
-                    artifact=artifact.artifact, metadata=metadata, extras=None
-                )
-                dynamic_key = ":".join(artifact.dkeys)
-                artifacts_dict[dynamic_key] = artifact_data
-        else:
-            artifacts_dict = None
-        return artifacts_dict
+            try:
+                unwrapped_composite_model = loaded_model.artifact.unwrap_python_model()
+            except Exception:
+                _LOGGER.exception("Error occurred while unwrapping python model")
+                return None
+
+            dict_artifacts = unwrapped_composite_model.dict_artifacts
+            metadata = loaded_model.metadata
+            version_info = loaded_model.extras
+            return ArtifactData(artifact=dict_artifacts, metadata=metadata, extras=version_info)
+        return None
 
     @staticmethod
     def __log_mlflow_err(mlflow_err: RestException, model_key: str) -> None:
@@ -297,14 +296,14 @@ class MLflowRegistry(ArtifactManager):
             mlflow ModelVersion instance
         """
         multiple_artifacts = CompositeModels(skeys=skeys, dict_artifacts=dict_artifacts, **metadata)
-        dkeys_list = multiple_artifacts.get_dkeys_list()
+        dkeys_list = multiple_artifacts._get_dkeys_list()
         sorted_dkeys = self.__get_sorted_unique_dkeys(dkeys_list)
         return self.save(
-            skeys=multiple_artifacts.skeys,
+            skeys=skeys,
             dkeys=sorted_dkeys,
             artifact=multiple_artifacts,
             artifact_type="pyfunc",
-            metadata=multiple_artifacts.metadata,
+            **metadata,
         )
 
     @staticmethod
@@ -449,12 +448,14 @@ class CompositeModels(mlflow.pyfunc.PythonModel):
         metadata (META_VT): Additional metadata associated with the artifacts.
     """
 
+    __slots__ = ("skeys", "dict_artifacts", "metadata")
+
     def __init__(self, skeys: KEYS, dict_artifacts: dict[str, KeyedArtifact], **metadata: META_VT):
         self.skeys = skeys
         self.dict_artifacts = dict_artifacts
         self.metadata = metadata
 
-    def get_dkeys_list(self):
+    def _get_dkeys_list(self):
         """
         Returns a list of all dynamic keys in the stored artifacts.
 
