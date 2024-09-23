@@ -116,11 +116,11 @@ class TestMLflow(unittest.TestCase):
         skeys = self.skeys
         dkeys_list = [["AE", "infer"], ["scaler", "infer"]]
         data = ml.load_multiple(skeys=skeys, dkeys_list=dkeys_list)
-        self.assertIsNotNone(data["AE:infer"].metadata)
-        self.assertIsNotNone(data["scaler:infer"].metadata)
-        self.assertIsInstance(data, dict)
-        self.assertIsInstance(data["AE:infer"].artifact, VanillaAE)
-        self.assertIsInstance(data["scaler:infer"].artifact, StandardScaler)
+        self.assertIsNotNone(data.metadata)
+        self.assertIsInstance(data, ArtifactData)
+        self.assertIsInstance(data.artifact, dict)
+        self.assertIsInstance(data.artifact["AE"].artifact, VanillaAE)
+        self.assertIsInstance(data.artifact["scaler"].artifact, StandardScaler)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
     @patch("mlflow.log_param", mock_log_state_dict)

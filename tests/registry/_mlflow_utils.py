@@ -385,7 +385,9 @@ def return_pyfunc_rundata():
             status="RUNNING",
             user_id="lol",
         ),
-        run_data=RunData(metrics={}, tags={}, params={}),
+        run_data=RunData(
+            metrics={}, tags={}, params=[mlflow.entities.Param("learning_rate", "0.01")]
+        ),
     )
 
 
