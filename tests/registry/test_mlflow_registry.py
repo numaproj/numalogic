@@ -11,11 +11,11 @@ from mlflow.store.entities import PagedList
 from sklearn.preprocessing import StandardScaler
 
 from numalogic.models.autoencoder.variants import VanillaAE
+from numalogic.models.threshold._std import StdDevThreshold
 from numalogic.registry import MLflowRegistry, ArtifactData, LocalLRUCache
 
 
 from numalogic.registry.mlflow_registry import ModelStage
-from numalogic.tools.types import KeyedArtifact
 from tests.registry._mlflow_utils import (
     mock_load_model_pyfunc,
     mock_log_model_pyfunc,
@@ -93,9 +93,11 @@ class TestMLflow(unittest.TestCase):
         status = ml.save_multiple(
             skeys=self.skeys,
             dict_artifacts={
-                "AE": KeyedArtifact(dkeys=["AE", "infer"], artifact=VanillaAE(10)),
-                "scaler": KeyedArtifact(dkeys=["scaler", "infer"], artifact=StandardScaler()),
+                "inference": VanillaAE(10),
+                "precrocessing": StandardScaler(),
+                "threshold": StdDevThreshold(),
             },
+            dkeys=["unique", "sorted"],
             **{"learning_rate": 0.01},
         )
         self.assertIsNotNone(status)
@@ -114,13 +116,23 @@ class TestMLflow(unittest.TestCase):
     def test_load_multiple_models_when_pyfunc_model_exist(self):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
-        dkeys_list = [["AE", "infer"], ["scaler", "infer"]]
-        data = ml.load_multiple(skeys=skeys, dkeys_list=dkeys_list)
+        dkeys = ["unique", "sorted"]
+        ml.save_multiple(
+            skeys=self.skeys,
+            dict_artifacts={
+                "inference": VanillaAE(10),
+                "precrocessing": StandardScaler(),
+                "threshold": StdDevThreshold(),
+            },
+            dkeys=["unique", "sorted"],
+            **{"learning_rate": 0.01},
+        )
+        data = ml.load_multiple(skeys=skeys, dkeys=dkeys)
         self.assertIsNotNone(data.metadata)
         self.assertIsInstance(data, ArtifactData)
         self.assertIsInstance(data.artifact, dict)
-        self.assertIsInstance(data.artifact["AE"].artifact, VanillaAE)
-        self.assertIsInstance(data.artifact["scaler"].artifact, StandardScaler)
+        self.assertIsInstance(data.artifact["inference"], VanillaAE)
+        self.assertIsInstance(data.artifact["precrocessing"], StandardScaler)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
     @patch("mlflow.log_param", mock_log_state_dict)
@@ -466,10 +478,9 @@ class TestMLflow(unittest.TestCase):
     def test_cache_loading_pyfunc(self):
         cache_registry = LocalLRUCache(ttl=50000)
         ml = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
-        dkeys_list = [["AE", "infer"], ["scaler", "infer"]]
-        ml.load_multiple(skeys=self.skeys, dkeys_list=dkeys_list)
-        unique_sorted_dkeys = ["AE", "infer", "scaler"]
-        key = MLflowRegistry.construct_key(self.skeys, unique_sorted_dkeys)
+        dkeys = ["unique", "sorted"]
+        ml.load_multiple(skeys=self.skeys, dkeys=dkeys)
+        key = MLflowRegistry.construct_key(self.skeys, dkeys)
         self.assertIsNotNone(ml._load_from_cache(key))
 
 

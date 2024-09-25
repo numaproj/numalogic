@@ -13,8 +13,7 @@ from mlflow.models import Model
 
 from numalogic.models.autoencoder.variants.vanilla import VanillaAE
 from numalogic.models.threshold import StdDevThreshold
-from numalogic.registry.mlflow_registry import CompositeModels
-from numalogic.tools.types import KeyedArtifact
+from numalogic.registry.mlflow_registry import CompositeModel
 
 
 def create_model():
@@ -192,11 +191,12 @@ def mock_load_model_pyfunc(*_, **__):
     return mlflow.pyfunc.PyFuncModel(
         model_meta=model,
         model_impl=TestObject(
-            python_model=CompositeModels(
-                skeys=["model"],
+            python_model=CompositeModel(
+                skeys=["error"],
                 dict_artifacts={
-                    "AE": KeyedArtifact(dkeys=["AE", "infer"], artifact=VanillaAE(10)),
-                    "scaler": KeyedArtifact(dkeys=["scaler", "infer"], artifact=StandardScaler()),
+                    "inference": VanillaAE(10),
+                    "precrocessing": StandardScaler(),
+                    "threshold": StdDevThreshold(),
                 },
                 **{"learning_rate": 0.01},
             )
