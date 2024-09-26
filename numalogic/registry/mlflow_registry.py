@@ -218,12 +218,12 @@ class MLflowRegistry(ArtifactManager):
         except Exception:
             _LOGGER.exception("Unexpected error occurred while unwrapping python model.")
             return None
-        else:
-            return ArtifactData(
-                artifact=unwrapped_composite_model.dict_artifacts,
-                metadata=loaded_model.metadata,
-                extras=loaded_model.extras,
-            )
+
+        return ArtifactData(
+            artifact=unwrapped_composite_model.dict_artifacts,
+            metadata=loaded_model.metadata,
+            extras=loaded_model.extras,
+        )
 
     @staticmethod
     def __log_mlflow_err(mlflow_err: RestException, model_key: str) -> None:
@@ -303,7 +303,7 @@ class MLflowRegistry(ArtifactManager):
 
         """
         if len(dict_artifacts) == 1:
-            _LOGGER.warning("Only one element in dict_artifacts. Please use save directly.")
+            _LOGGER.warning("Only one element in dict_artifacts. Saving directly is recommended.")
         multiple_artifacts = CompositeModel(skeys=skeys, dict_artifacts=dict_artifacts, **metadata)
         return self.save(
             skeys=skeys,
@@ -447,7 +447,7 @@ class CompositeModel(mlflow.pyfunc.PythonModel):
         self.dict_artifacts = dict_artifacts
         self.metadata = metadata
 
-    def predict(self):
+    def predict(self, context, model_input, params: Optional[dict[str, Any]] = None):
         """
         Predict method is not implemented for our use case.
 
