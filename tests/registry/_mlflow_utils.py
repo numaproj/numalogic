@@ -204,6 +204,37 @@ def mock_load_model_pyfunc(*_, **__):
     )
 
 
+def mock_load_model_pyfunc_type_error(*_, **__):
+    artifact_path = "model"
+    flavors = {
+        "python_function": {
+            "cloudpickle_version": "3.0.0",
+            "code": None,
+            "env": {"conda": "conda.yaml", "virtualenv": "python_env.yaml"},
+            "loader_module": "mlflow.pytorch.model",
+            "python_model": "python_model.pkl",
+            "python_version": "3.10.14",
+            "streamable": False,
+        }
+    }
+    model_size_bytes = 8912
+    model_uuid = "ae27ecc166c94c01a4f4dccaf84ca5dc"
+    run_id = "7e85a3fa46d44e668c840f3dddc909c3"
+    utc_time_created = "2024-09-18 17:12:41.501209"
+    model = Model(
+        artifact_path=artifact_path,
+        flavors=flavors,
+        model_size_bytes=model_size_bytes,
+        model_uuid=model_uuid,
+        run_id=run_id,
+        utc_time_created=utc_time_created,
+        mlflow_version="2.16.0",
+    )
+    return mlflow.pyfunc.PyFuncModel(
+        model_meta=model, model_impl=mlflow.pytorch._PyTorchWrapper(VanillaAE(10), device="cpu")
+    )
+
+
 def mock_transition_stage(*_, **__):
     return ModelVersion(
         creation_timestamp=1653402941169,

@@ -207,11 +207,11 @@ class MLflowRegistry(ArtifactManager):
         loaded_model = self.load(skeys=skeys, dkeys=dkeys, artifact_type="pyfunc")
         if loaded_model is None:
             return None
-        if loaded_model.artifact.loader_module != "mlflow.pyfunc.model":
-            raise TypeError("The loaded model is not a valid pyfunc Python model.")
 
         try:
             unwrapped_composite_model = loaded_model.artifact.unwrap_python_model()
+        except mlflow.exceptions.MlflowException as e:
+            raise TypeError("The loaded model is not a valid pyfunc Python model.") from e
         except AttributeError:
             _LOGGER.exception("The loaded model does not have an unwrap_python_model method")
             return None
@@ -448,4 +448,10 @@ class CompositeModel(mlflow.pyfunc.PythonModel):
         self.metadata = metadata
 
     def predict(self):
-        raise NotImplementedError()
+        """
+        Predict method is not implemented for our use case.
+
+        The CompositeModel class is designed to store and load multiple artifacts,
+        and the predict method is not required for this functionality.
+        """
+        raise NotImplementedError("The predict method is not implemented for CompositeModel.")
