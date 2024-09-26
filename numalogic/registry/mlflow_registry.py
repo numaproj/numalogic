@@ -15,12 +15,9 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional, Any
 
-import mlflow.pyfunc
-import mlflow.pytorch
-import mlflow.sklearn
 import mlflow
 from mlflow.entities.model_registry import ModelVersion
-from mlflow.exceptions import RestException
+from mlflow.exceptions import RestException, MlflowException
 from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
 
@@ -210,7 +207,7 @@ class MLflowRegistry(ArtifactManager):
 
         try:
             unwrapped_composite_model = loaded_model.artifact.unwrap_python_model()
-        except mlflow.exceptions.MlflowException as e:
+        except MlflowException as e:
             raise TypeError("The loaded model is not a valid pyfunc Python model.") from e
         except AttributeError:
             _LOGGER.exception("The loaded model does not have an unwrap_python_model method")
@@ -303,7 +300,9 @@ class MLflowRegistry(ArtifactManager):
 
         """
         if len(dict_artifacts) == 1:
-            _LOGGER.warning("Only one element in dict_artifacts. Saving directly is recommended.")
+            _LOGGER.warning(
+                "Only one artifact present in dict_artifacts. Saving directly is recommended."
+            )
         multiple_artifacts = CompositeModel(skeys=skeys, dict_artifacts=dict_artifacts, **metadata)
         return self.save(
             skeys=skeys,

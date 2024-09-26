@@ -3,6 +3,9 @@ import unittest
 from contextlib import contextmanager
 from unittest.mock import patch, Mock
 
+import mlflow.pytorch  # noqa: F401
+import mlflow.pyfunc  # noqa: F401
+import mlflow.sklearn  # noqa: F401
 from freezegun import freeze_time
 from mlflow import ActiveRun
 from mlflow.exceptions import RestException
