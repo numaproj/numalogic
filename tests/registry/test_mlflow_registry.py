@@ -3,6 +3,9 @@ import unittest
 from contextlib import contextmanager
 from unittest.mock import patch, Mock
 
+import mlflow.pytorch  # noqa: F401
+import mlflow.pyfunc  # noqa: F401
+import mlflow.sklearn  # noqa: F401
 from freezegun import freeze_time
 from mlflow import ActiveRun
 from mlflow.exceptions import RestException
@@ -11,11 +14,15 @@ from mlflow.store.entities import PagedList
 from sklearn.preprocessing import StandardScaler
 
 from numalogic.models.autoencoder.variants import VanillaAE
+from numalogic.models.threshold._std import StdDevThreshold
 from numalogic.registry import MLflowRegistry, ArtifactData, LocalLRUCache
 
 
-from numalogic.registry.mlflow_registry import ModelStage
+from numalogic.registry.mlflow_registry import CompositeModel, ModelStage
 from tests.registry._mlflow_utils import (
+    mock_load_model_pyfunc,
+    mock_load_model_pyfunc_type_error,
+    mock_log_model_pyfunc,
     model_sklearn,
     create_model,
     mock_log_model_pytorch,
@@ -23,6 +30,7 @@ from tests.registry._mlflow_utils import (
     mock_get_model_version,
     mock_transition_stage,
     mock_log_model_sklearn,
+    return_pyfunc_rundata,
     return_pytorch_rundata_dict,
     return_empty_rundata,
     mock_list_of_model_version,
@@ -56,21 +64,170 @@ class TestMLflow(unittest.TestCase):
         self.assertEqual("model_:nnet::error1", key)
 
     @patch("mlflow.pytorch.log_model", mock_log_model_pytorch)
-    @patch("mlflow.log_param", mock_log_state_dict)
+    @patch("mlflow.log_params", mock_log_state_dict)
     @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
     @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
     @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
     @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
-    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
     def test_save_model(self):
         ml = MLflowRegistry(TRACKING_URI)
         skeys = self.skeys
         dkeys = self.dkeys
         status = ml.save(
-            skeys=skeys, dkeys=dkeys, artifact=self.model, run_id="1234", artifact_type="pytorch"
+            skeys=skeys,
+            dkeys=dkeys,
+            artifact=self.model,
+            run_id="1234",
+            artifact_type="pytorch",
+            **{"lr": 0.01},
         )
         mock_status = "READY"
         self.assertEqual(mock_status, status.status)
+
+    @patch("mlflow.pyfunc.log_model", mock_log_model_pyfunc)
+    @patch("mlflow.log_params", mock_log_state_dict)
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pyfunc_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    def test_save_multiple_models_pyfunc(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        status = ml.save_multiple(
+            skeys=self.skeys,
+            dict_artifacts={
+                "inference": VanillaAE(10),
+                "precrocessing": StandardScaler(),
+                "threshold": StdDevThreshold(),
+            },
+            dkeys=["unique", "sorted"],
+            **{"learning_rate": 0.01},
+        )
+        self.assertIsNotNone(status)
+        mock_status = "READY"
+        self.assertEqual(mock_status, status.status)
+
+    @patch("mlflow.pyfunc.log_model", mock_log_model_pyfunc)
+    @patch("mlflow.log_params", mock_log_state_dict)
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pyfunc_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    def test_save_multiple_models_when_only_one_model(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        with self.assertLogs(level="WARNING"):
+            ml.save_multiple(
+                skeys=self.skeys,
+                dict_artifacts={
+                    "inference": VanillaAE(10),
+                },
+                dkeys=["unique", "sorted"],
+                **{"learning_rate": 0.01},
+            )
+
+    @patch("mlflow.pyfunc.log_model", mock_log_model_pyfunc)
+    @patch("mlflow.log_params", mock_log_state_dict)
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pyfunc_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.pyfunc.load_model", mock_load_model_pyfunc)
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pyfunc_rundata()))
+    def test_load_multiple_models_when_pyfunc_model_exist(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        skeys = self.skeys
+        dkeys = ["unique", "sorted"]
+        ml.save_multiple(
+            skeys=self.skeys,
+            dict_artifacts={
+                "inference": VanillaAE(10),
+                "precrocessing": StandardScaler(),
+                "threshold": StdDevThreshold(),
+            },
+            dkeys=["unique", "sorted"],
+            **{"learning_rate": 0.01},
+        )
+        data = ml.load_multiple(skeys=skeys, dkeys=dkeys)
+        self.assertIsNotNone(data.metadata)
+        self.assertIsInstance(data, ArtifactData)
+        self.assertIsInstance(data.artifact, dict)
+        self.assertIsInstance(data.artifact["inference"], VanillaAE)
+        self.assertIsInstance(data.artifact["precrocessing"], StandardScaler)
+
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch(
+        "mlflow.tracking.MlflowClient.get_latest_versions",
+        Mock(return_value=PagedList(items=[], token=None)),
+    )
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.pyfunc.load_model", Mock(return_value=None))
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_empty_rundata()))
+    def test_load_model_when_no_model_pyfunc(self):
+        fake_skeys = ["Fakemodel_"]
+        fake_dkeys = ["error"]
+        ml = MLflowRegistry(TRACKING_URI)
+        with self.assertLogs(level="ERROR") as log:
+            o = ml.load_multiple(skeys=fake_skeys, dkeys=fake_dkeys)
+            self.assertIsNone(o)
+            self.assertTrue(log.output)
+
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.get_model_version", mock_get_model_version_obj)
+    @patch(
+        "mlflow.pyfunc.load_model",
+        Mock(
+            return_value=CompositeModel(
+                skeys=["error"],
+                dict_artifacts={
+                    "inference": VanillaAE(10),
+                    "precrocessing": StandardScaler(),
+                    "threshold": StdDevThreshold(),
+                },
+                **{"learning_rate": 0.01},
+            )
+        ),
+    )
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pyfunc_rundata()))
+    def test_load_multiple_attribute_error(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        skeys = self.skeys
+        dkeys = ["unique", "sorted"]
+        with self.assertLogs(level="ERROR") as log:
+            result = ml.load_multiple(skeys=skeys, dkeys=dkeys)
+        self.assertIsNone(result)
+        self.assertTrue(
+            any(
+                "The loaded model does not have an unwrap_python_model method" in message
+                for message in log.output
+            )
+        )
+
+    @patch("mlflow.pytorch.log_model", mock_log_model_pytorch)
+    @patch("mlflow.log_params", mock_log_state_dict)
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pytorch_rundata_dict())))
+    @patch("mlflow.active_run", Mock(return_value=return_pytorch_rundata_dict()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.search_model_versions", mock_list_of_model_version2)
+    @patch("mlflow.pyfunc.load_model", mock_load_model_pyfunc_type_error)
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pyfunc_rundata()))
+    def test_load_multiple_type_error(self):
+        ml = MLflowRegistry(TRACKING_URI)
+        ml.save(
+            skeys=self.skeys,
+            dkeys=self.dkeys,
+            artifact=self.model,
+            artifact_type="pytorch",
+            **{"lr": 0.01},
+        )
+        with self.assertRaises(TypeError):
+            ml.load_multiple(skeys=self.skeys, dkeys=self.dkeys)
 
     @patch("mlflow.sklearn.log_model", mock_log_model_sklearn)
     @patch("mlflow.log_param", mock_log_state_dict)
@@ -405,6 +562,20 @@ class TestMLflow(unittest.TestCase):
         ml = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
         ml.load(skeys=self.skeys, dkeys=self.dkeys, artifact_type="pytorch")
         key = MLflowRegistry.construct_key(self.skeys, self.dkeys)
+        self.assertIsNotNone(ml._load_from_cache(key))
+
+    @patch("mlflow.start_run", Mock(return_value=ActiveRun(return_pyfunc_rundata())))
+    @patch("mlflow.active_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.tracking.MlflowClient.transition_model_version_stage", mock_transition_stage)
+    @patch("mlflow.tracking.MlflowClient.get_latest_versions", mock_get_model_version)
+    @patch("mlflow.tracking.MlflowClient.get_run", Mock(return_value=return_pyfunc_rundata()))
+    @patch("mlflow.pyfunc.load_model", mock_load_model_pyfunc)
+    def test_cache_loading_pyfunc(self):
+        cache_registry = LocalLRUCache(ttl=50000)
+        ml = MLflowRegistry(TRACKING_URI, cache_registry=cache_registry)
+        dkeys = ["unique", "sorted"]
+        ml.load_multiple(skeys=self.skeys, dkeys=dkeys)
+        key = MLflowRegistry.construct_key(self.skeys, dkeys)
         self.assertIsNotNone(ml._load_from_cache(key))
 
 

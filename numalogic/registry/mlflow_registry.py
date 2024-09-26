@@ -15,11 +15,9 @@ from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional, Any
 
-import mlflow.pyfunc
-import mlflow.pytorch
-import mlflow.sklearn
+import mlflow
 from mlflow.entities.model_registry import ModelVersion
-from mlflow.exceptions import RestException
+from mlflow.exceptions import RestException, MlflowException
 from mlflow.protos.databricks_pb2 import ErrorCode, RESOURCE_DOES_NOT_EXIST
 from mlflow.tracking import MlflowClient
 
@@ -187,6 +185,43 @@ class MLflowRegistry(ArtifactManager):
                 self._save_in_cache(model_key, artifact_data)
             return artifact_data
 
+    def load_multiple(
+        self,
+        skeys: KEYS,
+        dkeys: KEYS,
+    ) -> Optional[ArtifactData]:
+        """
+        Load multiple artifacts from the registry for pyfunc models.
+        Args:
+            skeys (KEYS): The source keys of the artifacts to load.
+            dkeys: dynamic key fields as list/tuple of strings.
+
+        Returns
+        -------
+            Optional[ArtifactData]: The loaded ArtifactData object if available otherwise None.
+            ArtifactData should contain a dictionary of artifacts.
+        """
+        loaded_model = self.load(skeys=skeys, dkeys=dkeys, artifact_type="pyfunc")
+        if loaded_model is None:
+            return None
+
+        try:
+            unwrapped_composite_model = loaded_model.artifact.unwrap_python_model()
+        except MlflowException as e:
+            raise TypeError("The loaded model is not a valid pyfunc Python model.") from e
+        except AttributeError:
+            _LOGGER.exception("The loaded model does not have an unwrap_python_model method")
+            return None
+        except Exception:
+            _LOGGER.exception("Unexpected error occurred while unwrapping python model.")
+            return None
+
+        return ArtifactData(
+            artifact=unwrapped_composite_model.dict_artifacts,
+            metadata=loaded_model.metadata,
+            extras=loaded_model.extras,
+        )
+
     @staticmethod
     def __log_mlflow_err(mlflow_err: RestException, model_key: str) -> None:
         if ErrorCode.Value(mlflow_err.error_code) == RESOURCE_DOES_NOT_EXIST:
@@ -225,7 +260,10 @@ class MLflowRegistry(ArtifactManager):
         handler = self.handler_from_type(artifact_type)
         try:
             mlflow.start_run(run_id=run_id)
-            handler.log_model(artifact, "model", registered_model_name=model_key)
+            if artifact_type == "pyfunc":
+                handler.log_model("model", python_model=artifact, registered_model_name=model_key)
+            else:
+                handler.log_model(artifact, "model", registered_model_name=model_key)
             if metadata:
                 mlflow.log_params(metadata)
             model_version = self.transition_stage(skeys=skeys, dkeys=dkeys)
@@ -237,6 +275,42 @@ class MLflowRegistry(ArtifactManager):
             return model_version
         finally:
             mlflow.end_run()
+
+    def save_multiple(
+        self,
+        skeys: KEYS,
+        dkeys: KEYS,
+        dict_artifacts: dict[str, artifact_t],
+        **metadata: META_VT,
+    ) -> Optional[ModelVersion]:
+        """
+        Saves multiple artifacts into mlflow registry. The last save stores all the
+        artifact versions in the metadata.
+
+        Args:
+        ----
+            skeys (KEYS): Static key fields as a list or tuple of strings.
+            dkeys (KEYS): Dynamic key fields as a list or tuple of strings.
+            dict_artifacts (dict[str, artifact_t]): Dictionary of artifacts to save.
+            **metadata (META_VT): Additional metadata to be saved with the artifacts.
+
+        Returns
+        -------
+            Optional[ModelVersion]: An instance of the MLflow ModelVersion.
+
+        """
+        if len(dict_artifacts) == 1:
+            _LOGGER.warning(
+                "Only one artifact present in dict_artifacts. Saving directly is recommended."
+            )
+        multiple_artifacts = CompositeModel(skeys=skeys, dict_artifacts=dict_artifacts, **metadata)
+        return self.save(
+            skeys=skeys,
+            dkeys=dkeys,
+            artifact=multiple_artifacts,
+            artifact_type="pyfunc",
+            **metadata,
+        )
 
     @staticmethod
     def is_artifact_stale(artifact_data: ArtifactData, freq_hr: int) -> bool:
@@ -338,3 +412,45 @@ class MLflowRegistry(ArtifactManager):
             version_info.version,
         )
         return model, metadata
+
+
+class CompositeModel(mlflow.pyfunc.PythonModel):
+    """A composite model that represents multiple artifacts.
+
+    This class extends the `mlflow.pyfunc.PythonModel` class and is used to store and load
+    multiple artifacts in the MLflow registry. It provides a convenient way to manage and
+    organize multiple artifacts associated with a single model.
+
+    Args:
+        skeys (KEYS): The static keys of the artifacts.
+        dict_artifacts (dict[str, KeyedArtifact]): A dictionary mapping dynamic keys to
+            `KeyedArtifact` objects.
+        **metadata (META_VT): Additional metadata associated with the artifacts.
+
+    Methods
+    -------
+        predict: Not implemented for our use case.
+
+    Attributes
+    ----------
+        skeys (KEYS): The static keys of the artifacts.
+        dict_artifacts (dict[str, KeyedArtifact]): A dictionary mapping dynamic keys to
+            `KeyedArtifact` objects.
+        metadata (META_VT): Additional metadata associated with the artifacts.
+    """
+
+    __slots__ = ("skeys", "dict_artifacts", "metadata")
+
+    def __init__(self, skeys: KEYS, dict_artifacts: dict[str, artifact_t], **metadata: META_VT):
+        self.skeys = skeys
+        self.dict_artifacts = dict_artifacts
+        self.metadata = metadata
+
+    def predict(self, context, model_input, params: Optional[dict[str, Any]] = None):
+        """
+        Predict method is not implemented for our use case.
+
+        The CompositeModel class is designed to store and load multiple artifacts,
+        and the predict method is not required for this functionality.
+        """
+        raise NotImplementedError("The predict method is not implemented for CompositeModel.")
