@@ -51,7 +51,7 @@ the result further or drop it after a trigger request.
 
 ## Getting Started
 
-For set-up information and running your first pipeline using numalogic, please see our [getting started guide](./quick-start.md).
+For set-up information and running your first pipeline using numalogic, please see our [getting started guide](./docs/quick-start.md).
 
 
 ## Installation
